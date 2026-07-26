@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Radley, Arimo } from "next/font/google";
+import ThemeSync from "@/components/ThemeSync";
 import "./globals.css";
 
 const radley = Radley({
@@ -45,7 +46,10 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="flex min-h-full flex-col bg-background font-sans text-foreground">{children}</body>
+      <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
+        <ThemeSync />
+        {children}
+      </body>
     </html>
   );
 }
