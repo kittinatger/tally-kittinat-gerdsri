@@ -29,7 +29,7 @@ export default function ExpenseRow({
       </div>
       <p
         className={`shrink-0 font-semibold ${
-          expense.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
+          expense.type === "income" ? "text-blue-600 dark:text-blue-400" : "text-foreground"
         }`}
       >
         {expense.type === "income" ? "+" : "-"}

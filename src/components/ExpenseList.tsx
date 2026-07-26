@@ -42,7 +42,7 @@ export default function ExpenseList({
               <h2 className="text-sm font-semibold text-ink-soft">{monthLabel(key)}</h2>
               <span
                 className={`text-sm font-semibold ${
-                  net >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-ink-soft"
+                  net >= 0 ? "text-blue-600 dark:text-blue-400" : "text-ink-soft"
                 }`}
               >
                 {net >= 0 ? "+" : "-"}

@@ -20,7 +20,7 @@ export default function SummaryCards({
     <div className="mb-6 grid grid-cols-3 gap-3">
       <div className="rounded-card border border-line bg-surface p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Income</p>
-        <p className="mt-1.5 font-display text-xl text-emerald-600 dark:text-emerald-400 sm:text-2xl">
+        <p className="mt-1.5 font-display text-xl text-blue-600 dark:text-blue-400 sm:text-2xl">
           {formatCurrency(monthIncome)}
         </p>
       </div>
