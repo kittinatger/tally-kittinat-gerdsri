@@ -20,13 +20,15 @@ export default function SummaryCards({
     <div className="mb-6 grid grid-cols-3 gap-3">
       <div className="rounded-card border border-line bg-surface p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Income</p>
-        <p className="mt-1.5 font-display text-xl text-blue-600 dark:text-blue-400 sm:text-2xl">
+        <p className="mt-1.5 font-display text-xl text-emerald-600 dark:text-emerald-400 sm:text-2xl">
           {formatCurrency(monthIncome)}
         </p>
       </div>
       <div className="rounded-card border border-line bg-surface p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Expenses</p>
-        <p className="mt-1.5 font-display text-xl text-foreground sm:text-2xl">{formatCurrency(monthSpent)}</p>
+        <p className="mt-1.5 font-display text-xl text-red-600 dark:text-red-400 sm:text-2xl">
+          {formatCurrency(monthSpent)}
+        </p>
       </div>
       <button onClick={onEditBalance} className="rounded-card border border-line bg-surface p-4 text-left transition hover:border-navy">
         <div className="flex items-center justify-between gap-1">
