@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStartingBalance, setStartingBalance } from "@/lib/db";
+import { getRemaining, setRemaining } from "@/lib/db";
 import { settingsInputSchema } from "@/lib/validation";
 
 export async function GET() {
-  const startingBalance = await getStartingBalance();
-  return NextResponse.json({ startingBalance });
+  const remaining = await getRemaining();
+  return NextResponse.json({ remaining });
 }
 
 export async function PATCH(req: NextRequest) {
@@ -13,6 +13,6 @@ export async function PATCH(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
-  const startingBalance = await setStartingBalance(parsed.data.startingBalance);
-  return NextResponse.json({ startingBalance });
+  const remaining = await setRemaining(parsed.data.remaining);
+  return NextResponse.json({ remaining });
 }

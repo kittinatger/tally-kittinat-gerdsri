@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Expense } from "@/types/expense";
+import { signedAmount, type Expense } from "@/types/expense";
 import SummaryCards from "./SummaryCards";
 import ExpenseList from "./ExpenseList";
 import AddExpenseModal from "./AddExpenseModal";
@@ -16,14 +16,14 @@ function sortByDateDesc(a: Expense, b: Expense): number {
 
 export default function Dashboard({
   initialExpenses,
-  initialStartingBalance,
+  initialRemaining,
 }: {
   initialExpenses: Expense[];
-  initialStartingBalance: number;
+  initialRemaining: number;
 }) {
   const router = useRouter();
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
-  const [startingBalance, setStartingBalance] = useState(initialStartingBalance);
+  const [remaining, setRemaining] = useState(initialRemaining);
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [editingBalance, setEditingBalance] = useState(false);
@@ -31,20 +31,29 @@ export default function Dashboard({
 
   function handleCreated(expense: Expense) {
     setExpenses((prev) => [expense, ...prev].sort(sortByDateDesc));
+    setRemaining((prev) => prev + signedAmount(expense));
   }
 
   function handleUpdated(expense: Expense) {
+    const previous = expenses.find((e) => e.id === expense.id);
+    if (previous) {
+      setRemaining((r) => r - signedAmount(previous) + signedAmount(expense));
+    }
     setExpenses((prev) => prev.map((e) => (e.id === expense.id ? expense : e)).sort(sortByDateDesc));
     setEditing(null);
   }
 
   function handleDeleted(id: number) {
+    const removed = expenses.find((e) => e.id === id);
+    if (removed) {
+      setRemaining((r) => r - signedAmount(removed));
+    }
     setExpenses((prev) => prev.filter((e) => e.id !== id));
     setEditing(null);
   }
 
   function handleBalanceSaved(value: number) {
-    setStartingBalance(value);
+    setRemaining(value);
     setEditingBalance(false);
   }
 
@@ -86,7 +95,7 @@ export default function Dashboard({
       </header>
 
       <main className="flex-1 px-1 py-6 sm:px-2">
-        <SummaryCards expenses={expenses} startingBalance={startingBalance} onEditBalance={() => setEditingBalance(true)} />
+        <SummaryCards expenses={expenses} remaining={remaining} onEditBalance={() => setEditingBalance(true)} />
         <ExpenseList expenses={expenses} onSelect={setEditing} />
       </main>
 
@@ -109,7 +118,7 @@ export default function Dashboard({
       )}
       {editingBalance && (
         <EditBalanceModal
-          currentValue={startingBalance}
+          currentValue={remaining}
           onClose={() => setEditingBalance(false)}
           onSaved={handleBalanceSaved}
         />

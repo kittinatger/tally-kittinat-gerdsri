@@ -3,11 +3,11 @@ import { formatCurrency, monthKey, todayInputValue } from "@/lib/format";
 
 export default function SummaryCards({
   expenses,
-  startingBalance,
+  remaining,
   onEditBalance,
 }: {
   expenses: Expense[];
-  startingBalance: number;
+  remaining: number;
   onEditBalance: () => void;
 }) {
   const currentMonthKey = monthKey(todayInputValue());
@@ -15,10 +15,6 @@ export default function SummaryCards({
 
   const monthIncome = thisMonth.filter((e) => e.type === "income").reduce((sum, e) => sum + e.amount, 0);
   const monthSpent = thisMonth.filter((e) => e.type === "expense").reduce((sum, e) => sum + e.amount, 0);
-
-  const allTimeIncome = expenses.filter((e) => e.type === "income").reduce((sum, e) => sum + e.amount, 0);
-  const allTimeSpent = expenses.filter((e) => e.type === "expense").reduce((sum, e) => sum + e.amount, 0);
-  const remaining = startingBalance + allTimeIncome - allTimeSpent;
 
   return (
     <div className="mb-6 grid grid-cols-3 gap-3">

@@ -29,14 +29,14 @@ export default function EditBalanceModal({
       const res = await fetch("/api/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ startingBalance: amount }),
+        body: JSON.stringify({ remaining: amount }),
       });
       const data = await res.json();
       if (!res.ok) {
         setError(typeof data.error === "string" ? data.error : "Could not save.");
         return;
       }
-      onSaved(Number(data.startingBalance));
+      onSaved(Number(data.remaining));
     } catch {
       setError("Network error while saving.");
     } finally {
@@ -45,14 +45,14 @@ export default function EditBalanceModal({
   }
 
   return (
-    <Modal onClose={onClose} title="Starting balance">
+    <Modal onClose={onClose} title="Remaining balance">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="startingBalance" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-            Balance to start counting from
+          <label htmlFor="remaining" className="mb-1.5 block text-sm font-semibold text-ink-soft">
+            Set remaining balance to
           </label>
           <input
-            id="startingBalance"
+            id="remaining"
             type="number"
             inputMode="decimal"
             step="0.01"
@@ -62,8 +62,8 @@ export default function EditBalanceModal({
             className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
           <p className="mt-2 text-xs text-ink-soft">
-            &quot;Remaining&quot; is calculated as this balance plus all income minus all expenses you&apos;ve
-            logged.
+            This becomes your Remaining figure right now. Future expenses and income will adjust it from here —
+            it won&apos;t recalculate against anything already logged.
           </p>
         </div>
 

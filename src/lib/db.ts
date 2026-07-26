@@ -35,8 +35,10 @@ function ensureSchema(): Promise<void> {
       // expenses; existing rows backfill to 'expense' via the column default.
       await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'expense';`;
 
-      // Single-row table holding the user-editable starting balance used to
-      // compute the "Remaining" figure.
+      // Single-row table anchoring the "Remaining" figure: a balance plus the
+      // timestamp it was last reset, so only transactions logged after that
+      // moment affect it (editing sets Remaining to exactly that value, not
+      // a historical starting point that gets replayed against old data).
       await sql`
         CREATE TABLE IF NOT EXISTS app_settings (
           id INTEGER PRIMARY KEY DEFAULT 1,
@@ -44,29 +46,37 @@ function ensureSchema(): Promise<void> {
           CONSTRAINT app_settings_single_row CHECK (id = 1)
         );
       `;
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS starting_balance_set_at TIMESTAMPTZ NOT NULL DEFAULT now();`;
       await sql`INSERT INTO app_settings (id, starting_balance) VALUES (1, 0) ON CONFLICT (id) DO NOTHING;`;
     })();
   }
   return schemaReady;
 }
 
-export async function getStartingBalance(): Promise<number> {
+export async function getRemaining(): Promise<number> {
   await ensureSchema();
-  const { rows } = await sql<{ starting_balance: string }>`
-    SELECT starting_balance::text AS starting_balance FROM app_settings WHERE id = 1;
+  const { rows } = await sql<{ remaining: string }>`
+    SELECT (
+      s.starting_balance + COALESCE((
+        SELECT SUM(CASE WHEN e.type = 'income' THEN e.amount ELSE -e.amount END)
+        FROM expenses e
+        WHERE e.created_at > s.starting_balance_set_at
+      ), 0)
+    )::text AS remaining
+    FROM app_settings s
+    WHERE s.id = 1;
   `;
-  return rows[0] ? Number(rows[0].starting_balance) : 0;
+  return rows[0] ? Number(rows[0].remaining) : 0;
 }
 
-export async function setStartingBalance(amount: number): Promise<number> {
+export async function setRemaining(amount: number): Promise<number> {
   await ensureSchema();
-  const { rows } = await sql<{ starting_balance: string }>`
+  await sql`
     UPDATE app_settings
-    SET starting_balance = ${amount}
-    WHERE id = 1
-    RETURNING starting_balance::text AS starting_balance;
+    SET starting_balance = ${amount}, starting_balance_set_at = now()
+    WHERE id = 1;
   `;
-  return Number(rows[0].starting_balance);
+  return amount;
 }
 
 export async function listExpenses(): Promise<Expense[]> {
