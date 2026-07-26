@@ -19,22 +19,20 @@
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a1120;
-    --bg-soft: #101a30;
-    --navy: #6ea1e8;
-    --navy-dark: #8fb8f0;
-    --foreground: #dbe4f2;
-    --ink-soft: #9fb0c8;
-    --surface: #131f36;
-    --line: rgba(255, 255, 255, 0.14);
-    --glass-bg: linear-gradient(180deg, rgba(28, 40, 64, 0.58) 0%, rgba(10, 17, 32, 0.68) 100%);
-    --glass-border: rgba(255, 255, 255, 0.2);
-    --glass-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.22), inset 0 -10px 16px -8px rgba(0, 0, 0, 0.35);
-    --nav-hover-bg: rgba(110, 161, 232, 0.16);
-    color-scheme: dark;
-  }
+:root[data-theme="dark"] {
+  --background: #0a1120;
+  --bg-soft: #101a30;
+  --navy: #6ea1e8;
+  --navy-dark: #8fb8f0;
+  --foreground: #dbe4f2;
+  --ink-soft: #9fb0c8;
+  --surface: #131f36;
+  --line: rgba(255, 255, 255, 0.14);
+  --glass-bg: linear-gradient(180deg, rgba(28, 40, 64, 0.58) 0%, rgba(10, 17, 32, 0.68) 100%);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.22), inset 0 -10px 16px -8px rgba(0, 0, 0, 0.35);
+  --nav-hover-bg: rgba(110, 161, 232, 0.16);
+  color-scheme: dark;
 }
 
 @theme inline {

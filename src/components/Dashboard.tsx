@@ -8,6 +8,7 @@ import ExpenseList from "./ExpenseList";
 import AddExpenseModal from "./AddExpenseModal";
 import EditExpenseModal from "./EditExpenseModal";
 import EditBalanceModal from "./EditBalanceModal";
+import SettingsMenu from "./SettingsMenu";
 
 function sortByDateDesc(a: Expense, b: Expense): number {
   if (a.date !== b.date) return a.date < b.date ? 1 : -1;
@@ -84,6 +85,7 @@ export default function Dashboard({
           >
             + Add
           </button>
+          <SettingsMenu />
           <button
             onClick={handleLogout}
             disabled={loggingOut}

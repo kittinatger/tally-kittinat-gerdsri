@@ -1,4 +1,5 @@
 import LoginForm from "@/components/LoginForm";
+import SettingsMenu from "@/components/SettingsMenu";
 
 export default async function LoginPage({
   searchParams,
@@ -8,7 +9,10 @@ export default async function LoginPage({
   const { next } = await searchParams;
 
   return (
-    <main className="flex min-h-screen flex-1 flex-col items-center justify-center bg-background px-4">
+    <main className="relative flex min-h-screen flex-1 flex-col items-center justify-center bg-background px-4">
+      <div className="absolute right-4 top-4">
+        <SettingsMenu />
+      </div>
       <div className="mb-8 flex flex-col items-center gap-3">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-navy text-2xl font-bold text-white shadow-soft">
           T
