@@ -36,7 +36,7 @@ export default function LoginForm({ next }: { next: string }) {
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
       <div>
-        <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+        <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-ink-soft">
           Password
         </label>
         <input
@@ -46,7 +46,7 @@ export default function LoginForm({ next }: { next: string }) {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-base text-neutral-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+          className="w-full rounded-card border border-line bg-surface px-4 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           placeholder="Enter password"
         />
       </div>
@@ -54,7 +54,7 @@ export default function LoginForm({ next }: { next: string }) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-xl bg-emerald-600 px-4 py-2.5 font-medium text-white transition hover:bg-emerald-700 disabled:opacity-60"
+        className="w-full rounded-full bg-navy px-4 py-2.5 font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
       >
         {loading ? "Signing in..." : "Sign in"}
       </button>

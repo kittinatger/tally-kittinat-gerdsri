@@ -26,10 +26,8 @@ export default function ExpenseList({
     return (
       <div className="mt-10 flex flex-col items-center gap-2 text-center">
         <p className="text-4xl">🧾</p>
-        <p className="font-medium text-neutral-700 dark:text-neutral-300">No expenses yet</p>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          Add one manually or scan a receipt to get started.
-        </p>
+        <p className="font-display text-lg text-foreground">No expenses yet</p>
+        <p className="text-sm text-ink-soft">Add one manually or scan a receipt to get started.</p>
       </div>
     );
   }
@@ -41,10 +39,10 @@ export default function ExpenseList({
         return (
           <section key={key}>
             <div className="mb-2 flex items-center justify-between px-1">
-              <h2 className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">{monthLabel(key)}</h2>
-              <span className="text-sm text-neutral-400 dark:text-neutral-500">{formatCurrency(total)}</span>
+              <h2 className="text-sm font-semibold text-ink-soft">{monthLabel(key)}</h2>
+              <span className="text-sm text-ink-soft">{formatCurrency(total)}</span>
             </div>
-            <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+            <div className="overflow-hidden rounded-card border border-line bg-surface">
               {items.map((expense, i) => (
                 <ExpenseRow
                   key={expense.id}

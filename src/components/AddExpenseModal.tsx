@@ -101,23 +101,19 @@ export default function AddExpenseModal({
 
   return (
     <Modal onClose={onClose} title="Add expense">
-      <div className="mb-4 flex gap-1 rounded-xl bg-neutral-100 p-1 dark:bg-neutral-800">
+      <div className="mb-4 flex gap-1 rounded-full bg-bg-soft p-1">
         <button
           onClick={() => setTab("manual")}
-          className={`flex-1 rounded-lg py-2 text-sm font-medium transition ${
-            tab === "manual"
-              ? "bg-white text-neutral-900 shadow-sm dark:bg-neutral-700 dark:text-neutral-100"
-              : "text-neutral-500 dark:text-neutral-400"
+          className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+            tab === "manual" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
           }`}
         >
           Manual entry
         </button>
         <button
           onClick={() => setTab("scan")}
-          className={`flex-1 rounded-lg py-2 text-sm font-medium transition ${
-            tab === "scan"
-              ? "bg-white text-neutral-900 shadow-sm dark:bg-neutral-700 dark:text-neutral-100"
-              : "text-neutral-500 dark:text-neutral-400"
+          className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+            tab === "scan" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
           }`}
         >
           Scan receipt
@@ -142,10 +138,10 @@ export default function AddExpenseModal({
             <div className="flex flex-col items-center gap-3 py-10 text-center">
               {previewUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={previewUrl} alt="Receipt preview" className="h-32 w-32 rounded-xl object-cover" />
+                <img src={previewUrl} alt="Receipt preview" className="h-32 w-32 rounded-card object-cover" />
               )}
-              <div className="flex items-center gap-2 text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+              <div className="flex items-center gap-2 text-sm font-semibold text-ink-soft">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-navy border-t-transparent" />
                 Reading receipt...
               </div>
             </div>
@@ -156,7 +152,7 @@ export default function AddExpenseModal({
               <p className="text-sm text-red-600 dark:text-red-400">{scanError}</p>
               <button
                 onClick={resetScan}
-                className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
               >
                 Try another photo
               </button>
@@ -165,12 +161,12 @@ export default function AddExpenseModal({
 
           {scanStatus === "review" && scanValues && (
             <div>
-              <div className="mb-4 flex items-center gap-3 rounded-xl bg-neutral-50 p-3 dark:bg-neutral-800/50">
+              <div className="mb-4 flex items-center gap-3 rounded-card bg-bg-soft p-3">
                 {previewUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={previewUrl} alt="Receipt preview" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
                 )}
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                <p className="text-xs text-ink-soft">
                   Review the details below before saving — the vision model can occasionally misread receipts.
                 </p>
               </div>

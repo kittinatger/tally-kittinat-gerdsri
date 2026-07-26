@@ -8,13 +8,13 @@ export default async function LoginPage({
   const { next } = await searchParams;
 
   return (
-    <main className="flex min-h-screen flex-1 flex-col items-center justify-center bg-neutral-50 px-4 dark:bg-neutral-950">
-      <div className="mb-8 flex flex-col items-center gap-2">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-xl font-bold text-white">
+    <main className="flex min-h-screen flex-1 flex-col items-center justify-center bg-background px-4">
+      <div className="mb-8 flex flex-col items-center gap-3">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-navy text-2xl font-bold text-white shadow-soft">
           T
         </div>
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Tally</h1>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">Sign in to view your expenses</p>
+        <h1 className="font-display text-2xl text-foreground">Tally</h1>
+        <p className="text-sm text-ink-soft">Sign in to view your expenses</p>
       </div>
       <LoginForm next={next ?? "/"} />
     </main>

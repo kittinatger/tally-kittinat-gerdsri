@@ -47,39 +47,39 @@ export default function Dashboard({ initialExpenses }: { initialExpenses: Expens
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col pb-24 sm:pb-10">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-neutral-200/80 bg-neutral-50/90 px-4 py-4 backdrop-blur dark:border-neutral-800/80 dark:bg-neutral-950/90 sm:px-6">
+    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-3 pb-24 pt-3 sm:px-4 sm:pb-10">
+      <header className="sticky top-3 z-10 flex items-center justify-between gap-3 rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] px-4 py-2.5 shadow-soft backdrop-blur-xl sm:px-5">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-sm font-bold text-white">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-navy text-sm font-bold text-white">
             T
           </div>
-          <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Tally</h1>
+          <h1 className="font-display text-lg text-foreground">Tally</h1>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setAddOpen(true)}
-            className="hidden items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 sm:flex"
+            className="hidden items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark hover:-translate-y-0.5 sm:flex"
           >
             + Add expense
           </button>
           <button
             onClick={handleLogout}
             disabled={loggingOut}
-            className="rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-600 transition hover:bg-neutral-100 disabled:opacity-60 dark:border-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-900"
+            className="rounded-full px-3.5 py-2 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
           >
             Sign out
           </button>
         </div>
       </header>
 
-      <main className="flex-1 px-4 py-5 sm:px-6">
+      <main className="flex-1 px-1 py-6 sm:px-2">
         <SummaryCards expenses={expenses} />
         <ExpenseList expenses={expenses} onSelect={setEditing} />
       </main>
 
       <button
         onClick={() => setAddOpen(true)}
-        className="fixed bottom-6 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-2xl font-light text-white shadow-lg shadow-emerald-600/30 transition hover:bg-emerald-700 sm:hidden"
+        className="fixed bottom-6 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-navy text-2xl font-light text-white shadow-soft transition hover:bg-navy-dark sm:hidden"
         aria-label="Add expense"
       >
         +

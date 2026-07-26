@@ -21,8 +21,8 @@ export const emptyExpenseFormValues: ExpenseFormValues = {
 };
 
 const inputClass =
-  "w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-base text-neutral-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100";
-const labelClass = "mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300";
+  "w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20";
+const labelClass = "mb-1.5 block text-sm font-semibold text-ink-soft";
 
 export default function ExpenseForm({
   initialValues,
@@ -143,7 +143,7 @@ export default function ExpenseForm({
             <button
               type="button"
               onClick={onCancel}
-              className="rounded-xl px-4 py-2.5 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
+              className="rounded-full px-4 py-2.5 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
             >
               Cancel
             </button>
@@ -151,7 +151,7 @@ export default function ExpenseForm({
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:opacity-60"
+            className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
           >
             {submitting ? "Saving..." : submitLabel}
           </button>

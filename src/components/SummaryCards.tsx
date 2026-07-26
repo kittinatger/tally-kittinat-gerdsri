@@ -22,26 +22,22 @@ export default function SummaryCards({ expenses }: { expenses: Expense[] }) {
 
   return (
     <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-      <div className="rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-        <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">This month</p>
-        <p className="mt-1 text-xl font-semibold text-neutral-900 dark:text-neutral-100 sm:text-2xl">
-          {formatCurrency(total)}
-        </p>
+      <div className="rounded-card border border-line bg-surface p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">This month</p>
+        <p className="mt-1.5 font-display text-2xl text-navy sm:text-3xl">{formatCurrency(total)}</p>
       </div>
-      <div className="rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-        <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Transactions</p>
-        <p className="mt-1 text-xl font-semibold text-neutral-900 dark:text-neutral-100 sm:text-2xl">
-          {thisMonth.length}
-        </p>
+      <div className="rounded-card border border-line bg-surface p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Transactions</p>
+        <p className="mt-1.5 font-display text-2xl text-navy sm:text-3xl">{thisMonth.length}</p>
       </div>
-      <div className="col-span-2 rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900 sm:col-span-1">
-        <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Top category</p>
+      <div className="col-span-2 rounded-card border border-line bg-surface p-4 sm:col-span-1">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Top category</p>
         {topCategory ? (
-          <span className={`mt-1.5 inline-block rounded-full px-2 py-1 text-xs font-medium ${categoryStyle(topCategory)}`}>
+          <span className={`mt-2 inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${categoryStyle(topCategory)}`}>
             {topCategory}
           </span>
         ) : (
-          <p className="mt-2 text-sm text-neutral-400 dark:text-neutral-500">—</p>
+          <p className="mt-2 text-sm text-ink-soft">—</p>
         )}
       </div>
     </div>

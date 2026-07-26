@@ -41,17 +41,13 @@ export default function ReceiptDropzone({ onFileSelected }: { onFileSelected: (f
         }}
         role="button"
         tabIndex={0}
-        className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-6 py-10 text-center transition ${
-          dragOver
-            ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
-            : "border-neutral-300 hover:border-emerald-400 hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800/50"
+        className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-card border-2 border-dashed px-6 py-10 text-center transition ${
+          dragOver ? "border-navy bg-[var(--nav-hover-bg)]" : "border-line hover:border-navy hover:bg-bg-soft"
         }`}
       >
         <span className="text-3xl">📷</span>
-        <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-          Drop a receipt photo here, or tap to choose
-        </p>
-        <p className="text-xs text-neutral-400 dark:text-neutral-500">JPEG, PNG, WEBP, or HEIC — up to 8MB</p>
+        <p className="text-sm font-semibold text-foreground">Drop a receipt photo here, or tap to choose</p>
+        <p className="text-xs text-ink-soft">JPEG, PNG, WEBP, or HEIC — up to 8MB</p>
         <input
           ref={inputRef}
           type="file"

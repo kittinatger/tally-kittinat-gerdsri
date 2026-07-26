@@ -102,7 +102,7 @@ export default function EditExpenseModal({
             type="button"
             onClick={handleDelete}
             disabled={deleting}
-            className={`rounded-xl px-3 py-2 text-sm font-medium transition ${
+            className={`rounded-full px-3.5 py-2 text-sm font-semibold transition ${
               confirmingDelete
                 ? "bg-red-600 text-white hover:bg-red-700"
                 : "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
