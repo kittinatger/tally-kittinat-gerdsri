@@ -4,25 +4,37 @@ import { useRef, useState } from "react";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
 const MAX_BYTES = 8 * 1024 * 1024;
+const MAX_FILES = 20;
 
-export default function ReceiptDropzone({ onFileSelected }: { onFileSelected: (file: File) => void }) {
+export default function ReceiptDropzone({ onFilesSelected }: { onFilesSelected: (files: File[]) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function handleFiles(files: FileList | null) {
-    const file = files?.[0];
-    if (!file) return;
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      setError("Unsupported file type. Use JPEG, PNG, WEBP, or HEIC.");
+  function handleFiles(fileList: FileList | null) {
+    if (!fileList || fileList.length === 0) return;
+
+    const files = Array.from(fileList).slice(0, MAX_FILES);
+    const valid: File[] = [];
+    let skipped = 0;
+
+    for (const file of files) {
+      if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_BYTES) {
+        skipped++;
+        continue;
+      }
+      valid.push(file);
+    }
+
+    if (valid.length === 0) {
+      setError("None of those files could be used. Use JPEG, PNG, WEBP, or HEIC images under 8MB.");
       return;
     }
-    if (file.size > MAX_BYTES) {
-      setError("Image is too large (max 8MB).");
-      return;
-    }
-    setError(null);
-    onFileSelected(file);
+
+    setError(
+      skipped > 0 ? `${skipped} file${skipped === 1 ? "" : "s"} skipped (unsupported type or too large).` : null,
+    );
+    onFilesSelected(valid);
   }
 
   return (
@@ -47,13 +59,17 @@ export default function ReceiptDropzone({ onFileSelected }: { onFileSelected: (f
       >
         <span className="text-3xl">📷</span>
         <p className="text-sm font-semibold text-foreground">
-          Drop a receipt or income document here, or tap to choose
+          Drop receipts or income documents here, or tap to choose
         </p>
-        <p className="text-xs text-ink-soft">Expense or income — we&apos;ll detect which. JPEG, PNG, WEBP, or HEIC, up to 8MB</p>
+        <p className="text-xs text-ink-soft">
+          Select multiple to add them as a batch. Expense or income — we&apos;ll detect which. JPEG, PNG, WEBP, or
+          HEIC, up to 8MB each
+        </p>
         <input
           ref={inputRef}
           type="file"
           accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+          multiple
           className="hidden"
           onChange={(e) => handleFiles(e.target.files)}
         />

@@ -22,7 +22,6 @@ export default function Dashboard({ initialExpenses }: { initialExpenses: Expens
 
   function handleCreated(expense: Expense) {
     setExpenses((prev) => [expense, ...prev].sort(sortByDateDesc));
-    setAddOpen(false);
   }
 
   function handleUpdated(expense: Expense) {

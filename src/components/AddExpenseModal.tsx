@@ -18,6 +18,8 @@ export default function AddExpenseModal({
   onCreated: (expense: Expense) => void;
 }) {
   const [tab, setTab] = useState<Tab>("manual");
+  const [queue, setQueue] = useState<File[]>([]);
+  const [queueIndex, setQueueIndex] = useState(0);
   const [scanStatus, setScanStatus] = useState<ScanStatus>("idle");
   const [scanError, setScanError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -25,7 +27,7 @@ export default function AddExpenseModal({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  async function handleFileSelected(file: File) {
+  async function processFile(file: File) {
     setPreviewUrl(URL.createObjectURL(file));
     setScanStatus("analyzing");
     setScanError(null);
@@ -64,46 +66,53 @@ export default function AddExpenseModal({
     }
   }
 
-  function resetScan() {
-    setScanStatus("idle");
-    setScanError(null);
-    setScanValues(null);
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(null);
+  function handleFilesSelected(files: File[]) {
+    setQueue(files);
+    setQueueIndex(0);
+    processFile(files[0]);
   }
 
-  async function handleSubmit(values: ExpenseFormValues) {
+  function advanceQueue() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setScanValues(null);
+    setScanError(null);
+
+    const nextIndex = queueIndex + 1;
+    if (nextIndex < queue.length) {
+      setQueueIndex(nextIndex);
+      processFile(queue[nextIndex]);
+    } else {
+      setQueue([]);
+      setQueueIndex(0);
+      setScanStatus("idle");
+      onClose();
+    }
+  }
+
+  async function handleManualSubmit(values: ExpenseFormValues) {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const res = await fetch("/api/expenses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: values.type,
-          date: values.date,
-          amount: Number(values.amount),
-          merchant: values.merchant,
-          category: values.category,
-          notes: values.notes || undefined,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setSubmitError(typeof data.error === "string" ? data.error : "Could not save that entry.");
-        return;
-      }
-      onCreated({
-        id: data.expense.id,
-        type: data.expense.type === "income" ? "income" : "expense",
-        date: data.expense.date,
-        amount: Number(data.expense.amount),
-        merchant: data.expense.merchant,
-        category: data.expense.category,
-        notes: data.expense.notes,
-      });
-    } catch {
-      setSubmitError("Network error while saving.");
+      const expense = await createExpense(values);
+      onCreated(expense);
+      onClose();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Could not save that entry.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleScanSubmit(values: ExpenseFormValues) {
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const expense = await createExpense(values);
+      onCreated(expense);
+      advanceQueue();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Could not save that entry.");
     } finally {
       setSubmitting(false);
     }
@@ -134,7 +143,7 @@ export default function AddExpenseModal({
         <ExpenseForm
           initialValues={emptyExpenseFormValues}
           submitLabel="Add transaction"
-          onSubmit={handleSubmit}
+          onSubmit={handleManualSubmit}
           submitting={submitting}
           error={submitError}
         />
@@ -142,7 +151,7 @@ export default function AddExpenseModal({
 
       {tab === "scan" && (
         <div>
-          {scanStatus === "idle" && <ReceiptDropzone onFileSelected={handleFileSelected} />}
+          {scanStatus === "idle" && <ReceiptDropzone onFilesSelected={handleFilesSelected} />}
 
           {scanStatus === "analyzing" && (
             <div className="flex flex-col items-center gap-3 py-10 text-center">
@@ -152,20 +161,33 @@ export default function AddExpenseModal({
               )}
               <div className="flex items-center gap-2 text-sm font-semibold text-ink-soft">
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-navy border-t-transparent" />
-                Reading document...
+                {queue.length > 1 ? `Reading document ${queueIndex + 1} of ${queue.length}...` : "Reading document..."}
               </div>
             </div>
           )}
 
           {scanStatus === "error" && (
             <div className="flex flex-col items-center gap-3 py-8 text-center">
+              {queue.length > 1 && (
+                <p className="text-xs font-semibold text-ink-soft">
+                  Document {queueIndex + 1} of {queue.length}
+                </p>
+              )}
               <p className="text-sm text-red-600 dark:text-red-400">{scanError}</p>
-              <button
-                onClick={resetScan}
-                className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
-              >
-                Try another photo
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => processFile(queue[queueIndex])}
+                  className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
+                >
+                  Retry
+                </button>
+                <button
+                  onClick={advanceQueue}
+                  className="rounded-full px-4 py-2 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
+                >
+                  {queueIndex + 1 < queue.length ? "Skip" : "Close"}
+                </button>
+              </div>
             </div>
           )}
 
@@ -176,16 +198,24 @@ export default function AddExpenseModal({
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={previewUrl} alt="Document preview" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
                 )}
-                <p className="text-xs text-ink-soft">
-                  Review the details below before saving — the vision model detected whether this is an expense or
-                  income and can occasionally get it wrong, so double-check the toggle too.
-                </p>
+                <div className="min-w-0">
+                  {queue.length > 1 && (
+                    <p className="mb-1 text-xs font-semibold text-navy">
+                      Reviewing {queueIndex + 1} of {queue.length}
+                    </p>
+                  )}
+                  <p className="text-xs text-ink-soft">
+                    Review the details below before saving — the vision model detected whether this is an expense
+                    or income and can occasionally get it wrong, so double-check the toggle too.
+                  </p>
+                </div>
               </div>
               <ExpenseForm
+                key={queueIndex}
                 initialValues={scanValues}
-                submitLabel="Save transaction"
-                onSubmit={handleSubmit}
-                onCancel={resetScan}
+                submitLabel={queueIndex + 1 < queue.length ? "Save & next" : "Save transaction"}
+                onSubmit={handleScanSubmit}
+                onCancel={advanceQueue}
                 submitting={submitting}
                 error={submitError}
               />
@@ -195,4 +225,32 @@ export default function AddExpenseModal({
       )}
     </Modal>
   );
+}
+
+async function createExpense(values: ExpenseFormValues): Promise<Expense> {
+  const res = await fetch("/api/expenses", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: values.type,
+      date: values.date,
+      amount: Number(values.amount),
+      merchant: values.merchant,
+      category: values.category,
+      notes: values.notes || undefined,
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(typeof data.error === "string" ? data.error : "Could not save that entry.");
+  }
+  return {
+    id: data.expense.id,
+    type: data.expense.type === "income" ? "income" : "expense",
+    date: data.expense.date,
+    amount: Number(data.expense.amount),
+    merchant: data.expense.merchant,
+    category: data.expense.category,
+    notes: data.expense.notes,
+  };
 }
