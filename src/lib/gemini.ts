@@ -9,7 +9,7 @@ export type ReceiptExtraction = {
   notes?: string;
 };
 
-const MODEL = "gemini-2.5-flash";
+const MODEL = "gemini-3.5-flash";
 
 const PROMPT = `You are reading a photo of a purchase receipt for a personal expense tracker.
 Extract the following fields:
