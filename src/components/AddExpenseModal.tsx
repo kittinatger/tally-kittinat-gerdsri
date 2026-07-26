@@ -5,7 +5,7 @@ import Modal from "./Modal";
 import ExpenseForm, { emptyExpenseFormValues, type ExpenseFormValues } from "./ExpenseForm";
 import ReceiptDropzone from "./ReceiptDropzone";
 import type { Expense } from "@/types/expense";
-import { isCategory, type TransactionType } from "@/lib/categories";
+import { isCategory, isTransactionType } from "@/lib/categories";
 
 type Tab = "manual" | "scan";
 type ScanStatus = "idle" | "analyzing" | "review" | "error";
@@ -18,7 +18,6 @@ export default function AddExpenseModal({
   onCreated: (expense: Expense) => void;
 }) {
   const [tab, setTab] = useState<Tab>("manual");
-  const [scanType, setScanType] = useState<TransactionType>("expense");
   const [scanStatus, setScanStatus] = useState<ScanStatus>("idle");
   const [scanError, setScanError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -33,7 +32,6 @@ export default function AddExpenseModal({
 
     const formData = new FormData();
     formData.append("image", file);
-    formData.append("type", scanType);
 
     try {
       const res = await fetch("/api/extract-receipt", { method: "POST", body: formData });
@@ -43,13 +41,20 @@ export default function AddExpenseModal({
         setScanStatus("error");
         return;
       }
-      const extraction = data.extraction as { merchant: string; amount: number; date: string; category: string };
+      const extraction = data.extraction as {
+        type: string;
+        merchant: string;
+        amount: number;
+        date: string;
+        category: string;
+      };
+      const type = isTransactionType(extraction.type) ? extraction.type : "expense";
       setScanValues({
-        type: scanType,
+        type,
         date: extraction.date,
         amount: String(extraction.amount),
         merchant: extraction.merchant,
-        category: isCategory(scanType, extraction.category) ? extraction.category : "Other",
+        category: isCategory(type, extraction.category) ? extraction.category : "Other",
         notes: "",
       });
       setScanStatus("review");
@@ -137,29 +142,7 @@ export default function AddExpenseModal({
 
       {tab === "scan" && (
         <div>
-          {scanStatus === "idle" && (
-            <>
-              <div className="mb-4 flex gap-1 rounded-full bg-bg-soft p-1">
-                <button
-                  onClick={() => setScanType("expense")}
-                  className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-                    scanType === "expense" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
-                  }`}
-                >
-                  Expense receipt
-                </button>
-                <button
-                  onClick={() => setScanType("income")}
-                  className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-                    scanType === "income" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
-                  }`}
-                >
-                  Income document
-                </button>
-              </div>
-              <ReceiptDropzone onFileSelected={handleFileSelected} />
-            </>
-          )}
+          {scanStatus === "idle" && <ReceiptDropzone onFileSelected={handleFileSelected} />}
 
           {scanStatus === "analyzing" && (
             <div className="flex flex-col items-center gap-3 py-10 text-center">
@@ -194,7 +177,8 @@ export default function AddExpenseModal({
                   <img src={previewUrl} alt="Document preview" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
                 )}
                 <p className="text-xs text-ink-soft">
-                  Review the details below before saving — the vision model can occasionally misread documents.
+                  Review the details below before saving — the vision model detected whether this is an expense or
+                  income and can occasionally get it wrong, so double-check the toggle too.
                 </p>
               </div>
               <ExpenseForm

@@ -46,8 +46,10 @@ export default function ReceiptDropzone({ onFileSelected }: { onFileSelected: (f
         }`}
       >
         <span className="text-3xl">📷</span>
-        <p className="text-sm font-semibold text-foreground">Drop a receipt photo here, or tap to choose</p>
-        <p className="text-xs text-ink-soft">JPEG, PNG, WEBP, or HEIC — up to 8MB</p>
+        <p className="text-sm font-semibold text-foreground">
+          Drop a receipt or income document here, or tap to choose
+        </p>
+        <p className="text-xs text-ink-soft">Expense or income — we&apos;ll detect which. JPEG, PNG, WEBP, or HEIC, up to 8MB</p>
         <input
           ref={inputRef}
           type="file"
