@@ -1,18 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { CATEGORIES, type Category } from "@/lib/categories";
+import { categoriesForType, type TransactionType } from "@/lib/categories";
 import { todayInputValue } from "@/lib/format";
 
 export type ExpenseFormValues = {
+  type: TransactionType;
   date: string;
   amount: string;
   merchant: string;
-  category: Category;
+  category: string;
   notes: string;
 };
 
 export const emptyExpenseFormValues: ExpenseFormValues = {
+  type: "expense",
   date: todayInputValue(),
   amount: "",
   merchant: "",
@@ -42,9 +44,19 @@ export default function ExpenseForm({
   footerLeft?: React.ReactNode;
 }) {
   const [values, setValues] = useState<ExpenseFormValues>(initialValues);
+  const categories = categoriesForType(values.type);
+  const sourceLabel = values.type === "income" ? "Source" : "Merchant";
 
   function update<K extends keyof ExpenseFormValues>(key: K, value: ExpenseFormValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function updateType(type: TransactionType) {
+    setValues((prev) => ({
+      ...prev,
+      type,
+      category: categoriesForType(type).includes(prev.category) ? prev.category : "Other",
+    }));
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -54,6 +66,27 @@ export default function ExpenseForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="flex gap-1 rounded-full bg-bg-soft p-1">
+        <button
+          type="button"
+          onClick={() => updateType("expense")}
+          className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+            values.type === "expense" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+          }`}
+        >
+          Expense
+        </button>
+        <button
+          type="button"
+          onClick={() => updateType("income")}
+          className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+            values.type === "income" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+          }`}
+        >
+          Income
+        </button>
+      </div>
+
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelClass} htmlFor="date">
@@ -89,7 +122,7 @@ export default function ExpenseForm({
 
       <div>
         <label className={labelClass} htmlFor="merchant">
-          Merchant
+          {sourceLabel}
         </label>
         <input
           id="merchant"
@@ -97,7 +130,7 @@ export default function ExpenseForm({
           required
           value={values.merchant}
           onChange={(e) => update("merchant", e.target.value)}
-          placeholder="e.g. Whole Foods"
+          placeholder={values.type === "income" ? "e.g. Acme Corp" : "e.g. Whole Foods"}
           className={inputClass}
         />
       </div>
@@ -109,10 +142,10 @@ export default function ExpenseForm({
         <select
           id="category"
           value={values.category}
-          onChange={(e) => update("category", e.target.value as Category)}
+          onChange={(e) => update("category", e.target.value)}
           className={inputClass}
         >
-          {CATEGORIES.map((c) => (
+          {categories.map((c) => (
             <option key={c} value={c}>
               {c}
             </option>

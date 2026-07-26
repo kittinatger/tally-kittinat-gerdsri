@@ -27,7 +27,14 @@ export default function ExpenseRow({
           <span className="text-xs text-ink-soft">{formatDateLong(expense.date)}</span>
         </div>
       </div>
-      <p className="shrink-0 font-semibold text-foreground">{formatCurrency(expense.amount)}</p>
+      <p
+        className={`shrink-0 font-semibold ${
+          expense.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
+        }`}
+      >
+        {expense.type === "income" ? "+" : "-"}
+        {formatCurrency(expense.amount)}
+      </p>
     </button>
   );
 }

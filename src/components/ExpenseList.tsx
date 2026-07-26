@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import type { Expense } from "@/types/expense";
+import { signedAmount, type Expense } from "@/types/expense";
 import { monthKey, monthLabel, formatCurrency } from "@/lib/format";
 import ExpenseRow from "./ExpenseRow";
 
@@ -26,8 +26,8 @@ export default function ExpenseList({
     return (
       <div className="mt-10 flex flex-col items-center gap-2 text-center">
         <p className="text-4xl">🧾</p>
-        <p className="font-display text-lg text-foreground">No expenses yet</p>
-        <p className="text-sm text-ink-soft">Add one manually or scan a receipt to get started.</p>
+        <p className="font-display text-lg text-foreground">No transactions yet</p>
+        <p className="text-sm text-ink-soft">Add an expense or income entry, or scan a document, to get started.</p>
       </div>
     );
   }
@@ -35,12 +35,19 @@ export default function ExpenseList({
   return (
     <div className="space-y-6">
       {groups.map(([key, items]) => {
-        const total = items.reduce((sum, e) => sum + e.amount, 0);
+        const net = items.reduce((sum, e) => sum + signedAmount(e), 0);
         return (
           <section key={key}>
             <div className="mb-2 flex items-center justify-between px-1">
               <h2 className="text-sm font-semibold text-ink-soft">{monthLabel(key)}</h2>
-              <span className="text-sm text-ink-soft">{formatCurrency(total)}</span>
+              <span
+                className={`text-sm font-semibold ${
+                  net >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-ink-soft"
+                }`}
+              >
+                {net >= 0 ? "+" : "-"}
+                {formatCurrency(Math.abs(net))}
+              </span>
             </div>
             <div className="overflow-hidden rounded-card border border-line bg-surface">
               {items.map((expense, i) => (

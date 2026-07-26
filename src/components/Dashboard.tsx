@@ -60,7 +60,7 @@ export default function Dashboard({ initialExpenses }: { initialExpenses: Expens
             onClick={() => setAddOpen(true)}
             className="hidden items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark hover:-translate-y-0.5 sm:flex"
           >
-            + Add expense
+            + Add
           </button>
           <button
             onClick={handleLogout}

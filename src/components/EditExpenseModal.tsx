@@ -4,7 +4,6 @@ import { useState } from "react";
 import Modal from "./Modal";
 import ExpenseForm, { type ExpenseFormValues } from "./ExpenseForm";
 import type { Expense } from "@/types/expense";
-import type { Category } from "@/lib/categories";
 
 export default function EditExpenseModal({
   expense,
@@ -23,10 +22,11 @@ export default function EditExpenseModal({
   const [deleting, setDeleting] = useState(false);
 
   const initialValues: ExpenseFormValues = {
+    type: expense.type,
     date: expense.date,
     amount: String(expense.amount),
     merchant: expense.merchant,
-    category: expense.category as Category,
+    category: expense.category,
     notes: expense.notes ?? "",
   };
 
@@ -38,6 +38,7 @@ export default function EditExpenseModal({
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          type: values.type,
           date: values.date,
           amount: Number(values.amount),
           merchant: values.merchant,
@@ -52,6 +53,7 @@ export default function EditExpenseModal({
       }
       onUpdated({
         id: data.expense.id,
+        type: data.expense.type === "income" ? "income" : "expense",
         date: data.expense.date,
         amount: Number(data.expense.amount),
         merchant: data.expense.merchant,
@@ -89,7 +91,7 @@ export default function EditExpenseModal({
   }
 
   return (
-    <Modal onClose={onClose} title="Edit expense">
+    <Modal onClose={onClose} title="Edit transaction">
       <ExpenseForm
         initialValues={initialValues}
         submitLabel="Save changes"

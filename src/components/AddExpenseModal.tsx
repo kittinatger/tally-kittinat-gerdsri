@@ -5,7 +5,7 @@ import Modal from "./Modal";
 import ExpenseForm, { emptyExpenseFormValues, type ExpenseFormValues } from "./ExpenseForm";
 import ReceiptDropzone from "./ReceiptDropzone";
 import type { Expense } from "@/types/expense";
-import { isCategory, type Category } from "@/lib/categories";
+import { isCategory, type TransactionType } from "@/lib/categories";
 
 type Tab = "manual" | "scan";
 type ScanStatus = "idle" | "analyzing" | "review" | "error";
@@ -18,6 +18,7 @@ export default function AddExpenseModal({
   onCreated: (expense: Expense) => void;
 }) {
   const [tab, setTab] = useState<Tab>("manual");
+  const [scanType, setScanType] = useState<TransactionType>("expense");
   const [scanStatus, setScanStatus] = useState<ScanStatus>("idle");
   const [scanError, setScanError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -32,26 +33,28 @@ export default function AddExpenseModal({
 
     const formData = new FormData();
     formData.append("image", file);
+    formData.append("type", scanType);
 
     try {
       const res = await fetch("/api/extract-receipt", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) {
-        setScanError(typeof data.error === "string" ? data.error : "Could not read that receipt.");
+        setScanError(typeof data.error === "string" ? data.error : "Could not read that document.");
         setScanStatus("error");
         return;
       }
       const extraction = data.extraction as { merchant: string; amount: number; date: string; category: string };
       setScanValues({
+        type: scanType,
         date: extraction.date,
         amount: String(extraction.amount),
         merchant: extraction.merchant,
-        category: isCategory(extraction.category) ? (extraction.category as Category) : "Other",
+        category: isCategory(scanType, extraction.category) ? extraction.category : "Other",
         notes: "",
       });
       setScanStatus("review");
     } catch {
-      setScanError("Network error while reading the receipt.");
+      setScanError("Network error while reading the document.");
       setScanStatus("error");
     }
   }
@@ -72,6 +75,7 @@ export default function AddExpenseModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          type: values.type,
           date: values.date,
           amount: Number(values.amount),
           merchant: values.merchant,
@@ -81,11 +85,12 @@ export default function AddExpenseModal({
       });
       const data = await res.json();
       if (!res.ok) {
-        setSubmitError(typeof data.error === "string" ? data.error : "Could not save that expense.");
+        setSubmitError(typeof data.error === "string" ? data.error : "Could not save that entry.");
         return;
       }
       onCreated({
         id: data.expense.id,
+        type: data.expense.type === "income" ? "income" : "expense",
         date: data.expense.date,
         amount: Number(data.expense.amount),
         merchant: data.expense.merchant,
@@ -100,7 +105,7 @@ export default function AddExpenseModal({
   }
 
   return (
-    <Modal onClose={onClose} title="Add expense">
+    <Modal onClose={onClose} title="Add transaction">
       <div className="mb-4 flex gap-1 rounded-full bg-bg-soft p-1">
         <button
           onClick={() => setTab("manual")}
@@ -116,14 +121,14 @@ export default function AddExpenseModal({
             tab === "scan" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
           }`}
         >
-          Scan receipt
+          Scan document
         </button>
       </div>
 
       {tab === "manual" && (
         <ExpenseForm
           initialValues={emptyExpenseFormValues}
-          submitLabel="Add expense"
+          submitLabel="Add transaction"
           onSubmit={handleSubmit}
           submitting={submitting}
           error={submitError}
@@ -132,17 +137,39 @@ export default function AddExpenseModal({
 
       {tab === "scan" && (
         <div>
-          {scanStatus === "idle" && <ReceiptDropzone onFileSelected={handleFileSelected} />}
+          {scanStatus === "idle" && (
+            <>
+              <div className="mb-4 flex gap-1 rounded-full bg-bg-soft p-1">
+                <button
+                  onClick={() => setScanType("expense")}
+                  className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+                    scanType === "expense" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+                  }`}
+                >
+                  Expense receipt
+                </button>
+                <button
+                  onClick={() => setScanType("income")}
+                  className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+                    scanType === "income" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+                  }`}
+                >
+                  Income document
+                </button>
+              </div>
+              <ReceiptDropzone onFileSelected={handleFileSelected} />
+            </>
+          )}
 
           {scanStatus === "analyzing" && (
             <div className="flex flex-col items-center gap-3 py-10 text-center">
               {previewUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={previewUrl} alt="Receipt preview" className="h-32 w-32 rounded-card object-cover" />
+                <img src={previewUrl} alt="Document preview" className="h-32 w-32 rounded-card object-cover" />
               )}
               <div className="flex items-center gap-2 text-sm font-semibold text-ink-soft">
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-navy border-t-transparent" />
-                Reading receipt...
+                Reading document...
               </div>
             </div>
           )}
@@ -164,15 +191,15 @@ export default function AddExpenseModal({
               <div className="mb-4 flex items-center gap-3 rounded-card bg-bg-soft p-3">
                 {previewUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={previewUrl} alt="Receipt preview" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+                  <img src={previewUrl} alt="Document preview" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
                 )}
                 <p className="text-xs text-ink-soft">
-                  Review the details below before saving — the vision model can occasionally misread receipts.
+                  Review the details below before saving — the vision model can occasionally misread documents.
                 </p>
               </div>
               <ExpenseForm
                 initialValues={scanValues}
-                submitLabel="Save expense"
+                submitLabel="Save transaction"
                 onSubmit={handleSubmit}
                 onCancel={resetScan}
                 submitting={submitting}

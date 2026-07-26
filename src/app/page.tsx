@@ -10,6 +10,7 @@ export default async function HomePage() {
   const rows = await listExpenses();
   const expenses: Expense[] = rows.map((r) => ({
     id: r.id,
+    type: r.type === "income" ? "income" : "expense",
     date: r.date,
     amount: Number(r.amount),
     merchant: r.merchant,

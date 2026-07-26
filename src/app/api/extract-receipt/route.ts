@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { extractReceipt } from "@/lib/gemini";
+import { extractTransaction } from "@/lib/gemini";
+import { isTransactionType } from "@/lib/categories";
 
 const MAX_BYTES = 8 * 1024 * 1024; // 8MB
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
@@ -7,6 +8,8 @@ const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/h
 export async function POST(req: NextRequest) {
   const formData = await req.formData().catch(() => null);
   const file = formData?.get("image");
+  const typeRaw = formData?.get("type");
+  const type = typeof typeRaw === "string" && isTransactionType(typeRaw) ? typeRaw : "expense";
 
   if (!file || !(file instanceof File)) {
     return NextResponse.json({ error: "No image file was uploaded." }, { status: 400 });
@@ -24,10 +27,10 @@ export async function POST(req: NextRequest) {
   const base64 = buffer.toString("base64");
 
   try {
-    const result = await extractReceipt(base64, file.type);
+    const result = await extractTransaction(base64, file.type, type);
     return NextResponse.json({ extraction: result });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to read the receipt.";
+    const message = err instanceof Error ? err.message : "Failed to read the document.";
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }
