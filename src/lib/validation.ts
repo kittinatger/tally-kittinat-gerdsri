@@ -14,3 +14,7 @@ export const expenseInputSchema = z.discriminatedUnion("type", [
 ]);
 
 export type ExpenseInput = z.infer<typeof expenseInputSchema>;
+
+export const settingsInputSchema = z.object({
+  startingBalance: z.number().finite(),
+});

@@ -7,17 +7,26 @@ import SummaryCards from "./SummaryCards";
 import ExpenseList from "./ExpenseList";
 import AddExpenseModal from "./AddExpenseModal";
 import EditExpenseModal from "./EditExpenseModal";
+import EditBalanceModal from "./EditBalanceModal";
 
 function sortByDateDesc(a: Expense, b: Expense): number {
   if (a.date !== b.date) return a.date < b.date ? 1 : -1;
   return b.id - a.id;
 }
 
-export default function Dashboard({ initialExpenses }: { initialExpenses: Expense[] }) {
+export default function Dashboard({
+  initialExpenses,
+  initialStartingBalance,
+}: {
+  initialExpenses: Expense[];
+  initialStartingBalance: number;
+}) {
   const router = useRouter();
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
+  const [startingBalance, setStartingBalance] = useState(initialStartingBalance);
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
+  const [editingBalance, setEditingBalance] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
   function handleCreated(expense: Expense) {
@@ -32,6 +41,11 @@ export default function Dashboard({ initialExpenses }: { initialExpenses: Expens
   function handleDeleted(id: number) {
     setExpenses((prev) => prev.filter((e) => e.id !== id));
     setEditing(null);
+  }
+
+  function handleBalanceSaved(value: number) {
+    setStartingBalance(value);
+    setEditingBalance(false);
   }
 
   async function handleLogout() {
@@ -72,7 +86,7 @@ export default function Dashboard({ initialExpenses }: { initialExpenses: Expens
       </header>
 
       <main className="flex-1 px-1 py-6 sm:px-2">
-        <SummaryCards expenses={expenses} />
+        <SummaryCards expenses={expenses} startingBalance={startingBalance} onEditBalance={() => setEditingBalance(true)} />
         <ExpenseList expenses={expenses} onSelect={setEditing} />
       </main>
 
@@ -91,6 +105,13 @@ export default function Dashboard({ initialExpenses }: { initialExpenses: Expens
           onClose={() => setEditing(null)}
           onUpdated={handleUpdated}
           onDeleted={handleDeleted}
+        />
+      )}
+      {editingBalance && (
+        <EditBalanceModal
+          currentValue={startingBalance}
+          onClose={() => setEditingBalance(false)}
+          onSaved={handleBalanceSaved}
         />
       )}
     </div>

@@ -1,37 +1,58 @@
 import type { Expense } from "@/types/expense";
 import { formatCurrency, monthKey, todayInputValue } from "@/lib/format";
 
-export default function SummaryCards({ expenses }: { expenses: Expense[] }) {
+export default function SummaryCards({
+  expenses,
+  startingBalance,
+  onEditBalance,
+}: {
+  expenses: Expense[];
+  startingBalance: number;
+  onEditBalance: () => void;
+}) {
   const currentMonthKey = monthKey(todayInputValue());
   const thisMonth = expenses.filter((e) => monthKey(e.date) === currentMonthKey);
 
-  const income = thisMonth.filter((e) => e.type === "income").reduce((sum, e) => sum + e.amount, 0);
-  const spent = thisMonth.filter((e) => e.type === "expense").reduce((sum, e) => sum + e.amount, 0);
-  const net = income - spent;
+  const monthIncome = thisMonth.filter((e) => e.type === "income").reduce((sum, e) => sum + e.amount, 0);
+  const monthSpent = thisMonth.filter((e) => e.type === "expense").reduce((sum, e) => sum + e.amount, 0);
+
+  const allTimeIncome = expenses.filter((e) => e.type === "income").reduce((sum, e) => sum + e.amount, 0);
+  const allTimeSpent = expenses.filter((e) => e.type === "expense").reduce((sum, e) => sum + e.amount, 0);
+  const remaining = startingBalance + allTimeIncome - allTimeSpent;
 
   return (
     <div className="mb-6 grid grid-cols-3 gap-3">
       <div className="rounded-card border border-line bg-surface p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Income</p>
         <p className="mt-1.5 font-display text-xl text-emerald-600 dark:text-emerald-400 sm:text-2xl">
-          {formatCurrency(income)}
+          {formatCurrency(monthIncome)}
         </p>
       </div>
       <div className="rounded-card border border-line bg-surface p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Expenses</p>
-        <p className="mt-1.5 font-display text-xl text-foreground sm:text-2xl">{formatCurrency(spent)}</p>
+        <p className="mt-1.5 font-display text-xl text-foreground sm:text-2xl">{formatCurrency(monthSpent)}</p>
       </div>
-      <div className="rounded-card border border-line bg-surface p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Net</p>
+      <button onClick={onEditBalance} className="rounded-card border border-line bg-surface p-4 text-left transition hover:border-navy">
+        <div className="flex items-center justify-between gap-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Remaining</p>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className="h-3.5 w-3.5 shrink-0 text-ink-soft"
+          >
+            <path d="M13.586 3.586a2 2 0 1 1 2.828 2.828l-8.5 8.5a2 2 0 0 1-.848.503l-3.03.86a.5.5 0 0 1-.618-.618l.86-3.03a2 2 0 0 1 .503-.848l8.5-8.5Z" />
+          </svg>
+        </div>
         <p
           className={`mt-1.5 font-display text-xl sm:text-2xl ${
-            net >= 0 ? "text-navy" : "text-red-600 dark:text-red-400"
+            remaining >= 0 ? "text-navy" : "text-red-600 dark:text-red-400"
           }`}
         >
-          {net >= 0 ? "+" : "-"}
-          {formatCurrency(Math.abs(net))}
+          {remaining < 0 ? "-" : ""}
+          {formatCurrency(Math.abs(remaining))}
         </p>
-      </div>
+      </button>
     </div>
   );
 }

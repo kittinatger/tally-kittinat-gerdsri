@@ -1,4 +1,4 @@
-import { listExpenses } from "@/lib/db";
+import { listExpenses, getStartingBalance } from "@/lib/db";
 import Dashboard from "@/components/Dashboard";
 import type { Expense } from "@/types/expense";
 
@@ -7,7 +7,7 @@ import type { Expense } from "@/types/expense";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const rows = await listExpenses();
+  const [rows, startingBalance] = await Promise.all([listExpenses(), getStartingBalance()]);
   const expenses: Expense[] = rows.map((r) => ({
     id: r.id,
     type: r.type === "income" ? "income" : "expense",
@@ -18,5 +18,5 @@ export default async function HomePage() {
     notes: r.notes,
   }));
 
-  return <Dashboard initialExpenses={expenses} />;
+  return <Dashboard initialExpenses={expenses} initialStartingBalance={startingBalance} />;
 }

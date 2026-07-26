@@ -34,9 +34,39 @@ function ensureSchema(): Promise<void> {
       // Added after the initial release to support income entries alongside
       // expenses; existing rows backfill to 'expense' via the column default.
       await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'expense';`;
+
+      // Single-row table holding the user-editable starting balance used to
+      // compute the "Remaining" figure.
+      await sql`
+        CREATE TABLE IF NOT EXISTS app_settings (
+          id INTEGER PRIMARY KEY DEFAULT 1,
+          starting_balance NUMERIC(12, 2) NOT NULL DEFAULT 0,
+          CONSTRAINT app_settings_single_row CHECK (id = 1)
+        );
+      `;
+      await sql`INSERT INTO app_settings (id, starting_balance) VALUES (1, 0) ON CONFLICT (id) DO NOTHING;`;
     })();
   }
   return schemaReady;
+}
+
+export async function getStartingBalance(): Promise<number> {
+  await ensureSchema();
+  const { rows } = await sql<{ starting_balance: string }>`
+    SELECT starting_balance::text AS starting_balance FROM app_settings WHERE id = 1;
+  `;
+  return rows[0] ? Number(rows[0].starting_balance) : 0;
+}
+
+export async function setStartingBalance(amount: number): Promise<number> {
+  await ensureSchema();
+  const { rows } = await sql<{ starting_balance: string }>`
+    UPDATE app_settings
+    SET starting_balance = ${amount}
+    WHERE id = 1
+    RETURNING starting_balance::text AS starting_balance;
+  `;
+  return Number(rows[0].starting_balance);
 }
 
 export async function listExpenses(): Promise<Expense[]> {
