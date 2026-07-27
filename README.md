@@ -7,6 +7,7 @@ category for you to review before saving.
 ## Features
 
 - **Manual entry & receipt scanning** — enter expenses/income manually (date, amount, merchant, category, notes) or snap a photo; [Google Gemini](https://ai.google.dev/) extracts the fields and pre-fills the form for you to review.
+- **Voice-to-expense** — tap the mic and say something like "spent 12 dollars on coffee at Starbucks today"; Gemini transcribes and extracts the fields for you to review before saving.
 - **Bulk scanning** — drop multiple receipt photos at once; they queue up for review and batch-save.
 - **Receipt storage** — original scanned images are saved and viewable from the transaction detail.
 - **Search & filter** — search by merchant/notes/tags; filter by type (income/expense), category, tags, or date range.

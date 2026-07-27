@@ -4,11 +4,12 @@ import { useState } from "react";
 import Modal from "./Modal";
 import ExpenseForm, { emptyExpenseFormValues, type ExpenseFormValues } from "./ExpenseForm";
 import ReceiptDropzone from "./ReceiptDropzone";
+import VoiceRecorder from "./VoiceRecorder";
 import type { Expense } from "@/types/expense";
 import { isTransactionType } from "@/lib/categories";
 import { useAllCategories } from "@/lib/categories-context";
 
-type Tab = "manual" | "scan";
+type Tab = "manual" | "scan" | "voice";
 type ScanStatus = "idle" | "analyzing" | "review" | "error";
 
 export default function AddExpenseModal({
@@ -26,6 +27,10 @@ export default function AddExpenseModal({
   const [scanError, setScanError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [scanValues, setScanValues] = useState<ExpenseFormValues | null>(null);
+  const [voiceStatus, setVoiceStatus] = useState<ScanStatus>("idle");
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [voiceValues, setVoiceValues] = useState<ExpenseFormValues | null>(null);
+  const [lastRecording, setLastRecording] = useState<{ blob: Blob; mimeType: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -74,6 +79,55 @@ export default function AddExpenseModal({
     setQueue(files);
     setQueueIndex(0);
     processFile(files[0]);
+  }
+
+  async function processVoice(blob: Blob, mimeType: string) {
+    setLastRecording({ blob, mimeType });
+    setVoiceStatus("analyzing");
+    setVoiceError(null);
+
+    const formData = new FormData();
+    formData.append("audio", blob, `recording.${mimeType.split("/")[1]?.split(";")[0] ?? "webm"}`);
+
+    try {
+      const res = await fetch("/api/extract-voice", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) {
+        setVoiceError(typeof data.error === "string" ? data.error : "Could not understand that recording.");
+        setVoiceStatus("error");
+        return;
+      }
+      const extraction = data.extraction as {
+        type: string;
+        merchant: string;
+        amount: number;
+        date: string;
+        category: string;
+        notes?: string;
+      };
+      const type = isTransactionType(extraction.type) ? extraction.type : "expense";
+      const categoryValid = allCategories.some((c) => c.type === type && c.name === extraction.category);
+      setVoiceValues({
+        type,
+        date: extraction.date,
+        amount: String(extraction.amount),
+        merchant: extraction.merchant,
+        category: categoryValid ? extraction.category : "Other",
+        notes: extraction.notes ?? "",
+        tags: [],
+      });
+      setVoiceStatus("review");
+    } catch {
+      setVoiceError("Network error while reading the recording.");
+      setVoiceStatus("error");
+    }
+  }
+
+  function resetVoice() {
+    setVoiceStatus("idle");
+    setVoiceError(null);
+    setVoiceValues(null);
+    setLastRecording(null);
   }
 
   function advanceQueue() {
@@ -137,6 +191,21 @@ export default function AddExpenseModal({
     }
   }
 
+  async function handleVoiceSubmit(values: ExpenseFormValues) {
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const expense = await createExpense(values);
+      onCreated(expense);
+      resetVoice();
+      onClose();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Could not save that entry.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <Modal onClose={onClose} title="Add transaction">
       <div className="mb-4 flex gap-1 rounded-full bg-bg-soft p-1">
@@ -155,6 +224,14 @@ export default function AddExpenseModal({
           }`}
         >
           Scan document
+        </button>
+        <button
+          onClick={() => setTab("voice")}
+          className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+            tab === "voice" ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
+          }`}
+        >
+          Speak
         </button>
       </div>
 
@@ -235,6 +312,60 @@ export default function AddExpenseModal({
                 submitLabel={queueIndex + 1 < queue.length ? "Save & next" : "Save transaction"}
                 onSubmit={handleScanSubmit}
                 onCancel={advanceQueue}
+                submitting={submitting}
+                error={submitError}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === "voice" && (
+        <div>
+          {voiceStatus === "idle" && <VoiceRecorder onRecorded={processVoice} />}
+
+          {voiceStatus === "analyzing" && (
+            <div className="flex flex-col items-center gap-3 py-10 text-center">
+              <div className="flex items-center gap-2 text-sm font-semibold text-surface-foreground-soft">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-surface-accent border-t-transparent" />
+                Listening...
+              </div>
+            </div>
+          )}
+
+          {voiceStatus === "error" && (
+            <div className="flex flex-col items-center gap-3 py-8 text-center">
+              <p className="text-sm text-red-600 dark:text-red-400">{voiceError}</p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => lastRecording && processVoice(lastRecording.blob, lastRecording.mimeType)}
+                  className="rounded-full border border-surface-line px-4 py-2 text-sm font-semibold text-surface-foreground transition hover:bg-[var(--surface-nav-hover)]"
+                >
+                  Retry
+                </button>
+                <button
+                  onClick={resetVoice}
+                  className="rounded-full px-4 py-2 text-sm font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
+                >
+                  Record again
+                </button>
+              </div>
+            </div>
+          )}
+
+          {voiceStatus === "review" && voiceValues && (
+            <div>
+              <div className="mb-4 rounded-card bg-surface-soft p-3">
+                <p className="text-xs text-surface-foreground-soft">
+                  Review the details below before saving — double-check the amount and expense/income toggle, since
+                  spoken numbers can occasionally be misheard.
+                </p>
+              </div>
+              <ExpenseForm
+                initialValues={voiceValues}
+                submitLabel="Save transaction"
+                onSubmit={handleVoiceSubmit}
+                onCancel={resetVoice}
                 submitting={submitting}
                 error={submitError}
               />
