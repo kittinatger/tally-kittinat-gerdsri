@@ -21,8 +21,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No audio recording was uploaded." }, { status: 400 });
   }
 
-  if (!ALLOWED_TYPES.has(file.type)) {
-    return NextResponse.json({ error: "Unsupported audio format." }, { status: 400 });
+  // Browsers report MediaRecorder mime types with a codecs suffix (e.g.
+  // "audio/webm;codecs=opus"), so match on the base type only.
+  const baseType = file.type.split(";")[0].trim().toLowerCase();
+
+  if (!ALLOWED_TYPES.has(baseType)) {
+    return NextResponse.json({ error: `Unsupported audio format: ${file.type || "unknown"}.` }, { status: 400 });
   }
 
   if (file.size > MAX_BYTES) {
@@ -38,7 +42,7 @@ export async function POST(req: NextRequest) {
       expense: categoryRows.filter((c) => c.type === "expense").map((c) => c.name),
       income: categoryRows.filter((c) => c.type === "income").map((c) => c.name),
     };
-    const result = await extractTransactionFromAudio(base64, file.type, categories);
+    const result = await extractTransactionFromAudio(base64, baseType, categories);
     return NextResponse.json({ extraction: result });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to understand that recording.";
