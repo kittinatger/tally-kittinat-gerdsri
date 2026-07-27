@@ -18,10 +18,16 @@ export default function DateRangeFilter({
   from,
   to,
   onChange,
+  alignTopRef,
+  alignRightRef,
 }: {
   from: string;
   to: string;
   onChange: (from: string, to: string) => void;
+  /** Element whose top edge the popover's top should line up with. */
+  alignTopRef?: React.RefObject<HTMLElement | null>;
+  /** Element whose right edge the popover's right should line up with. */
+  alignRightRef?: React.RefObject<HTMLElement | null>;
 }) {
   const [open, setOpen] = useState(false);
   const [draftFrom, setDraftFrom] = useState(from);
@@ -29,6 +35,7 @@ export default function DateRangeFilter({
   const [pickingSecond, setPickingSecond] = useState(false);
   const [viewYear, setViewYear] = useState(() => parseKey(todayInputValue()).y);
   const [viewMonth, setViewMonth] = useState(() => parseKey(todayInputValue()).m);
+  const [popoverPos, setPopoverPos] = useState<{ top: number; right: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -45,6 +52,33 @@ export default function DateRangeFilter({
       document.removeEventListener("keydown", onKey);
     };
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    function reposition() {
+      const topEl = alignTopRef?.current;
+      const rightEl = alignRightRef?.current;
+      if (!topEl || !rightEl) {
+        setPopoverPos(null);
+        return;
+      }
+      const topRect = topEl.getBoundingClientRect();
+      const rightRect = rightEl.getBoundingClientRect();
+      setPopoverPos({ top: topRect.top, right: window.innerWidth - rightRect.right });
+    }
+    reposition();
+    window.addEventListener("resize", reposition);
+    return () => window.removeEventListener("resize", reposition);
+  }, [open, alignTopRef, alignRightRef]);
+
+  useEffect(() => {
+    if (!open || !popoverPos) return;
+    function onScroll() {
+      setOpen(false);
+    }
+    window.addEventListener("scroll", onScroll, true);
+    return () => window.removeEventListener("scroll", onScroll, true);
+  }, [open, popoverPos]);
 
   const active = Boolean(from || to);
   const summary = !active
@@ -178,7 +212,10 @@ export default function DateRangeFilter({
         <div
           role="dialog"
           aria-label="Filter by date range"
-          className="absolute right-0 top-[calc(100%+14px)] z-30 w-72 rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-3.5 shadow-[var(--panel-shadow)] backdrop-blur-xl"
+          className={`z-30 w-72 rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-3.5 shadow-[var(--panel-shadow)] backdrop-blur-xl ${
+            popoverPos ? "fixed" : "absolute right-0 top-[calc(100%+14px)]"
+          }`}
+          style={popoverPos ? { top: popoverPos.top, right: popoverPos.right } : undefined}
         >
           <div className="mb-2 flex items-center justify-between gap-2 rounded-xl bg-bg-soft px-2.5 py-1.5 text-xs font-medium text-ink-soft">
             <span>{draftFrom ? formatDateShort(draftFrom) : "Start date"}</span>

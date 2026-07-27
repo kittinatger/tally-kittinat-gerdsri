@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { signedAmount, type Expense } from "@/types/expense";
 import { monthKey, monthLabel, formatCurrency, todayInputValue } from "@/lib/format";
 import { useAllCategories } from "@/lib/categories-context";
@@ -24,6 +24,8 @@ export default function ExpenseList({
   const [tagFilter, setTagFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const filterBarRef = useRef<HTMLDivElement>(null);
+  const exportButtonRef = useRef<HTMLButtonElement>(null);
 
   const categoryOptions = useMemo(() => {
     const names = new Set(
@@ -115,7 +117,10 @@ export default function ExpenseList({
 
   return (
     <div>
-      <div className="mb-3 flex flex-col gap-2.5 rounded-card border border-line bg-surface p-3 sm:flex-row sm:items-center">
+      <div
+        ref={filterBarRef}
+        className="mb-3 flex flex-col gap-2.5 rounded-card border border-line bg-surface p-3 sm:flex-row sm:items-center"
+      >
         <div className="relative flex-1">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -170,6 +175,8 @@ export default function ExpenseList({
             setDateFrom(nextFrom);
             setDateTo(nextTo);
           }}
+          alignTopRef={exportButtonRef}
+          alignRightRef={filterBarRef}
         />
       </div>
 
@@ -187,6 +194,7 @@ export default function ExpenseList({
             {formatCurrency(Math.abs(filteredNet))}
           </span>
           <button
+            ref={exportButtonRef}
             onClick={exportCsv}
             disabled={filtered.length === 0}
             className="rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-bg-soft disabled:opacity-40"
