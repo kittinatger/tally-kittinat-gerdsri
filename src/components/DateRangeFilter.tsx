@@ -1,7 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { formatDateShort } from "@/lib/format";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { formatDateShort, todayInputValue } from "@/lib/format";
+
+const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+function toKey(y: number, m: number, d: number): string {
+  return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+function parseKey(key: string): { y: number; m: number; d: number } {
+  const [y, m, d] = key.split("-").map(Number);
+  return { y, m: m - 1, d };
+}
 
 export default function DateRangeFilter({
   from,
@@ -15,6 +26,9 @@ export default function DateRangeFilter({
   const [open, setOpen] = useState(false);
   const [draftFrom, setDraftFrom] = useState(from);
   const [draftTo, setDraftTo] = useState(to);
+  const [pickingSecond, setPickingSecond] = useState(false);
+  const [viewYear, setViewYear] = useState(() => parseKey(todayInputValue()).y);
+  const [viewMonth, setViewMonth] = useState(() => parseKey(todayInputValue()).m);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,6 +55,62 @@ export default function DateRangeFilter({
         ? `From ${formatDateShort(from)}`
         : `Until ${formatDateShort(to)}`;
 
+  const days = useMemo(() => {
+    const firstOfMonth = new Date(viewYear, viewMonth, 1);
+    const startWeekday = firstOfMonth.getDay();
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const daysInPrevMonth = new Date(viewYear, viewMonth, 0).getDate();
+
+    const cells: Array<{ key: string; label: number; inMonth: boolean }> = [];
+    for (let i = startWeekday - 1; i >= 0; i--) {
+      const d = daysInPrevMonth - i;
+      const y = viewMonth === 0 ? viewYear - 1 : viewYear;
+      const m = viewMonth === 0 ? 11 : viewMonth - 1;
+      cells.push({ key: toKey(y, m, d), label: d, inMonth: false });
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      cells.push({ key: toKey(viewYear, viewMonth, d), label: d, inMonth: true });
+    }
+    let nextDay = 1;
+    while (cells.length % 7 !== 0) {
+      const y = viewMonth === 11 ? viewYear + 1 : viewYear;
+      const m = viewMonth === 11 ? 0 : viewMonth + 1;
+      cells.push({ key: toKey(y, m, nextDay), label: nextDay, inMonth: false });
+      nextDay++;
+    }
+    return cells;
+  }, [viewYear, viewMonth]);
+
+  function changeMonth(delta: number) {
+    let m = viewMonth + delta;
+    let y = viewYear;
+    if (m < 0) {
+      m = 11;
+      y -= 1;
+    } else if (m > 11) {
+      m = 0;
+      y += 1;
+    }
+    setViewMonth(m);
+    setViewYear(y);
+  }
+
+  function pickDay(key: string) {
+    if (!pickingSecond) {
+      setDraftFrom(key);
+      setDraftTo("");
+      setPickingSecond(true);
+      return;
+    }
+    if (key < draftFrom) {
+      setDraftTo(draftFrom);
+      setDraftFrom(key);
+    } else {
+      setDraftTo(key);
+    }
+    setPickingSecond(false);
+  }
+
   function apply() {
     onChange(draftFrom, draftTo);
     setOpen(false);
@@ -49,9 +119,15 @@ export default function DateRangeFilter({
   function clear() {
     setDraftFrom("");
     setDraftTo("");
+    setPickingSecond(false);
     onChange("", "");
     setOpen(false);
   }
+
+  const monthLabel = new Date(viewYear, viewMonth, 1).toLocaleDateString(undefined, {
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <div className="relative" ref={containerRef}>
@@ -62,6 +138,11 @@ export default function DateRangeFilter({
             if (!o) {
               setDraftFrom(from);
               setDraftTo(to);
+              setPickingSecond(false);
+              const anchor = from || to || todayInputValue();
+              const parsed = parseKey(anchor);
+              setViewYear(parsed.y);
+              setViewMonth(parsed.m);
             }
             return !o;
           });
@@ -97,28 +178,80 @@ export default function DateRangeFilter({
         <div
           role="dialog"
           aria-label="Filter by date range"
-          className="absolute right-0 top-[calc(100%+8px)] z-30 w-64 rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-3.5 shadow-[var(--panel-shadow)] backdrop-blur-xl"
+          className="absolute right-0 top-[calc(100%+8px)] z-30 w-72 rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-3.5 shadow-[var(--panel-shadow)] backdrop-blur-xl"
         >
-          <label className="block text-xs font-semibold text-ink-soft">
-            From
-            <input
-              type="date"
-              value={draftFrom}
-              max={draftTo || undefined}
-              onChange={(e) => setDraftFrom(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-line bg-bg-soft px-2.5 py-1.5 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-            />
-          </label>
-          <label className="mt-3 block text-xs font-semibold text-ink-soft">
-            To
-            <input
-              type="date"
-              value={draftTo}
-              min={draftFrom || undefined}
-              onChange={(e) => setDraftTo(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-line bg-bg-soft px-2.5 py-1.5 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-            />
-          </label>
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-xl bg-bg-soft px-2.5 py-1.5 text-xs font-medium text-ink-soft">
+            <span>{draftFrom ? formatDateShort(draftFrom) : "Start date"}</span>
+            <span>–</span>
+            <span>{draftTo ? formatDateShort(draftTo) : "End date"}</span>
+          </div>
+
+          <div className="mb-2 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => changeMonth(-1)}
+              aria-label="Previous month"
+              className="rounded-full p-1.5 text-ink-soft transition hover:bg-bg-soft hover:text-foreground"
+            >
+              <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                <path
+                  fillRule="evenodd"
+                  d="M12.79 5.23a.75.75 0 0 1 .02 1.06L9.832 10l2.978 3.71a.75.75 0 1 1-1.06 1.08l-4.5-4.25a.75.75 0 0 1 0-1.08l4.5-4.25a.75.75 0 0 1 1.06.02Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+            <span className="text-sm font-semibold text-foreground">{monthLabel}</span>
+            <button
+              type="button"
+              onClick={() => changeMonth(1)}
+              aria-label="Next month"
+              className="rounded-full p-1.5 text-ink-soft transition hover:bg-bg-soft hover:text-foreground"
+            >
+              <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                <path
+                  fillRule="evenodd"
+                  d="M7.21 14.77a.75.75 0 0 1-.02-1.06L10.168 10 7.19 6.29a.75.75 0 1 1 1.06-1.08l4.5 4.25a.75.75 0 0 1 0 1.08l-4.5 4.25a.75.75 0 0 1-1.06-.02Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-7 gap-y-0.5 text-center">
+            {WEEKDAYS.map((w) => (
+              <span key={w} className="py-1 text-[11px] font-semibold text-ink-soft">
+                {w}
+              </span>
+            ))}
+            {days.map((cell) => {
+              const isFrom = cell.key === draftFrom;
+              const isTo = cell.key === draftTo;
+              const inRange = draftFrom && draftTo && cell.key > draftFrom && cell.key < draftTo;
+              const isToday = cell.key === todayInputValue();
+              return (
+                <button
+                  key={cell.key}
+                  type="button"
+                  onClick={() => pickDay(cell.key)}
+                  className={`relative h-8 w-full text-sm transition ${
+                    cell.inMonth ? "text-foreground" : "text-ink-soft/40"
+                  } ${isFrom || isTo ? "font-semibold text-white" : "hover:bg-bg-soft"} ${
+                    isFrom ? "rounded-l-full" : ""
+                  } ${isTo ? "rounded-r-full" : ""} ${isFrom && isTo ? "rounded-full" : ""}`}
+                  style={{
+                    backgroundColor: isFrom || isTo ? "var(--navy)" : inRange ? "var(--navy-soft, rgba(24,64,58,0.12))" : undefined,
+                  }}
+                >
+                  {isToday && !(isFrom || isTo) && (
+                    <span className="absolute inset-x-2 bottom-1 h-0.5 rounded-full bg-navy" />
+                  )}
+                  {cell.label}
+                </button>
+              );
+            })}
+          </div>
+
           <div className="mt-3.5 flex items-center justify-between gap-2">
             <button
               type="button"
@@ -130,7 +263,8 @@ export default function DateRangeFilter({
             <button
               type="button"
               onClick={apply}
-              className="rounded-full bg-navy px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark"
+              disabled={!draftFrom}
+              className="rounded-full bg-navy px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-40"
             >
               Apply
             </button>
