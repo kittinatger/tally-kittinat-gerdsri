@@ -64,7 +64,7 @@ export default function DateRangeFilter({
       }
       const topRect = topEl.getBoundingClientRect();
       const rightRect = rightEl.getBoundingClientRect();
-      setPopoverPos({ top: topRect.top, right: window.innerWidth - rightRect.right });
+      setPopoverPos({ top: topRect.top, right: Math.max(0, window.innerWidth - rightRect.right - 6) });
     }
     reposition();
     window.addEventListener("resize", reposition);
