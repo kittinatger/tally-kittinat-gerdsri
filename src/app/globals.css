@@ -34,6 +34,11 @@
   --modal-glass-border: rgba(255, 255, 255, 0.16);
   --modal-glass-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.16), inset 0 -10px 16px -8px rgba(0, 0, 0, 0.4);
   --modal-panel-shadow: var(--shadow-soft-value), var(--modal-glass-shadow);
+
+  /* Green-tinted frosted glass for the mobile floating add button. */
+  --fab-glass-bg: linear-gradient(180deg, rgba(31, 122, 92, 0.82) 0%, rgba(15, 67, 49, 0.88) 100%);
+  --fab-glass-border: rgba(255, 255, 255, 0.35);
+  --fab-glass-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), inset 0 -6px 10px -6px rgba(0, 0, 0, 0.35);
 }
 
 :root[data-theme="dark"] {
@@ -62,6 +67,10 @@
   --modal-glass-border: var(--glass-border);
   --modal-glass-shadow: var(--glass-shadow);
   --modal-panel-shadow: var(--panel-shadow);
+
+  --fab-glass-bg: linear-gradient(180deg, rgba(111, 215, 171, 0.38) 0%, rgba(70, 160, 125, 0.42) 100%);
+  --fab-glass-border: rgba(255, 255, 255, 0.25);
+  --fab-glass-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), inset 0 -6px 10px -6px rgba(0, 0, 0, 0.45);
 }
 
 @theme inline {

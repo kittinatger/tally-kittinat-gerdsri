@@ -103,7 +103,7 @@ export default function Dashboard({
 
       <button
         onClick={() => setAddOpen(true)}
-        className="fixed bottom-6 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-navy text-2xl font-light text-white shadow-soft transition hover:bg-navy-dark sm:hidden"
+        className="fixed bottom-6 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--fab-glass-border)] bg-[image:var(--fab-glass-bg)] text-2xl font-light text-white shadow-[var(--shadow-soft),var(--fab-glass-shadow)] backdrop-blur-xl transition hover:brightness-110 sm:hidden"
         aria-label="Add expense"
       >
         +
