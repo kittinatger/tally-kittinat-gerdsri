@@ -8,6 +8,7 @@ export type Expense = {
   merchant: string;
   category: string;
   notes: string | null;
+  tags: string[];
 };
 
 export function signedAmount(expense: Expense): number {

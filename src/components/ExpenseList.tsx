@@ -20,6 +20,7 @@ export default function ExpenseList({
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [tagFilter, setTagFilter] = useState("all");
 
   const categoryOptions = useMemo(() => {
     const names = new Set(
@@ -27,6 +28,14 @@ export default function ExpenseList({
     );
     return Array.from(names).sort((a, b) => a.localeCompare(b));
   }, [allCategories, typeFilter]);
+
+  const tagOptions = useMemo(() => {
+    const names = new Set<string>();
+    for (const e of expenses) {
+      for (const tag of e.tags) names.add(tag);
+    }
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [expenses]);
 
   function handleTypeFilter(nextType: TypeFilter) {
     setTypeFilter(nextType);
@@ -42,13 +51,14 @@ export default function ExpenseList({
     return expenses.filter((e) => {
       if (typeFilter !== "all" && e.type !== typeFilter) return false;
       if (categoryFilter !== "all" && e.category !== categoryFilter) return false;
+      if (tagFilter !== "all" && !e.tags.includes(tagFilter)) return false;
       if (q) {
-        const haystack = `${e.merchant} ${e.notes ?? ""}`.toLowerCase();
+        const haystack = `${e.merchant} ${e.notes ?? ""} ${e.tags.join(" ")}`.toLowerCase();
         if (!haystack.includes(q)) return false;
       }
       return true;
     });
-  }, [expenses, search, typeFilter, categoryFilter]);
+  }, [expenses, search, typeFilter, categoryFilter, tagFilter]);
 
   const groups = useMemo(() => {
     const map = new Map<string, Expense[]>();
@@ -92,7 +102,7 @@ export default function ExpenseList({
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search merchant or notes..."
+            placeholder="Search merchant, notes, or tags..."
             className="w-full rounded-full border border-line bg-bg-soft py-2 pl-9 pr-3 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
         </div>
@@ -117,6 +127,10 @@ export default function ExpenseList({
           options={categoryOptions}
           onChange={setCategoryFilter}
         />
+
+        {tagOptions.length > 0 && (
+          <FilterDropdown value={tagFilter} allLabel="All tags" options={tagOptions} onChange={setTagFilter} />
+        )}
       </div>
 
       <div className="mb-4 flex items-center justify-between px-1 text-sm">

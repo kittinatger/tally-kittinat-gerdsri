@@ -61,6 +61,7 @@ export default function AddExpenseModal({
         merchant: extraction.merchant,
         category: categoryValid ? extraction.category : "Other",
         notes: "",
+        tags: [],
       });
       setScanStatus("review");
     } catch {
@@ -241,6 +242,7 @@ async function createExpense(values: ExpenseFormValues): Promise<Expense> {
       merchant: values.merchant,
       category: values.category,
       notes: values.notes || undefined,
+      tags: values.tags,
     }),
   });
   const data = await res.json();
@@ -255,5 +257,6 @@ async function createExpense(values: ExpenseFormValues): Promise<Expense> {
     merchant: data.expense.merchant,
     category: data.expense.category,
     notes: data.expense.notes,
+    tags: data.expense.tags ?? [],
   };
 }

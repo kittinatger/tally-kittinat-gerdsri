@@ -9,11 +9,19 @@ export type Expense = {
   merchant: string;
   category: string;
   notes: string | null;
+  tags: string[];
 };
 
 // Dates and amounts are cast explicitly to text in every query so the
 // output format never depends on driver-specific type parsing (which is a
 // common source of off-by-one-day bugs with DATE columns).
+
+// The sql tag's parameter type only allows primitives, not arrays, so tag
+// lists are passed as a Postgres array-literal string and cast in SQL.
+function toPgTextArray(values: string[]): string {
+  const escaped = values.map((v) => `"${v.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`);
+  return `{${escaped.join(",")}}`;
+}
 
 let schemaReady: Promise<void> | null = null;
 
@@ -34,6 +42,10 @@ function ensureSchema(): Promise<void> {
       // Added after the initial release to support income entries alongside
       // expenses; existing rows backfill to 'expense' via the column default.
       await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'expense';`;
+
+      // Free-form labels, separate from the single required category —
+      // zero or more per expense, for cross-cutting groupings.
+      await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}';`;
 
       // Single-row table anchoring the "Remaining" figure: a balance plus the
       // timestamp it was last reset, so only transactions logged after that
@@ -236,7 +248,8 @@ export async function listExpenses(): Promise<Expense[]> {
       amount::text AS amount,
       merchant,
       category,
-      notes
+      notes,
+      tags
     FROM expenses
     ORDER BY date DESC, id DESC;
   `;
@@ -247,8 +260,8 @@ export async function createExpense(input: ExpenseInput): Promise<Expense> {
   await ensureSchema();
   const { rows } = await sql<Expense>`
     WITH inserted AS (
-      INSERT INTO expenses (type, date, amount, merchant, category, notes)
-      VALUES (${input.type}, ${input.date}, ${input.amount}, ${input.merchant}, ${input.category}, ${input.notes ?? null})
+      INSERT INTO expenses (type, date, amount, merchant, category, notes, tags)
+      VALUES (${input.type}, ${input.date}, ${input.amount}, ${input.merchant}, ${input.category}, ${input.notes ?? null}, ${toPgTextArray(input.tags ?? [])}::text[])
       RETURNING *
     )
     SELECT
@@ -258,7 +271,8 @@ export async function createExpense(input: ExpenseInput): Promise<Expense> {
       amount::text AS amount,
       merchant,
       category,
-      notes
+      notes,
+      tags
     FROM inserted;
   `;
   return rows[0];
@@ -274,7 +288,8 @@ export async function updateExpense(id: number, input: ExpenseInput): Promise<Ex
           amount = ${input.amount},
           merchant = ${input.merchant},
           category = ${input.category},
-          notes = ${input.notes ?? null}
+          notes = ${input.notes ?? null},
+          tags = ${toPgTextArray(input.tags ?? [])}::text[]
       WHERE id = ${id}
       RETURNING *
     )
@@ -285,7 +300,8 @@ export async function updateExpense(id: number, input: ExpenseInput): Promise<Ex
       amount::text AS amount,
       merchant,
       category,
-      notes
+      notes,
+      tags
     FROM updated;
   `;
   return rows[0] ?? null;

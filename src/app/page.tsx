@@ -17,6 +17,7 @@ export default async function HomePage() {
     merchant: r.merchant,
     category: r.category,
     notes: r.notes,
+    tags: r.tags ?? [],
   }));
   const categories: CategoryOption[] = categoryRows.map((c) => ({
     id: c.id,

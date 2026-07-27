@@ -10,6 +10,22 @@ const sharedFields = {
   // whatever categories currently exist rather than a fixed enum.
   category: z.string().trim().min(1).max(60),
   notes: z.string().trim().max(500).nullable().optional(),
+  tags: z
+    .array(z.string().trim().min(1).max(30))
+    .max(10)
+    .optional()
+    .transform((arr) => {
+      if (!arr) return [];
+      const seen = new Set<string>();
+      const deduped: string[] = [];
+      for (const tag of arr) {
+        const key = tag.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        deduped.push(tag);
+      }
+      return deduped;
+    }),
 };
 
 export const expenseInputSchema = z.discriminatedUnion("type", [

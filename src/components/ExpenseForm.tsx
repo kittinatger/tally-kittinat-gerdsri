@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { TransactionType } from "@/lib/categories";
 import { useAllCategories } from "@/lib/categories-context";
 import { todayInputValue } from "@/lib/format";
+import TagInput from "./TagInput";
 
 export type ExpenseFormValues = {
   type: TransactionType;
@@ -12,6 +13,7 @@ export type ExpenseFormValues = {
   merchant: string;
   category: string;
   notes: string;
+  tags: string[];
 };
 
 export const emptyExpenseFormValues: ExpenseFormValues = {
@@ -21,6 +23,7 @@ export const emptyExpenseFormValues: ExpenseFormValues = {
   merchant: "",
   category: "Other",
   notes: "",
+  tags: [],
 };
 
 const inputClass =
@@ -152,6 +155,11 @@ export default function ExpenseForm({
             </option>
           ))}
         </select>
+      </div>
+
+      <div>
+        <label className={labelClass}>Tags (optional)</label>
+        <TagInput tags={values.tags} onChange={(tags) => update("tags", tags)} />
       </div>
 
       <div>

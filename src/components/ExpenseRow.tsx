@@ -31,6 +31,18 @@ export default function ExpenseRow({
           </span>
           <span className="text-xs text-surface-foreground-soft">{formatDateLong(expense.date)}</span>
         </div>
+        {expense.tags.length > 0 && (
+          <div className="mt-1 flex flex-wrap items-center gap-1">
+            {expense.tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full bg-[var(--surface-nav-hover)] px-2 py-0.5 text-[11px] font-medium text-surface-foreground-soft"
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
       <p
         className={`shrink-0 font-semibold ${
