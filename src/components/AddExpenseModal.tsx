@@ -113,7 +113,22 @@ export default function AddExpenseModal({
     setSubmitError(null);
     try {
       const expense = await createExpense(values);
-      onCreated(expense);
+      const file = queue[queueIndex];
+      let hasReceipt = false;
+      if (file) {
+        try {
+          const receiptData = new FormData();
+          receiptData.append("image", file);
+          const receiptRes = await fetch(`/api/expenses/${expense.id}/receipt`, {
+            method: "POST",
+            body: receiptData,
+          });
+          hasReceipt = receiptRes.ok;
+        } catch {
+          // Best-effort: the transaction is already saved even if the receipt image fails to attach.
+        }
+      }
+      onCreated({ ...expense, hasReceipt });
       advanceQueue();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Could not save that entry.");
@@ -258,5 +273,6 @@ async function createExpense(values: ExpenseFormValues): Promise<Expense> {
     category: data.expense.category,
     notes: data.expense.notes,
     tags: data.expense.tags ?? [],
+    hasReceipt: data.expense.has_receipt ?? false,
   };
 }

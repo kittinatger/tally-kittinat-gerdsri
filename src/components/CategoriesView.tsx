@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Expense } from "@/types/expense";
-import { formatCurrency, monthKey, todayInputValue } from "@/lib/format";
+import { formatCurrency, monthKey, monthShortLabel, todayInputValue } from "@/lib/format";
 import { badgeClasses, dotClasses } from "@/lib/category-styles";
 import type { TransactionType } from "@/lib/categories";
 import type { CategoryOption } from "@/types/category";
@@ -60,6 +60,23 @@ export default function CategoriesView({
 
     return { rows, total, count: filtered.length };
   }, [expenses, type, range]);
+
+  const trend = useMemo(() => {
+    const now = new Date(`${todayInputValue()}T00:00:00`);
+    const months: string[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    }
+    const totals = new Map(months.map((m) => [m, 0]));
+    for (const e of expenses) {
+      if (e.type !== type) continue;
+      const key = monthKey(e.date);
+      if (totals.has(key)) totals.set(key, totals.get(key)! + e.amount);
+    }
+    const max = Math.max(...totals.values(), 0);
+    return months.map((key) => ({ key, amount: totals.get(key) ?? 0, pct: max > 0 ? (totals.get(key)! / max) * 100 : 0 }));
+  }, [expenses, type]);
 
   function handleSaved() {
     setModal(null);
@@ -152,6 +169,30 @@ export default function CategoriesView({
           <p className="mt-1 text-xs text-ink-soft">
             {breakdown.count} transaction{breakdown.count === 1 ? "" : "s"}
           </p>
+        </div>
+
+        <div className="mb-6 rounded-card border border-line bg-surface p-5">
+          <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            {type === "income" ? "Income" : "Spending"} trend
+          </p>
+          <div className="flex items-end justify-between gap-2">
+            {trend.map((m) => (
+              <div key={m.key} className="flex flex-1 flex-col items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-foreground">
+                  {m.amount > 0 ? formatCurrency(m.amount) : ""}
+                </span>
+                <div className="flex h-24 w-full items-end">
+                  <div
+                    className={`w-full rounded-t-md transition-all ${
+                      type === "income" ? "bg-emerald-500 dark:bg-emerald-400" : "bg-navy"
+                    }`}
+                    style={{ height: `${Math.max(m.pct, m.amount > 0 ? 4 : 0)}%` }}
+                  />
+                </div>
+                <span className="text-xs text-ink-soft">{monthShortLabel(m.key)}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {breakdown.rows.length === 0 ? (

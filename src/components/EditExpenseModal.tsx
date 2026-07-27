@@ -62,6 +62,7 @@ export default function EditExpenseModal({
         category: data.expense.category,
         notes: data.expense.notes,
         tags: data.expense.tags ?? [],
+        hasReceipt: expense.hasReceipt,
       });
     } catch {
       setError("Network error while saving.");
@@ -95,6 +96,22 @@ export default function EditExpenseModal({
 
   return (
     <Modal onClose={onClose} title="Edit transaction">
+      {expense.hasReceipt && (
+        <a
+          href={`/api/expenses/${expense.id}/receipt`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mb-4 flex items-center gap-3 rounded-card bg-surface-soft p-3 transition hover:bg-[var(--surface-nav-hover)]"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`/api/expenses/${expense.id}/receipt`}
+            alt="Receipt"
+            className="h-14 w-14 shrink-0 rounded-lg object-cover"
+          />
+          <span className="text-sm font-semibold text-surface-foreground">View original receipt</span>
+        </a>
+      )}
       <ExpenseForm
         initialValues={initialValues}
         submitLabel="Save changes"

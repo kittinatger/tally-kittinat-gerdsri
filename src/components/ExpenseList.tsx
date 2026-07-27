@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { signedAmount, type Expense } from "@/types/expense";
-import { monthKey, monthLabel, formatCurrency } from "@/lib/format";
+import { monthKey, monthLabel, formatCurrency, todayInputValue } from "@/lib/format";
 import { useAllCategories } from "@/lib/categories-context";
 import ExpenseRow from "./ExpenseRow";
 import FilterDropdown from "./FilterDropdown";
@@ -21,6 +21,8 @@ export default function ExpenseList({
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   const categoryOptions = useMemo(() => {
     const names = new Set(
@@ -52,13 +54,41 @@ export default function ExpenseList({
       if (typeFilter !== "all" && e.type !== typeFilter) return false;
       if (categoryFilter !== "all" && e.category !== categoryFilter) return false;
       if (tagFilter !== "all" && !e.tags.includes(tagFilter)) return false;
+      if (dateFrom && e.date < dateFrom) return false;
+      if (dateTo && e.date > dateTo) return false;
       if (q) {
         const haystack = `${e.merchant} ${e.notes ?? ""} ${e.tags.join(" ")}`.toLowerCase();
         if (!haystack.includes(q)) return false;
       }
       return true;
     });
-  }, [expenses, search, typeFilter, categoryFilter, tagFilter]);
+  }, [expenses, search, typeFilter, categoryFilter, tagFilter, dateFrom, dateTo]);
+
+  function exportCsv() {
+    const header = ["Date", "Type", "Merchant", "Category", "Tags", "Amount", "Notes"];
+    const escape = (value: string) => `"${value.replace(/"/g, '""')}"`;
+    const lines = [header.join(",")];
+    for (const e of filtered) {
+      lines.push(
+        [
+          e.date,
+          e.type,
+          escape(e.merchant),
+          escape(e.category),
+          escape(e.tags.join("; ")),
+          signedAmount(e).toFixed(2),
+          escape(e.notes ?? ""),
+        ].join(","),
+      );
+    }
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `tally-export-${todayInputValue()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   const groups = useMemo(() => {
     const map = new Map<string, Expense[]>();
@@ -131,20 +161,47 @@ export default function ExpenseList({
         {tagOptions.length > 0 && (
           <FilterDropdown value={tagFilter} allLabel="All tags" options={tagOptions} onChange={setTagFilter} />
         )}
+
+        <div className="flex items-center gap-1.5">
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            aria-label="From date"
+            className="w-full rounded-full border border-line bg-bg-soft px-3 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20 sm:w-auto"
+          />
+          <span className="text-xs text-ink-soft">to</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            aria-label="To date"
+            className="w-full rounded-full border border-line bg-bg-soft px-3 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20 sm:w-auto"
+          />
+        </div>
       </div>
 
-      <div className="mb-4 flex items-center justify-between px-1 text-sm">
+      <div className="mb-4 flex items-center justify-between gap-3 px-1 text-sm">
         <span className="text-ink-soft">
           {filtered.length} transaction{filtered.length === 1 ? "" : "s"}
         </span>
-        <span
-          className={`font-semibold ${
-            filteredNet >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
-          }`}
-        >
-          {filteredNet >= 0 ? "+" : "-"}
-          {formatCurrency(Math.abs(filteredNet))}
-        </span>
+        <div className="flex items-center gap-3">
+          <span
+            className={`font-semibold ${
+              filteredNet >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+            }`}
+          >
+            {filteredNet >= 0 ? "+" : "-"}
+            {formatCurrency(Math.abs(filteredNet))}
+          </span>
+          <button
+            onClick={exportCsv}
+            disabled={filtered.length === 0}
+            className="rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-bg-soft disabled:opacity-40"
+          >
+            Export CSV
+          </button>
+        </div>
       </div>
 
       {filtered.length === 0 ? (

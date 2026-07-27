@@ -10,6 +10,7 @@ export type Expense = {
   category: string;
   notes: string | null;
   tags: string[];
+  has_receipt: boolean;
 };
 
 // Dates and amounts are cast explicitly to text in every query so the
@@ -46,6 +47,13 @@ function ensureSchema(): Promise<void> {
       // Free-form labels, separate from the single required category —
       // zero or more per expense, for cross-cutting groupings.
       await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}';`;
+
+      // Optional original receipt/document photo, attached after a scanned
+      // transaction is saved. Stored directly in Postgres for simplicity —
+      // fine at personal scale; a dedicated blob store would be the next
+      // step if this ever needs to hold a large volume of images.
+      await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS receipt_image BYTEA;`;
+      await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS receipt_image_type TEXT;`;
 
       // Single-row table anchoring the "Remaining" figure: a balance plus the
       // timestamp it was last reset, so only transactions logged after that
@@ -249,7 +257,8 @@ export async function listExpenses(): Promise<Expense[]> {
       merchant,
       category,
       notes,
-      tags
+      tags,
+      (receipt_image IS NOT NULL) AS has_receipt
     FROM expenses
     ORDER BY date DESC, id DESC;
   `;
@@ -272,7 +281,8 @@ export async function createExpense(input: ExpenseInput): Promise<Expense> {
       merchant,
       category,
       notes,
-      tags
+      tags,
+      (receipt_image IS NOT NULL) AS has_receipt
     FROM inserted;
   `;
   return rows[0];
@@ -301,7 +311,8 @@ export async function updateExpense(id: number, input: ExpenseInput): Promise<Ex
       merchant,
       category,
       notes,
-      tags
+      tags,
+      (receipt_image IS NOT NULL) AS has_receipt
     FROM updated;
   `;
   return rows[0] ?? null;
@@ -311,4 +322,28 @@ export async function deleteExpense(id: number): Promise<boolean> {
   await ensureSchema();
   const { rowCount } = await sql`DELETE FROM expenses WHERE id = ${id};`;
   return (rowCount ?? 0) > 0;
+}
+
+// BYTEA also isn't a Primitive the sql tag accepts directly, so the bytes
+// are hex-encoded and cast with decode(...) the same way tags use ::text[].
+export async function attachReceiptImage(id: number, bytes: Buffer, mimeType: string): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    UPDATE expenses
+    SET receipt_image = decode(${bytes.toString("hex")}, 'hex'), receipt_image_type = ${mimeType}
+    WHERE id = ${id};
+  `;
+  return (rowCount ?? 0) > 0;
+}
+
+export async function getReceiptImage(id: number): Promise<{ bytes: Buffer; mimeType: string } | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ hex: string | null; mime: string | null }>`
+    SELECT encode(receipt_image, 'hex') AS hex, receipt_image_type AS mime
+    FROM expenses
+    WHERE id = ${id};
+  `;
+  const row = rows[0];
+  if (!row?.hex || !row.mime) return null;
+  return { bytes: Buffer.from(row.hex, "hex"), mimeType: row.mime };
 }

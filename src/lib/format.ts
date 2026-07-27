@@ -29,3 +29,9 @@ export function monthLabel(key: string): string {
   const d = new Date(y, m - 1, 1);
   return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
 }
+
+export function monthShortLabel(key: string): string {
+  const [y, m] = key.split("-").map(Number);
+  const d = new Date(y, m - 1, 1);
+  return d.toLocaleDateString(undefined, { month: "short" });
+}

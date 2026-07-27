@@ -9,6 +9,7 @@ export type Expense = {
   category: string;
   notes: string | null;
   tags: string[];
+  hasReceipt: boolean;
 };
 
 export function signedAmount(expense: Expense): number {
