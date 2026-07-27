@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { signedAmount, type Expense } from "@/types/expense";
 import SummaryCards from "./SummaryCards";
 import ExpenseList from "./ExpenseList";
 import AddExpenseModal from "./AddExpenseModal";
 import EditExpenseModal from "./EditExpenseModal";
 import EditBalanceModal from "./EditBalanceModal";
-import SettingsMenu from "./SettingsMenu";
+import AppHeader from "./AppHeader";
 
 function sortByDateDesc(a: Expense, b: Expense): number {
   if (a.date !== b.date) return a.date < b.date ? 1 : -1;
@@ -22,13 +21,11 @@ export default function Dashboard({
   initialExpenses: Expense[];
   initialRemaining: number;
 }) {
-  const router = useRouter();
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [remaining, setRemaining] = useState(initialRemaining);
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [editingBalance, setEditingBalance] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
 
   function handleCreated(expense: Expense) {
     setExpenses((prev) => [expense, ...prev].sort(sortByDateDesc));
@@ -58,43 +55,9 @@ export default function Dashboard({
     setEditingBalance(false);
   }
 
-  async function handleLogout() {
-    setLoggingOut(true);
-    try {
-      await fetch("/api/auth/logout", { method: "POST" });
-      router.replace("/login");
-      router.refresh();
-    } finally {
-      setLoggingOut(false);
-    }
-  }
-
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-3 pb-24 pt-3 sm:px-4 sm:pb-10">
-      <header className="sticky top-3 z-10 flex items-center justify-between gap-3 rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] px-4 py-2.5 shadow-soft backdrop-blur-xl sm:px-5">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-navy text-sm font-bold text-white">
-            T
-          </div>
-          <h1 className="font-display text-lg text-foreground">Tally</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setAddOpen(true)}
-            className="hidden items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark hover:-translate-y-0.5 sm:flex"
-          >
-            + Add
-          </button>
-          <SettingsMenu />
-          <button
-            onClick={handleLogout}
-            disabled={loggingOut}
-            className="rounded-full px-3.5 py-2 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
-          >
-            Sign out
-          </button>
-        </div>
-      </header>
+    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-24 pt-3 sm:px-4 sm:pb-10">
+      <AppHeader onAddClick={() => setAddOpen(true)} />
 
       <main className="flex-1 px-1 py-6 sm:px-2">
         <SummaryCards expenses={expenses} remaining={remaining} onEditBalance={() => setEditingBalance(true)} />
