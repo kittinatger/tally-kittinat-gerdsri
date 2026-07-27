@@ -6,16 +6,19 @@ category for you to review before saving.
 
 ## Features
 
-- **Manual entry** — date, amount, merchant, category, optional notes.
-- **Receipt scanning** — drag-and-drop or tap-to-upload a photo; [Google
-  Gemini](https://ai.google.dev/) extracts the fields and pre-fills the form
-  for you to review and correct before it's saved.
-- **Password-protected** — a single shared password gates the whole app via a
-  signed, httpOnly session cookie.
-- **Clean, responsive UI** — built for quick entry on a phone, with a full
-  desktop layout too.
-- Expenses are stored in **Postgres** (works out of the box with [Vercel
-  Postgres](https://vercel.com/docs/storage/vercel-postgres)).
+- **Manual entry & receipt scanning** — enter expenses/income manually (date, amount, merchant, category, notes) or snap a photo; [Google Gemini](https://ai.google.dev/) extracts the fields and pre-fills the form for you to review.
+- **Bulk scanning** — drop multiple receipt photos at once; they queue up for review and batch-save.
+- **Receipt storage** — original scanned images are saved and viewable from the transaction detail.
+- **Search & filter** — search by merchant/notes/tags; filter by type (income/expense), category, tags, or date range.
+- **Free-form tags** — label transactions with custom tags for cross-cutting groupings.
+- **Income tracking** — separate income and expense transaction types with distinct category lists.
+- **Customizable categories** — rename and recolor expense/income categories to match your workflow.
+- **Spending trends** — see a 6-month trend chart for expenses or income on the Categories page.
+- **CSV export** — download filtered transactions in CSV format.
+- **Remaining balance** — live-updating balance that auto-calculates from a starting point and all logged transactions.
+- **Password-protected** — single shared password gates the whole app via signed, httpOnly session cookies.
+- **Liquid-glass UI** — clean, modern design built for quick entry on a phone and full desktop use.
+- **Postgres storage** — works out of the box with [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres).
 
 ## Tech stack
 
