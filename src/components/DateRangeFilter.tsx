@@ -178,7 +178,7 @@ export default function DateRangeFilter({
         <div
           role="dialog"
           aria-label="Filter by date range"
-          className="absolute right-0 top-[calc(100%+8px)] z-30 w-72 rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-3.5 shadow-[var(--panel-shadow)] backdrop-blur-xl"
+          className="absolute right-0 top-[calc(100%+14px)] z-30 w-72 rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-3.5 shadow-[var(--panel-shadow)] backdrop-blur-xl"
         >
           <div className="mb-2 flex items-center justify-between gap-2 rounded-xl bg-bg-soft px-2.5 py-1.5 text-xs font-medium text-ink-soft">
             <span>{draftFrom ? formatDateShort(draftFrom) : "Start date"}</span>
