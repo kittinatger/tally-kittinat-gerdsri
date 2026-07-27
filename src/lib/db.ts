@@ -49,8 +49,9 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS starting_balance_set_at TIMESTAMPTZ NOT NULL DEFAULT now();`;
       await sql`INSERT INTO app_settings (id, starting_balance) VALUES (1, 0) ON CONFLICT (id) DO NOTHING;`;
 
-      // User-editable categories. Seeded once with the original defaults so
-      // existing behavior is unchanged until someone customizes them.
+      // User-editable categories. Seeded once with a starter set — this runs
+      // exactly once (gated by the flag below) so re-running it later never
+      // resurrects a category someone has since deleted.
       await sql`
         CREATE TABLE IF NOT EXISTS categories (
           id SERIAL PRIMARY KEY,
@@ -62,8 +63,11 @@ function ensureSchema(): Promise<void> {
           CONSTRAINT categories_type_name_unique UNIQUE (type, name)
         );
       `;
-      const { rows: countRows } = await sql<{ count: string }>`SELECT COUNT(*)::text AS count FROM categories;`;
-      if (Number(countRows[0].count) === 0) {
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS categories_seeded BOOLEAN NOT NULL DEFAULT false;`;
+      const { rows: flagRows } = await sql<{ categories_seeded: boolean }>`
+        SELECT categories_seeded FROM app_settings WHERE id = 1;
+      `;
+      if (!flagRows[0]?.categories_seeded) {
         const defaults: Array<{ type: string; name: string; color: string; sort: number }> = [
           { type: "expense", name: "Groceries", color: "emerald", sort: 0 },
           { type: "expense", name: "Food & Drink", color: "amber", sort: 1 },
@@ -73,21 +77,36 @@ function ensureSchema(): Promise<void> {
           { type: "expense", name: "Entertainment", color: "fuchsia", sort: 5 },
           { type: "expense", name: "Health", color: "teal", sort: 6 },
           { type: "expense", name: "Travel", color: "cyan", sort: 7 },
-          { type: "expense", name: "Other", color: "slate", sort: 8 },
+          { type: "expense", name: "Rent & Housing", color: "blue", sort: 8 },
+          { type: "expense", name: "Insurance", color: "indigo", sort: 9 },
+          { type: "expense", name: "Education", color: "lime", sort: 10 },
+          { type: "expense", name: "Subscriptions", color: "pink", sort: 11 },
+          { type: "expense", name: "Personal Care", color: "orange", sort: 12 },
+          { type: "expense", name: "Gifts & Donations", color: "green", sort: 13 },
+          { type: "expense", name: "Pets", color: "sky", sort: 14 },
+          { type: "expense", name: "Fees & Charges", color: "rose", sort: 15 },
+          { type: "expense", name: "Other", color: "slate", sort: 16 },
           { type: "income", name: "Salary", color: "green", sort: 0 },
           { type: "income", name: "Freelance", color: "indigo", sort: 1 },
           { type: "income", name: "Business", color: "blue", sort: 2 },
           { type: "income", name: "Investment", color: "lime", sort: 3 },
           { type: "income", name: "Gift", color: "pink", sort: 4 },
           { type: "income", name: "Refund", color: "orange", sort: 5 },
-          { type: "income", name: "Other", color: "slate", sort: 6 },
+          { type: "income", name: "Bonus", color: "amber", sort: 6 },
+          { type: "income", name: "Interest & Dividends", color: "emerald", sort: 7 },
+          { type: "income", name: "Rental Income", color: "sky", sort: 8 },
+          { type: "income", name: "Pension", color: "violet", sort: 9 },
+          { type: "income", name: "Grants & Scholarships", color: "cyan", sort: 10 },
+          { type: "income", name: "Other", color: "slate", sort: 11 },
         ];
         for (const d of defaults) {
           await sql`
             INSERT INTO categories (type, name, color, sort_order)
-            VALUES (${d.type}, ${d.name}, ${d.color}, ${d.sort});
+            VALUES (${d.type}, ${d.name}, ${d.color}, ${d.sort})
+            ON CONFLICT (type, name) DO NOTHING;
           `;
         }
+        await sql`UPDATE app_settings SET categories_seeded = true WHERE id = 1;`;
       }
     })();
   }
