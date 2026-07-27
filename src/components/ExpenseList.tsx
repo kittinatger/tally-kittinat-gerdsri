@@ -6,6 +6,7 @@ import { monthKey, monthLabel, formatCurrency, todayInputValue } from "@/lib/for
 import { useAllCategories } from "@/lib/categories-context";
 import ExpenseRow from "./ExpenseRow";
 import FilterDropdown from "./FilterDropdown";
+import DateRangeFilter from "./DateRangeFilter";
 
 type TypeFilter = "all" | "expense" | "income";
 
@@ -162,23 +163,14 @@ export default function ExpenseList({
           <FilterDropdown value={tagFilter} allLabel="All tags" options={tagOptions} onChange={setTagFilter} />
         )}
 
-        <div className="flex items-center gap-1.5">
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            aria-label="From date"
-            className="w-full rounded-full border border-line bg-bg-soft px-3 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20 sm:w-auto"
-          />
-          <span className="text-xs text-ink-soft">to</span>
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            aria-label="To date"
-            className="w-full rounded-full border border-line bg-bg-soft px-3 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20 sm:w-auto"
-          />
-        </div>
+        <DateRangeFilter
+          from={dateFrom}
+          to={dateTo}
+          onChange={(nextFrom, nextTo) => {
+            setDateFrom(nextFrom);
+            setDateTo(nextTo);
+          }}
+        />
       </div>
 
       <div className="mb-4 flex items-center justify-between gap-3 px-1 text-sm">

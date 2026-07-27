@@ -35,3 +35,8 @@ export function monthShortLabel(key: string): string {
   const d = new Date(y, m - 1, 1);
   return d.toLocaleDateString(undefined, { month: "short" });
 }
+
+export function formatDateShort(dateStr: string): string {
+  const d = new Date(`${dateStr}T00:00:00`);
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
