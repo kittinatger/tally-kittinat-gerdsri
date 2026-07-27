@@ -23,8 +23,8 @@ export const emptyExpenseFormValues: ExpenseFormValues = {
 };
 
 const inputClass =
-  "w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20";
-const labelClass = "mb-1.5 block text-sm font-semibold text-ink-soft";
+  "w-full rounded-card border border-surface-line bg-surface-soft px-3.5 py-2.5 text-base text-surface-foreground outline-none transition focus:border-surface-accent focus:ring-2 focus:ring-surface-accent/20";
+const labelClass = "mb-1.5 block text-sm font-semibold text-surface-foreground-soft";
 
 export default function ExpenseForm({
   initialValues,
@@ -66,12 +66,12 @@ export default function ExpenseForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex gap-1 rounded-full bg-bg-soft p-1">
+      <div className="flex gap-1 rounded-full bg-black/15 p-1">
         <button
           type="button"
           onClick={() => updateType("expense")}
           className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-            values.type === "expense" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+            values.type === "expense" ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
           }`}
         >
           Expense
@@ -80,7 +80,7 @@ export default function ExpenseForm({
           type="button"
           onClick={() => updateType("income")}
           className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-            values.type === "income" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+            values.type === "income" ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
           }`}
         >
           Income
@@ -167,7 +167,7 @@ export default function ExpenseForm({
         />
       </div>
 
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="text-sm text-red-400">{error}</p>}
 
       <div className="flex items-center justify-between gap-2 pt-1">
         <div>{footerLeft}</div>
@@ -176,7 +176,7 @@ export default function ExpenseForm({
             <button
               type="button"
               onClick={onCancel}
-              className="rounded-full px-4 py-2.5 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
+              className="rounded-full px-4 py-2.5 text-sm font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
             >
               Cancel
             </button>

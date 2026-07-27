@@ -14,23 +14,21 @@ export default function ExpenseRow({
   return (
     <button
       onClick={onClick}
-      className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition hover:bg-[var(--nav-hover-bg)] ${
-        isLast ? "" : "border-b border-line"
+      className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition hover:bg-[var(--surface-nav-hover)] ${
+        isLast ? "" : "border-b border-surface-line"
       }`}
     >
       <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold text-foreground">{expense.merchant}</p>
+        <p className="truncate font-semibold text-surface-foreground">{expense.merchant}</p>
         <div className="mt-1 flex items-center gap-2">
           <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${categoryStyle(expense.category)}`}>
             {expense.category}
           </span>
-          <span className="text-xs text-ink-soft">{formatDateLong(expense.date)}</span>
+          <span className="text-xs text-surface-foreground-soft">{formatDateLong(expense.date)}</span>
         </div>
       </div>
       <p
-        className={`shrink-0 font-semibold ${
-          expense.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
-        }`}
+        className={`shrink-0 font-semibold ${expense.type === "income" ? "text-emerald-400" : "text-red-400"}`}
       >
         {expense.type === "income" ? "+" : "-"}
         {formatCurrency(expense.amount)}

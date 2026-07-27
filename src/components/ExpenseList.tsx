@@ -49,7 +49,7 @@ export default function ExpenseList({
                 {formatCurrency(Math.abs(net))}
               </span>
             </div>
-            <div className="overflow-hidden rounded-card border border-line bg-surface">
+            <div className="overflow-hidden rounded-card border border-surface-line bg-surface">
               {items.map((expense, i) => (
                 <ExpenseRow
                   key={expense.id}

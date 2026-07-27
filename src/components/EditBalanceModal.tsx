@@ -48,7 +48,7 @@ export default function EditBalanceModal({
     <Modal onClose={onClose} title="Remaining balance">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="remaining" className="mb-1.5 block text-sm font-semibold text-ink-soft">
+          <label htmlFor="remaining" className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">
             Set remaining balance to
           </label>
           <input
@@ -59,21 +59,21 @@ export default function EditBalanceModal({
             autoFocus
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+            className="w-full rounded-card border border-surface-line bg-surface-soft px-3.5 py-2.5 text-base text-surface-foreground outline-none transition focus:border-surface-accent focus:ring-2 focus:ring-surface-accent/20"
           />
-          <p className="mt-2 text-xs text-ink-soft">
+          <p className="mt-2 text-xs text-surface-foreground-soft">
             This becomes your Remaining figure right now. Future expenses and income will adjust it from here —
             it won&apos;t recalculate against anything already logged.
           </p>
         </div>
 
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="text-sm text-red-400">{error}</p>}
 
         <div className="flex items-center justify-end gap-2 pt-1">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full px-4 py-2.5 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
+            className="rounded-full px-4 py-2.5 text-sm font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
           >
             Cancel
           </button>

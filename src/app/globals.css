@@ -9,7 +9,6 @@
   --navy-darker: #0f4331;
   --foreground: #1a2b20;
   --ink-soft: #4b5c50;
-  --surface: #ffffff;
   --line: rgba(26, 43, 32, 0.12);
   --glass-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.6) 100%);
   --glass-border: rgba(255, 255, 255, 0.9);
@@ -18,6 +17,23 @@
   --shadow-soft-value: 0 20px 50px -25px rgba(15, 67, 49, 0.35);
   --panel-shadow: var(--shadow-soft-value), var(--glass-shadow);
   color-scheme: light;
+
+  /* Cards, the list, and modals are deliberately inverted in light mode —
+     dark green boxes with light text, echoing the portfolio's always-dark
+     .tile/.cta blocks — rather than following the page's light background.
+     In dark mode these just mirror the normal page tokens (already dark). */
+  --surface: #123626;
+  --surface-soft: #1a4531;
+  --surface-foreground: #eaf3ec;
+  --surface-foreground-soft: #b9cdc1;
+  --surface-line: rgba(255, 255, 255, 0.14);
+  --surface-nav-hover: rgba(255, 255, 255, 0.12);
+  --surface-accent: #7fe0b3;
+  --surface-accent-dark: #66c99b;
+  --modal-glass-bg: linear-gradient(180deg, rgba(20, 58, 41, 0.94) 0%, rgba(10, 34, 24, 0.97) 100%);
+  --modal-glass-border: rgba(255, 255, 255, 0.16);
+  --modal-glass-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.16), inset 0 -10px 16px -8px rgba(0, 0, 0, 0.4);
+  --modal-panel-shadow: var(--shadow-soft-value), var(--modal-glass-shadow);
 }
 
 :root[data-theme="dark"] {
@@ -27,13 +43,25 @@
   --navy-dark: #8fe3c0;
   --foreground: #dde8e0;
   --ink-soft: #9db3a4;
-  --surface: #131f19;
   --line: rgba(255, 255, 255, 0.14);
   --glass-bg: linear-gradient(180deg, rgba(24, 40, 30, 0.58) 0%, rgba(10, 19, 15, 0.68) 100%);
   --glass-border: rgba(255, 255, 255, 0.2);
   --glass-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.22), inset 0 -10px 16px -8px rgba(0, 0, 0, 0.35);
   --nav-hover-bg: rgba(111, 215, 171, 0.16);
   color-scheme: dark;
+
+  --surface: #131f19;
+  --surface-soft: var(--bg-soft);
+  --surface-foreground: var(--foreground);
+  --surface-foreground-soft: var(--ink-soft);
+  --surface-line: var(--line);
+  --surface-nav-hover: var(--nav-hover-bg);
+  --surface-accent: var(--navy);
+  --surface-accent-dark: var(--navy-dark);
+  --modal-glass-bg: var(--glass-bg);
+  --modal-glass-border: var(--glass-border);
+  --modal-glass-shadow: var(--glass-shadow);
+  --modal-panel-shadow: var(--panel-shadow);
 }
 
 @theme inline {
@@ -45,6 +73,12 @@
   --color-navy-darker: var(--navy-darker);
   --color-ink-soft: var(--ink-soft);
   --color-surface: var(--surface);
+  --color-surface-soft: var(--surface-soft);
+  --color-surface-foreground: var(--surface-foreground);
+  --color-surface-foreground-soft: var(--surface-foreground-soft);
+  --color-surface-line: var(--surface-line);
+  --color-surface-accent: var(--surface-accent);
+  --color-surface-accent-dark: var(--surface-accent-dark);
   --color-line: var(--line);
   --color-nav-hover: var(--nav-hover-bg);
   --font-sans: var(--font-arimo);

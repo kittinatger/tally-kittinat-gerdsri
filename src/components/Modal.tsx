@@ -30,15 +30,15 @@ export default function Modal({
       onClick={onClose}
     >
       <div
-        className="max-h-[92vh] w-full overflow-y-auto rounded-t-[28px] border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-5 shadow-[var(--panel-shadow)] backdrop-blur-xl sm:max-w-md sm:rounded-[28px] sm:p-6"
+        className="max-h-[92vh] w-full overflow-y-auto rounded-t-[28px] border border-[var(--modal-glass-border)] bg-[image:var(--modal-glass-bg)] p-5 shadow-[var(--modal-panel-shadow)] backdrop-blur-xl sm:max-w-md sm:rounded-[28px] sm:p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-xl text-foreground">{title}</h2>
+          <h2 className="font-display text-xl text-surface-foreground">{title}</h2>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="rounded-full p-1.5 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
+            className="rounded-full p-1.5 text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
           >
             ✕
           </button>

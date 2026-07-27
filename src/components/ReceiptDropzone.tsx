@@ -54,14 +54,16 @@ export default function ReceiptDropzone({ onFilesSelected }: { onFilesSelected: 
         role="button"
         tabIndex={0}
         className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-card border-2 border-dashed px-6 py-10 text-center transition ${
-          dragOver ? "border-navy bg-[var(--nav-hover-bg)]" : "border-line hover:border-navy hover:bg-bg-soft"
+          dragOver
+            ? "border-surface-accent bg-[var(--surface-nav-hover)]"
+            : "border-surface-line hover:border-surface-accent hover:bg-surface-soft"
         }`}
       >
         <span className="text-3xl">📷</span>
-        <p className="text-sm font-semibold text-foreground">
+        <p className="text-sm font-semibold text-surface-foreground">
           Drop receipts or income documents here, or tap to choose
         </p>
-        <p className="text-xs text-ink-soft">
+        <p className="text-xs text-surface-foreground-soft">
           Select multiple to add them as a batch. Expense or income — we&apos;ll detect which. JPEG, PNG, WEBP, or
           HEIC, up to 8MB each
         </p>
@@ -74,7 +76,7 @@ export default function ReceiptDropzone({ onFilesSelected }: { onFilesSelected: 
           onChange={(e) => handleFiles(e.target.files)}
         />
       </div>
-      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
     </div>
   );
 }

@@ -120,11 +120,11 @@ export default function AddExpenseModal({
 
   return (
     <Modal onClose={onClose} title="Add transaction">
-      <div className="mb-4 flex gap-1 rounded-full bg-bg-soft p-1">
+      <div className="mb-4 flex gap-1 rounded-full bg-black/15 p-1">
         <button
           onClick={() => setTab("manual")}
           className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-            tab === "manual" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+            tab === "manual" ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
           }`}
         >
           Manual entry
@@ -132,7 +132,7 @@ export default function AddExpenseModal({
         <button
           onClick={() => setTab("scan")}
           className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-            tab === "scan" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+            tab === "scan" ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
           }`}
         >
           Scan document
@@ -159,8 +159,8 @@ export default function AddExpenseModal({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={previewUrl} alt="Document preview" className="h-32 w-32 rounded-card object-cover" />
               )}
-              <div className="flex items-center gap-2 text-sm font-semibold text-ink-soft">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-navy border-t-transparent" />
+              <div className="flex items-center gap-2 text-sm font-semibold text-surface-foreground-soft">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-surface-accent border-t-transparent" />
                 {queue.length > 1 ? `Reading document ${queueIndex + 1} of ${queue.length}...` : "Reading document..."}
               </div>
             </div>
@@ -169,21 +169,21 @@ export default function AddExpenseModal({
           {scanStatus === "error" && (
             <div className="flex flex-col items-center gap-3 py-8 text-center">
               {queue.length > 1 && (
-                <p className="text-xs font-semibold text-ink-soft">
+                <p className="text-xs font-semibold text-surface-foreground-soft">
                   Document {queueIndex + 1} of {queue.length}
                 </p>
               )}
-              <p className="text-sm text-red-600 dark:text-red-400">{scanError}</p>
+              <p className="text-sm text-red-400">{scanError}</p>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => processFile(queue[queueIndex])}
-                  className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
+                  className="rounded-full border border-surface-line px-4 py-2 text-sm font-semibold text-surface-foreground transition hover:bg-[var(--surface-nav-hover)]"
                 >
                   Retry
                 </button>
                 <button
                   onClick={advanceQueue}
-                  className="rounded-full px-4 py-2 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
+                  className="rounded-full px-4 py-2 text-sm font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
                 >
                   {queueIndex + 1 < queue.length ? "Skip" : "Close"}
                 </button>
@@ -193,18 +193,18 @@ export default function AddExpenseModal({
 
           {scanStatus === "review" && scanValues && (
             <div>
-              <div className="mb-4 flex items-center gap-3 rounded-card bg-bg-soft p-3">
+              <div className="mb-4 flex items-center gap-3 rounded-card bg-surface-soft p-3">
                 {previewUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={previewUrl} alt="Document preview" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
                 )}
                 <div className="min-w-0">
                   {queue.length > 1 && (
-                    <p className="mb-1 text-xs font-semibold text-navy">
+                    <p className="mb-1 text-xs font-semibold text-surface-accent">
                       Reviewing {queueIndex + 1} of {queue.length}
                     </p>
                   )}
-                  <p className="text-xs text-ink-soft">
+                  <p className="text-xs text-surface-foreground-soft">
                     Review the details below before saving — the vision model detected whether this is an expense
                     or income and can occasionally get it wrong, so double-check the toggle too.
                   </p>
