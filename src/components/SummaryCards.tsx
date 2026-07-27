@@ -20,11 +20,15 @@ export default function SummaryCards({
     <div className="mb-6 grid grid-cols-3 gap-3">
       <div className="rounded-card border border-surface-line bg-surface p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">Income</p>
-        <p className="mt-1.5 font-display text-xl text-emerald-400 sm:text-2xl">{formatCurrency(monthIncome)}</p>
+        <p className="mt-1.5 font-display text-xl text-emerald-600 dark:text-emerald-400 sm:text-2xl">
+          {formatCurrency(monthIncome)}
+        </p>
       </div>
       <div className="rounded-card border border-surface-line bg-surface p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">Expenses</p>
-        <p className="mt-1.5 font-display text-xl text-red-400 sm:text-2xl">{formatCurrency(monthSpent)}</p>
+        <p className="mt-1.5 font-display text-xl text-red-600 dark:text-red-400 sm:text-2xl">
+          {formatCurrency(monthSpent)}
+        </p>
       </div>
       <button
         onClick={onEditBalance}
@@ -42,7 +46,9 @@ export default function SummaryCards({
           </svg>
         </div>
         <p
-          className={`mt-1.5 font-display text-xl sm:text-2xl ${remaining >= 0 ? "text-surface-accent" : "text-red-400"}`}
+          className={`mt-1.5 font-display text-xl sm:text-2xl ${
+            remaining >= 0 ? "text-surface-accent" : "text-red-600 dark:text-red-400"
+          }`}
         >
           {remaining < 0 ? "-" : ""}
           {formatCurrency(Math.abs(remaining))}

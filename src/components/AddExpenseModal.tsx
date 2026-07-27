@@ -120,7 +120,7 @@ export default function AddExpenseModal({
 
   return (
     <Modal onClose={onClose} title="Add transaction">
-      <div className="mb-4 flex gap-1 rounded-full bg-black/15 p-1">
+      <div className="mb-4 flex gap-1 rounded-full bg-bg-soft p-1">
         <button
           onClick={() => setTab("manual")}
           className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
@@ -173,7 +173,7 @@ export default function AddExpenseModal({
                   Document {queueIndex + 1} of {queue.length}
                 </p>
               )}
-              <p className="text-sm text-red-400">{scanError}</p>
+              <p className="text-sm text-red-600 dark:text-red-400">{scanError}</p>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => processFile(queue[queueIndex])}

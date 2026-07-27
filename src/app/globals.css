@@ -18,22 +18,18 @@
   --panel-shadow: var(--shadow-soft-value), var(--glass-shadow);
   color-scheme: light;
 
-  /* Cards, the list, and modals are deliberately inverted in light mode —
-     dark green boxes with light text, echoing the portfolio's always-dark
-     .tile/.cta blocks — rather than following the page's light background.
-     In dark mode these just mirror the normal page tokens (already dark). */
-  --surface: #123626;
-  --surface-soft: #1a4531;
-  --surface-foreground: #eaf3ec;
-  --surface-foreground-soft: #b9cdc1;
-  --surface-line: rgba(255, 255, 255, 0.14);
-  --surface-nav-hover: rgba(255, 255, 255, 0.12);
-  --surface-accent: #7fe0b3;
-  --surface-accent-dark: #66c99b;
-  --modal-glass-bg: linear-gradient(180deg, rgba(20, 58, 41, 0.94) 0%, rgba(10, 34, 24, 0.97) 100%);
-  --modal-glass-border: rgba(255, 255, 255, 0.16);
-  --modal-glass-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.16), inset 0 -10px 16px -8px rgba(0, 0, 0, 0.4);
-  --modal-panel-shadow: var(--shadow-soft-value), var(--modal-glass-shadow);
+  --surface: #ffffff;
+  --surface-soft: var(--bg-soft);
+  --surface-foreground: var(--foreground);
+  --surface-foreground-soft: var(--ink-soft);
+  --surface-line: var(--line);
+  --surface-nav-hover: var(--nav-hover-bg);
+  --surface-accent: var(--navy);
+  --surface-accent-dark: var(--navy-dark);
+  --modal-glass-bg: var(--glass-bg);
+  --modal-glass-border: var(--glass-border);
+  --modal-glass-shadow: var(--glass-shadow);
+  --modal-panel-shadow: var(--panel-shadow);
 
   /* Green-tinted frosted glass for the mobile floating add button. */
   --fab-glass-bg: linear-gradient(180deg, rgba(31, 122, 92, 0.82) 0%, rgba(15, 67, 49, 0.88) 100%);

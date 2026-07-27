@@ -28,7 +28,9 @@ export default function ExpenseRow({
         </div>
       </div>
       <p
-        className={`shrink-0 font-semibold ${expense.type === "income" ? "text-emerald-400" : "text-red-400"}`}
+        className={`shrink-0 font-semibold ${
+          expense.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+        }`}
       >
         {expense.type === "income" ? "+" : "-"}
         {formatCurrency(expense.amount)}

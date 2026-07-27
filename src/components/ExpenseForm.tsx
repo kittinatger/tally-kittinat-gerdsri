@@ -66,7 +66,7 @@ export default function ExpenseForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex gap-1 rounded-full bg-black/15 p-1">
+      <div className="flex gap-1 rounded-full bg-bg-soft p-1">
         <button
           type="button"
           onClick={() => updateType("expense")}
@@ -167,7 +167,7 @@ export default function ExpenseForm({
         />
       </div>
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       <div className="flex items-center justify-between gap-2 pt-1">
         <div>{footerLeft}</div>
