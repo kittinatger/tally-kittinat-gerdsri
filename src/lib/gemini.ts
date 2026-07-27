@@ -1,11 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import {
-  isCategory,
-  isTransactionType,
-  EXPENSE_CATEGORIES,
-  INCOME_CATEGORIES,
-  type TransactionType,
-} from "@/lib/categories";
+import { isTransactionType, type TransactionType } from "@/lib/categories";
 
 export type TransactionExtraction = {
   type: TransactionType;
@@ -15,11 +9,16 @@ export type TransactionExtraction = {
   category: string;
 };
 
+export type CategoriesByType = {
+  expense: string[];
+  income: string[];
+};
+
 const MODEL = "gemini-3.5-flash";
 
-function buildPrompt(): string {
+function buildPrompt(categories: CategoriesByType): string {
   const currentYear = new Date().getFullYear();
-  const allCategories = [...new Set([...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES])];
+  const allCategories = [...new Set([...categories.expense, ...categories.income])];
 
   return `You are reading a photo of a financial document for a personal finance tracker. It is either:
 - an EXPENSE document: a purchase receipt
@@ -31,21 +30,25 @@ First decide which of the two it is, then extract:
 - amount: the total amount (paid, for an expense; received, for income), as a plain number (no currency symbols, no thousands separators)
 - date: the transaction/payment date in strict YYYY-MM-DD format. If the year is missing, assume the current year: ${currentYear}.
 - category: the single best-fit category.
-  - If type is "expense", choose EXACTLY one from: ${EXPENSE_CATEGORIES.join(", ")}.
-  - If type is "income", choose EXACTLY one from: ${INCOME_CATEGORIES.join(", ")}.
+  - If type is "expense", choose EXACTLY one from: ${categories.expense.join(", ")}.
+  - If type is "income", choose EXACTLY one from: ${categories.income.join(", ")}.
   - Only use values from this combined list: ${allCategories.join(", ")}.
 
 If any field is illegible or absent, make your best reasonable guess rather than leaving it blank.
 Respond with JSON only, matching the provided schema.`;
 }
 
-export async function extractTransaction(imageBase64: string, mimeType: string): Promise<TransactionExtraction> {
+export async function extractTransaction(
+  imageBase64: string,
+  mimeType: string,
+  categories: CategoriesByType,
+): Promise<TransactionExtraction> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY environment variable is not set.");
   }
 
-  const allCategories = [...new Set([...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES])];
+  const allCategories = [...new Set([...categories.expense, ...categories.income])];
   const ai = new GoogleGenAI({ apiKey });
 
   const response = await ai.models.generateContent({
@@ -53,7 +56,7 @@ export async function extractTransaction(imageBase64: string, mimeType: string):
     contents: [
       {
         role: "user",
-        parts: [{ text: buildPrompt() }, { inlineData: { mimeType, data: imageBase64 } }],
+        parts: [{ text: buildPrompt(categories) }, { inlineData: { mimeType, data: imageBase64 } }],
       },
     ],
     config: {
@@ -97,7 +100,8 @@ export async function extractTransaction(imageBase64: string, mimeType: string):
   const dateRaw = typeof record.date === "string" ? record.date.trim() : "";
   const date = /^\d{4}-\d{2}-\d{2}$/.test(dateRaw) ? dateRaw : new Date().toISOString().slice(0, 10);
   const categoryRaw = typeof record.category === "string" ? record.category.trim() : "";
-  const category = isCategory(type, categoryRaw) ? categoryRaw : "Other";
+  const validNames = type === "income" ? categories.income : categories.expense;
+  const category = validNames.includes(categoryRaw) ? categoryRaw : (validNames.includes("Other") ? "Other" : (validNames[0] ?? "Other"));
 
   return { type, merchant, amount, date, category };
 }

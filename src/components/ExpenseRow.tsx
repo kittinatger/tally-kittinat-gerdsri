@@ -1,6 +1,9 @@
+"use client";
+
 import type { Expense } from "@/types/expense";
 import { formatCurrency, formatDateLong } from "@/lib/format";
-import { categoryStyle } from "@/lib/category-styles";
+import { badgeClasses } from "@/lib/category-styles";
+import { useCategoryColor } from "@/lib/categories-context";
 
 export default function ExpenseRow({
   expense,
@@ -11,6 +14,8 @@ export default function ExpenseRow({
   onClick: () => void;
   isLast: boolean;
 }) {
+  const color = useCategoryColor(expense.type, expense.category);
+
   return (
     <button
       onClick={onClick}
@@ -21,7 +26,7 @@ export default function ExpenseRow({
       <div className="min-w-0 flex-1">
         <p className="truncate font-semibold text-surface-foreground">{expense.merchant}</p>
         <div className="mt-1 flex items-center gap-2">
-          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${categoryStyle(expense.category)}`}>
+          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClasses(color)}`}>
             {expense.category}
           </span>
           <span className="text-xs text-surface-foreground-soft">{formatDateLong(expense.date)}</span>

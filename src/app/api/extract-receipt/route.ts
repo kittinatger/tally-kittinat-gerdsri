@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractTransaction } from "@/lib/gemini";
+import { listCategories } from "@/lib/db";
 
 const MAX_BYTES = 8 * 1024 * 1024; // 8MB
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
@@ -24,7 +25,12 @@ export async function POST(req: NextRequest) {
   const base64 = buffer.toString("base64");
 
   try {
-    const result = await extractTransaction(base64, file.type);
+    const categoryRows = await listCategories();
+    const categories = {
+      expense: categoryRows.filter((c) => c.type === "expense").map((c) => c.name),
+      income: categoryRows.filter((c) => c.type === "income").map((c) => c.name),
+    };
+    const result = await extractTransaction(base64, file.type, categories);
     return NextResponse.json({ extraction: result });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to read the document.";

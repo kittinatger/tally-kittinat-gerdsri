@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { categoriesForType, type TransactionType } from "@/lib/categories";
+import type { TransactionType } from "@/lib/categories";
+import { useAllCategories } from "@/lib/categories-context";
 import { todayInputValue } from "@/lib/format";
 
 export type ExpenseFormValues = {
@@ -44,7 +45,8 @@ export default function ExpenseForm({
   footerLeft?: React.ReactNode;
 }) {
   const [values, setValues] = useState<ExpenseFormValues>(initialValues);
-  const categories = categoriesForType(values.type);
+  const allCategories = useAllCategories();
+  const categories = allCategories.filter((c) => c.type === values.type);
   const sourceLabel = values.type === "income" ? "Source" : "Merchant";
 
   function update<K extends keyof ExpenseFormValues>(key: K, value: ExpenseFormValues[K]) {
@@ -52,11 +54,10 @@ export default function ExpenseForm({
   }
 
   function updateType(type: TransactionType) {
-    setValues((prev) => ({
-      ...prev,
-      type,
-      category: categoriesForType(type).includes(prev.category) ? prev.category : "Other",
-    }));
+    setValues((prev) => {
+      const stillValid = allCategories.some((c) => c.type === type && c.name === prev.category);
+      return { ...prev, type, category: stillValid ? prev.category : "Other" };
+    });
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -146,8 +147,8 @@ export default function ExpenseForm({
           className={inputClass}
         >
           {categories.map((c) => (
-            <option key={c} value={c}>
-              {c}
+            <option key={c.id} value={c.name}>
+              {c.name}
             </option>
           ))}
         </select>

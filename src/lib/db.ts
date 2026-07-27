@@ -48,9 +48,137 @@ function ensureSchema(): Promise<void> {
       `;
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS starting_balance_set_at TIMESTAMPTZ NOT NULL DEFAULT now();`;
       await sql`INSERT INTO app_settings (id, starting_balance) VALUES (1, 0) ON CONFLICT (id) DO NOTHING;`;
+
+      // User-editable categories. Seeded once with the original defaults so
+      // existing behavior is unchanged until someone customizes them.
+      await sql`
+        CREATE TABLE IF NOT EXISTS categories (
+          id SERIAL PRIMARY KEY,
+          type TEXT NOT NULL,
+          name TEXT NOT NULL,
+          color TEXT NOT NULL,
+          sort_order INTEGER NOT NULL DEFAULT 0,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT categories_type_name_unique UNIQUE (type, name)
+        );
+      `;
+      const { rows: countRows } = await sql<{ count: string }>`SELECT COUNT(*)::text AS count FROM categories;`;
+      if (Number(countRows[0].count) === 0) {
+        const defaults: Array<{ type: string; name: string; color: string; sort: number }> = [
+          { type: "expense", name: "Groceries", color: "emerald", sort: 0 },
+          { type: "expense", name: "Food & Drink", color: "amber", sort: 1 },
+          { type: "expense", name: "Transport", color: "sky", sort: 2 },
+          { type: "expense", name: "Shopping", color: "violet", sort: 3 },
+          { type: "expense", name: "Bills & Utilities", color: "rose", sort: 4 },
+          { type: "expense", name: "Entertainment", color: "fuchsia", sort: 5 },
+          { type: "expense", name: "Health", color: "teal", sort: 6 },
+          { type: "expense", name: "Travel", color: "cyan", sort: 7 },
+          { type: "expense", name: "Other", color: "slate", sort: 8 },
+          { type: "income", name: "Salary", color: "green", sort: 0 },
+          { type: "income", name: "Freelance", color: "indigo", sort: 1 },
+          { type: "income", name: "Business", color: "blue", sort: 2 },
+          { type: "income", name: "Investment", color: "lime", sort: 3 },
+          { type: "income", name: "Gift", color: "pink", sort: 4 },
+          { type: "income", name: "Refund", color: "orange", sort: 5 },
+          { type: "income", name: "Other", color: "slate", sort: 6 },
+        ];
+        for (const d of defaults) {
+          await sql`
+            INSERT INTO categories (type, name, color, sort_order)
+            VALUES (${d.type}, ${d.name}, ${d.color}, ${d.sort});
+          `;
+        }
+      }
     })();
   }
   return schemaReady;
+}
+
+export type CategoryRow = {
+  id: number;
+  type: string;
+  name: string;
+  color: string;
+  sort_order: number;
+};
+
+export async function listCategories(): Promise<CategoryRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<CategoryRow>`
+    SELECT id, type, name, color, sort_order
+    FROM categories
+    ORDER BY type, sort_order, id;
+  `;
+  return rows;
+}
+
+export async function createCategory(type: string, name: string, color: string): Promise<CategoryRow> {
+  await ensureSchema();
+  const { rows: maxRows } = await sql<{ max: number | null }>`
+    SELECT MAX(sort_order) AS max FROM categories WHERE type = ${type};
+  `;
+  const nextSort = (maxRows[0]?.max ?? -1) + 1;
+  const { rows } = await sql<CategoryRow>`
+    INSERT INTO categories (type, name, color, sort_order)
+    VALUES (${type}, ${name}, ${color}, ${nextSort})
+    RETURNING id, type, name, color, sort_order;
+  `;
+  return rows[0];
+}
+
+export async function updateCategory(
+  id: number,
+  input: { name?: string; color?: string },
+): Promise<CategoryRow | null> {
+  await ensureSchema();
+  const { rows: existingRows } = await sql<CategoryRow>`
+    SELECT id, type, name, color, sort_order FROM categories WHERE id = ${id};
+  `;
+  const existing = existingRows[0];
+  if (!existing) return null;
+
+  const trimmedName = input.name?.trim();
+  if (existing.name === "Other" && trimmedName !== undefined && trimmedName !== "Other") {
+    throw new Error('The "Other" category can\'t be renamed — it\'s used as the fallback everywhere.');
+  }
+
+  const newName = trimmedName ?? existing.name;
+  const newColor = input.color ?? existing.color;
+
+  const { rows } = await sql<CategoryRow>`
+    UPDATE categories
+    SET name = ${newName}, color = ${newColor}
+    WHERE id = ${id}
+    RETURNING id, type, name, color, sort_order;
+  `;
+
+  if (trimmedName !== undefined && trimmedName !== existing.name) {
+    await sql`
+      UPDATE expenses SET category = ${newName}
+      WHERE type = ${existing.type} AND category = ${existing.name};
+    `;
+  }
+
+  return rows[0] ?? null;
+}
+
+export async function deleteCategory(id: number): Promise<{ ok: true } | { ok: false; error: string }> {
+  await ensureSchema();
+  const { rows } = await sql<CategoryRow>`
+    SELECT id, type, name, color, sort_order FROM categories WHERE id = ${id};
+  `;
+  const existing = rows[0];
+  if (!existing) return { ok: false, error: "Not found" };
+  if (existing.name === "Other") {
+    return { ok: false, error: 'The "Other" category can\'t be deleted — it\'s used as the fallback everywhere.' };
+  }
+
+  await sql`
+    UPDATE expenses SET category = 'Other'
+    WHERE type = ${existing.type} AND category = ${existing.name};
+  `;
+  await sql`DELETE FROM categories WHERE id = ${id};`;
+  return { ok: true };
 }
 
 export async function getRemaining(): Promise<number> {

@@ -5,7 +5,8 @@ import Modal from "./Modal";
 import ExpenseForm, { emptyExpenseFormValues, type ExpenseFormValues } from "./ExpenseForm";
 import ReceiptDropzone from "./ReceiptDropzone";
 import type { Expense } from "@/types/expense";
-import { isCategory, isTransactionType } from "@/lib/categories";
+import { isTransactionType } from "@/lib/categories";
+import { useAllCategories } from "@/lib/categories-context";
 
 type Tab = "manual" | "scan";
 type ScanStatus = "idle" | "analyzing" | "review" | "error";
@@ -17,6 +18,7 @@ export default function AddExpenseModal({
   onClose: () => void;
   onCreated: (expense: Expense) => void;
 }) {
+  const allCategories = useAllCategories();
   const [tab, setTab] = useState<Tab>("manual");
   const [queue, setQueue] = useState<File[]>([]);
   const [queueIndex, setQueueIndex] = useState(0);
@@ -51,12 +53,13 @@ export default function AddExpenseModal({
         category: string;
       };
       const type = isTransactionType(extraction.type) ? extraction.type : "expense";
+      const categoryValid = allCategories.some((c) => c.type === type && c.name === extraction.category);
       setScanValues({
         type,
         date: extraction.date,
         amount: String(extraction.amount),
         merchant: extraction.merchant,
-        category: isCategory(type, extraction.category) ? extraction.category : "Other",
+        category: categoryValid ? extraction.category : "Other",
         notes: "",
       });
       setScanStatus("review");

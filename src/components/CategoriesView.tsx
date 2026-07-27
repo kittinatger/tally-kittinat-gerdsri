@@ -1,17 +1,40 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { Expense } from "@/types/expense";
 import { formatCurrency, monthKey, todayInputValue } from "@/lib/format";
-import { categoryStyle } from "@/lib/category-styles";
+import { badgeClasses, dotClasses } from "@/lib/category-styles";
 import type { TransactionType } from "@/lib/categories";
+import type { CategoryOption } from "@/types/category";
 import AppHeader from "./AppHeader";
+import CategoryModal from "./CategoryModal";
 
 type Range = "month" | "all";
 
-export default function CategoriesView({ expenses }: { expenses: Expense[] }) {
+export default function CategoriesView({
+  expenses,
+  categories,
+}: {
+  expenses: Expense[];
+  categories: CategoryOption[];
+}) {
+  const router = useRouter();
   const [type, setType] = useState<TransactionType>("expense");
   const [range, setRange] = useState<Range>("month");
+  const [modal, setModal] = useState<{ mode: "add" } | { mode: "edit"; category: CategoryOption } | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const categoriesForType = useMemo(
+    () => categories.filter((c) => c.type === type).sort((a, b) => a.id - b.id),
+    [categories, type],
+  );
+
+  function colorFor(name: string): string | undefined {
+    return categoriesForType.find((c) => c.name === name)?.color;
+  }
 
   const breakdown = useMemo(() => {
     const currentMonthKey = monthKey(todayInputValue());
@@ -37,6 +60,36 @@ export default function CategoriesView({ expenses }: { expenses: Expense[] }) {
 
     return { rows, total, count: filtered.length };
   }, [expenses, type, range]);
+
+  function handleSaved() {
+    setModal(null);
+    router.refresh();
+  }
+
+  async function handleDelete(id: number) {
+    if (confirmDeleteId !== id) {
+      setConfirmDeleteId(id);
+      setDeleteError(null);
+      return;
+    }
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) {
+        setDeleteError(typeof data.error === "string" ? data.error : "Could not delete that category.");
+        setConfirmDeleteId(null);
+        return;
+      }
+      router.refresh();
+    } catch {
+      setDeleteError("Network error while deleting.");
+      setConfirmDeleteId(null);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-10 pt-3 sm:px-4">
@@ -115,7 +168,7 @@ export default function CategoriesView({ expenses }: { expenses: Expense[] }) {
             {breakdown.rows.map((row) => (
               <div key={row.category} className="rounded-card border border-line bg-surface p-4">
                 <div className="mb-2 flex items-center justify-between gap-2">
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${categoryStyle(row.category)}`}>
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${badgeClasses(colorFor(row.category))}`}>
                     {row.category}
                   </span>
                   <span className="text-sm font-semibold text-foreground">{formatCurrency(row.amount)}</span>
@@ -131,7 +184,73 @@ export default function CategoriesView({ expenses }: { expenses: Expense[] }) {
             ))}
           </div>
         )}
+
+        <div className="mt-10 flex items-center justify-between gap-3">
+          <h3 className="font-display text-xl text-foreground">Manage {type} categories</h3>
+          <button
+            onClick={() => setModal({ mode: "add" })}
+            className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark"
+          >
+            + Add category
+          </button>
+        </div>
+
+        {deleteError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{deleteError}</p>}
+
+        <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
+          {categoriesForType.map((c, i) => (
+            <div
+              key={c.id}
+              className={`flex items-center justify-between gap-3 px-4 py-3 ${
+                i === categoriesForType.length - 1 ? "" : "border-b border-line"
+              }`}
+            >
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className={`h-3 w-3 shrink-0 rounded-full ${dotClasses(c.color)}`} />
+                <span className="truncate font-medium text-foreground">{c.name}</span>
+              </div>
+              <div className="flex shrink-0 items-center gap-1">
+                <button
+                  onClick={() => setModal({ mode: "edit", category: c })}
+                  aria-label={`Edit ${c.name}`}
+                  className="rounded-full p-2 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="h-4 w-4"
+                  >
+                    <path d="M13.586 3.586a2 2 0 1 1 2.828 2.828l-8.5 8.5a2 2 0 0 1-.848.503l-3.03.86a.5.5 0 0 1-.618-.618l.86-3.03a2 2 0 0 1 .503-.848l8.5-8.5Z" />
+                  </svg>
+                </button>
+                {c.name !== "Other" && (
+                  <button
+                    onClick={() => handleDelete(c.id)}
+                    disabled={deleting}
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition disabled:opacity-60 ${
+                      confirmDeleteId === c.id
+                        ? "bg-red-600 text-white hover:bg-red-700"
+                        : "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                    }`}
+                  >
+                    {confirmDeleteId === c.id ? "Confirm" : "Delete"}
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       </main>
+
+      {modal && (
+        <CategoryModal
+          type={type}
+          category={modal.mode === "edit" ? modal.category : undefined}
+          onClose={() => setModal(null)}
+          onSaved={handleSaved}
+        />
+      )}
     </div>
   );
 }

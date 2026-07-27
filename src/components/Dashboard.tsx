@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { signedAmount, type Expense } from "@/types/expense";
+import type { CategoryOption } from "@/types/category";
+import { CategoriesProvider } from "@/lib/categories-context";
 import SummaryCards from "./SummaryCards";
 import ExpenseList from "./ExpenseList";
 import AddExpenseModal from "./AddExpenseModal";
@@ -17,9 +19,11 @@ function sortByDateDesc(a: Expense, b: Expense): number {
 export default function Dashboard({
   initialExpenses,
   initialRemaining,
+  categories,
 }: {
   initialExpenses: Expense[];
   initialRemaining: number;
+  categories: CategoryOption[];
 }) {
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [remaining, setRemaining] = useState(initialRemaining);
@@ -56,38 +60,40 @@ export default function Dashboard({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-24 pt-3 sm:px-4 sm:pb-10">
-      <AppHeader onAddClick={() => setAddOpen(true)} />
+    <CategoriesProvider categories={categories}>
+      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-24 pt-3 sm:px-4 sm:pb-10">
+        <AppHeader onAddClick={() => setAddOpen(true)} />
 
-      <main className="flex-1 px-1 py-6 sm:px-2">
-        <SummaryCards expenses={expenses} remaining={remaining} onEditBalance={() => setEditingBalance(true)} />
-        <ExpenseList expenses={expenses} onSelect={setEditing} />
-      </main>
+        <main className="flex-1 px-1 py-6 sm:px-2">
+          <SummaryCards expenses={expenses} remaining={remaining} onEditBalance={() => setEditingBalance(true)} />
+          <ExpenseList expenses={expenses} onSelect={setEditing} />
+        </main>
 
-      <button
-        onClick={() => setAddOpen(true)}
-        className="fixed bottom-6 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--fab-glass-border)] bg-[image:var(--fab-glass-bg)] text-2xl font-light text-white shadow-[var(--shadow-soft),var(--fab-glass-shadow)] backdrop-blur-xl transition hover:brightness-110 sm:hidden"
-        aria-label="Add expense"
-      >
-        +
-      </button>
+        <button
+          onClick={() => setAddOpen(true)}
+          className="fixed bottom-6 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--fab-glass-border)] bg-[image:var(--fab-glass-bg)] text-2xl font-light text-white shadow-[var(--shadow-soft),var(--fab-glass-shadow)] backdrop-blur-xl transition hover:brightness-110 sm:hidden"
+          aria-label="Add expense"
+        >
+          +
+        </button>
 
-      {addOpen && <AddExpenseModal onClose={() => setAddOpen(false)} onCreated={handleCreated} />}
-      {editing && (
-        <EditExpenseModal
-          expense={editing}
-          onClose={() => setEditing(null)}
-          onUpdated={handleUpdated}
-          onDeleted={handleDeleted}
-        />
-      )}
-      {editingBalance && (
-        <EditBalanceModal
-          currentValue={remaining}
-          onClose={() => setEditingBalance(false)}
-          onSaved={handleBalanceSaved}
-        />
-      )}
-    </div>
+        {addOpen && <AddExpenseModal onClose={() => setAddOpen(false)} onCreated={handleCreated} />}
+        {editing && (
+          <EditExpenseModal
+            expense={editing}
+            onClose={() => setEditing(null)}
+            onUpdated={handleUpdated}
+            onDeleted={handleDeleted}
+          />
+        )}
+        {editingBalance && (
+          <EditBalanceModal
+            currentValue={remaining}
+            onClose={() => setEditingBalance(false)}
+            onSaved={handleBalanceSaved}
+          />
+        )}
+      </div>
+    </CategoriesProvider>
   );
 }
