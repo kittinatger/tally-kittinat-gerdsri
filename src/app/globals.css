@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Tailwind's `dark:` variant defaults to following the OS's prefers-color-scheme.
+   This app's theme is instead controlled by the `data-theme` attribute (manual
+   toggle + live device sync, see ThemeSync/SettingsMenu), so re-point `dark:` at
+   that attribute — otherwise `dark:` classes can disagree with the CSS custom
+   properties above whenever the manual choice differs from the OS setting. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
   --background: #eef4ef;
   --bg-soft: #f6faf7;
