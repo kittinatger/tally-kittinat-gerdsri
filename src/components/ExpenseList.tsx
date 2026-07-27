@@ -5,6 +5,7 @@ import { signedAmount, type Expense } from "@/types/expense";
 import { monthKey, monthLabel, formatCurrency } from "@/lib/format";
 import { useAllCategories } from "@/lib/categories-context";
 import ExpenseRow from "./ExpenseRow";
+import FilterDropdown from "./FilterDropdown";
 
 type TypeFilter = "all" | "expense" | "income";
 
@@ -110,18 +111,12 @@ export default function ExpenseList({
           ))}
         </div>
 
-        <select
+        <FilterDropdown
           value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          className="rounded-full border border-line bg-bg-soft px-3 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-        >
-          <option value="all">All categories</option>
-          {categoryOptions.map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
-        </select>
+          allLabel="All categories"
+          options={categoryOptions}
+          onChange={setCategoryFilter}
+        />
       </div>
 
       <div className="mb-4 flex items-center justify-between px-1 text-sm">
