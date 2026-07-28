@@ -33,14 +33,14 @@ Or follow the [detailed step-by-step Vercel deployment guide](DEPLOYMENT_VERCEL.
 
 <table>
 <tr>
-<td><img src="screenshots/light-mode-login-page.jpg" alt="Login page" width="250"/></td>
+<td><img src="screenshots/login-light-mode.jpg" alt="Login page" width="250"/></td>
 <td><img src="screenshots/dashboard-light-mode.jpg" alt="Dashboard (light mode)" width="250"/></td>
-<td><img src="screenshots/dark-mode-dashboard.jpg" alt="Dashboard (dark mode)" width="250"/></td>
+<td><img src="screenshots/dashboard-dark-mode.jpg" alt="Dashboard (dark mode)" width="250"/></td>
 </tr>
 <tr>
-<td><img src="screenshots/scan.jpg" alt="Receipt scanning" width="250"/></td>
-<td><img src="screenshots/mic-add.jpg" alt="Voice entry" width="250"/></td>
-<td><img src="screenshots/light-mode-categories.jpg" alt="Categories with spending trend" width="250"/></td>
+<td><img src="screenshots/receipt-scan-light-mode.jpg" alt="Receipt scanning" width="250"/></td>
+<td><img src="screenshots/voice-entry-light-mode.jpg" alt="Voice entry" width="250"/></td>
+<td><img src="screenshots/categories-light-mode.jpg" alt="Categories with spending trend" width="250"/></td>
 </tr>
 <tr>
 <td><img src="screenshots/settings-dark-mode.jpg" alt="Settings menu" width="250"/></td>
