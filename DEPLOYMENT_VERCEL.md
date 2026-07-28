@@ -21,7 +21,7 @@ Follow these steps exactly. Even if you've never deployed an app before, this wi
 
 2. **Look at the top right of the page**
    - You'll see several buttons in a row
-   - Find the button that says **"Fork"** with a fork icon (🍴)
+   - Find the button that says **"Fork"** with a fork icon
    - It's near buttons labeled "Star" and "Watch"
    - **Click on "Fork"**
 
