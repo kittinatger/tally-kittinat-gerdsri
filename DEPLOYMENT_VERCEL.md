@@ -4,20 +4,23 @@ Follow these steps exactly. Even if you've never deployed an app before, this wi
 
 ## What You Need (5 minutes to gather)
 
-1. A [GitHub](https://github.com) account (free)
-2. A [Vercel](https://vercel.com) account (free, sign in with GitHub)
-3. A free [Google Gemini API key](https://aistudio.google.com/apikey) (for receipt scanning)
+1. A GitHub account → **[Create free GitHub account](https://github.com/signup)**
+2. A Vercel account → **[Sign up free on Vercel](https://vercel.com/signup)** (use your GitHub login)
+3. A Google Gemini API key → **[Get free Gemini API key](https://aistudio.google.com/apikey)** (for receipt scanning)
 4. A password you want to use for Tally (e.g., `MyExpensePassword123!`)
 
 ## Step 1: Create Your Copy on GitHub (2 minutes)
 
 **What this does**: Creates your own copy of Tally in your GitHub account.
 
-1. **Open this link in your browser**:
+1. **Click this button to open the Tally repo**:
+   
+   **[🍴 Fork Tally on GitHub](https://github.com/kittinatger/tally-kittinat-gerdsri)**
+   
+   (Or copy & paste this link if the button doesn't work:)
    ```
    https://github.com/kittinatger/tally-kittinat-gerdsri
    ```
-   (Copy and paste if unsure)
 
 2. **Look at the top right of the page**
    - You'll see several buttons in a row
@@ -38,10 +41,11 @@ Follow these steps exactly. Even if you've never deployed an app before, this wi
 
 **What this does**: Tells Vercel to run your copy of Tally on the internet.
 
-1. **Open Vercel in a new browser tab**:
-   ```
-   https://vercel.com
-   ```
+1. **Click this button to go to Vercel**:
+   
+   **[🚀 Go to Vercel Dashboard](https://vercel.com)**
+   
+   (Or copy & paste: `https://vercel.com`)
 
 2. **In the top right corner**, click **"Sign in"**
    - If you see "Dashboard", skip to step 5
@@ -119,8 +123,8 @@ https://tally-xyz123.vercel.app
    ```
 
 2. **In the "Value" box**, paste your Google Gemini API key
-   - You got this from https://aistudio.google.com/apikey in Step 1
-   - If you didn't get one yet, go there now and click "Get API Key"
+   - You got this from **[Google AI Studio](https://aistudio.google.com/apikey)** in Step 1
+   - If you didn't get one yet, **[click here to get it](https://aistudio.google.com/apikey)**
 
 3. **Click "Save"**
 
@@ -228,7 +232,7 @@ This tells Tally where to store your expenses.
 - Click **Redeploy**
 
 ### "Receipt scanning doesn't work"
-- You need a valid Gemini API key from https://aistudio.google.com/apikey
+- You need a valid Gemini API key → **[Get Gemini API Key](https://aistudio.google.com/apikey)**
 - Make sure `GEMINI_API_KEY` is set correctly in Environment Variables
 - Click **Redeploy**
 - Manual expense entry still works without the API key
@@ -243,4 +247,4 @@ Your personal expense tracker is now live and only accessible with your password
 - Customize categories in Settings
 - Share the URL only with people you trust
 
-**Need help?** Open an issue on [GitHub](https://github.com/kittinatger/tally-kittinat-gerdsri/issues)
+**Need help?** → **[Report issue on GitHub](https://github.com/kittinatger/tally-kittinat-gerdsri/issues)**
