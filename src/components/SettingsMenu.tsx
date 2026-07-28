@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { CURRENCIES } from "@/lib/currencies";
 import { useCurrency } from "@/lib/currency-context";
+import CurrencyDropdown from "./CurrencyDropdown";
 
 type Theme = "light" | "dark";
 
@@ -189,22 +189,8 @@ export default function SettingsMenu() {
             </div>
 
             <div className="mt-3.5 border-t border-[var(--glass-border)] pt-3.5">
-              <label htmlFor="currency-select" className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                Default currency
-              </label>
-              <select
-                id="currency-select"
-                value={currency}
-                disabled={savingCurrency}
-                onChange={(e) => handleCurrencyChange(e.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-line bg-bg-soft px-2.5 py-1.5 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20 disabled:opacity-60"
-              >
-                {CURRENCIES.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.code} — {c.name}
-                  </option>
-                ))}
-              </select>
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">Default currency</p>
+              <CurrencyDropdown value={currency} onChange={handleCurrencyChange} disabled={savingCurrency} />
               {currencyError && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{currencyError}</p>}
             </div>
 

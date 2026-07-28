@@ -3,7 +3,7 @@ export type CurrencyOption = {
   name: string;
 };
 
-export const CURRENCIES: CurrencyOption[] = [
+const RAW_CURRENCIES: CurrencyOption[] = [
   { code: "USD", name: "US Dollar" },
   { code: "EUR", name: "Euro" },
   { code: "GBP", name: "British Pound" },
@@ -35,6 +35,8 @@ export const CURRENCIES: CurrencyOption[] = [
   { code: "VND", name: "Vietnamese Dong" },
   { code: "PKR", name: "Pakistani Rupee" },
 ];
+
+export const CURRENCIES: CurrencyOption[] = [...RAW_CURRENCIES].sort((a, b) => a.code.localeCompare(b.code));
 
 export function isCurrencyCode(value: string): boolean {
   return CURRENCIES.some((c) => c.code === value);
