@@ -15,7 +15,7 @@ Follow these steps exactly. Even if you've never deployed an app before, this wi
 
 1. **Click this button to open the Tally repo**:
    
-   **[🍴 Fork Tally on GitHub](https://github.com/kittinatger/tally-kittinat-gerdsri)**
+   **[Fork Tally on GitHub](https://github.com/kittinatger/tally-kittinat-gerdsri)**
    
    (Or copy & paste this link if the button doesn't work:)
    ```
@@ -43,7 +43,7 @@ Follow these steps exactly. Even if you've never deployed an app before, this wi
 
 1. **Click this button to go to Vercel**:
    
-   **[🚀 Go to Vercel Dashboard](https://vercel.com)**
+   **[Go to Vercel Dashboard](https://vercel.com)**
    
    (Or copy & paste: `https://vercel.com`)
 
