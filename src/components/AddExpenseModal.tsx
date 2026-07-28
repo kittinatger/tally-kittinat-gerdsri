@@ -8,9 +8,12 @@ import VoiceRecorder from "./VoiceRecorder";
 import type { Expense } from "@/types/expense";
 import { isTransactionType } from "@/lib/categories";
 import { useAllCategories } from "@/lib/categories-context";
+import { useCurrency } from "@/lib/currency-context";
+import { formatCurrency } from "@/lib/format";
 
 type Tab = "manual" | "scan" | "voice";
 type ScanStatus = "idle" | "analyzing" | "review" | "error";
+type ConversionInfo = { originalAmount: number; originalCurrency: string };
 
 export default function AddExpenseModal({
   onClose,
@@ -20,6 +23,7 @@ export default function AddExpenseModal({
   onCreated: (expense: Expense) => void;
 }) {
   const allCategories = useAllCategories();
+  const currency = useCurrency();
   const [tab, setTab] = useState<Tab>("manual");
   const [queue, setQueue] = useState<File[]>([]);
   const [queueIndex, setQueueIndex] = useState(0);
@@ -27,9 +31,11 @@ export default function AddExpenseModal({
   const [scanError, setScanError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [scanValues, setScanValues] = useState<ExpenseFormValues | null>(null);
+  const [scanConversion, setScanConversion] = useState<ConversionInfo | null>(null);
   const [voiceStatus, setVoiceStatus] = useState<ScanStatus>("idle");
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [voiceValues, setVoiceValues] = useState<ExpenseFormValues | null>(null);
+  const [voiceConversion, setVoiceConversion] = useState<ConversionInfo | null>(null);
   const [lastRecording, setLastRecording] = useState<{ blob: Blob; mimeType: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -56,6 +62,8 @@ export default function AddExpenseModal({
         amount: number;
         date: string;
         category: string;
+        originalAmount?: number;
+        originalCurrency?: string;
       };
       const type = isTransactionType(extraction.type) ? extraction.type : "expense";
       const categoryValid = allCategories.some((c) => c.type === type && c.name === extraction.category);
@@ -68,6 +76,11 @@ export default function AddExpenseModal({
         notes: "",
         tags: [],
       });
+      setScanConversion(
+        extraction.originalAmount !== undefined && extraction.originalCurrency
+          ? { originalAmount: extraction.originalAmount, originalCurrency: extraction.originalCurrency }
+          : null,
+      );
       setScanStatus("review");
     } catch {
       setScanError("Network error while reading the document.");
@@ -104,6 +117,8 @@ export default function AddExpenseModal({
         date: string;
         category: string;
         notes?: string;
+        originalAmount?: number;
+        originalCurrency?: string;
       };
       const type = isTransactionType(extraction.type) ? extraction.type : "expense";
       const categoryValid = allCategories.some((c) => c.type === type && c.name === extraction.category);
@@ -116,6 +131,11 @@ export default function AddExpenseModal({
         notes: extraction.notes ?? "",
         tags: [],
       });
+      setVoiceConversion(
+        extraction.originalAmount !== undefined && extraction.originalCurrency
+          ? { originalAmount: extraction.originalAmount, originalCurrency: extraction.originalCurrency }
+          : null,
+      );
       setVoiceStatus("review");
     } catch {
       setVoiceError("Network error while reading the recording.");
@@ -127,6 +147,7 @@ export default function AddExpenseModal({
     setVoiceStatus("idle");
     setVoiceError(null);
     setVoiceValues(null);
+    setVoiceConversion(null);
     setLastRecording(null);
   }
 
@@ -134,6 +155,7 @@ export default function AddExpenseModal({
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
     setScanValues(null);
+    setScanConversion(null);
     setScanError(null);
 
     const nextIndex = queueIndex + 1;
@@ -306,6 +328,12 @@ export default function AddExpenseModal({
                   </p>
                 </div>
               </div>
+              {scanConversion && (
+                <p className="mb-4 rounded-card bg-surface-soft px-3 py-2 text-xs font-medium text-surface-accent">
+                  Converted from {formatCurrency(scanConversion.originalAmount, scanConversion.originalCurrency)} to{" "}
+                  {currency}.
+                </p>
+              )}
               <ExpenseForm
                 key={queueIndex}
                 initialValues={scanValues}
@@ -361,6 +389,12 @@ export default function AddExpenseModal({
                   spoken numbers can occasionally be misheard.
                 </p>
               </div>
+              {voiceConversion && (
+                <p className="mb-4 rounded-card bg-surface-soft px-3 py-2 text-xs font-medium text-surface-accent">
+                  Converted from {formatCurrency(voiceConversion.originalAmount, voiceConversion.originalCurrency)} to{" "}
+                  {currency}.
+                </p>
+              )}
               <ExpenseForm
                 initialValues={voiceValues}
                 submitLabel="Save transaction"

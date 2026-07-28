@@ -8,6 +8,8 @@ export type TransactionExtraction = {
   date: string;
   category: string;
   notes?: string;
+  /** ISO 4217 code of the currency the amount was originally denominated in, if detected. */
+  currency?: string;
 };
 
 export type CategoriesByType = {
@@ -34,6 +36,9 @@ First decide which of the two it is, then extract:
   - If type is "expense", choose EXACTLY one from: ${categories.expense.join(", ")}.
   - If type is "income", choose EXACTLY one from: ${categories.income.join(", ")}.
   - Only use values from this combined list: ${allCategories.join(", ")}.
+- currency: the ISO 4217 currency code (e.g. USD, EUR, GBP, THB, JPY) the amount is denominated
+  in, inferred from any symbol ($, €, £, ¥, ฿, etc.), currency name/code text, or country context
+  on the document. Empty string if you genuinely cannot tell.
 
 If any field is illegible or absent, make your best reasonable guess rather than leaving it blank.
 Respond with JSON only, matching the provided schema.`;
@@ -64,6 +69,9 @@ received), then extract:
   - Only use values from this combined list: ${allCategories.join(", ")}.
 - notes: any extra context mentioned that isn't captured above (who it was with, what it was for,
   why), as a short phrase. Empty string if nothing extra was said.
+- currency: the ISO 4217 currency code (e.g. USD, EUR, GBP, THB, JPY) if a specific currency was
+  named or clearly implied (e.g. "euros", "baht", "quid"). Empty string if no currency was
+  specified — do not guess one from context alone.
 
 If any field is unclear, make your best reasonable guess rather than leaving it blank.
 Respond with JSON only, matching the provided schema.`;
@@ -78,6 +86,7 @@ function responseSchema(allCategories: string[], includeNotes: boolean) {
       amount: { type: Type.NUMBER },
       date: { type: Type.STRING },
       category: { type: Type.STRING, enum: allCategories },
+      currency: { type: Type.STRING },
       ...(includeNotes ? { notes: { type: Type.STRING } } : {}),
     },
     required: ["type", "merchant", "amount", "date", "category"],
@@ -108,8 +117,10 @@ function parseExtraction(text: string, categories: CategoriesByType): Transactio
   const validNames = type === "income" ? categories.income : categories.expense;
   const category = validNames.includes(categoryRaw) ? categoryRaw : (validNames.includes("Other") ? "Other" : (validNames[0] ?? "Other"));
   const notes = typeof record.notes === "string" ? record.notes.trim() : "";
+  const currencyRaw = typeof record.currency === "string" ? record.currency.trim().toUpperCase() : "";
+  const currency = /^[A-Z]{3}$/.test(currencyRaw) ? currencyRaw : undefined;
 
-  return { type, merchant, amount, date, category, notes: notes || undefined };
+  return { type, merchant, amount, date, category, notes: notes || undefined, currency };
 }
 
 export async function extractTransaction(

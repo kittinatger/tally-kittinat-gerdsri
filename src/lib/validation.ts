@@ -44,10 +44,12 @@ export const settingsInputSchema = z
       .length(3)
       .transform((v) => v.toUpperCase())
       .optional(),
+    autoConvertCurrency: z.boolean().optional(),
   })
-  .refine((data) => data.remaining !== undefined || data.currency !== undefined, {
-    message: "Provide remaining and/or currency",
-  });
+  .refine(
+    (data) => data.remaining !== undefined || data.currency !== undefined || data.autoConvertCurrency !== undefined,
+    { message: "Provide remaining, currency, and/or autoConvertCurrency" },
+  );
 
 export const categoryInputSchema = z.object({
   type: z.enum(TRANSACTION_TYPES),

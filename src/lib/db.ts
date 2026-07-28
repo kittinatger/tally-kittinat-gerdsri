@@ -68,6 +68,7 @@ function ensureSchema(): Promise<void> {
       `;
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS starting_balance_set_at TIMESTAMPTZ NOT NULL DEFAULT now();`;
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS currency TEXT NOT NULL DEFAULT 'USD';`;
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS auto_convert_currency BOOLEAN NOT NULL DEFAULT false;`;
       await sql`INSERT INTO app_settings (id, starting_balance) VALUES (1, 0) ON CONFLICT (id) DO NOTHING;`;
 
       // User-editable categories. Seeded once with a starter set — this runs
@@ -257,6 +258,20 @@ export async function setCurrency(code: string): Promise<string> {
   await ensureSchema();
   await sql`UPDATE app_settings SET currency = ${code} WHERE id = 1;`;
   return code;
+}
+
+export async function getAutoConvertCurrency(): Promise<boolean> {
+  await ensureSchema();
+  const { rows } = await sql<{ auto_convert_currency: boolean }>`
+    SELECT auto_convert_currency FROM app_settings WHERE id = 1;
+  `;
+  return rows[0]?.auto_convert_currency ?? false;
+}
+
+export async function setAutoConvertCurrency(enabled: boolean): Promise<boolean> {
+  await ensureSchema();
+  await sql`UPDATE app_settings SET auto_convert_currency = ${enabled} WHERE id = 1;`;
+  return enabled;
 }
 
 export async function listExpenses(): Promise<Expense[]> {

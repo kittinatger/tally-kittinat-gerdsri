@@ -14,6 +14,10 @@ export default function SettingsMenu() {
   const [open, setOpen] = useState(false);
   const [savingCurrency, setSavingCurrency] = useState(false);
   const [currencyError, setCurrencyError] = useState<string | null>(null);
+  const [autoConvert, setAutoConvert] = useState(false);
+  const [autoConvertLoaded, setAutoConvertLoaded] = useState(false);
+  const [savingAutoConvert, setSavingAutoConvert] = useState(false);
+  const [autoConvertError, setAutoConvertError] = useState<string | null>(null);
   // Safe to read the DOM directly here (no effect needed): this only ever
   // differs from the server-rendered default while the portal below is
   // closed, and that portal isn't part of the SSR output at all.
@@ -42,6 +46,24 @@ export default function SettingsMenu() {
       window.removeEventListener("resize", updatePosition);
     };
   }, [open]);
+
+  useEffect(() => {
+    if (!open || autoConvertLoaded) return;
+    let cancelled = false;
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return;
+        setAutoConvert(Boolean(data.autoConvertCurrency));
+        setAutoConvertLoaded(true);
+      })
+      .catch(() => {
+        // Leave the toggle at its default; the user can still flip it.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, autoConvertLoaded]);
 
   useEffect(() => {
     function onPointerDown(e: MouseEvent) {
@@ -79,6 +101,29 @@ export default function SettingsMenu() {
       setCurrencyError("Network error while saving.");
     } finally {
       setSavingCurrency(false);
+    }
+  }
+
+  async function handleAutoConvertToggle() {
+    const next = !autoConvert;
+    setAutoConvert(next);
+    setSavingAutoConvert(true);
+    setAutoConvertError(null);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ autoConvertCurrency: next }),
+      });
+      if (!res.ok) {
+        setAutoConvert(!next);
+        setAutoConvertError("Could not save.");
+      }
+    } catch {
+      setAutoConvert(!next);
+      setAutoConvertError("Network error while saving.");
+    } finally {
+      setSavingAutoConvert(false);
     }
   }
 
@@ -161,6 +206,35 @@ export default function SettingsMenu() {
                 ))}
               </select>
               {currencyError && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{currencyError}</p>}
+            </div>
+
+            <div className="mt-3.5 border-t border-[var(--glass-border)] pt-3.5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Auto-convert</p>
+                  <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">
+                    Convert detected foreign currencies to {currency} when scanning or recording.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAutoConvertToggle}
+                  disabled={savingAutoConvert}
+                  role="switch"
+                  aria-checked={autoConvert}
+                  aria-label="Toggle automatic currency conversion"
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-60 ${
+                    autoConvert ? "bg-navy" : "bg-bg-soft"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                      autoConvert ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+              {autoConvertError && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{autoConvertError}</p>}
             </div>
           </div>,
           document.body,

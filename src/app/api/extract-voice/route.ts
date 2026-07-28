@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractTransactionFromAudio } from "@/lib/gemini";
-import { listCategories } from "@/lib/db";
+import { getAutoConvertCurrency, getCurrency, listCategories } from "@/lib/db";
+import { maybeAutoConvert } from "@/lib/exchange-rate";
 
 const MAX_BYTES = 15 * 1024 * 1024; // 15MB
 const ALLOWED_TYPES = new Set([
@@ -37,12 +38,17 @@ export async function POST(req: NextRequest) {
   const base64 = buffer.toString("base64");
 
   try {
-    const categoryRows = await listCategories();
+    const [categoryRows, defaultCurrency, autoConvertEnabled] = await Promise.all([
+      listCategories(),
+      getCurrency(),
+      getAutoConvertCurrency(),
+    ]);
     const categories = {
       expense: categoryRows.filter((c) => c.type === "expense").map((c) => c.name),
       income: categoryRows.filter((c) => c.type === "income").map((c) => c.name),
     };
-    const result = await extractTransactionFromAudio(base64, baseType, categories);
+    const extraction = await extractTransactionFromAudio(base64, baseType, categories);
+    const result = await maybeAutoConvert(extraction, defaultCurrency, autoConvertEnabled);
     return NextResponse.json({ extraction: result });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to understand that recording.";

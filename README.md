@@ -18,6 +18,7 @@ category for you to review before saving.
 - **CSV export** — download filtered transactions in CSV format.
 - **Remaining balance** — live-updating balance that auto-calculates from a starting point and all logged transactions.
 - **Currency selection** — pick your default currency from the settings menu; formatting updates everywhere immediately.
+- **Automatic currency conversion** — optional toggle in settings; when scanning receipts or recording voice memos in a different currency, the detected amount is converted to your default currency (via [Frankfurter](https://frankfurter.app), a free ECB-rate API) before you review it.
 - **Password-protected** — single shared password gates the whole app via signed, httpOnly session cookies.
 - **Liquid-glass UI** — clean, modern design built for quick entry on a phone and full desktop use.
 - **Postgres storage** — works out of the box with [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres).
