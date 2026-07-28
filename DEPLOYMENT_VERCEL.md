@@ -241,4 +241,6 @@ Your personal expense tracker is now live and only accessible with your password
 - Customize categories in Settings
 - Share the URL only with people you trust
 
-**Need help?** [Report issue on GitHub](https://github.com/kittinatger/tally-kittinat-gerdsri/issues)
+**Need help?**
+- [Report issue on GitHub](https://github.com/kittinatger/tally-kittinat-gerdsri/issues)
+- [Contact me on my socials](https://kittinatger.github.io/kittinat-gerdsri/index.html#contact)
