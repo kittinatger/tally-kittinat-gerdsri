@@ -4,9 +4,15 @@ Follow these steps exactly. Even if you've never deployed an app before, this wi
 
 ## What You Need (5 minutes to gather)
 
-1. A GitHub account → **[Create free GitHub account](https://github.com/signup)**
-2. A Vercel account → **[Sign up free on Vercel](https://vercel.com/signup)** (use your GitHub login)
-3. A Google Gemini API key → **[Get free Gemini API key](https://aistudio.google.com/apikey)** (for receipt scanning)
+1. A GitHub account
+   <a href="https://github.com/signup" style="display: inline-block; padding: 10px 20px; background-color: #333; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">Create free GitHub account</a>
+
+2. A Vercel account (use your GitHub login)
+   <a href="https://vercel.com/signup" style="display: inline-block; padding: 10px 20px; background-color: #000; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">Sign up free on Vercel</a>
+
+3. A Google Gemini API key (for receipt scanning)
+   <a href="https://aistudio.google.com/apikey" style="display: inline-block; padding: 10px 20px; background-color: #1f2937; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">Get free Gemini API key</a>
+
 4. A password you want to use for Tally (e.g., `MyExpensePassword123!`)
 
 ## Step 1: Create Your Copy on GitHub (2 minutes)
@@ -14,13 +20,10 @@ Follow these steps exactly. Even if you've never deployed an app before, this wi
 **What this does**: Creates your own copy of Tally in your GitHub account.
 
 1. **Click this button to open the Tally repo**:
-   
-   **[Fork Tally on GitHub](https://github.com/kittinatger/tally-kittinat-gerdsri)**
-   
-   (Or copy & paste this link if the button doesn't work:)
-   ```
-   https://github.com/kittinatger/tally-kittinat-gerdsri
-   ```
+
+   <a href="https://github.com/kittinatger/tally-kittinat-gerdsri" style="display: inline-block; padding: 12px 24px; background-color: #333; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">Fork Tally on GitHub</a>
+
+   (Or copy & paste if needed: `https://github.com/kittinatger/tally-kittinat-gerdsri`)
 
 2. **Look at the top right of the page**
    - You'll see several buttons in a row
@@ -42,9 +45,9 @@ Follow these steps exactly. Even if you've never deployed an app before, this wi
 **What this does**: Tells Vercel to run your copy of Tally on the internet.
 
 1. **Click this button to go to Vercel**:
-   
-   **[Go to Vercel Dashboard](https://vercel.com)**
-   
+
+   <a href="https://vercel.com" style="display: inline-block; padding: 12px 24px; background-color: #000; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">Go to Vercel Dashboard</a>
+
    (Or copy & paste: `https://vercel.com`)
 
 2. **In the top right corner**, click **"Sign in"**
@@ -123,8 +126,10 @@ https://tally-xyz123.vercel.app
    ```
 
 2. **In the "Value" box**, paste your Google Gemini API key
-   - You got this from **[Google AI Studio](https://aistudio.google.com/apikey)** in Step 1
-   - If you didn't get one yet, **[click here to get it](https://aistudio.google.com/apikey)**
+   - You got this from Google AI Studio in Step 1
+   - If you didn't get one yet:
+   
+     <a href="https://aistudio.google.com/apikey" style="display: inline-block; padding: 8px 16px; background-color: #1f2937; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">Get Gemini API Key</a>
 
 3. **Click "Save"**
 
@@ -232,7 +237,10 @@ This tells Tally where to store your expenses.
 - Click **Redeploy**
 
 ### "Receipt scanning doesn't work"
-- You need a valid Gemini API key → **[Get Gemini API Key](https://aistudio.google.com/apikey)**
+- You need a valid Gemini API key
+
+  <a href="https://aistudio.google.com/apikey" style="display: inline-block; padding: 10px 20px; background-color: #1f2937; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">Get Gemini API Key</a>
+
 - Make sure `GEMINI_API_KEY` is set correctly in Environment Variables
 - Click **Redeploy**
 - Manual expense entry still works without the API key
@@ -247,4 +255,6 @@ Your personal expense tracker is now live and only accessible with your password
 - Customize categories in Settings
 - Share the URL only with people you trust
 
-**Need help?** → **[Report issue on GitHub](https://github.com/kittinatger/tally-kittinat-gerdsri/issues)**
+**Need help?**
+
+<a href="https://github.com/kittinatger/tally-kittinat-gerdsri/issues" style="display: inline-block; padding: 10px 20px; background-color: #333; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">Report issue on GitHub</a>
