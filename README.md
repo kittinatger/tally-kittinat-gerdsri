@@ -4,6 +4,12 @@ A private, personal expense tracker. Add expenses manually or snap a photo of a
 receipt and let Gemini's vision API read the merchant, total, date, and
 category for you to review before saving.
 
+## Deploy
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyour-username%2Ftally&env=POSTGRES_URL,GEMINI_API_KEY,APP_PASSWORD,SESSION_SECRET&envDescription=Required%20environment%20variables%20for%20Tally&envLink=https%3A%2F%2Fgithub.com%2Fyour-username%2Ftally%2Fblob%2Fmain%2F.env.local.example)
+
+Or follow the [Deploying privately](#deploying-privately-github--vercel) section below for a detailed walkthrough.
+
 ## Features
 
 - **Manual entry & receipt scanning** — enter expenses/income manually (date, amount, merchant, category, notes) or snap a photo; [Google Gemini](https://ai.google.dev/) extracts the fields and pre-fills the form for you to review.
