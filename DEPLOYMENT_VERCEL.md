@@ -4,11 +4,9 @@ Follow these steps exactly. Even if you've never deployed an app before, this wi
 
 ## What You Need (5 minutes to gather)
 
-1. A GitHub account — <a href="https://github.com/signup" style="display:inline-block;padding:6px 12px;background:#333;color:#fff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600;font-family:system-ui;">Create GitHub Account</a>
-
+1. A GitHub account — [Create GitHub Account](https://github.com/signup)
 2. A Vercel account (use your GitHub login) — [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/signup)
-
-3. A Google Gemini API key (for receipt scanning) — <a href="https://aistudio.google.com/apikey" style="display:inline-block;padding:6px 12px;background:#1f2937;color:#fff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600;font-family:system-ui;">Get Gemini API Key</a>
+3. A Google Gemini API key (for receipt scanning) — [Get Gemini API Key](https://aistudio.google.com/apikey)
 
 4. A password you want to use for Tally (e.g., `MyExpensePassword123!`)
 
@@ -16,10 +14,8 @@ Follow these steps exactly. Even if you've never deployed an app before, this wi
 
 **What this does**: Creates your own copy of Tally in your GitHub account.
 
-1. **Click this button to open the Tally repo**:
-
-   <a href="https://github.com/kittinatger/tally-kittinat-gerdsri" style="display:inline-block;padding:8px 16px;background:#333;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:15px;font-family:system-ui;">Fork Tally on GitHub</a>
-
+1. **Open the Tally repo**: [Fork Tally on GitHub](https://github.com/kittinatger/tally-kittinat-gerdsri)
+   
    (Or copy & paste if needed: `https://github.com/kittinatger/tally-kittinat-gerdsri`)
 
 2. **Look at the top right of the page**
@@ -41,10 +37,8 @@ Follow these steps exactly. Even if you've never deployed an app before, this wi
 
 **What this does**: Tells Vercel to run your copy of Tally on the internet.
 
-1. **Click this button to go to Vercel**:
-
-   <a href="https://vercel.com" style="display:inline-block;padding:8px 16px;background:#000;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:15px;font-family:system-ui;">Go to Vercel Dashboard</a>
-
+1. **Open Vercel**: [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com)
+   
    (Or copy & paste: `https://vercel.com`)
 
 2. **In the top right corner**, click **"Sign in"**
@@ -124,7 +118,7 @@ https://tally-xyz123.vercel.app
 
 2. **In the "Value" box**, paste your Google Gemini API key
    - You got this from Google AI Studio in Step 1
-   - If you didn't get one yet: <a href="https://aistudio.google.com/apikey" style="display:inline-block;padding:6px 12px;background:#1f2937;color:#fff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600;font-family:system-ui;">Get Gemini API Key</a>
+   - If you didn't get one yet: [Get Gemini API Key](https://aistudio.google.com/apikey)
 
 3. **Click "Save"**
 
@@ -232,7 +226,7 @@ This tells Tally where to store your expenses.
 - Click **Redeploy**
 
 ### "Receipt scanning doesn't work"
-- You need a valid Gemini API key — <a href="https://aistudio.google.com/apikey" style="display:inline-block;padding:6px 12px;background:#1f2937;color:#fff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600;font-family:system-ui;">Get Gemini API Key</a>
+- You need a valid Gemini API key: [Get Gemini API Key](https://aistudio.google.com/apikey)
 - Make sure `GEMINI_API_KEY` is set correctly in Environment Variables
 - Click **Redeploy**
 - Manual expense entry still works without the API key
@@ -247,4 +241,4 @@ Your personal expense tracker is now live and only accessible with your password
 - Customize categories in Settings
 - Share the URL only with people you trust
 
-**Need help?** <a href="https://github.com/kittinatger/tally-kittinat-gerdsri/issues" style="display:inline-block;padding:6px 12px;background:#333;color:#fff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600;font-family:system-ui;">Report Issue on GitHub</a>
+**Need help?** [Report issue on GitHub](https://github.com/kittinatger/tally-kittinat-gerdsri/issues)
