@@ -129,3 +129,9 @@ under Project Settings → Deployment Protection.
 - **HTTPS required**: Always deploy on HTTPS in production. Session cookies include the `Secure` flag and will not work over plain HTTP.
 - **Environment variables**: Store `APP_PASSWORD` and `SESSION_SECRET` securely in your hosting platform's environment variable settings (Vercel, Railway, etc.), not in code. Never commit `.env.local`.
 - **Rotate secrets**: If you suspect `APP_PASSWORD` or `SESSION_SECRET` have leaked, rotate them immediately. Changing `SESSION_SECRET` invalidates all existing sessions.
+
+## Developed by
+
+[Kittinat Gerdsri](https://kittinatger.github.io/kittinat-gerdsri/)
+
+Tally is a personal project designed to make expense tracking simple, private, and self-hosted.
