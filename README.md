@@ -125,7 +125,7 @@ under Project Settings → Deployment Protection.
 
 - **API authentication**: All API routes (`/api/*`) require a valid session token and are protected by middleware. Unauthenticated requests return `401 Unauthorized`.
 - **Single-user design**: This app uses a single shared password, not per-user accounts. This is appropriate for a personal tool but not for multi-user SaaS. Each instance serves one person or household.
-- **Session security**: Sessions are signed with HMAC-SHA256 using `SESSION_SECRET`, stored in httpOnly cookies, and expire after 30 days. Session cookies are marked `Secure` (HTTPS only) and `SameSite=Lax` in production.
+- **Session security**: When you log in, Tally creates a secure "session cookie" that proves you're logged in. This cookie is locked so no one can fake a login — think of it like a tamper-proof badge. It automatically expires after 30 days, and it only works over HTTPS (encrypted internet connection).
 - **HTTPS required**: Always deploy on HTTPS in production. Session cookies include the `Secure` flag and will not work over plain HTTP.
 - **Environment variables**: Store `APP_PASSWORD` and `SESSION_SECRET` securely in your hosting platform's environment variable settings (Vercel, Railway, etc.), not in code. Never commit `.env.local`.
 - **Rotate secrets**: If you suspect `APP_PASSWORD` or `SESSION_SECRET` have leaked, rotate them immediately. Changing `SESSION_SECRET` invalidates all existing sessions.
