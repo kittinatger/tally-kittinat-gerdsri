@@ -44,7 +44,7 @@ export default function CurrencyDropdown({
         disabled={disabled}
         aria-expanded={open}
         aria-haspopup="listbox"
-        className="flex w-full items-center justify-between gap-1.5 rounded-xl border border-line bg-bg-soft px-2.5 py-1.5 text-sm text-foreground outline-none transition hover:border-navy focus:border-navy focus:ring-2 focus:ring-navy/20 disabled:opacity-60"
+        className="flex w-full items-center justify-between gap-1.5 rounded-xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] px-2.5 py-1.5 text-sm text-foreground shadow-soft outline-none backdrop-blur-xl transition hover:border-navy focus:border-navy focus:ring-2 focus:ring-navy/20 disabled:opacity-60"
       >
         <span className="truncate">
           {current ? `${current.code} — ${current.name}` : value}
