@@ -7,17 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- Vercel one-click deploy button
-- Public release documentation (security policy, contribution guidelines, code of conduct)
-- Detailed deployment instructions for Vercel
-- Known limitations section in README
-- Deployment options overview in README
+Nothing yet.
 
-### Security
-- Fixed critical API authentication vulnerability — all API routes now require valid session token via middleware
-
-## [0.1.0] - 2025-01-15
+## [0.1.0] - 2026-07-28
 
 ### Added
 - Core expense tracking with manual entry
@@ -41,13 +33,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pull-to-refresh on mobile
 - Postgres backend with Vercel Postgres integration
 
+- Vercel one-click deploy button
+- Public release documentation (security policy, contribution guidelines, code of conduct)
+- Step-by-step Vercel deployment guide for non-technical users
+- Screenshots and issue templates
+
 ### Tech Stack
 - Next.js 16.2 (App Router) with TypeScript
 - React 19 with functional components
 - Tailwind CSS v4 for styling
-- Vercel Postgres for storage
+- Vercel Postgres (Neon) for storage
 - Google Gemini API for vision and transcription
 - Frankfurter API for currency conversion
+
+### Security
+- Fixed critical API authentication vulnerability — all API routes now require a valid session token via middleware
 
 ---
 

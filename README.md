@@ -6,7 +6,7 @@ category for you to review before saving.
 
 ## Deploy
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyour-username%2Ftally&env=POSTGRES_URL,GEMINI_API_KEY,APP_PASSWORD,SESSION_SECRET&envDescription=Required%20environment%20variables%20for%20Tally&envLink=https%3A%2F%2Fgithub.com%2Fyour-username%2Ftally%2Fblob%2Fmain%2F.env.local.example)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fkittinatger%2Ftally-kittinat-gerdsri&env=POSTGRES_URL,GEMINI_API_KEY,APP_PASSWORD,SESSION_SECRET&envDescription=Required%20environment%20variables%20for%20Tally&envLink=https%3A%2F%2Fgithub.com%2Fkittinatger%2Ftally-kittinat-gerdsri%2Fblob%2Fmaster%2F.env.local.example)
 
 Or follow the [detailed step-by-step Vercel deployment guide](DEPLOYMENT_VERCEL.md) (no technical experience needed).
 
@@ -99,40 +99,13 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). You'll be redirected to `/login` first.
 
-## Deploying privately (GitHub + Vercel)
+## Deploying privately
 
-1. **Push to a private GitHub repo.**
-   ```bash
-   gh repo create tally --private --source=. --remote=origin
-   git push -u origin main
-   ```
-   (Or create the repo on github.com and add it as a remote yourself — either way, make sure it's **private**.)
+For the full step-by-step walkthrough (forking, Vercel, database, environment variables), see the [Vercel deployment guide](DEPLOYMENT_VERCEL.md).
 
-2. **Import into Vercel.**
-   Go to [vercel.com/new](https://vercel.com/new), select the repo, and deploy. Vercel auto-detects Next.js — no config needed.
+Push the repo to a **private** GitHub repo instead of forking publicly if you'd rather keep your copy invisible to others. Everything else in the guide is the same. You can also enable [Vercel's built-in Deployment Protection](https://vercel.com/docs/deployment-protection) for an extra layer.
 
-3. **Add a Postgres database.**
-   In the Vercel project: **Storage → Create Database → Postgres**, then connect it to the project. This automatically sets `POSTGRES_URL` (and friends) as environment variables.
-
-4. **Set the remaining environment variables.**
-   In **Project Settings → Environment Variables**, add:
-   - `GEMINI_API_KEY`
-   - `APP_PASSWORD`
-   - `SESSION_SECRET`
-
-5. **Redeploy** (Vercel will do this automatically after you save env vars, or trigger it manually from the Deployments tab).
-
-Your app is now live at a `*.vercel.app` URL that only you know, additionally
-gated behind the in-app password. For an extra layer, you can also enable
-[Vercel's built-in Deployment Protection](https://vercel.com/docs/deployment-protection)
-under Project Settings → Deployment Protection.
-
-## Deployment options
-
-- **Vercel** *(recommended for free tier)*: Deploy directly from GitHub with one click. Vercel handles hosting and can provide a free Postgres database. See deployment section above.
-- **Railway.app**: A simpler alternative to Vercel with built-in Postgres. Same environment-variable setup, different UI.
-- **Fly.io**: Global deployment with built-in Postgres (paid, starts at $5/month for always-on).
-- **Docker**: Self-host on your own server. Add a `Dockerfile` and `docker-compose.yml` to containerize the app.
+**Alternative hosts**: Railway.app and Fly.io also work (same environment variables, different UI); Docker self-hosting is possible but not documented here yet.
 
 ## Known limitations
 

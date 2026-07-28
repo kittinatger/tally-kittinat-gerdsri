@@ -7,7 +7,6 @@ Follow these steps exactly. Even if you've never deployed an app before, this wi
 1. A GitHub account — [Create GitHub Account](https://github.com/signup)
 2. A Vercel account (use your GitHub login) — [Sign up on Vercel](https://vercel.com/signup)
 3. A Google Gemini API key (for receipt scanning) — [Get Gemini API Key](https://aistudio.google.com/apikey)
-
 4. A password you want to use for Tally (e.g., `MyExpensePassword123!`)
 
 ## Step 1: Create Your Copy on GitHub (2 minutes)
