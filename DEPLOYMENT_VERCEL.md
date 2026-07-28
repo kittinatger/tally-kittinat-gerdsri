@@ -4,14 +4,11 @@ Follow these steps exactly. Even if you've never deployed an app before, this wi
 
 ## What You Need (5 minutes to gather)
 
-1. A GitHub account
-   <a href="https://github.com/signup" style="display: inline-block; padding: 10px 20px; background-color: #333; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">Create free GitHub account</a>
+1. A GitHub account — [![Create account](https://img.shields.io/badge/GitHub-Sign%20Up-181717?style=for-the-badge&logo=github)](https://github.com/signup)
 
-2. A Vercel account (use your GitHub login)
-   <a href="https://vercel.com/signup" style="display: inline-block; padding: 10px 20px; background-color: #000; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">Sign up free on Vercel</a>
+2. A Vercel account (use your GitHub login) — [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/signup)
 
-3. A Google Gemini API key (for receipt scanning)
-   <a href="https://aistudio.google.com/apikey" style="display: inline-block; padding: 10px 20px; background-color: #1f2937; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">Get free Gemini API key</a>
+3. A Google Gemini API key (for receipt scanning) — [![Get API Key](https://img.shields.io/badge/Google%20AI-Get%20API%20Key-4285F4?style=for-the-badge&logo=google)](https://aistudio.google.com/apikey)
 
 4. A password you want to use for Tally (e.g., `MyExpensePassword123!`)
 
@@ -21,7 +18,7 @@ Follow these steps exactly. Even if you've never deployed an app before, this wi
 
 1. **Click this button to open the Tally repo**:
 
-   <a href="https://github.com/kittinatger/tally-kittinat-gerdsri" style="display: inline-block; padding: 12px 24px; background-color: #333; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">Fork Tally on GitHub</a>
+   [![Fork Tally](https://img.shields.io/badge/GitHub-Fork%20Tally-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/kittinatger/tally-kittinat-gerdsri)
 
    (Or copy & paste if needed: `https://github.com/kittinatger/tally-kittinat-gerdsri`)
 
@@ -46,7 +43,7 @@ Follow these steps exactly. Even if you've never deployed an app before, this wi
 
 1. **Click this button to go to Vercel**:
 
-   <a href="https://vercel.com" style="display: inline-block; padding: 12px 24px; background-color: #000; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">Go to Vercel Dashboard</a>
+   [![Go to Vercel](https://img.shields.io/badge/Vercel-Dashboard-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com)
 
    (Or copy & paste: `https://vercel.com`)
 
@@ -129,7 +126,7 @@ https://tally-xyz123.vercel.app
    - You got this from Google AI Studio in Step 1
    - If you didn't get one yet:
    
-     <a href="https://aistudio.google.com/apikey" style="display: inline-block; padding: 8px 16px; background-color: #1f2937; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">Get Gemini API Key</a>
+     [![Get Gemini API Key](https://img.shields.io/badge/Google%20AI-Get%20API%20Key-4285F4?style=for-the-badge&logo=google)](https://aistudio.google.com/apikey)
 
 3. **Click "Save"**
 
@@ -238,9 +235,7 @@ This tells Tally where to store your expenses.
 
 ### "Receipt scanning doesn't work"
 - You need a valid Gemini API key
-
-  <a href="https://aistudio.google.com/apikey" style="display: inline-block; padding: 10px 20px; background-color: #1f2937; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">Get Gemini API Key</a>
-
+  [![Get Gemini API Key](https://img.shields.io/badge/Google%20AI-Get%20API%20Key-4285F4?style=for-the-badge&logo=google)](https://aistudio.google.com/apikey)
 - Make sure `GEMINI_API_KEY` is set correctly in Environment Variables
 - Click **Redeploy**
 - Manual expense entry still works without the API key
@@ -257,4 +252,4 @@ Your personal expense tracker is now live and only accessible with your password
 
 **Need help?**
 
-<a href="https://github.com/kittinatger/tally-kittinat-gerdsri/issues" style="display: inline-block; padding: 10px 20px; background-color: #333; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">Report issue on GitHub</a>
+[![Report issue](https://img.shields.io/badge/GitHub-Report%20Issue-181717?style=for-the-badge&logo=github)](https://github.com/kittinatger/tally-kittinat-gerdsri/issues)
