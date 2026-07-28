@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Discussions
+    url: https://github.com/kittinatger/tally-kittinat-gerdsri/discussions
+    about: Ask questions or start discussions about Tally
+  - name: Contact developer
+    url: https://kittinatger.github.io/kittinat-gerdsri/index.html#contact
+    about: Reach out directly on social media
