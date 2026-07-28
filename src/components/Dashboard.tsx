@@ -5,6 +5,7 @@ import { signedAmount, type Expense } from "@/types/expense";
 import type { CategoryOption } from "@/types/category";
 import { CategoriesProvider } from "@/lib/categories-context";
 import { CurrencyProvider } from "@/lib/currency-context";
+import PullToRefresh from "./PullToRefresh";
 import SummaryCards from "./SummaryCards";
 import ExpenseList from "./ExpenseList";
 import AddExpenseModal from "./AddExpenseModal";
@@ -66,12 +67,14 @@ export default function Dashboard({
     <CategoriesProvider categories={categories}>
       <CurrencyProvider currency={currency}>
         <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-24 pt-3 sm:px-4 sm:pb-10">
-          <AppHeader onAddClick={() => setAddOpen(true)} />
+          <PullToRefresh>
+            <AppHeader onAddClick={() => setAddOpen(true)} />
 
-          <main className="flex-1 px-1 py-6 sm:px-2">
-            <SummaryCards expenses={expenses} remaining={remaining} onEditBalance={() => setEditingBalance(true)} />
-            <ExpenseList expenses={expenses} onSelect={setEditing} />
-          </main>
+            <main className="flex-1 px-1 py-6 sm:px-2">
+              <SummaryCards expenses={expenses} remaining={remaining} onEditBalance={() => setEditingBalance(true)} />
+              <ExpenseList expenses={expenses} onSelect={setEditing} />
+            </main>
+          </PullToRefresh>
 
           <button
             onClick={() => setAddOpen(true)}

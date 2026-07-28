@@ -8,6 +8,7 @@ import { badgeClasses, dotClasses } from "@/lib/category-styles";
 import type { TransactionType } from "@/lib/categories";
 import type { CategoryOption } from "@/types/category";
 import { CurrencyProvider, useCurrency } from "@/lib/currency-context";
+import PullToRefresh from "./PullToRefresh";
 import AppHeader from "./AppHeader";
 import CategoryModal from "./CategoryModal";
 
@@ -122,9 +123,10 @@ function CategoriesViewInner({ expenses, categories }: { expenses: Expense[]; ca
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-10 pt-3 sm:px-4">
-      <AppHeader />
+      <PullToRefresh>
+        <AppHeader />
 
-      <main className="flex-1 px-1 py-6 sm:px-2">
+        <main className="flex-1 px-1 py-6 sm:px-2">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-display text-2xl text-foreground">Categories</h2>
           <div className="flex flex-wrap items-center gap-2">
@@ -295,6 +297,7 @@ function CategoriesViewInner({ expenses, categories }: { expenses: Expense[]; ca
           ))}
         </div>
       </main>
+      </PullToRefresh>
 
       {modal && (
         <CategoryModal
