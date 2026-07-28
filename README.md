@@ -8,7 +8,7 @@ category for you to review before saving.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyour-username%2Ftally&env=POSTGRES_URL,GEMINI_API_KEY,APP_PASSWORD,SESSION_SECRET&envDescription=Required%20environment%20variables%20for%20Tally&envLink=https%3A%2F%2Fgithub.com%2Fyour-username%2Ftally%2Fblob%2Fmain%2F.env.local.example)
 
-Or follow the [Deploying privately](#deploying-privately-github--vercel) section below for a detailed walkthrough.
+Or follow the [detailed step-by-step Vercel deployment guide](DEPLOYMENT_VERCEL.md) (no technical experience needed).
 
 ## Features
 
