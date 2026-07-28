@@ -21,7 +21,7 @@ Follow these steps exactly. Even if you've never deployed an app before, this wi
 
 2. **Look at the top right of the page**
    - You'll see several buttons in a row
-   - Find the button that says **"Fork"** with a fork icon (🍴)
+   - Find the button that says **"Fork"** with a fork icon
    - It's near buttons labeled "Star" and "Watch"
    - **Click on "Fork"**
 
@@ -32,7 +32,7 @@ Follow these steps exactly. Even if you've never deployed an app before, this wi
 4. **Wait 5-10 seconds**
    - The page will change
    - You'll see "your-username/tally-kittinat-gerdsri" at the top
-   - **You now have your own copy!** ✅
+   - **You now have your own copy!**
 
 ## Step 2: Deploy to Vercel (5 minutes)
 
@@ -65,7 +65,7 @@ Follow these steps exactly. Even if you've never deployed an app before, this wi
 
 7. **Wait 1-2 minutes**
    - You'll see "Building..." then "Deploying..."
-   - When you see a green checkmark and "Congratulations!", you're done! ✅
+   - When you see a green checkmark and "Congratulations!", you're done!
 
 **Your app is now live!** You'll see a URL like:
 ```
@@ -111,7 +111,7 @@ https://tally-xyz123.vercel.app
 
 ---
 
-### 🔑 Secret 1: `GEMINI_API_KEY` (for receipt scanning)
+### Secret 1: `GEMINI_API_KEY` (for receipt scanning)
 
 1. **In the "Name" box**, type exactly:
    ```
@@ -126,7 +126,7 @@ https://tally-xyz123.vercel.app
 
 ---
 
-### 🔑 Secret 2: `APP_PASSWORD` (your Tally login password)
+### Secret 2: `APP_PASSWORD` (your Tally login password)
 
 1. **Click the "Add new..." button** to add another variable
 
@@ -143,7 +143,7 @@ https://tally-xyz123.vercel.app
 
 ---
 
-### 🔑 Secret 3: `SESSION_SECRET` (security key)
+### Secret 3: `SESSION_SECRET` (security key)
 
 This is a random security key. Don't worry what it means, just generate it:
 
@@ -169,7 +169,7 @@ This is a random security key. Don't worry what it means, just generate it:
 
 ---
 
-### 🔑 Secret 4: `POSTGRES_URL` (database connection)
+### Secret 4: `POSTGRES_URL` (database connection)
 
 This tells Tally where to store your expenses.
 
@@ -208,7 +208,7 @@ This tells Tally where to store your expenses.
 1. Go to your app URL (e.g., `tally-xyz123.vercel.app`)
 2. Enter your password (the one you set as `APP_PASSWORD`)
 3. Click **Sign in**
-4. **You're in!** ✅ Start adding expenses!
+4. **You're in!** Start adding expenses!
 
 ## Troubleshooting
 
@@ -233,7 +233,7 @@ This tells Tally where to store your expenses.
 - Click **Redeploy**
 - Manual expense entry still works without the API key
 
-## You're Done! 🎉
+## You're Done!
 
 Your personal expense tracker is now live and only accessible with your password.
 
