@@ -79,18 +79,20 @@ https://tally-xyz123.vercel.app
 1. **In Vercel dashboard, look at the left sidebar**
    - Click on **"Storage"** (it's between "Deployments" and "Settings")
 
-2. **Click the button that says "Create Database"**
+2. **Click the button that says "Create Database"** or **"Add"**
    - If you see "Connect Store", that's fine too
 
-3. **A popup will appear**
-   - Click **"Postgres"** (Postgres is the type of database)
+3. **A popup will appear with options**
+   - Click **"Neon"** (Neon is Vercel's database provider — it's Postgres, just hosted elsewhere)
+   - You might also see "Postgres" or other options, but choose **Neon**
 
 4. **Accept all defaults**, just click **"Create"**
    - Don't change any of the settings
    - Wait 30-60 seconds for it to create
+   - You may need to authorize Neon to connect to your Vercel account
 
 5. **You'll see your new database listed**
-   - It will have a name like "postgres" or "tally-db"
+   - It will have a name and show "Neon" as the provider
    - You're done with this step! ✅
 
 ## Step 4: Add Your Secrets (5 minutes)

@@ -27,7 +27,7 @@ Or follow the [detailed step-by-step Vercel deployment guide](DEPLOYMENT_VERCEL.
 - **Automatic currency conversion** — optional toggle in settings; when scanning receipts or recording voice memos in a different currency, the detected amount is converted to your default currency (via [Frankfurter](https://frankfurter.app), a free ECB-rate API) before you review it.
 - **Password-protected** — single shared password gates the whole app via signed, httpOnly session cookies.
 - **Liquid-glass UI** — clean, modern design built for quick entry on a phone and full desktop use.
-- **Postgres storage** — works out of the box with [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres).
+- **Postgres storage** — works out of the box with [Vercel's Neon database](https://vercel.com/docs/storage/vercel-postgres) (free tier available).
 
 ## Tech stack
 
@@ -61,14 +61,15 @@ Then fill in `.env.local`:
 | `APP_PASSWORD` | Yes | The password used to sign in to the app. Pick something you don't use elsewhere. |
 | `SESSION_SECRET` | Yes | A random secret that keeps your login session secure. Think of it like a security key that scrambles your session cookie so no one can forge a fake login. Generate one by copying and pasting this into your terminal: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` — it will print out a long random string (like `e7b4d9fccc1ade2ae...`). Paste that string as the value for `SESSION_SECRET`. **Important**: Use a different random string for production (on Vercel) than for local development. |
 
-### 3. Get a local Postgres database
+### 3. Get a Postgres database
 
-Easiest option — use a free [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres)
-database for both local dev and production:
+Easiest option — use a free [Neon Postgres database](https://neon.tech) via Vercel:
 
 1. Push this repo to GitHub (see below) and import it into a new [Vercel](https://vercel.com) project.
-2. In the Vercel project, go to **Storage → Create Database → Postgres**, and connect it to the project.
+2. In the Vercel project, go to **Storage → Create Database → Neon**, and connect it to the project.
 3. Locally, run `npx vercel link` once to link this folder to the Vercel project, then `npx vercel env pull .env.local` to pull `POSTGRES_URL` (and any other env vars you've set in Vercel) into your local `.env.local`.
+
+**Note**: Vercel's free Postgres tier now uses Neon. It works exactly the same way — just a different provider.
 
 The `expenses` table is created automatically on first use — no manual migration step needed.
 
@@ -119,7 +120,7 @@ under Project Settings → Deployment Protection.
 
 - **Single-user per instance**: This app uses a shared password (not per-user accounts). Each deployed instance is single-user by design. To share with others, each person must run their own instance.
 - **Requires Gemini API key**: Receipt scanning and voice transcription require a free API key from [Google AI Studio](https://aistudio.google.com/apikey). Manual entry and CSV export work without it.
-- **Requires Postgres database**: The app stores all data in Postgres (not SQLite). Free tiers available via [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres) or [Railway](https://railway.app).
+- **Requires Postgres database**: The app stores all data in Postgres (not SQLite). Free tier available via Vercel (uses Neon), or [Railway](https://railway.app).
 
 ## Security notes
 
