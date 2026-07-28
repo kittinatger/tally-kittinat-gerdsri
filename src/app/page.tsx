@@ -1,4 +1,4 @@
-import { listExpenses, getRemaining, listCategories } from "@/lib/db";
+import { listExpenses, getRemaining, listCategories, getCurrency } from "@/lib/db";
 import Dashboard from "@/components/Dashboard";
 import type { Expense } from "@/types/expense";
 import type { CategoryOption } from "@/types/category";
@@ -8,7 +8,12 @@ import type { CategoryOption } from "@/types/category";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [rows, remaining, categoryRows] = await Promise.all([listExpenses(), getRemaining(), listCategories()]);
+  const [rows, remaining, categoryRows, currency] = await Promise.all([
+    listExpenses(),
+    getRemaining(),
+    listCategories(),
+    getCurrency(),
+  ]);
   const expenses: Expense[] = rows.map((r) => ({
     id: r.id,
     type: r.type === "income" ? "income" : "expense",
@@ -27,5 +32,7 @@ export default async function HomePage() {
     color: c.color,
   }));
 
-  return <Dashboard initialExpenses={expenses} initialRemaining={remaining} categories={categories} />;
+  return (
+    <Dashboard initialExpenses={expenses} initialRemaining={remaining} categories={categories} currency={currency} />
+  );
 }

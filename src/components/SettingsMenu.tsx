@@ -2,11 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
+import { CURRENCIES } from "@/lib/currencies";
+import { useCurrency } from "@/lib/currency-context";
 
 type Theme = "light" | "dark";
 
 export default function SettingsMenu() {
+  const router = useRouter();
+  const currency = useCurrency();
   const [open, setOpen] = useState(false);
+  const [savingCurrency, setSavingCurrency] = useState(false);
+  const [currencyError, setCurrencyError] = useState<string | null>(null);
   // Safe to read the DOM directly here (no effect needed): this only ever
   // differs from the server-rendered default while the portal below is
   // closed, and that portal isn't part of the SSR output at all.
@@ -52,6 +59,28 @@ export default function SettingsMenu() {
       document.removeEventListener("keydown", onKey);
     };
   }, []);
+
+  async function handleCurrencyChange(code: string) {
+    if (code === currency) return;
+    setSavingCurrency(true);
+    setCurrencyError(null);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currency: code }),
+      });
+      if (!res.ok) {
+        setCurrencyError("Could not save currency.");
+        return;
+      }
+      router.refresh();
+    } catch {
+      setCurrencyError("Network error while saving.");
+    } finally {
+      setSavingCurrency(false);
+    }
+  }
 
   function toggleTheme() {
     const next: Theme = theme === "dark" ? "light" : "dark";
@@ -112,6 +141,26 @@ export default function SettingsMenu() {
                   </svg>
                 )}
               </button>
+            </div>
+
+            <div className="mt-3.5 border-t border-[var(--glass-border)] pt-3.5">
+              <label htmlFor="currency-select" className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                Default currency
+              </label>
+              <select
+                id="currency-select"
+                value={currency}
+                disabled={savingCurrency}
+                onChange={(e) => handleCurrencyChange(e.target.value)}
+                className="mt-1.5 w-full rounded-xl border border-line bg-bg-soft px-2.5 py-1.5 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20 disabled:opacity-60"
+              >
+                {CURRENCIES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.code} — {c.name}
+                  </option>
+                ))}
+              </select>
+              {currencyError && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{currencyError}</p>}
             </div>
           </div>,
           document.body,

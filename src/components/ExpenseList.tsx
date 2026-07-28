@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { signedAmount, type Expense } from "@/types/expense";
 import { monthKey, monthLabel, formatCurrency, todayInputValue } from "@/lib/format";
 import { useAllCategories } from "@/lib/categories-context";
+import { useCurrency } from "@/lib/currency-context";
 import ExpenseRow from "./ExpenseRow";
 import FilterDropdown from "./FilterDropdown";
 import DateRangeFilter from "./DateRangeFilter";
@@ -18,6 +19,7 @@ export default function ExpenseList({
   onSelect: (expense: Expense) => void;
 }) {
   const allCategories = useAllCategories();
+  const currency = useCurrency();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -191,7 +193,7 @@ export default function ExpenseList({
             }`}
           >
             {filteredNet >= 0 ? "+" : "-"}
-            {formatCurrency(Math.abs(filteredNet))}
+            {formatCurrency(Math.abs(filteredNet), currency)}
           </span>
           <button
             ref={exportButtonRef}
@@ -224,7 +226,7 @@ export default function ExpenseList({
                     }`}
                   >
                     {net >= 0 ? "+" : "-"}
-                    {formatCurrency(Math.abs(net))}
+                    {formatCurrency(Math.abs(net), currency)}
                   </span>
                 </div>
                 <div className="overflow-hidden rounded-card border border-surface-line bg-surface">

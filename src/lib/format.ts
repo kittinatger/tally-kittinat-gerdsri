@@ -1,9 +1,7 @@
-const CURRENCY = process.env.NEXT_PUBLIC_CURRENCY || "USD";
-
-export function formatCurrency(amount: number): string {
+export function formatCurrency(amount: number, currency: string = "USD"): string {
   return new Intl.NumberFormat(undefined, {
     style: "currency",
-    currency: CURRENCY,
+    currency,
     currencyDisplay: "narrowSymbol",
   }).format(amount);
 }

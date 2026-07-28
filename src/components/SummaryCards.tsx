@@ -1,5 +1,6 @@
 import type { Expense } from "@/types/expense";
 import { formatCurrency, monthKey, todayInputValue } from "@/lib/format";
+import { useCurrency } from "@/lib/currency-context";
 
 export default function SummaryCards({
   expenses,
@@ -10,6 +11,7 @@ export default function SummaryCards({
   remaining: number;
   onEditBalance: () => void;
 }) {
+  const currency = useCurrency();
   const currentMonthKey = monthKey(todayInputValue());
   const thisMonth = expenses.filter((e) => monthKey(e.date) === currentMonthKey);
 
@@ -21,13 +23,13 @@ export default function SummaryCards({
       <div className="rounded-card border border-surface-line bg-surface p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">Income</p>
         <p className="mt-1.5 font-display text-xl text-emerald-600 dark:text-emerald-400 sm:text-2xl">
-          {formatCurrency(monthIncome)}
+          {formatCurrency(monthIncome, currency)}
         </p>
       </div>
       <div className="rounded-card border border-surface-line bg-surface p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">Expenses</p>
         <p className="mt-1.5 font-display text-xl text-red-600 dark:text-red-400 sm:text-2xl">
-          {formatCurrency(monthSpent)}
+          {formatCurrency(monthSpent, currency)}
         </p>
       </div>
       <button
@@ -51,7 +53,7 @@ export default function SummaryCards({
           }`}
         >
           {remaining < 0 ? "-" : ""}
-          {formatCurrency(Math.abs(remaining))}
+          {formatCurrency(Math.abs(remaining), currency)}
         </p>
       </button>
     </div>

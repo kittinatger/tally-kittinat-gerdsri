@@ -7,6 +7,7 @@ import { formatCurrency, monthKey, monthShortLabel, todayInputValue } from "@/li
 import { badgeClasses, dotClasses } from "@/lib/category-styles";
 import type { TransactionType } from "@/lib/categories";
 import type { CategoryOption } from "@/types/category";
+import { CurrencyProvider, useCurrency } from "@/lib/currency-context";
 import AppHeader from "./AppHeader";
 import CategoryModal from "./CategoryModal";
 
@@ -15,11 +16,22 @@ type Range = "month" | "all";
 export default function CategoriesView({
   expenses,
   categories,
+  currency,
 }: {
   expenses: Expense[];
   categories: CategoryOption[];
+  currency: string;
 }) {
+  return (
+    <CurrencyProvider currency={currency}>
+      <CategoriesViewInner expenses={expenses} categories={categories} />
+    </CurrencyProvider>
+  );
+}
+
+function CategoriesViewInner({ expenses, categories }: { expenses: Expense[]; categories: CategoryOption[] }) {
   const router = useRouter();
+  const currency = useCurrency();
   const [type, setType] = useState<TransactionType>("expense");
   const [range, setRange] = useState<Range>("month");
   const [modal, setModal] = useState<{ mode: "add" } | { mode: "edit"; category: CategoryOption } | null>(null);
@@ -164,7 +176,7 @@ export default function CategoriesView({
               type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
             }`}
           >
-            {formatCurrency(breakdown.total)}
+            {formatCurrency(breakdown.total, currency)}
           </p>
           <p className="mt-1 text-xs text-ink-soft">
             {breakdown.count} transaction{breakdown.count === 1 ? "" : "s"}
@@ -179,7 +191,7 @@ export default function CategoriesView({
             {trend.map((m) => (
               <div key={m.key} className="flex flex-1 flex-col items-center gap-1.5">
                 <span className="text-[11px] font-semibold text-foreground">
-                  {m.amount > 0 ? formatCurrency(m.amount) : ""}
+                  {m.amount > 0 ? formatCurrency(m.amount, currency) : ""}
                 </span>
                 <div className="flex h-24 w-full items-end">
                   <div
@@ -212,7 +224,7 @@ export default function CategoriesView({
                   <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${badgeClasses(colorFor(row.category))}`}>
                     {row.category}
                   </span>
-                  <span className="text-sm font-semibold text-foreground">{formatCurrency(row.amount)}</span>
+                  <span className="text-sm font-semibold text-foreground">{formatCurrency(row.amount, currency)}</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-bg-soft">
                   <div

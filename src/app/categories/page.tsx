@@ -1,4 +1,4 @@
-import { listExpenses, listCategories } from "@/lib/db";
+import { listExpenses, listCategories, getCurrency } from "@/lib/db";
 import CategoriesView from "@/components/CategoriesView";
 import type { Expense } from "@/types/expense";
 import type { CategoryOption } from "@/types/category";
@@ -7,7 +7,7 @@ import type { CategoryOption } from "@/types/category";
 export const dynamic = "force-dynamic";
 
 export default async function CategoriesPage() {
-  const [rows, categoryRows] = await Promise.all([listExpenses(), listCategories()]);
+  const [rows, categoryRows, currency] = await Promise.all([listExpenses(), listCategories(), getCurrency()]);
   const expenses: Expense[] = rows.map((r) => ({
     id: r.id,
     type: r.type === "income" ? "income" : "expense",
@@ -26,5 +26,5 @@ export default async function CategoriesPage() {
     color: c.color,
   }));
 
-  return <CategoriesView expenses={expenses} categories={categories} />;
+  return <CategoriesView expenses={expenses} categories={categories} currency={currency} />;
 }

@@ -67,6 +67,7 @@ function ensureSchema(): Promise<void> {
         );
       `;
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS starting_balance_set_at TIMESTAMPTZ NOT NULL DEFAULT now();`;
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS currency TEXT NOT NULL DEFAULT 'USD';`;
       await sql`INSERT INTO app_settings (id, starting_balance) VALUES (1, 0) ON CONFLICT (id) DO NOTHING;`;
 
       // User-editable categories. Seeded once with a starter set — this runs
@@ -244,6 +245,18 @@ export async function setRemaining(amount: number): Promise<number> {
     WHERE id = 1;
   `;
   return amount;
+}
+
+export async function getCurrency(): Promise<string> {
+  await ensureSchema();
+  const { rows } = await sql<{ currency: string }>`SELECT currency FROM app_settings WHERE id = 1;`;
+  return rows[0]?.currency ?? "USD";
+}
+
+export async function setCurrency(code: string): Promise<string> {
+  await ensureSchema();
+  await sql`UPDATE app_settings SET currency = ${code} WHERE id = 1;`;
+  return code;
 }
 
 export async function listExpenses(): Promise<Expense[]> {

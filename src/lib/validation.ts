@@ -35,9 +35,19 @@ export const expenseInputSchema = z.discriminatedUnion("type", [
 
 export type ExpenseInput = z.infer<typeof expenseInputSchema>;
 
-export const settingsInputSchema = z.object({
-  remaining: z.number().finite(),
-});
+export const settingsInputSchema = z
+  .object({
+    remaining: z.number().finite().optional(),
+    currency: z
+      .string()
+      .trim()
+      .length(3)
+      .transform((v) => v.toUpperCase())
+      .optional(),
+  })
+  .refine((data) => data.remaining !== undefined || data.currency !== undefined, {
+    message: "Provide remaining and/or currency",
+  });
 
 export const categoryInputSchema = z.object({
   type: z.enum(TRANSACTION_TYPES),

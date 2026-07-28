@@ -4,6 +4,7 @@ import type { Expense } from "@/types/expense";
 import { formatCurrency, formatDateLong } from "@/lib/format";
 import { badgeClasses } from "@/lib/category-styles";
 import { useCategoryColor } from "@/lib/categories-context";
+import { useCurrency } from "@/lib/currency-context";
 
 export default function ExpenseRow({
   expense,
@@ -15,6 +16,7 @@ export default function ExpenseRow({
   isLast: boolean;
 }) {
   const color = useCategoryColor(expense.type, expense.category);
+  const currency = useCurrency();
 
   return (
     <button
@@ -50,7 +52,7 @@ export default function ExpenseRow({
         }`}
       >
         {expense.type === "income" ? "+" : "-"}
-        {formatCurrency(expense.amount)}
+        {formatCurrency(expense.amount, currency)}
       </p>
     </button>
   );

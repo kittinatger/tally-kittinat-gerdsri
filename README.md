@@ -17,6 +17,7 @@ category for you to review before saving.
 - **Spending trends** — see a 6-month trend chart for expenses or income on the Categories page.
 - **CSV export** — download filtered transactions in CSV format.
 - **Remaining balance** — live-updating balance that auto-calculates from a starting point and all logged transactions.
+- **Currency selection** — pick your default currency from the settings menu; formatting updates everywhere immediately.
 - **Password-protected** — single shared password gates the whole app via signed, httpOnly session cookies.
 - **Liquid-glass UI** — clean, modern design built for quick entry on a phone and full desktop use.
 - **Postgres storage** — works out of the box with [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres).
@@ -52,7 +53,6 @@ Then fill in `.env.local`:
 | `GEMINI_API_KEY` | Yes | Free key from [Google AI Studio](https://aistudio.google.com/apikey). Used only for receipt scanning; manual entry works without it. |
 | `APP_PASSWORD` | Yes | The password used to sign in to the app. Pick something you don't use elsewhere. |
 | `SESSION_SECRET` | Yes | Random secret used to sign session cookies. Generate one with: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
-| `NEXT_PUBLIC_CURRENCY` | No | ISO 4217 currency code for display, e.g. `USD`, `EUR`, `GBP`, `THB`. Defaults to `USD`. |
 
 ### 3. Get a local Postgres database
 
@@ -93,7 +93,6 @@ Open [http://localhost:3000](http://localhost:3000). You'll be redirected to `/l
    - `GEMINI_API_KEY`
    - `APP_PASSWORD`
    - `SESSION_SECRET`
-   - `NEXT_PUBLIC_CURRENCY` (optional)
 
 5. **Redeploy** (Vercel will do this automatically after you save env vars, or trigger it manually from the Deployments tab).
 

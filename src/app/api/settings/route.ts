@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getRemaining, setRemaining } from "@/lib/db";
+import { getCurrency, getRemaining, setCurrency, setRemaining } from "@/lib/db";
 import { settingsInputSchema } from "@/lib/validation";
 
 export async function GET() {
-  const remaining = await getRemaining();
-  return NextResponse.json({ remaining });
+  const [remaining, currency] = await Promise.all([getRemaining(), getCurrency()]);
+  return NextResponse.json({ remaining, currency });
 }
 
 export async function PATCH(req: NextRequest) {
@@ -13,6 +13,9 @@ export async function PATCH(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
-  const remaining = await setRemaining(parsed.data.remaining);
-  return NextResponse.json({ remaining });
+  const [remaining, currency] = await Promise.all([
+    parsed.data.remaining !== undefined ? setRemaining(parsed.data.remaining) : getRemaining(),
+    parsed.data.currency !== undefined ? setCurrency(parsed.data.currency) : getCurrency(),
+  ]);
+  return NextResponse.json({ remaining, currency });
 }
