@@ -93,7 +93,7 @@ https://tally-xyz123.vercel.app
 
 5. **You'll see your new database listed**
    - It will have a name and show "Neon" as the provider
-   - You're done with this step! ✅
+   - You're done with this step!
 
 ## Step 4: Add Your Secrets (5 minutes)
 
