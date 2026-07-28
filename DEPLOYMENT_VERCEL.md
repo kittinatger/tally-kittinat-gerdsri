@@ -11,74 +11,187 @@ Follow these steps exactly. Even if you've never deployed an app before, this wi
 
 ## Step 1: Create Your Copy on GitHub (2 minutes)
 
-1. Go to [github.com/kittinatger/tally-kittinat-gerdsri](https://github.com/kittinatger/tally-kittinat-gerdsri)
-2. Click the **Fork** button (top right)
-   - This creates your own copy of Tally
-3. Click **Create fork**
-4. Wait a few seconds — you now have your own copy! ✅
+**What this does**: Creates your own copy of Tally in your GitHub account.
+
+1. **Open this link in your browser**:
+   ```
+   https://github.com/kittinatger/tally-kittinat-gerdsri
+   ```
+   (Copy and paste if unsure)
+
+2. **Look at the top right of the page**
+   - You'll see several buttons in a row
+   - Find the button that says **"Fork"** with a fork icon (🍴)
+   - It's near buttons labeled "Star" and "Watch"
+   - **Click on "Fork"**
+
+3. **On the popup that appears**:
+   - Click the button that says **"Create fork"**
+   - It's usually in the bottom right
+
+4. **Wait 5-10 seconds**
+   - The page will change
+   - You'll see "your-username/tally-kittinat-gerdsri" at the top
+   - **You now have your own copy!** ✅
 
 ## Step 2: Deploy to Vercel (5 minutes)
 
-1. Go to [vercel.com](https://vercel.com)
-2. Click **Sign in** (top right)
-3. Click **Continue with GitHub**
-4. Authorize Vercel to access your GitHub account
-5. On the "New Project" screen:
-   - You should see your fork listed as `your-username/tally-kittinat-gerdsri`
-   - Click **Select** or **Import** next to it
-6. On the next screen, just click **Deploy**
-   - (Don't change anything — the defaults are fine)
-7. Wait 1-2 minutes for deployment to finish
-8. You'll see a green **"Congratulations"** message ✅
+**What this does**: Tells Vercel to run your copy of Tally on the internet.
 
-**Your app is now live!** You'll see a URL like `tally-xyz123.vercel.app`
+1. **Open Vercel in a new browser tab**:
+   ```
+   https://vercel.com
+   ```
+
+2. **In the top right corner**, click **"Sign in"**
+   - If you see "Dashboard", skip to step 5
+
+3. **Click "Continue with GitHub"**
+   - This connects Vercel to your GitHub account
+   - You may see a popup asking permission — click "Authorize"
+
+4. **Once logged in, you'll see the Vercel dashboard**
+   - Look for a button labeled **"Add New..."** or **"New Project"** (top left or center)
+   - Click it
+
+5. **On the screen that appears**:
+   - You'll see your forked Tally repo listed: `your-username/tally-kittinat-gerdsri`
+   - **Click "Select" next to your fork**
+
+6. **On the next screen**:
+   - Don't change anything
+   - Just scroll down and click **"Deploy"**
+   - This might say "Create" instead
+
+7. **Wait 1-2 minutes**
+   - You'll see "Building..." then "Deploying..."
+   - When you see a green checkmark and "Congratulations!", you're done! ✅
+
+**Your app is now live!** You'll see a URL like:
+```
+https://tally-xyz123.vercel.app
+```
 
 ## Step 3: Set Up Your Database (3 minutes)
 
-1. In Vercel, go to **Storage** (left sidebar)
-2. Click **Create Database**
-3. Click **Postgres**
-4. Click **Create**
-5. Accept the default settings and click **Create**
-6. Wait for the database to be created
+**What this does**: Creates a storage location for your expenses.
 
-## Step 4: Add Your Secrets (3 minutes)
+1. **In Vercel dashboard, look at the left sidebar**
+   - Click on **"Storage"** (it's between "Deployments" and "Settings")
 
-These are the passwords/keys that make your app work.
+2. **Click the button that says "Create Database"**
+   - If you see "Connect Store", that's fine too
 
-1. In Vercel, go to **Settings** (left sidebar)
-2. Click **Environment Variables**
-3. Add these four variables by filling in the name and value for each:
+3. **A popup will appear**
+   - Click **"Postgres"** (Postgres is the type of database)
 
-### Variable 1: `GEMINI_API_KEY`
-- **Name**: `GEMINI_API_KEY` (type exactly)
-- **Value**: Your Google Gemini API key (from step 1)
-- Click **Save**
+4. **Accept all defaults**, just click **"Create"**
+   - Don't change any of the settings
+   - Wait 30-60 seconds for it to create
 
-### Variable 2: `APP_PASSWORD`
-- **Name**: `APP_PASSWORD` (type exactly)
-- **Value**: Your Tally password (e.g., `MyExpensePassword123!`)
-- Click **Save**
+5. **You'll see your new database listed**
+   - It will have a name like "postgres" or "tally-db"
+   - You're done with this step! ✅
 
-### Variable 3: `SESSION_SECRET`
-- **Name**: `SESSION_SECRET` (type exactly)
-- **Value**: Open a terminal and paste this command:
-  ```bash
-  node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-  ```
-  - Press Enter
-  - Copy the long random string it prints
-  - Paste it as the value
-- Click **Save**
+## Step 4: Add Your Secrets (5 minutes)
 
-### Variable 4: `POSTGRES_URL`
-- Go back to **Storage** (left sidebar)
-- Click on your Postgres database
-- Scroll down and copy the `.env.local` text
-- Go back to **Settings → Environment Variables**
-- **Name**: `POSTGRES_URL` (type exactly)
-- **Value**: Paste the connection string from your database (it looks like `postgresql://...`)
-- Click **Save**
+**What this does**: Tells Vercel your passwords and API keys so your app can work.
+
+### Quick Setup (Easiest)
+
+1. **In Vercel, go to Settings → Environment Variables**
+   - Left sidebar → "Settings" → "Environment Variables"
+
+2. **You'll see empty boxes to fill in**
+   - Click in the first box labeled "Name"
+
+3. **Add these four secrets one at a time** (follow the exact steps below)
+
+---
+
+### 🔑 Secret 1: `GEMINI_API_KEY` (for receipt scanning)
+
+1. **In the "Name" box**, type exactly:
+   ```
+   GEMINI_API_KEY
+   ```
+
+2. **In the "Value" box**, paste your Google Gemini API key
+   - You got this from https://aistudio.google.com/apikey in Step 1
+   - If you didn't get one yet, go there now and click "Get API Key"
+
+3. **Click "Save"**
+
+---
+
+### 🔑 Secret 2: `APP_PASSWORD` (your Tally login password)
+
+1. **Click the "Add new..." button** to add another variable
+
+2. **In the "Name" box**, type exactly:
+   ```
+   APP_PASSWORD
+   ```
+
+3. **In the "Value" box**, type your password
+   - Examples: `MyPassword123!` or `SecureExpense2024`
+   - Make it something you'll remember!
+
+4. **Click "Save"**
+
+---
+
+### 🔑 Secret 3: `SESSION_SECRET` (security key)
+
+This is a random security key. Don't worry what it means, just generate it:
+
+1. **Click the "Add new..." button** to add another variable
+
+2. **In the "Name" box**, type exactly:
+   ```
+   SESSION_SECRET
+   ```
+
+3. **For the "Value", follow these steps**:
+   - Open a terminal/command prompt on your computer
+   - Copy and paste this command (copy it exactly):
+     ```bash
+     node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+     ```
+   - Press Enter
+   - A long random string will appear (like `e7b4d9fccc1ade2ae...`)
+   - Copy that entire string
+   - Paste it in the "Value" box
+
+4. **Click "Save"**
+
+---
+
+### 🔑 Secret 4: `POSTGRES_URL` (database connection)
+
+This tells Tally where to store your expenses.
+
+1. **In Vercel left sidebar, click "Storage"** (where you created the database)
+
+2. **Click on your Postgres database** (it's listed there)
+
+3. **Look for a section that shows connection information**
+   - Find the line that starts with `postgresql://`
+   - Click the "Copy" icon next to it
+   - This copies your database URL
+
+4. **Go back to Settings → Environment Variables**
+
+5. **Click "Add new..." to add another variable**
+
+6. **In the "Name" box**, type exactly:
+   ```
+   POSTGRES_URL
+   ```
+
+7. **In the "Value" box**, paste the database URL you just copied
+
+8. **Click "Save"**
 
 ## Step 5: Redeploy (2 minutes)
 
