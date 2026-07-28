@@ -56,6 +56,7 @@ export default function PullToRefresh({ children }: { children: React.ReactNode 
 
   const indicatorHeight = refreshing ? PULL_THRESHOLD : pull;
   const ready = pull >= PULL_THRESHOLD;
+  const label = refreshing ? "Refreshing…" : ready ? "Release to refresh" : "Pull to refresh";
 
   return (
     <div onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
@@ -64,12 +65,23 @@ export default function PullToRefresh({ children }: { children: React.ReactNode 
         style={{ height: indicatorHeight }}
         aria-hidden={indicatorHeight === 0}
       >
-        <span
-          className={`h-6 w-6 rounded-full border-2 border-navy border-t-transparent transition-opacity ${
-            refreshing ? "animate-spin opacity-100" : ready ? "opacity-100" : "opacity-60"
-          }`}
-          style={!refreshing ? { transform: `rotate(${pull * 3}deg)` } : undefined}
-        />
+        <div className="flex items-center gap-2 rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] px-3.5 py-2 shadow-soft backdrop-blur-xl">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.25"
+            strokeLinecap="round"
+            className={`h-5 w-5 shrink-0 text-navy transition-transform ${refreshing ? "animate-spin" : ""}`}
+            style={!refreshing ? { transform: `rotate(${Math.min(pull * 3.5, 360)}deg)` } : undefined}
+          >
+            <path d="M20 12a8 8 0 1 1-2.34-5.66" />
+            <path d="M20 4v5h-5" />
+          </svg>
+          <span className={`text-xs font-semibold ${ready || refreshing ? "text-foreground" : "text-ink-soft"}`}>
+            {label}
+          </span>
+        </div>
       </div>
       {children}
     </div>
