@@ -102,10 +102,24 @@ gated behind the in-app password. For an extra layer, you can also enable
 [Vercel's built-in Deployment Protection](https://vercel.com/docs/deployment-protection)
 under Project Settings → Deployment Protection.
 
+## Deployment options
+
+- **Vercel** *(recommended for free tier)*: Deploy directly from GitHub with one click. Vercel handles hosting and can provide a free Postgres database. See deployment section above.
+- **Railway.app**: A simpler alternative to Vercel with built-in Postgres. Same environment-variable setup, different UI.
+- **Fly.io**: Global deployment with built-in Postgres (paid, starts at $5/month for always-on).
+- **Docker**: Self-host on your own server. Add a `Dockerfile` and `docker-compose.yml` to containerize the app.
+
+## Known limitations
+
+- **Single-user per instance**: This app uses a shared password (not per-user accounts). Each deployed instance is single-user by design. To share with others, each person must run their own instance.
+- **Requires Gemini API key**: Receipt scanning and voice transcription require a free API key from [Google AI Studio](https://aistudio.google.com/apikey). Manual entry and CSV export work without it.
+- **Requires Postgres database**: The app stores all data in Postgres (not SQLite). Free tiers available via [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres) or [Railway](https://railway.app).
+
 ## Security notes
 
-- Never commit `.env.local` — it's already covered by `.gitignore`.
-- The app uses a single shared password (not per-user accounts), which is
-  appropriate for a personal single-user tool but not a multi-user product.
-- Rotate `APP_PASSWORD` and `SESSION_SECRET` any time you suspect they've
-  leaked; changing `SESSION_SECRET` invalidates all existing sessions.
+- **API authentication**: All API routes (`/api/*`) require a valid session token and are protected by middleware. Unauthenticated requests return `401 Unauthorized`.
+- **Single-user design**: This app uses a single shared password, not per-user accounts. This is appropriate for a personal tool but not for multi-user SaaS. Each instance serves one person or household.
+- **Session security**: Sessions are signed with HMAC-SHA256 using `SESSION_SECRET`, stored in httpOnly cookies, and expire after 30 days. Session cookies are marked `Secure` (HTTPS only) and `SameSite=Lax` in production.
+- **HTTPS required**: Always deploy on HTTPS in production. Session cookies include the `Secure` flag and will not work over plain HTTP.
+- **Environment variables**: Store `APP_PASSWORD` and `SESSION_SECRET` securely in your hosting platform's environment variable settings (Vercel, Railway, etc.), not in code. Never commit `.env.local`.
+- **Rotate secrets**: If you suspect `APP_PASSWORD` or `SESSION_SECRET` have leaked, rotate them immediately. Changing `SESSION_SECRET` invalidates all existing sessions.
