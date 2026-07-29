@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { attachReceiptImage, getReceiptImage } from "@/lib/db";
+import { getUserId } from "@/lib/auth";
 
 const MAX_BYTES = 8 * 1024 * 1024; // 8MB
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
@@ -10,6 +11,7 @@ function parseId(id: string): number | null {
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const userId = await getUserId();
   const { id } = await params;
   const expenseId = parseId(id);
   if (expenseId === null) {
@@ -29,7 +31,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const ok = await attachReceiptImage(expenseId, buffer, file.type);
+  const ok = await attachReceiptImage(userId, expenseId, buffer, file.type);
   if (!ok) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -37,13 +39,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const userId = await getUserId();
   const { id } = await params;
   const expenseId = parseId(id);
   if (expenseId === null) {
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
 
-  const image = await getReceiptImage(expenseId);
+  const image = await getReceiptImage(userId, expenseId);
   if (!image) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

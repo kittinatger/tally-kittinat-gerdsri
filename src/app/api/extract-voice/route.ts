@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { extractTransactionFromAudio } from "@/lib/gemini";
 import { getAutoConvertCurrency, getCurrency, listCategories } from "@/lib/db";
 import { maybeAutoConvert } from "@/lib/exchange-rate";
+import { getUserId } from "@/lib/auth";
 
 const MAX_BYTES = 15 * 1024 * 1024; // 15MB
 const ALLOWED_TYPES = new Set([
@@ -15,6 +16,7 @@ const ALLOWED_TYPES = new Set([
 ]);
 
 export async function POST(req: NextRequest) {
+  const userId = await getUserId();
   const formData = await req.formData().catch(() => null);
   const file = formData?.get("audio");
 
@@ -39,9 +41,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const [categoryRows, defaultCurrency, autoConvertEnabled] = await Promise.all([
-      listCategories(),
-      getCurrency(),
-      getAutoConvertCurrency(),
+      listCategories(userId),
+      getCurrency(userId),
+      getAutoConvertCurrency(userId),
     ]);
     const categories = {
       expense: categoryRows.filter((c) => c.type === "expense").map((c) => c.name),

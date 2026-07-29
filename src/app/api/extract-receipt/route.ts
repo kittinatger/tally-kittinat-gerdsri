@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { extractTransaction } from "@/lib/gemini";
 import { getAutoConvertCurrency, getCurrency, listCategories } from "@/lib/db";
 import { maybeAutoConvert } from "@/lib/exchange-rate";
+import { getUserId } from "@/lib/auth";
 
 const MAX_BYTES = 8 * 1024 * 1024; // 8MB
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 
 export async function POST(req: NextRequest) {
+  const userId = await getUserId();
   const formData = await req.formData().catch(() => null);
   const file = formData?.get("image");
 
@@ -27,9 +29,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const [categoryRows, defaultCurrency, autoConvertEnabled] = await Promise.all([
-      listCategories(),
-      getCurrency(),
-      getAutoConvertCurrency(),
+      listCategories(userId),
+      getCurrency(userId),
+      getAutoConvertCurrency(userId),
     ]);
     const categories = {
       expense: categoryRows.filter((c) => c.type === "expense").map((c) => c.name),

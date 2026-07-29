@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function LoginForm({ next }: { next: string }) {
+export default function RegisterForm() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -16,7 +16,7 @@ export default function LoginForm({ next }: { next: string }) {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -26,7 +26,7 @@ export default function LoginForm({ next }: { next: string }) {
         setError(data.error ?? "Something went wrong.");
         return;
       }
-      router.replace(next || "/");
+      router.replace("/");
       router.refresh();
     } catch {
       setError("Network error. Please try again.");
@@ -50,7 +50,7 @@ export default function LoginForm({ next }: { next: string }) {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           className="w-full rounded-card border border-line bg-bg-soft px-4 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-          placeholder="Enter username"
+          placeholder="3-32 characters: letters, numbers, . _ -"
         />
       </div>
       <div>
@@ -61,11 +61,12 @@ export default function LoginForm({ next }: { next: string }) {
           id="password"
           type="password"
           required
-          autoComplete="current-password"
+          minLength={8}
+          autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="w-full rounded-card border border-line bg-bg-soft px-4 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-          placeholder="Enter password"
+          placeholder="At least 8 characters"
         />
       </div>
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
@@ -74,12 +75,12 @@ export default function LoginForm({ next }: { next: string }) {
         disabled={loading}
         className="w-full rounded-full bg-navy px-4 py-2.5 font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
       >
-        {loading ? "Signing in..." : "Sign in"}
+        {loading ? "Creating account..." : "Create account"}
       </button>
       <p className="text-center text-sm text-ink-soft">
-        New here?{" "}
-        <Link href="/register" className="font-semibold text-navy hover:underline">
-          Create an account
+        Already have an account?{" "}
+        <Link href="/login" className="font-semibold text-navy hover:underline">
+          Sign in
         </Link>
       </p>
     </form>

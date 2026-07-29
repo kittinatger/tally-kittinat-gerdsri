@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updateCategory, deleteCategory } from "@/lib/db";
 import { categoryUpdateSchema } from "@/lib/validation";
+import { getUserId } from "@/lib/auth";
 
 function parseId(id: string): number | null {
   const n = Number(id);
@@ -12,6 +13,7 @@ function isUniqueViolation(err: unknown): boolean {
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const userId = await getUserId();
   const { id } = await params;
   const categoryId = parseId(id);
   if (categoryId === null) {
@@ -25,7 +27,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   try {
-    const category = await updateCategory(categoryId, parsed.data);
+    const category = await updateCategory(userId, categoryId, parsed.data);
     if (!category) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
@@ -42,13 +44,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const userId = await getUserId();
   const { id } = await params;
   const categoryId = parseId(id);
   if (categoryId === null) {
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
 
-  const result = await deleteCategory(categoryId);
+  const result = await deleteCategory(userId, categoryId);
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }

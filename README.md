@@ -6,7 +6,7 @@ category for you to review before saving.
 
 ## Deploy
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fkittinatger%2Ftally-kittinat-gerdsri&env=POSTGRES_URL,GEMINI_API_KEY,APP_PASSWORD,SESSION_SECRET&envDescription=Required%20environment%20variables%20for%20Tally&envLink=https%3A%2F%2Fgithub.com%2Fkittinatger%2Ftally-kittinat-gerdsri%2Fblob%2Fmaster%2F.env.local.example)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fkittinatger%2Ftally-kittinat-gerdsri&env=POSTGRES_URL,GEMINI_API_KEY,SESSION_SECRET&envDescription=Required%20environment%20variables%20for%20Tally&envLink=https%3A%2F%2Fgithub.com%2Fkittinatger%2Ftally-kittinat-gerdsri%2Fblob%2Fmaster%2F.env.local.example)
 
 Or follow the [detailed step-by-step Vercel deployment guide](DEPLOYMENT_VERCEL.md) (no technical experience needed).
 
@@ -25,7 +25,7 @@ Or follow the [detailed step-by-step Vercel deployment guide](DEPLOYMENT_VERCEL.
 - **Remaining balance** — live-updating balance that auto-calculates from a starting point and all logged transactions.
 - **Currency selection** — pick your default currency from the settings menu; formatting updates everywhere immediately.
 - **Automatic currency conversion** — optional toggle in settings; when scanning receipts or recording voice memos in a different currency, the detected amount is converted to your default currency (via [Frankfurter](https://frankfurter.app), a free ECB-rate API) before you review it.
-- **Password-protected** — single shared password gates the whole app via signed, httpOnly session cookies.
+- **Multi-user accounts** — anyone can sign up with their own username and password; each account's expenses, categories, and balance are fully private and isolated from every other account on the same deployment, via signed, httpOnly session cookies.
 - **Liquid-glass UI** — clean, modern design built for quick entry on a phone and full desktop use.
 - **Postgres storage** — works out of the box with [Vercel's Neon database](https://vercel.com/docs/storage/vercel-postgres) (free tier available).
 
@@ -76,8 +76,8 @@ Then fill in `.env.local`:
 | --- | --- | --- |
 | `POSTGRES_URL` | Yes | Connection string for your Postgres database. If you're using Vercel Postgres, run `vercel env pull .env.local` after creating the database (see below) instead of setting it by hand. |
 | `GEMINI_API_KEY` | Yes | Free key from [Google AI Studio](https://aistudio.google.com/apikey). Used only for receipt scanning; manual entry works without it. |
-| `APP_PASSWORD` | Yes | The password used to sign in to the app. Pick something you don't use elsewhere. |
 | `SESSION_SECRET` | Yes | A random secret that keeps your login session secure. Think of it like a security key that scrambles your session cookie so no one can forge a fake login. Generate one by copying and pasting this into your terminal: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` — it will print out a long random string (like `e7b4d9fccc1ade2ae...`). Paste that string as the value for `SESSION_SECRET`. **Important**: Use a different random string for production (on Vercel) than for local development. |
+| `ADMIN_USERNAME` / `ADMIN_BOOTSTRAP_PASSWORD` | No | Only needed once, on the very first deploy of an instance that already has data from before multi-user accounts existed — creates an admin account and assigns that existing data to it. Leave unset on a brand-new install; everyone just signs up at `/register` instead. Remove both after confirming the admin account works. |
 
 ### 3. Get a Postgres database
 
@@ -109,18 +109,19 @@ Push the repo to a **private** GitHub repo instead of forking publicly if you'd 
 
 ## Known limitations
 
-- **Single-user per instance**: This app uses a shared password (not per-user accounts). Each deployed instance is single-user by design. To share with others, each person must run their own instance.
+- **No password reset or account settings UI yet**: there's currently no way to change your password or delete your account from within the app.
 - **Requires Gemini API key**: Receipt scanning and voice transcription require a free API key from [Google AI Studio](https://aistudio.google.com/apikey). Manual entry and CSV export work without it.
 - **Requires Postgres database**: The app stores all data in Postgres (not SQLite). Free tier available via Vercel (uses Neon), or [Railway](https://railway.app).
 
 ## Security notes
 
 - **API authentication**: All API routes (`/api/*`) require a valid session token and are protected by middleware. Unauthenticated requests return `401 Unauthorized`.
-- **Single-user design**: This app uses a single shared password, not per-user accounts. This is appropriate for a personal tool but not for multi-user SaaS. Each instance serves one person or household.
+- **Multi-user accounts, fully isolated**: Anyone can create an account at `/register` (username + password, no email). Every account's expenses, categories, and balance are scoped to that account only — no other account can see or modify them.
+- **Password storage**: Passwords are hashed with scrypt (a slow, salted hashing algorithm) before being stored — the plaintext password is never saved anywhere.
 - **Session security**: Sessions are signed with HMAC-SHA256 (a mathematical lock that proves no one tampered with your login badge) using `SESSION_SECRET`, stored in httpOnly cookies (locked away where hackers can't access them), and expire after 30 days. Session cookies are marked `Secure` (only works on encrypted websites) and `SameSite=Lax` (protects against tricks) in production.
 - **HTTPS required**: Always deploy on HTTPS in production. Session cookies include the `Secure` flag and will not work over plain HTTP.
-- **Environment variables**: Store `APP_PASSWORD` and `SESSION_SECRET` securely in your hosting platform's environment variable settings (Vercel, Railway, etc.), not in code. Never commit `.env.local`.
-- **Rotate secrets**: If you suspect `APP_PASSWORD` or `SESSION_SECRET` have leaked, rotate them immediately. Changing `SESSION_SECRET` invalidates all existing sessions.
+- **Environment variables**: Store `SESSION_SECRET` (and `ADMIN_BOOTSTRAP_PASSWORD`, if used) securely in your hosting platform's environment variable settings (Vercel, Railway, etc.), not in code. Never commit `.env.local`.
+- **Rotate secrets**: If you suspect `SESSION_SECRET` has leaked, rotate it immediately — this invalidates all existing sessions for every account, logging everyone out.
 
 ## Developed by
 

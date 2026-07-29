@@ -36,45 +36,31 @@ function fromHex(hex: string): Uint8Array | null {
   return bytes;
 }
 
-export async function createSessionToken(): Promise<string> {
+export async function createSessionToken(userId: number): Promise<string> {
   const expires = Date.now() + SESSION_MAX_AGE_SECONDS * 1000;
-  const payload = String(expires);
+  const payload = `${userId}.${expires}`;
   const key = await getKey();
   const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
   return `${payload}.${toHex(signature)}`;
 }
 
-export async function verifySessionToken(token: string | undefined | null): Promise<boolean> {
-  if (!token) return false;
-  const dotIndex = token.indexOf(".");
-  if (dotIndex === -1) return false;
-  const payload = token.slice(0, dotIndex);
-  const signatureHex = token.slice(dotIndex + 1);
+export async function verifySessionToken(token: string | undefined | null): Promise<number | null> {
+  if (!token) return null;
+  const lastDot = token.lastIndexOf(".");
+  if (lastDot === -1) return null;
+  const payload = token.slice(0, lastDot);
+  const signatureHex = token.slice(lastDot + 1);
 
-  const expires = Number(payload);
-  if (!Number.isFinite(expires) || Date.now() > expires) return false;
+  const [userIdStr, expiresStr] = payload.split(".");
+  const userId = Number(userIdStr);
+  const expires = Number(expiresStr);
+  if (!Number.isInteger(userId) || userId <= 0) return null;
+  if (!Number.isFinite(expires) || Date.now() > expires) return null;
 
   const signatureBytes = fromHex(signatureHex);
-  if (!signatureBytes) return false;
+  if (!signatureBytes) return null;
 
   const key = await getKey();
-  return crypto.subtle.verify("HMAC", key, signatureBytes as BufferSource, new TextEncoder().encode(payload));
-}
-
-export async function verifyPassword(candidate: string): Promise<boolean> {
-  const expected = process.env.APP_PASSWORD;
-  if (!expected) {
-    throw new Error("APP_PASSWORD environment variable is not set.");
-  }
-  const key = await getKey();
-  const [candidateSig, expectedSig] = await Promise.all([
-    crypto.subtle.sign("HMAC", key, new TextEncoder().encode(candidate)),
-    crypto.subtle.sign("HMAC", key, new TextEncoder().encode(expected)),
-  ]);
-  const a = new Uint8Array(candidateSig);
-  const b = new Uint8Array(expectedSig);
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
-  return diff === 0;
+  const ok = await crypto.subtle.verify("HMAC", key, signatureBytes as BufferSource, new TextEncoder().encode(payload));
+  return ok ? userId : null;
 }

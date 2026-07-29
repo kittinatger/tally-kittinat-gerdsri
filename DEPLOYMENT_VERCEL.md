@@ -7,7 +7,8 @@ Follow these steps exactly. Even if you've never deployed an app before, this wi
 1. A GitHub account — [Create GitHub Account](https://github.com/signup)
 2. A Vercel account (use your GitHub login) — [Sign up on Vercel](https://vercel.com/signup)
 3. A Google Gemini API key (for receipt scanning) — [Get Gemini API Key](https://aistudio.google.com/apikey)
-4. A password you want to use for Tally (e.g., `MyExpensePassword123!`)
+
+You'll pick your Tally username and password later, after deploying — you create your own account right in the app, like signing up for any other website.
 
 ## Step 1: Create Your Copy on GitHub (2 minutes)
 
@@ -104,7 +105,7 @@ https://tally-xyz123.vercel.app
 2. **You'll see empty boxes to fill in**
    - Click in the first box labeled "Name"
 
-3. **Add these four secrets one at a time** (follow the exact steps below)
+3. **Add these three secrets one at a time** (follow the exact steps below)
 
 ---
 
@@ -123,24 +124,7 @@ https://tally-xyz123.vercel.app
 
 ---
 
-### Secret 2: `APP_PASSWORD` (your Tally login password)
-
-1. **Click the "Add new..." button** to add another variable
-
-2. **In the "Name" box**, type exactly:
-   ```
-   APP_PASSWORD
-   ```
-
-3. **In the "Value" box**, type your password
-   - Examples: `MyPassword123!` or `SecureExpense2024`
-   - Make it something you'll remember!
-
-4. **Click "Save"**
-
----
-
-### Secret 3: `SESSION_SECRET` (security key)
+### Secret 2: `SESSION_SECRET` (security key)
 
 This is a random security key. Don't worry what it means, just generate it:
 
@@ -166,7 +150,7 @@ This is a random security key. Don't worry what it means, just generate it:
 
 ---
 
-### Secret 4: `POSTGRES_URL` (database connection)
+### Secret 3: `POSTGRES_URL` (database connection)
 
 This tells Tally where to store your expenses.
 
@@ -200,17 +184,20 @@ This tells Tally where to store your expenses.
 4. Click **Redeploy**
 5. Wait 1-2 minutes for it to finish
 
-## Step 6: Log In (1 minute)
+## Step 6: Create Your Account (1 minute)
 
 1. Go to your app URL (e.g., `tally-xyz123.vercel.app`)
-2. Enter your password (the one you set as `APP_PASSWORD`)
-3. Click **Sign in**
-4. **You're in!** Start adding expenses!
+2. Click **"Create an account"** on the login page
+3. Pick a username (3-32 characters) and a password (at least 8 characters)
+4. Click **Create account**
+5. **You're in!** Start adding expenses!
+
+Anyone else who wants to use this same deployment (family, friends) can go to the same URL and create their own account — everyone's expenses stay private to their own account.
 
 ## Troubleshooting
 
 ### "Environment variables are not set" error
-- Make sure you added all 4 variables in Vercel Settings → Environment Variables
+- Make sure you added all 3 variables in Vercel Settings → Environment Variables
 - Make sure the names are **exactly** correct (copy-paste if unsure)
 - Click **Redeploy** after adding variables
 
@@ -219,10 +206,9 @@ This tells Tally where to store your expenses.
 - Make sure `POSTGRES_URL` is set in Environment Variables
 - Click **Redeploy**
 
-### "Wrong password" on login
-- You set the wrong `APP_PASSWORD` or mistyped it
-- Update `APP_PASSWORD` in Environment Variables with the correct password
-- Click **Redeploy**
+### "That username is already taken"
+- Someone (maybe you, on an earlier attempt) already registered that username on this deployment
+- Pick a different username, or sign in instead of registering if the account is yours
 
 ### "Receipt scanning doesn't work"
 - You need a valid Gemini API key: [Get Gemini API Key](https://aistudio.google.com/apikey)
@@ -232,13 +218,13 @@ This tells Tally where to store your expenses.
 
 ## You're Done!
 
-Your personal expense tracker is now live and only accessible with your password.
+Your personal expense tracker is now live. Each account that signs up only sees its own data.
 
 **Next steps:**
 - Add your first expense manually
 - Try taking a photo of a receipt to test AI extraction
 - Customize categories in Settings
-- Share the URL only with people you trust
+- Share the URL with anyone you'd like to also use Tally — they create their own account and their data stays separate from yours
 
 **Need help?**
 - [Report issue on GitHub](https://github.com/kittinatger/tally-kittinat-gerdsri/issues)
