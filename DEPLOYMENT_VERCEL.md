@@ -1,5 +1,7 @@
 # Deploy Tally to Vercel — Step by Step
 
+> **Just want to use Tally, not run your own copy?** You don't need any of this — go to [tally-kittinat.vercel.app](https://tally-kittinat.vercel.app) and create a free account instead. This guide is only for people who specifically want their own separate deployment.
+
 Follow these steps exactly. Even if you've never deployed an app before, this will work.
 
 ## What You Need (5 minutes to gather)

@@ -4,11 +4,11 @@ A private, personal expense tracker. Add expenses manually or snap a photo of a
 receipt and let Gemini's vision API read the merchant, total, date, and
 category for you to review before saving.
 
-## Deploy
+## Just want to use Tally?
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fkittinatger%2Ftally-kittinat-gerdsri&env=POSTGRES_URL,GEMINI_API_KEY,SESSION_SECRET&envDescription=Required%20environment%20variables%20for%20Tally&envLink=https%3A%2F%2Fgithub.com%2Fkittinatger%2Ftally-kittinat-gerdsri%2Fblob%2Fmaster%2F.env.local.example)
+You don't need to deploy anything — go to **[tally-kittinat.vercel.app](https://tally-kittinat.vercel.app)** and create your own account. It's free, takes a few seconds, and your data is completely private to your account (no one else, including other accounts on that deployment, can see it).
 
-Or follow the [detailed step-by-step Vercel deployment guide](DEPLOYMENT_VERCEL.md) (no technical experience needed).
+Self-hosting your own separate copy is only useful if you specifically want full control over your own database and infrastructure — see [Self-hosting](#self-hosting) below if that's you.
 
 ## Features
 
@@ -100,9 +100,13 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). You'll be redirected to `/login` first.
 
-## Deploying privately
+## Self-hosting
 
-For the full step-by-step walkthrough (forking, Vercel, database, environment variables), see the [Vercel deployment guide](DEPLOYMENT_VERCEL.md).
+Most people should just [create an account on the live instance](#just-want-to-use-tally) instead — self-hosting is only worth it if you want your own separate database and infrastructure.
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fkittinatger%2Ftally-kittinat-gerdsri&env=POSTGRES_URL,GEMINI_API_KEY,SESSION_SECRET&envDescription=Required%20environment%20variables%20for%20Tally&envLink=https%3A%2F%2Fgithub.com%2Fkittinatger%2Ftally-kittinat-gerdsri%2Fblob%2Fmaster%2F.env.local.example)
+
+Or follow the [detailed step-by-step Vercel deployment guide](DEPLOYMENT_VERCEL.md) (no technical experience needed) — it walks through forking, deploying, the database, and environment variables.
 
 Push the repo to a **private** GitHub repo instead of forking publicly if you'd rather keep your copy invisible to others. Everything else in the guide is the same. You can also enable [Vercel's built-in Deployment Protection](https://vercel.com/docs/deployment-protection) for an extra layer.
 
