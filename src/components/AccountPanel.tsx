@@ -117,6 +117,7 @@ export default function AccountPanel({ initialUsername }: { initialUsername: str
             className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
         </div>
+        <p className="mt-1.5 text-xs text-ink-soft">Enter your current password to confirm this change.</p>
         {usernameError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{usernameError}</p>}
         {usernameSuccess && <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">Username updated.</p>}
         <button
