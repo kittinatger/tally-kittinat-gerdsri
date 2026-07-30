@@ -8,8 +8,6 @@ category for you to review before saving.
 
 You don't need to deploy anything — go to **[tally-kittinat.vercel.app](https://tally-kittinat.vercel.app)** and create your own account. It's free, takes a few seconds, and your data is completely private to your account (no one else, including other accounts on that deployment, can see it).
 
-Self-hosting your own separate copy is only useful if you specifically want full control over your own database and infrastructure — see [Self-hosting](#self-hosting) below if that's you.
-
 ## Features
 
 - **Manual entry & receipt scanning** — enter expenses/income manually (date, amount, merchant, category, notes) or snap a photo; [Google Gemini](https://ai.google.dev/) extracts the fields and pre-fills the form for you to review.
@@ -100,18 +98,6 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). You'll be redirected to `/login` first.
 
-## Self-hosting
-
-Most people should just [create an account on the live instance](#just-want-to-use-tally) instead — self-hosting is only worth it if you want your own separate database and infrastructure.
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fkittinatger%2Ftally-kittinat-gerdsri&env=POSTGRES_URL,GEMINI_API_KEY,SESSION_SECRET&envDescription=Required%20environment%20variables%20for%20Tally&envLink=https%3A%2F%2Fgithub.com%2Fkittinatger%2Ftally-kittinat-gerdsri%2Fblob%2Fmaster%2F.env.local.example)
-
-Or follow the [detailed step-by-step Vercel deployment guide](DEPLOYMENT_VERCEL.md) (no technical experience needed) — it walks through forking, deploying, the database, and environment variables.
-
-Push the repo to a **private** GitHub repo instead of forking publicly if you'd rather keep your copy invisible to others. Everything else in the guide is the same. You can also enable [Vercel's built-in Deployment Protection](https://vercel.com/docs/deployment-protection) for an extra layer.
-
-**Alternative hosts**: Railway.app and Fly.io also work (same environment variables, different UI); Docker self-hosting is possible but not documented here yet.
-
 ## Known limitations
 
 - **No account deletion or password reset (forgot-password) flow yet**: you can change your username/password from Settings while logged in, but there's no way to delete an account or recover access if you forget your password.
@@ -132,4 +118,13 @@ Push the repo to a **private** GitHub repo instead of forking publicly if you'd 
 
 [Kittinat Gerdsri](https://kittinatger.github.io/kittinat-gerdsri/)
 
-Tally is a personal project designed to make expense tracking simple, private, and self-hosted.
+Tally is a personal project designed to make expense tracking simple and private. [Create an account](https://tally-kittinat.vercel.app) to use it — no deployment needed.
+
+<details>
+<summary>Running your own separate instance</summary>
+
+Not recommended for most people — [creating an account on the live instance](#just-want-to-use-tally) already gives you fully private, isolated data. Only do this if you specifically need your own separate database and infrastructure.
+
+If you still want to: [Vercel deploy link](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fkittinatger%2Ftally-kittinat-gerdsri&env=POSTGRES_URL,GEMINI_API_KEY,SESSION_SECRET&envDescription=Required%20environment%20variables%20for%20Tally&envLink=https%3A%2F%2Fgithub.com%2Fkittinatger%2Ftally-kittinat-gerdsri%2Fblob%2Fmaster%2F.env.local.example), or the [step-by-step guide](DEPLOYMENT_VERCEL.md) for a fully manual walkthrough.
+
+</details>
