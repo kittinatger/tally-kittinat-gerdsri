@@ -513,6 +513,27 @@ export async function getUserByUsername(username: string): Promise<UserRow | nul
   return rows[0] ?? null;
 }
 
+export async function getUserById(id: number): Promise<UserRow | null> {
+  await ensureSchema();
+  const { rows } = await sql<UserRow>`
+    SELECT id, username, password_hash FROM users WHERE id = ${id};
+  `;
+  return rows[0] ?? null;
+}
+
+export async function updateUsername(userId: number, newUsername: string): Promise<string> {
+  await ensureSchema();
+  const { rows } = await sql<{ username: string }>`
+    UPDATE users SET username = ${newUsername} WHERE id = ${userId} RETURNING username;
+  `;
+  return rows[0].username;
+}
+
+export async function updatePasswordHash(userId: number, passwordHash: string): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE users SET password_hash = ${passwordHash} WHERE id = ${userId};`;
+}
+
 export async function createUser(username: string, passwordHash: string): Promise<{ id: number; username: string }> {
   await ensureSchema();
   const { rows } = await sql<{ id: number; username: string }>`

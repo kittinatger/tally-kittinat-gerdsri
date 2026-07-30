@@ -6,10 +6,19 @@ import { CurrencyProvider } from "@/lib/currency-context";
 import { APP_VERSION } from "@/lib/version";
 import PullToRefresh from "./PullToRefresh";
 import AppHeader from "./AppHeader";
+import AccountPanel from "./AccountPanel";
 import SettingsPanel from "./SettingsPanel";
 import CategoryManager from "./CategoryManager";
 
-export default function SettingsView({ categories, currency }: { categories: CategoryOption[]; currency: string }) {
+export default function SettingsView({
+  categories,
+  currency,
+  username,
+}: {
+  categories: CategoryOption[];
+  currency: string;
+  username: string;
+}) {
   return (
     <CurrencyProvider currency={currency}>
       <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-10 pt-3 sm:px-4">
@@ -18,6 +27,10 @@ export default function SettingsView({ categories, currency }: { categories: Cat
 
           <main className="flex-1 px-1 py-6 sm:px-2">
             <h2 className="mb-5 font-display text-2xl text-foreground">Settings</h2>
+
+            <div className="mb-8">
+              <AccountPanel initialUsername={username} />
+            </div>
 
             <div className="mb-8 rounded-card border border-line bg-surface p-5">
               <SettingsPanel />

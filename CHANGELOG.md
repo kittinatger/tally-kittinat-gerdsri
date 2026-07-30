@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.4.0] - 2026-07-30
+
+### Added
+- "Your account" section in Settings — view your username, change your username (checked for availability before saving), and change your password, both requiring your current password to confirm
+
 ## [0.3.0] - 2026-07-30
 
 ### Changed
