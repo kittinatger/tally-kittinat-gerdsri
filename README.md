@@ -20,12 +20,13 @@ Or follow the [detailed step-by-step Vercel deployment guide](DEPLOYMENT_VERCEL.
 - **Free-form tags** — label transactions with custom tags for cross-cutting groupings.
 - **Income tracking** — separate income and expense transaction types with distinct category lists.
 - **Customizable categories** — rename and recolor expense/income categories to match your workflow.
-- **Spending trends** — see a 6-month trend chart for expenses or income on the Categories page.
+- **Spending trends** — see a 6-month trend chart and category breakdown right on the Dashboard.
 - **CSV export** — download filtered transactions in CSV format.
 - **Remaining balance** — live-updating balance that auto-calculates from a starting point and all logged transactions.
-- **Currency selection** — pick your default currency from the settings menu; formatting updates everywhere immediately.
+- **Currency selection** — pick your default currency in Settings; formatting updates everywhere immediately.
 - **Automatic currency conversion** — optional toggle in settings; when scanning receipts or recording voice memos in a different currency, the detected amount is converted to your default currency (via [Frankfurter](https://frankfurter.app), a free ECB-rate API) before you review it.
 - **Multi-user accounts** — anyone can sign up with their own username and password; each account's expenses, categories, and balance are fully private and isolated from every other account on the same deployment, via signed, httpOnly session cookies.
+- **Account management** — change your username or password any time from Settings (both require re-entering your current password to confirm).
 - **Liquid-glass UI** — clean, modern design built for quick entry on a phone and full desktop use.
 - **Postgres storage** — works out of the box with [Vercel's Neon database](https://vercel.com/docs/storage/vercel-postgres) (free tier available).
 
@@ -40,10 +41,10 @@ Or follow the [detailed step-by-step Vercel deployment guide](DEPLOYMENT_VERCEL.
 <tr>
 <td><img src="screenshots/receipt-scan-light-mode.jpg" alt="Receipt scanning" width="250"/></td>
 <td><img src="screenshots/voice-entry-light-mode.jpg" alt="Voice entry" width="250"/></td>
-<td><img src="screenshots/categories-light-mode.jpg" alt="Categories with spending trend" width="250"/></td>
+<td><img src="screenshots/categories-light-mode.jpg" alt="Spending trend and category breakdown" width="250"/></td>
 </tr>
 <tr>
-<td><img src="screenshots/settings-dark-mode.jpg" alt="Settings menu" width="250"/></td>
+<td><img src="screenshots/settings-dark-mode.jpg" alt="Settings" width="250"/></td>
 </tr>
 </table>
 
@@ -109,7 +110,7 @@ Push the repo to a **private** GitHub repo instead of forking publicly if you'd 
 
 ## Known limitations
 
-- **No password reset or account settings UI yet**: there's currently no way to change your password or delete your account from within the app.
+- **No account deletion or password reset (forgot-password) flow yet**: you can change your username/password from Settings while logged in, but there's no way to delete an account or recover access if you forget your password.
 - **Requires Gemini API key**: Receipt scanning and voice transcription require a free API key from [Google AI Studio](https://aistudio.google.com/apikey). Manual entry and CSV export work without it.
 - **Requires Postgres database**: The app stores all data in Postgres (not SQLite). Free tier available via Vercel (uses Neon), or [Railway](https://railway.app).
 
