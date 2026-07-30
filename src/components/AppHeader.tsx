@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import SettingsMenu from "./SettingsMenu";
 
 const NAV_LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/categories", label: "Categories" },
+  { href: "/", label: "Dashboard" },
+  { href: "/activities", label: "Activities" },
+  { href: "/settings", label: "Settings" },
 ];
 
 export default function AppHeader({ onAddClick }: { onAddClick?: () => void }) {
@@ -61,7 +61,6 @@ export default function AppHeader({ onAddClick }: { onAddClick?: () => void }) {
             + Add
           </button>
         )}
-        <SettingsMenu />
         <button
           onClick={handleLogout}
           disabled={loggingOut}

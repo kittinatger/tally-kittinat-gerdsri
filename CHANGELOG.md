@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.3.0] - 2026-07-30
+
+### Changed
+- Reorganized the app into three pages: **Dashboard** (income/expense summary, remaining balance, category breakdown, spending trend), **Activities** (full transaction log, search/filter, CSV export, add transaction), and **Settings** (theme, currency, auto-convert, category management)
+- Settings moved from a gear-icon dropdown into its own page for authenticated users (the dropdown is still used for the pre-login theme/currency preview on the login/register pages)
+- Category management (add/rename/delete) moved from the old Categories page into Settings
+- `/categories` now redirects to the Dashboard
+
+### Added
+- Version number, Privacy Policy, and Terms of Service links in the Settings page footer
+
 ## [0.2.0] - 2026-07-30
 
 ### Added
