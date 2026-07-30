@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.2.0] - 2026-07-30
+
+### Added
+- Multi-user accounts: public sign-up at `/register` (username + password, no email) so multiple people can use the same deployment with fully isolated data
+- One-time admin bootstrap (`ADMIN_USERNAME`/`ADMIN_BOOTSTRAP_PASSWORD`) that migrates a pre-existing single-user deployment's data to a real account instead of losing it
+
+### Changed
+- Session cookies now identify which account is logged in, instead of just being a shared pass/fail token
+- Replaced the single shared `APP_PASSWORD` with per-account passwords (scrypt-hashed)
+
+### Fixed
+- Closed an IDOR gap where expense/category edit and delete endpoints only checked the row's id, not who owned it
+- Fixed a migration bug that could delete the settings row (starting balance, currency) before an admin account claimed it
+- Fixed a crash/collision in new-account creation caused by a leftover legacy default value on the settings table
+
+### Security
+- Passwords are now hashed (scrypt) instead of compared against a single plaintext environment variable
+- Login no longer reveals whether a given username exists via response timing
+
 ## [0.1.0] - 2026-07-28
 
 ### Added
@@ -32,7 +51,6 @@ Nothing yet.
 - Responsive liquid-glass UI optimized for mobile and desktop
 - Pull-to-refresh on mobile
 - Postgres backend with Vercel Postgres integration
-
 - Vercel one-click deploy button
 - Public release documentation (security policy, contribution guidelines, code of conduct)
 - Step-by-step Vercel deployment guide for non-technical users
