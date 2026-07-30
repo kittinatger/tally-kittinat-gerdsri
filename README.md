@@ -32,17 +32,18 @@ You don't need to deploy anything — go to **[tally-kittinat.vercel.app](https:
 
 <table>
 <tr>
-<td><img src="screenshots/login-light-mode.jpg" alt="Login page" width="250"/></td>
-<td><img src="screenshots/dashboard-light-mode.jpg" alt="Dashboard (light mode)" width="250"/></td>
-<td><img src="screenshots/dashboard-dark-mode.jpg" alt="Dashboard (dark mode)" width="250"/></td>
+<td><img src="screenshots/01-dashboard-light.jpg" alt="Dashboard (light mode)" width="250"/></td>
+<td><img src="screenshots/02-dashboard-dark.jpg" alt="Dashboard (dark mode)" width="250"/></td>
+<td><img src="screenshots/03-activities-light.jpg" alt="Activities (light mode)" width="250"/></td>
 </tr>
 <tr>
-<td><img src="screenshots/receipt-scan-light-mode.jpg" alt="Receipt scanning" width="250"/></td>
-<td><img src="screenshots/voice-entry-light-mode.jpg" alt="Voice entry" width="250"/></td>
-<td><img src="screenshots/categories-light-mode.jpg" alt="Spending trend and category breakdown" width="250"/></td>
+<td><img src="screenshots/04-activities-dark.jpg" alt="Activities (dark mode)" width="250"/></td>
+<td><img src="screenshots/05-scan-document-light.jpg" alt="Document scanning (light mode)" width="250"/></td>
+<td><img src="screenshots/06-scan-document-dark.jpg" alt="Document scanning (dark mode)" width="250"/></td>
 </tr>
 <tr>
-<td><img src="screenshots/settings-dark-mode.jpg" alt="Settings" width="250"/></td>
+<td><img src="screenshots/07-voice-entry-light.jpg" alt="Voice entry (light mode)" width="250"/></td>
+<td><img src="screenshots/08-voice-entry-dark.jpg" alt="Voice entry (dark mode)" width="250"/></td>
 </tr>
 </table>
 
