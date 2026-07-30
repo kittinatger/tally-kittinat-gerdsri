@@ -86,7 +86,7 @@ async function bootstrapAdminIfNeeded(): Promise<void> {
       if (settingsRows[0]) {
         await client.sql`UPDATE app_settings SET user_id = ${adminId} WHERE id = 1;`;
       } else {
-        await client.sql`INSERT INTO app_settings (user_id, starting_balance) VALUES (${adminId}, 0);`;
+        await client.sql`INSERT INTO app_settings (id, user_id, starting_balance) VALUES (${-adminId}, ${adminId}, 0);`;
       }
     }
     await client.query("COMMIT");
@@ -126,11 +126,17 @@ async function hardenMultiUserConstraints(): Promise<void> {
     }
   }
 
-  // The old singleton seed row (id=1) is only meaningful pre-migration. If no
-  // admin ever claimed it (e.g. a fresh install with no ADMIN_* env vars),
-  // it's disposable scaffolding — every real user gets their own row via
-  // createUser() at signup, so drop unclaimed rows rather than block on them.
-  await sql`DELETE FROM app_settings WHERE user_id IS NULL;`;
+  // The old singleton seed row (id=1) is only meaningful pre-migration, and
+  // only disposable once we know it either got claimed by an admin, or there
+  // was never any admin to claim it in the first place (no users exist at
+  // all yet — a brand-new install with no legacy data). If ADMIN_* env vars
+  // just haven't been set *yet* on an existing deployment, at least one user
+  // may still be about to claim this row on a later cold start — don't touch
+  // it until we know which case we're in.
+  const { rows: anyUserForSettings } = await sql`SELECT id FROM users LIMIT 1;`;
+  if (anyUserForSettings[0]) {
+    await sql`DELETE FROM app_settings WHERE user_id IS NULL;`;
+  }
 
   const { rows: settingsOrphan } = await sql<{ n: number }>`SELECT COUNT(*)::int AS n FROM app_settings WHERE user_id IS NULL;`;
   const { rows: settingsLegacy } = await sql`SELECT 1 FROM pg_constraint WHERE conname = 'app_settings_single_row';`;
@@ -197,7 +203,14 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS starting_balance_set_at TIMESTAMPTZ NOT NULL DEFAULT now();`;
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS currency TEXT NOT NULL DEFAULT 'USD';`;
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS auto_convert_currency BOOLEAN NOT NULL DEFAULT false;`;
-      await sql`INSERT INTO app_settings (id, starting_balance) VALUES (1, 0) ON CONFLICT (id) DO NOTHING;`;
+      // Once the multi-user migration has hardened this table (see
+      // hardenMultiUserConstraints), `id` no longer has any constraint for
+      // ON CONFLICT to target — and the legacy singleton row is obsolete by
+      // then anyway, so skip re-seeding it entirely past that point.
+      const { rows: legacyStillActive } = await sql`SELECT 1 FROM pg_constraint WHERE conname = 'app_settings_single_row';`;
+      if (legacyStillActive[0]) {
+        await sql`INSERT INTO app_settings (id, starting_balance) VALUES (1, 0) ON CONFLICT (id) DO NOTHING;`;
+      }
 
       // User-editable categories.
       await sql`
@@ -508,7 +521,10 @@ export async function createUser(username: string, passwordHash: string): Promis
     RETURNING id, username;
   `;
   const user = rows[0];
-  await sql`INSERT INTO app_settings (user_id, starting_balance) VALUES (${user.id}, 0);`;
+  // Explicit negative `id` avoids colliding with the legacy singleton row
+  // (id=1, still PRIMARY KEY until the schema is hardened post-migration —
+  // see hardenMultiUserConstraints) or with any other new user's own row.
+  await sql`INSERT INTO app_settings (id, user_id, starting_balance) VALUES (${-user.id}, ${user.id}, 0);`;
   return user;
 }
 
