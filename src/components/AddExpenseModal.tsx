@@ -6,7 +6,7 @@ import ExpenseForm, { emptyExpenseFormValues, type ExpenseFormValues } from "./E
 import ReceiptDropzone from "./ReceiptDropzone";
 import VoiceRecorder from "./VoiceRecorder";
 import type { Expense } from "@/types/expense";
-import { isTransactionType } from "@/lib/categories";
+import { isTransactionType, type TransactionType } from "@/lib/categories";
 import { useAllCategories } from "@/lib/categories-context";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency } from "@/lib/format";
@@ -18,9 +18,11 @@ type ConversionInfo = { originalAmount: number; originalCurrency: string };
 export default function AddExpenseModal({
   onClose,
   onCreated,
+  initialType = "expense",
 }: {
   onClose: () => void;
   onCreated: (expense: Expense) => void;
+  initialType?: TransactionType;
 }) {
   const allCategories = useAllCategories();
   const currency = useCurrency();
@@ -259,7 +261,7 @@ export default function AddExpenseModal({
 
       {tab === "manual" && (
         <ExpenseForm
-          initialValues={emptyExpenseFormValues}
+          initialValues={{ ...emptyExpenseFormValues, type: initialType }}
           submitLabel="Add transaction"
           onSubmit={handleManualSubmit}
           submitting={submitting}

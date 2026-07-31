@@ -6,10 +6,14 @@ export default function SummaryCards({
   expenses,
   remaining,
   onEditBalance,
+  onAddIncome,
+  onAddExpense,
 }: {
   expenses: Expense[];
   remaining: number;
   onEditBalance: () => void;
+  onAddIncome: () => void;
+  onAddExpense: () => void;
 }) {
   const currency = useCurrency();
   const currentMonthKey = monthKey(todayInputValue());
@@ -20,18 +24,24 @@ export default function SummaryCards({
 
   return (
     <div className="mb-6 grid grid-cols-3 gap-3">
-      <div className="rounded-card border border-surface-line bg-surface p-4">
+      <button
+        onClick={onAddIncome}
+        className="rounded-card border border-surface-line bg-surface p-4 text-left transition hover:border-surface-accent"
+      >
         <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">Income</p>
         <p className="mt-1.5 font-display text-xl text-emerald-600 dark:text-emerald-400 sm:text-2xl">
           {formatCurrency(monthIncome, currency)}
         </p>
-      </div>
-      <div className="rounded-card border border-surface-line bg-surface p-4">
+      </button>
+      <button
+        onClick={onAddExpense}
+        className="rounded-card border border-surface-line bg-surface p-4 text-left transition hover:border-surface-accent"
+      >
         <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">Expenses</p>
         <p className="mt-1.5 font-display text-xl text-red-600 dark:text-red-400 sm:text-2xl">
           {formatCurrency(monthSpent, currency)}
         </p>
-      </div>
+      </button>
       <button
         onClick={onEditBalance}
         className="rounded-card border border-surface-line bg-surface p-4 text-left transition hover:border-surface-accent"
