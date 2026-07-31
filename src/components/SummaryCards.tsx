@@ -39,12 +39,11 @@ export default function SummaryCards({
         <div className="flex items-center justify-between gap-1">
           <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">Remaining</p>
           <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
+            viewBox="0 0 20.3949 19.9823"
             fill="currentColor"
             className="h-3.5 w-3.5 shrink-0 text-surface-foreground-soft"
           >
-            <path d="M13.586 3.586a2 2 0 1 1 2.828 2.828l-8.5 8.5a2 2 0 0 1-.848.503l-3.03.86a.5.5 0 0 1-.618-.618l.86-3.03a2 2 0 0 1 .503-.848l8.5-8.5Z" />
+            <path d="M3.24919 18.8046L17.3312 4.74211L15.3293 2.73039L1.24723 16.7929L0.0265306 19.4882C-0.0906569 19.7616 0.202312 20.0741 0.475749 19.957ZM18.3761 3.72649L19.5578 2.55461C20.1632 1.94914 20.1925 1.31438 19.6554 0.777268L19.3039 0.425706C18.7765-0.101638 18.132-0.0528096 17.5363 0.533128L16.3449 1.705Z" />
           </svg>
         </div>
         <p
