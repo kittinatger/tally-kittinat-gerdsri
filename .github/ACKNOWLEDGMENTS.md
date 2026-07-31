@@ -1,5 +1,17 @@
 # Acknowledgments
 
+## Developed by
+
+[Kittinat Gerdsri](https://kittinatger.github.io/kittinat-gerdsri/)
+
+## Tech stack
+
+- [Next.js](https://nextjs.org) (App Router) + TypeScript
+- [Tailwind CSS](https://tailwindcss.com) v4
+- [`@vercel/postgres`](https://vercel.com/docs/storage/vercel-postgres) for storage
+- [`@google/genai`](https://www.npmjs.com/package/@google/genai) for receipt vision extraction (Gemini)
+- [Frankfurter](https://frankfurter.app) for free, ECB-rate currency conversion
+
 ## Icons
 
 Several icons in Tally's interface (theme toggle, sign-out, receipt, and chart

@@ -47,15 +47,6 @@ You don't need to deploy anything — go to **[tally-kittinat.vercel.app](https:
 </tr>
 </table>
 
-## Tech stack
-
-- [Next.js](https://nextjs.org) (App Router) + TypeScript
-- [Tailwind CSS](https://tailwindcss.com) v4
-- [`@vercel/postgres`](https://vercel.com/docs/storage/vercel-postgres) for storage
-- [`@google/genai`](https://www.npmjs.com/package/@google/genai) for receipt vision extraction (Gemini)
-
-Some interface icons are derived from Apple's SF Symbols — see [Acknowledgments](.github/ACKNOWLEDGMENTS.md) for licensing notes.
-
 ## Known limitations
 
 - **No account deletion or password reset (forgot-password) flow yet**: you can change your username/password from Settings while logged in, but there's no way to delete an account or recover access if you forget your password.
@@ -129,8 +120,6 @@ Open [http://localhost:3000](http://localhost:3000). You'll be redirected to `/l
 
 </details>
 
-## Developed by
-
-[Kittinat Gerdsri](https://kittinatger.github.io/kittinat-gerdsri/)
-
 Tally is a personal project designed to make expense tracking simple and private. [Create an account](https://tally-kittinat.vercel.app) to use it — no deployment needed.
+
+See [Acknowledgments](.github/ACKNOWLEDGMENTS.md) for the author, tech stack, and icon credits.
