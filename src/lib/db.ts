@@ -240,6 +240,10 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE categories ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;`;
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;`;
 
+      // Supports listExpenses' WHERE user_id = ... ORDER BY date DESC, id DESC
+      // so it stays fast as transaction history grows.
+      await sql`CREATE INDEX IF NOT EXISTS expenses_user_date_idx ON expenses (user_id, date DESC, id DESC);`;
+
       await bootstrapAdminIfNeeded();
       await hardenMultiUserConstraints();
     })();
