@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.4.1] - 2026-07-31
+
+### Changed
+- Replaced favicons with new light/dark SVG marks, and swapped the login/register/header logo badge to match
+- Replaced the theme toggle, sign-out, chart, and receipt icons with a new icon set
+- Consolidated author, tech stack, and icon-licensing credits into `.github/ACKNOWLEDGMENTS.md`
+- Updated README screenshots
+
+### Fixed
+- Navigating between Dashboard, Activities, and Settings could feel slow with no feedback while data loaded — added streaming loading skeletons so the transition shows instantly, plus a database index to keep the transaction list query fast as history grows
+- Corrected the contact email in the security policy, contributing guide, and code of conduct
+
 ## [0.4.0] - 2026-07-30
 
 ### Added
