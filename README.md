@@ -54,6 +54,8 @@ You don't need to deploy anything — go to **[tally-kittinat.vercel.app](https:
 - [`@vercel/postgres`](https://vercel.com/docs/storage/vercel-postgres) for storage
 - [`@google/genai`](https://www.npmjs.com/package/@google/genai) for receipt vision extraction (Gemini)
 
+Some interface icons are derived from Apple's SF Symbols — see [Acknowledgments](.github/ACKNOWLEDGMENTS.md) for licensing notes.
+
 ## Known limitations
 
 - **No account deletion or password reset (forgot-password) flow yet**: you can change your username/password from Settings while logged in, but there's no way to delete an account or recover access if you forget your password.
