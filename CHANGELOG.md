@@ -7,8 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.5.0] - 2026-07-31
+
+### Added
+- Tapping the Income or Expenses summary card on the Dashboard opens Add with that transaction type preset
+- Direct camera capture for receipt scanning — some mobile browsers (Samsung Internet in particular) only offered gallery upload, not a direct camera option
+- Confirmation prompt before signing out
+- Permissions section in Settings to check and request microphone/camera access up front
+
 ### Changed
 - Replaced the edit-balance pencil icon on the Dashboard's "Remaining" card
+- Replaced the "+ Add" / "+ Add category" text with a plus icon, the receipt-scan camera emoji, the voice-entry microphone icon, the dropdown chevrons, and the date-range calendar icon with a consistent icon set
 
 ## [0.4.1] - 2026-07-31
 
