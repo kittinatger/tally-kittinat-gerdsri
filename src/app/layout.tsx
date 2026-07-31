@@ -18,6 +18,12 @@ const arimo = Arimo({
 export const metadata: Metadata = {
   title: "Tally — Personal Expense Tracker",
   description: "A private, personal expense tracker with receipt scanning.",
+  icons: {
+    icon: [
+      { url: "/favicon-light.png", media: "(prefers-color-scheme: light)" },
+      { url: "/favicon-dark.png", media: "(prefers-color-scheme: dark)" },
+    ],
+  },
 };
 
 export const viewport = {

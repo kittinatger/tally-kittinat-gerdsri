@@ -108,3 +108,12 @@ h1, h2, h3 {
   font-family: var(--font-display);
   font-weight: 400;
 }
+
+/* Browsers shade autofilled inputs with their own blue by default; force our theme colors instead. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--foreground);
+  transition: background-color 9999s ease-in-out 0s;
+  caret-color: var(--foreground);
+}
