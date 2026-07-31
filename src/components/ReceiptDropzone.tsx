@@ -8,6 +8,7 @@ const MAX_FILES = 20;
 
 export default function ReceiptDropzone({ onFilesSelected }: { onFilesSelected: (files: File[]) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,11 +68,33 @@ export default function ReceiptDropzone({ onFilesSelected }: { onFilesSelected: 
           Select multiple to add them as a batch. Expense or income — we&apos;ll detect which. JPEG, PNG, WEBP, or
           HEIC, up to 8MB each
         </p>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            cameraInputRef.current?.click();
+          }}
+          className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark"
+        >
+          Take Photo
+        </button>
         <input
           ref={inputRef}
           type="file"
           accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
           multiple
+          className="hidden"
+          onChange={(e) => handleFiles(e.target.files)}
+        />
+        {/* Separate single-file input with `capture` — on some browsers
+            (notably Samsung Internet) the default file picker doesn't
+            surface a camera option unless this attribute is set, and
+            combining `capture` with `multiple` isn't reliably supported. */}
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+          capture="environment"
           className="hidden"
           onChange={(e) => handleFiles(e.target.files)}
         />
