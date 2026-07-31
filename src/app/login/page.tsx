@@ -14,9 +14,8 @@ export default async function LoginPage({
         <SettingsMenu />
       </div>
       <div className="mb-8 flex flex-col items-center gap-3">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-navy text-2xl font-bold text-white shadow-soft">
-          T
-        </div>
+        <img src="/favicon-light.svg" alt="Tally" className="h-14 w-14 dark:hidden" />
+        <img src="/favicon-dark.svg" alt="Tally" className="hidden h-14 w-14 dark:block" />
         <h1 className="font-display text-2xl text-foreground">Tally</h1>
         <p className="text-sm text-ink-soft">Sign in to view your expenses</p>
       </div>
