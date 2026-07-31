@@ -4,7 +4,7 @@
 
 **Please do not** open a public GitHub issue for security vulnerabilities.
 
-Instead, email your report to **`timelabs.2023@gmail.com`** with:
+Instead, email your report to **`kittinatg@gmail.com`** with:
 
 1. **Description**: What is the vulnerability?
 2. **Affected versions**: Which versions of Tally (if deployed) or commit (if self-hosted)?

@@ -6,7 +6,7 @@ Thanks for your interest in improving Tally! This is a personal project, but con
 
 ### Security vulnerabilities
 
-**Do not** open a public GitHub issue for security vulnerabilities. Instead, email details to `timelabs.2023@gmail.com` with:
+**Do not** open a public GitHub issue for security vulnerabilities. Instead, email details to `kittinatg@gmail.com` with:
 - A description of the vulnerability
 - Steps to reproduce (if applicable)
 - Potential impact
