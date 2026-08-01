@@ -72,6 +72,14 @@ export default function CategoryManager({ categories }: { categories: CategoryOp
             >
               Income
             </button>
+            <button
+              onClick={() => setType("transfer")}
+              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+                type === "transfer" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+              }`}
+            >
+              Transfer
+            </button>
           </div>
         </div>
         <button

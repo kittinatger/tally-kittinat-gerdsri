@@ -5,6 +5,7 @@ import { hashPassword } from "@/lib/password";
 export type Expense = {
   id: number;
   type: string;
+  direction: string | null;
   date: string;
   amount: string;
   merchant: string;
@@ -55,7 +56,14 @@ const DEFAULT_CATEGORIES: Array<{ type: string; name: string; color: string; sor
   { type: "income", name: "Pension", color: "violet", sort: 9 },
   { type: "income", name: "Grants & Scholarships", color: "cyan", sort: 10 },
   { type: "income", name: "Other", color: "slate", sort: 11 },
+  { type: "transfer", name: "Self-transfer", color: "slate", sort: 0 },
+  { type: "transfer", name: "E-wallet top-up", color: "cyan", sort: 1 },
+  { type: "transfer", name: "Bank transfer", color: "blue", sort: 2 },
+  { type: "transfer", name: "Savings", color: "teal", sort: 3 },
+  { type: "transfer", name: "Other", color: "slate", sort: 4 },
 ];
+
+const DEFAULT_TRANSFER_CATEGORIES = DEFAULT_CATEGORIES.filter((d) => d.type === "transfer");
 
 // One-time, best-effort migration of a pre-multi-user deployment's existing
 // data to an admin account, so a live instance's data isn't lost when this
@@ -182,6 +190,11 @@ function ensureSchema(): Promise<void> {
       // zero or more per expense, for cross-cutting groupings.
       await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}';`;
 
+      // Only meaningful when type = 'transfer' -- which way the money moved
+      // (self-transfers/e-wallet top-ups aren't income or spending, but still
+      // move money in or out of the balance Tally tracks).
+      await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS direction TEXT;`;
+
       // Optional original receipt/document photo, attached after a scanned
       // transaction is saved. Stored directly in Postgres for simplicity —
       // fine at personal scale; a dedicated blob store would be the next
@@ -246,6 +259,23 @@ function ensureSchema(): Promise<void> {
 
       await bootstrapAdminIfNeeded();
       await hardenMultiUserConstraints();
+
+      // Transfer categories were added after the initial multi-user release,
+      // so existing accounts (seeded before this point) need them backfilled.
+      // seedDefaultCategoriesForUser only runs once, at registration, so this
+      // catches everyone who signed up before transfers existed.
+      const { rows: categoriesHardened } = await sql`
+        SELECT 1 FROM pg_constraint WHERE conname = 'categories_user_type_name_unique';
+      `;
+      if (categoriesHardened[0]) {
+        for (const d of DEFAULT_TRANSFER_CATEGORIES) {
+          await sql`
+            INSERT INTO categories (user_id, type, name, color, sort_order)
+            SELECT id, ${d.type}, ${d.name}, ${d.color}, ${d.sort} FROM users
+            ON CONFLICT (user_id, type, name) DO NOTHING;
+          `;
+        }
+      }
     })();
   }
   return schemaReady;
@@ -348,7 +378,13 @@ export async function getRemaining(userId: number): Promise<number> {
   const { rows } = await sql<{ remaining: string }>`
     SELECT (
       s.starting_balance + COALESCE((
-        SELECT SUM(CASE WHEN e.type = 'income' THEN e.amount ELSE -e.amount END)
+        SELECT SUM(
+          CASE
+            WHEN e.type = 'income' THEN e.amount
+            WHEN e.type = 'transfer' AND e.direction = 'in' THEN e.amount
+            ELSE -e.amount
+          END
+        )
         FROM expenses e
         WHERE e.user_id = ${userId} AND e.created_at > s.starting_balance_set_at
       ), 0)
@@ -401,6 +437,7 @@ export async function listExpenses(userId: number): Promise<Expense[]> {
     SELECT
       id,
       type,
+      direction,
       to_char(date, 'YYYY-MM-DD') AS date,
       amount::text AS amount,
       merchant,
@@ -452,15 +489,17 @@ export async function deleteTag(userId: number, name: string): Promise<void> {
 
 export async function createExpense(userId: number, input: ExpenseInput): Promise<Expense> {
   await ensureSchema();
+  const direction = input.type === "transfer" ? input.direction : null;
   const { rows } = await sql<Expense>`
     WITH inserted AS (
-      INSERT INTO expenses (user_id, type, date, amount, merchant, category, notes, tags)
-      VALUES (${userId}, ${input.type}, ${input.date}, ${input.amount}, ${input.merchant}, ${input.category}, ${input.notes ?? null}, ${toPgTextArray(input.tags ?? [])}::text[])
+      INSERT INTO expenses (user_id, type, direction, date, amount, merchant, category, notes, tags)
+      VALUES (${userId}, ${input.type}, ${direction}, ${input.date}, ${input.amount}, ${input.merchant}, ${input.category}, ${input.notes ?? null}, ${toPgTextArray(input.tags ?? [])}::text[])
       RETURNING *
     )
     SELECT
       id,
       type,
+      direction,
       to_char(date, 'YYYY-MM-DD') AS date,
       amount::text AS amount,
       merchant,
@@ -475,10 +514,12 @@ export async function createExpense(userId: number, input: ExpenseInput): Promis
 
 export async function updateExpense(userId: number, id: number, input: ExpenseInput): Promise<Expense | null> {
   await ensureSchema();
+  const direction = input.type === "transfer" ? input.direction : null;
   const { rows } = await sql<Expense>`
     WITH updated AS (
       UPDATE expenses
       SET type = ${input.type},
+          direction = ${direction},
           date = ${input.date},
           amount = ${input.amount},
           merchant = ${input.merchant},
@@ -491,6 +532,7 @@ export async function updateExpense(userId: number, id: number, input: ExpenseIn
     SELECT
       id,
       type,
+      direction,
       to_char(date, 'YYYY-MM-DD') AS date,
       amount::text AS amount,
       merchant,

@@ -1,6 +1,6 @@
 "use client";
 
-import type { Expense } from "@/types/expense";
+import { signedAmount, type Expense } from "@/types/expense";
 import { formatCurrency, formatDateLong } from "@/lib/format";
 import { badgeClasses } from "@/lib/category-styles";
 import { useCategoryColor } from "@/lib/categories-context";
@@ -48,10 +48,14 @@ export default function ExpenseRow({
       </div>
       <p
         className={`shrink-0 font-semibold ${
-          expense.type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+          expense.type === "income"
+            ? "text-emerald-600 dark:text-emerald-400"
+            : expense.type === "transfer"
+              ? "text-surface-foreground-soft"
+              : "text-red-600 dark:text-red-400"
         }`}
       >
-        {expense.type === "income" ? "+" : "-"}
+        {signedAmount(expense) >= 0 ? "+" : "-"}
         {formatCurrency(expense.amount, currency)}
       </p>
     </button>

@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
     const categories = {
       expense: categoryRows.filter((c) => c.type === "expense").map((c) => c.name),
       income: categoryRows.filter((c) => c.type === "income").map((c) => c.name),
+      transfer: categoryRows.filter((c) => c.type === "transfer").map((c) => c.name),
     };
     const extraction = await extractTransaction(base64, file.type, categories);
     const result = await maybeAutoConvert(extraction, defaultCurrency, autoConvertEnabled);

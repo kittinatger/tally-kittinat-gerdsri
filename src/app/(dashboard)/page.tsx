@@ -1,7 +1,8 @@
 import { listExpenses, getRemaining, listCategories, getCurrency } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import Dashboard from "@/components/Dashboard";
-import type { Expense } from "@/types/expense";
+import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
+import { isTransactionType } from "@/lib/categories";
 import type { CategoryOption } from "@/types/category";
 
 // Always render fresh: the expense list changes on every write, and this
@@ -18,7 +19,8 @@ export default async function HomePage() {
   ]);
   const expenses: Expense[] = rows.map((r) => ({
     id: r.id,
-    type: r.type === "income" ? "income" : "expense",
+    type: normalizeExpenseType(r.type),
+    direction: normalizeDirection(r.direction),
     date: r.date,
     amount: Number(r.amount),
     merchant: r.merchant,
@@ -29,7 +31,7 @@ export default async function HomePage() {
   }));
   const categories: CategoryOption[] = categoryRows.map((c) => ({
     id: c.id,
-    type: c.type === "income" ? "income" : "expense",
+    type: isTransactionType(c.type) ? c.type : "expense",
     name: c.name,
     color: c.color,
   }));

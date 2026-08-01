@@ -1,8 +1,10 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { isTransactionType, type TransactionType } from "@/lib/categories";
+import { isTransactionType, isTransferDirection, type TransactionType, type TransferDirection } from "@/lib/categories";
 
 export type TransactionExtraction = {
   type: TransactionType;
+  /** Only present when type is "transfer". */
+  direction?: TransferDirection;
   merchant: string;
   amount: number;
   date: string;
@@ -15,6 +17,7 @@ export type TransactionExtraction = {
 export type CategoriesByType = {
   expense: string[];
   income: string[];
+  transfer: string[];
 };
 
 const MODEL = "gemini-2.5-flash";
@@ -32,20 +35,23 @@ function getClient(): GoogleGenAI {
 
 function buildPrompt(categories: CategoriesByType): string {
   const currentYear = new Date().getFullYear();
-  const allCategories = [...new Set([...categories.expense, ...categories.income])];
+  const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
 
-  return `You are reading a photo of a financial document for a personal finance tracker. It is either:
+  return `You are reading a photo of a financial document for a personal finance tracker. It is one of:
 - an EXPENSE document: a purchase receipt
-- an INCOME document: a payslip, an invoice the user sent to a client, a freelance/platform payment confirmation, or a bank deposit or transfer receipt showing money the user received
+- an INCOME document: a payslip, an invoice the user sent to a client, a freelance/platform payment confirmation, or money received from someone else
+- a TRANSFER document: a receipt for moving the user's own money between their own accounts/wallets -- e.g. an e-wallet top-up, a self-transfer between two of the user's own bank accounts, or a savings deposit. This is NOT income and NOT an expense, since the money is still theirs.
 
-First decide which of the two it is, then extract:
-- type: exactly "expense" or "income"
-- merchant: for an expense, the store or business name; for income, the source of the money (employer, client, company, or platform). Cleaned up (title case, no trailing numbers/codes).
-- amount: the total amount (paid, for an expense; received, for income), as a plain number (no currency symbols, no thousands separators)
+First decide which of the three it is, then extract:
+- type: exactly "expense", "income", or "transfer"
+- direction: ONLY if type is "transfer" -- "out" if money left the account/cash the user tracks in this app (e.g. topping up an e-wallet), or "in" if money came back into it (e.g. withdrawing from the e-wallet back to the tracked account). Omit this field entirely if type is not "transfer".
+- merchant: for an expense, the store or business name; for income, the source of the money (employer, client, company, or platform); for a transfer, a short description of where the money went/came from (e.g. "E-wallet top-up", "Savings transfer"). Cleaned up (title case, no trailing numbers/codes).
+- amount: the total amount (paid, for an expense; received, for income; moved, for a transfer), as a plain number (no currency symbols, no thousands separators)
 - date: the transaction/payment date in strict YYYY-MM-DD format. If the year is missing, assume the current year: ${currentYear}.
 - category: the single best-fit category.
   - If type is "expense", choose EXACTLY one from: ${categories.expense.join(", ")}.
   - If type is "income", choose EXACTLY one from: ${categories.income.join(", ")}.
+  - If type is "transfer", choose EXACTLY one from: ${categories.transfer.join(", ")}.
   - Only use values from this combined list: ${allCategories.join(", ")}.
 - currency: the ISO 4217 currency code (e.g. USD, EUR, GBP, THB, JPY) the amount is denominated
   in, inferred from any symbol ($, €, £, ¥, ฿, etc.), currency name/code text, or country context
@@ -57,18 +63,29 @@ Respond with JSON only, matching the provided schema.`;
 
 function buildVoicePrompt(categories: CategoriesByType): string {
   const currentYear = new Date().getFullYear();
-  const allCategories = [...new Set([...categories.expense, ...categories.income])];
+  const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
 
   return `You are listening to a short voice memo where someone is logging a single financial
 transaction out loud for a personal finance tracker, e.g. "I spent twelve fifty on coffee at
-Starbucks this morning" or "got paid two thousand dollars from my freelance client yesterday".
+Starbucks this morning", "got paid two thousand dollars from my freelance client yesterday", or
+"moved fifty bucks into my e-wallet".
 
-First decide whether they are describing an EXPENSE (money they spent) or INCOME (money they
-received), then extract:
-- type: exactly "expense" or "income"
+First decide whether they are describing:
+- an EXPENSE (money they spent to someone/somewhere else)
+- INCOME (money they received from someone/somewhere else)
+- a TRANSFER (money moved between their OWN accounts/wallets -- e.g. an e-wallet top-up, moving
+  money to savings, a self-transfer between their own bank accounts. This is NOT income and NOT
+  an expense, since it's still their money.)
+
+then extract:
+- type: exactly "expense", "income", or "transfer"
+- direction: ONLY if type is "transfer" -- "out" if the money left the account/cash tracked in this
+  app (e.g. topping up an e-wallet), or "in" if it came back into it (e.g. withdrawing from the
+  e-wallet). Omit this field entirely if type is not "transfer".
 - merchant: for an expense, the store/business/person paid; for income, the source of the money
-  (employer, client, company, platform). Cleaned up (title case). If genuinely not mentioned, use
-  a short generic label like "Cash purchase" or "Cash received".
+  (employer, client, company, platform); for a transfer, a short description (e.g. "E-wallet top-up",
+  "Savings transfer"). Cleaned up (title case). If genuinely not mentioned, use a short generic
+  label like "Cash purchase" or "Cash received".
 - amount: the amount spoken (handle spoken numbers like "twelve fifty" -> 12.50, "twenty bucks" ->
   20), as a plain number, no currency symbols.
 - date: the transaction date in strict YYYY-MM-DD format. Resolve relative terms like "today",
@@ -77,6 +94,7 @@ received), then extract:
 - category: the single best-fit category.
   - If type is "expense", choose EXACTLY one from: ${categories.expense.join(", ")}.
   - If type is "income", choose EXACTLY one from: ${categories.income.join(", ")}.
+  - If type is "transfer", choose EXACTLY one from: ${categories.transfer.join(", ")}.
   - Only use values from this combined list: ${allCategories.join(", ")}.
 - notes: any extra context mentioned that isn't captured above (who it was with, what it was for,
   why), as a short phrase. Empty string if nothing extra was said.
@@ -92,7 +110,8 @@ function responseSchema(allCategories: string[], includeNotes: boolean) {
   return {
     type: Type.OBJECT,
     properties: {
-      type: { type: Type.STRING, enum: ["expense", "income"] },
+      type: { type: Type.STRING, enum: ["expense", "income", "transfer"] },
+      direction: { type: Type.STRING, enum: ["out", "in"] },
       merchant: { type: Type.STRING },
       amount: { type: Type.NUMBER },
       date: { type: Type.STRING },
@@ -119,19 +138,22 @@ function parseExtraction(text: string, categories: CategoriesByType): Transactio
   const record = parsed as Record<string, unknown>;
   const typeRaw = typeof record.type === "string" ? record.type.trim().toLowerCase() : "";
   const type: TransactionType = isTransactionType(typeRaw) ? typeRaw : "expense";
+  const directionRaw = typeof record.direction === "string" ? record.direction.trim().toLowerCase() : "";
+  const direction: TransferDirection | undefined =
+    type === "transfer" ? (isTransferDirection(directionRaw) ? directionRaw : "out") : undefined;
   const merchant =
     typeof record.merchant === "string" && record.merchant.trim() ? record.merchant.trim() : "Unknown";
   const amount = typeof record.amount === "number" && Number.isFinite(record.amount) ? Math.abs(record.amount) : 0;
   const dateRaw = typeof record.date === "string" ? record.date.trim() : "";
   const date = /^\d{4}-\d{2}-\d{2}$/.test(dateRaw) ? dateRaw : new Date().toISOString().slice(0, 10);
   const categoryRaw = typeof record.category === "string" ? record.category.trim() : "";
-  const validNames = type === "income" ? categories.income : categories.expense;
+  const validNames = type === "income" ? categories.income : type === "transfer" ? categories.transfer : categories.expense;
   const category = validNames.includes(categoryRaw) ? categoryRaw : (validNames.includes("Other") ? "Other" : (validNames[0] ?? "Other"));
   const notes = typeof record.notes === "string" ? record.notes.trim() : "";
   const currencyRaw = typeof record.currency === "string" ? record.currency.trim().toUpperCase() : "";
   const currency = /^[A-Z]{3}$/.test(currencyRaw) ? currencyRaw : undefined;
 
-  return { type, merchant, amount, date, category, notes: notes || undefined, currency };
+  return { type, direction, merchant, amount, date, category, notes: notes || undefined, currency };
 }
 
 export async function extractTransaction(
@@ -139,7 +161,7 @@ export async function extractTransaction(
   mimeType: string,
   categories: CategoriesByType,
 ): Promise<TransactionExtraction> {
-  const allCategories = [...new Set([...categories.expense, ...categories.income])];
+  const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
   const ai = getClient();
 
   const response = await ai.models.generateContent({
@@ -169,7 +191,7 @@ export async function extractTransactionFromAudio(
   mimeType: string,
   categories: CategoriesByType,
 ): Promise<TransactionExtraction> {
-  const allCategories = [...new Set([...categories.expense, ...categories.income])];
+  const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
   const ai = getClient();
 
   const response = await ai.models.generateContent({

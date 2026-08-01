@@ -5,8 +5,8 @@ import Modal from "./Modal";
 import ExpenseForm, { emptyExpenseFormValues, type ExpenseFormValues } from "./ExpenseForm";
 import ReceiptDropzone from "./ReceiptDropzone";
 import VoiceRecorder from "./VoiceRecorder";
-import type { Expense } from "@/types/expense";
-import { isTransactionType, type TransactionType } from "@/lib/categories";
+import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
+import { isTransactionType, isTransferDirection, type TransactionType } from "@/lib/categories";
 import { useAllCategories } from "@/lib/categories-context";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency } from "@/lib/format";
@@ -60,6 +60,7 @@ export default function AddExpenseModal({
       }
       const extraction = data.extraction as {
         type: string;
+        direction?: string;
         merchant: string;
         amount: number;
         date: string;
@@ -68,9 +69,11 @@ export default function AddExpenseModal({
         originalCurrency?: string;
       };
       const type = isTransactionType(extraction.type) ? extraction.type : "expense";
+      const direction = extraction.direction && isTransferDirection(extraction.direction) ? extraction.direction : "out";
       const categoryValid = allCategories.some((c) => c.type === type && c.name === extraction.category);
       setScanValues({
         type,
+        direction,
         date: extraction.date,
         amount: String(extraction.amount),
         merchant: extraction.merchant,
@@ -114,6 +117,7 @@ export default function AddExpenseModal({
       }
       const extraction = data.extraction as {
         type: string;
+        direction?: string;
         merchant: string;
         amount: number;
         date: string;
@@ -123,9 +127,11 @@ export default function AddExpenseModal({
         originalCurrency?: string;
       };
       const type = isTransactionType(extraction.type) ? extraction.type : "expense";
+      const direction = extraction.direction && isTransferDirection(extraction.direction) ? extraction.direction : "out";
       const categoryValid = allCategories.some((c) => c.type === type && c.name === extraction.category);
       setVoiceValues({
         type,
+        direction,
         date: extraction.date,
         amount: String(extraction.amount),
         merchant: extraction.merchant,
@@ -419,6 +425,7 @@ async function createExpense(values: ExpenseFormValues): Promise<Expense> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       type: values.type,
+      direction: values.type === "transfer" ? values.direction : undefined,
       date: values.date,
       amount: Number(values.amount),
       merchant: values.merchant,
@@ -433,7 +440,8 @@ async function createExpense(values: ExpenseFormValues): Promise<Expense> {
   }
   return {
     id: data.expense.id,
-    type: data.expense.type === "income" ? "income" : "expense",
+    type: normalizeExpenseType(data.expense.type),
+    direction: normalizeDirection(data.expense.direction),
     date: data.expense.date,
     amount: Number(data.expense.amount),
     merchant: data.expense.merchant,

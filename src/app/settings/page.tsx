@@ -1,6 +1,7 @@
 import { listCategories, getCurrency, getUserById } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import SettingsView from "@/components/SettingsView";
+import { isTransactionType } from "@/lib/categories";
 import type { CategoryOption } from "@/types/category";
 
 // Always render fresh, same reasoning as the dashboard page.
@@ -15,7 +16,7 @@ export default async function SettingsPage() {
   ]);
   const categories: CategoryOption[] = categoryRows.map((c) => ({
     id: c.id,
-    type: c.type === "income" ? "income" : "expense",
+    type: isTransactionType(c.type) ? c.type : "expense",
     name: c.name,
     color: c.color,
   }));

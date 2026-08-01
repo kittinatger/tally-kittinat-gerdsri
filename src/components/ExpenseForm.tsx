@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { TransactionType } from "@/lib/categories";
+import type { TransactionType, TransferDirection } from "@/lib/categories";
 import { useAllCategories } from "@/lib/categories-context";
 import { todayInputValue } from "@/lib/format";
 import TagInput from "./TagInput";
@@ -10,6 +10,8 @@ import SelectDropdown from "./SelectDropdown";
 
 export type ExpenseFormValues = {
   type: TransactionType;
+  /** Only meaningful when type is "transfer". */
+  direction: TransferDirection;
   date: string;
   amount: string;
   merchant: string;
@@ -20,6 +22,7 @@ export type ExpenseFormValues = {
 
 export const emptyExpenseFormValues: ExpenseFormValues = {
   type: "expense",
+  direction: "out",
   date: todayInputValue(),
   amount: "",
   merchant: "",
@@ -52,7 +55,7 @@ export default function ExpenseForm({
   const [values, setValues] = useState<ExpenseFormValues>(initialValues);
   const allCategories = useAllCategories();
   const categories = allCategories.filter((c) => c.type === values.type);
-  const sourceLabel = values.type === "income" ? "Source" : "Merchant";
+  const sourceLabel = values.type === "income" ? "Source" : values.type === "transfer" ? "Description" : "Merchant";
 
   function update<K extends keyof ExpenseFormValues>(key: K, value: ExpenseFormValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -91,7 +94,49 @@ export default function ExpenseForm({
         >
           Income
         </button>
+        <button
+          type="button"
+          onClick={() => updateType("transfer")}
+          className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+            values.type === "transfer" ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
+          }`}
+        >
+          Transfer
+        </button>
       </div>
+
+      {values.type === "transfer" && (
+        <div>
+          <label className={labelClass}>Direction</label>
+          <div className="flex gap-1 rounded-full bg-bg-soft p-1">
+            <button
+              type="button"
+              onClick={() => update("direction", "out")}
+              className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+                values.direction === "out"
+                  ? "bg-surface-soft text-surface-foreground shadow-sm"
+                  : "text-surface-foreground-soft"
+              }`}
+            >
+              Money out
+            </button>
+            <button
+              type="button"
+              onClick={() => update("direction", "in")}
+              className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+                values.direction === "in"
+                  ? "bg-surface-soft text-surface-foreground shadow-sm"
+                  : "text-surface-foreground-soft"
+              }`}
+            >
+              Money in
+            </button>
+          </div>
+          <p className="mt-1.5 text-xs text-surface-foreground-soft">
+            Transfers aren&apos;t counted as income or spending, but still move your Remaining balance.
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -129,7 +174,9 @@ export default function ExpenseForm({
           required
           value={values.merchant}
           onChange={(e) => update("merchant", e.target.value)}
-          placeholder={values.type === "income" ? "e.g. Acme Corp" : "e.g. Whole Foods"}
+          placeholder={
+            values.type === "income" ? "e.g. Acme Corp" : values.type === "transfer" ? "e.g. E-wallet top-up" : "e.g. Whole Foods"
+          }
           className={inputClass}
         />
       </div>

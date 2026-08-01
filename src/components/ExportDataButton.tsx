@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { signedAmount } from "@/types/expense";
+import { normalizeExpenseType, normalizeDirection, signedAmount } from "@/types/expense";
 import { todayInputValue } from "@/lib/format";
 
 type ApiExpense = {
   id: number;
   type: string;
+  direction: string | null;
   date: string;
   amount: string;
   merchant: string;
@@ -37,7 +38,8 @@ export default function ExportDataButton() {
       for (const e of expenses) {
         const amount = signedAmount({
           id: e.id,
-          type: e.type === "income" ? "income" : "expense",
+          type: normalizeExpenseType(e.type),
+          direction: normalizeDirection(e.direction),
           date: e.date,
           amount: Number(e.amount),
           merchant: e.merchant,

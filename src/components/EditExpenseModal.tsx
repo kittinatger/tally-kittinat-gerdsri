@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Modal from "./Modal";
 import ExpenseForm, { type ExpenseFormValues } from "./ExpenseForm";
-import type { Expense } from "@/types/expense";
+import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
 
 export default function EditExpenseModal({
   expense,
@@ -23,6 +23,7 @@ export default function EditExpenseModal({
 
   const initialValues: ExpenseFormValues = {
     type: expense.type,
+    direction: expense.direction ?? "out",
     date: expense.date,
     amount: String(expense.amount),
     merchant: expense.merchant,
@@ -40,6 +41,7 @@ export default function EditExpenseModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: values.type,
+          direction: values.type === "transfer" ? values.direction : undefined,
           date: values.date,
           amount: Number(values.amount),
           merchant: values.merchant,
@@ -55,7 +57,8 @@ export default function EditExpenseModal({
       }
       onUpdated({
         id: data.expense.id,
-        type: data.expense.type === "income" ? "income" : "expense",
+        type: normalizeExpenseType(data.expense.type),
+        direction: normalizeDirection(data.expense.direction),
         date: data.expense.date,
         amount: Number(data.expense.amount),
         merchant: data.expense.merchant,

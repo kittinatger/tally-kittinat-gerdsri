@@ -1,7 +1,8 @@
 import { listExpenses, listCategories, getCurrency } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import ActivitiesView from "@/components/ActivitiesView";
-import type { Expense } from "@/types/expense";
+import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
+import { isTransactionType } from "@/lib/categories";
 import type { CategoryOption } from "@/types/category";
 
 // Always render fresh, same reasoning as the dashboard page.
@@ -16,7 +17,8 @@ export default async function ActivitiesPage() {
   ]);
   const expenses: Expense[] = rows.map((r) => ({
     id: r.id,
-    type: r.type === "income" ? "income" : "expense",
+    type: normalizeExpenseType(r.type),
+    direction: normalizeDirection(r.direction),
     date: r.date,
     amount: Number(r.amount),
     merchant: r.merchant,
@@ -27,7 +29,7 @@ export default async function ActivitiesPage() {
   }));
   const categories: CategoryOption[] = categoryRows.map((c) => ({
     id: c.id,
-    type: c.type === "income" ? "income" : "expense",
+    type: isTransactionType(c.type) ? c.type : "expense",
     name: c.name,
     color: c.color,
   }));

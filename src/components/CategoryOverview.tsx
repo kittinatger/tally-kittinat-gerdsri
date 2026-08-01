@@ -150,6 +150,14 @@ export default function CategoryOverview({
             >
               Income
             </button>
+            <button
+              onClick={() => setType("transfer")}
+              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+                type === "transfer" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+              }`}
+            >
+              Transfer
+            </button>
           </div>
           <FilterDropdown
             value={range === "all" ? "all" : RANGE_LABELS[range]}
@@ -162,7 +170,7 @@ export default function CategoryOverview({
 
       <div className="mb-6 rounded-card border border-line bg-surface p-5">
         <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
-          Total {type === "income" ? "income" : "spent"}
+          Total {type === "income" ? "income" : type === "transfer" ? "transferred" : "spent"}
         </p>
         <p
           className={`mt-1.5 font-display text-3xl ${
@@ -179,7 +187,7 @@ export default function CategoryOverview({
       <div className="mb-6 rounded-card border border-line bg-surface p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
-            {type === "income" ? "Income" : "Spending"} trend
+            {type === "income" ? "Income" : type === "transfer" ? "Transfer" : "Spending"} trend
           </p>
           <ChartTypeDropdown value={chartType} onChange={setChartType} />
         </div>
@@ -200,8 +208,8 @@ export default function CategoryOverview({
           </svg>
           <p className="font-display text-lg text-foreground">No data yet</p>
           <p className="text-sm text-ink-soft">
-            {type === "income" ? "Income" : "Expenses"} for this range will show up here once you&apos;ve logged
-            some.
+            {type === "income" ? "Income" : type === "transfer" ? "Transfers" : "Expenses"} for this range will show
+            up here once you&apos;ve logged some.
           </p>
         </div>
       ) : (
