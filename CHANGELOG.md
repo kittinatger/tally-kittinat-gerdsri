@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.6.0] - 2026-08-01
+
+### Added
+- Selectable chart type for the Dashboard's spending trend — Bar, Line, Area, Pie, Radar, or Stacked Bar (by category)
+- More date range options for the Dashboard's category breakdown: Today, 2/3/6 months, and Year, alongside the existing This month / All time
+- Settings reorganized into a navigable list (App settings, Records, Display, Support) with dedicated detail pages instead of one long scrolling page
+- Support section in Settings: Usage guide, FAQs, Contact, Report an issue, and Changelog pages
+- Custom date picker and category dropdown in the transaction form, replacing the OS-native date input and select
+
+### Fixed
+- Receipt scanning and voice entry failing with a raw "heavy traffic" error from Gemini — now retries transient overload errors automatically and shows a clear message if one still fails
+- Replaced remaining emoji and system symbols (search icon, close buttons) with a consistent icon set
+- Sign-out confirmation button is now red to signal it's a destructive action
+
 ## [0.5.0] - 2026-07-31
 
 ### Added
