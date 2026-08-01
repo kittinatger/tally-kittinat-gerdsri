@@ -290,6 +290,12 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS wallet_id INTEGER REFERENCES wallets(id) ON DELETE SET NULL;`;
       await sql`CREATE INDEX IF NOT EXISTS expenses_wallet_idx ON expenses (wallet_id);`;
 
+      // One-time guard so the default wallet's balance gets synced from the
+      // pre-wallets app_settings starting balance exactly once — otherwise
+      // every new account's wallet (correctly starting at 0) would get
+      // re-synced from app_settings on every cold start too.
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS legacy_balance_synced BOOLEAN NOT NULL DEFAULT false;`;
+
       await bootstrapAdminIfNeeded();
       await hardenMultiUserConstraints();
 
@@ -307,6 +313,19 @@ function ensureSchema(): Promise<void> {
         SET wallet_id = w.id
         FROM wallets w
         WHERE e.wallet_id IS NULL AND w.user_id = e.user_id AND w.sort_order = 0;
+      `;
+
+      // The "Remaining" figure on the Dashboard used to be tracked
+      // independently on app_settings; now it's derived from wallets (see
+      // getRemaining), so the default wallet needs to inherit whatever
+      // balance/anchor the user had there, or Remaining would jump to 0.
+      await sql`
+        UPDATE wallets w
+        SET starting_balance = s.starting_balance,
+            starting_balance_set_at = s.starting_balance_set_at,
+            legacy_balance_synced = true
+        FROM app_settings s
+        WHERE w.user_id = s.user_id AND w.sort_order = 0 AND w.legacy_balance_synced = false;
       `;
 
       // Transfer categories were added after the initial multi-user release,
@@ -551,11 +570,14 @@ export async function seedDefaultWalletForUser(userId: number): Promise<void> {
   `;
 }
 
+// The Dashboard's "Remaining" is derived from wallets, not tracked
+// separately — it's always exactly the sum of every wallet's own balance
+// (see listWallets), so the two figures can never drift apart.
 export async function getRemaining(userId: number): Promise<number> {
   await ensureSchema();
   const { rows } = await sql<{ remaining: string }>`
-    SELECT (
-      s.starting_balance + COALESCE((
+    SELECT COALESCE(SUM(
+      w.starting_balance + COALESCE((
         SELECT SUM(
           CASE
             WHEN e.type = 'income' THEN e.amount
@@ -564,21 +586,54 @@ export async function getRemaining(userId: number): Promise<number> {
           END
         )
         FROM expenses e
-        WHERE e.user_id = ${userId} AND e.created_at > s.starting_balance_set_at
+        WHERE e.wallet_id = w.id AND e.created_at > w.starting_balance_set_at
       ), 0)
-    )::text AS remaining
-    FROM app_settings s
-    WHERE s.user_id = ${userId};
+    ), 0)::text AS remaining
+    FROM wallets w
+    WHERE w.user_id = ${userId};
   `;
   return rows[0] ? Number(rows[0].remaining) : 0;
 }
 
+async function getWalletBalance(walletId: number): Promise<number> {
+  const { rows } = await sql<{ balance: string }>`
+    SELECT (
+      w.starting_balance + COALESCE((
+        SELECT SUM(
+          CASE
+            WHEN e.type = 'income' THEN e.amount
+            WHEN e.type = 'transfer' AND e.direction = 'in' THEN e.amount
+            ELSE -e.amount
+          END
+        )
+        FROM expenses e
+        WHERE e.wallet_id = w.id AND e.created_at > w.starting_balance_set_at
+      ), 0)
+    )::text AS balance
+    FROM wallets w
+    WHERE w.id = ${walletId};
+  `;
+  return rows[0] ? Number(rows[0].balance) : 0;
+}
+
+// Editing the Dashboard's overall "Remaining" nudges the default wallet by
+// whatever delta is needed to bring the total to the requested amount,
+// rather than trying to guess how to split an absolute figure across
+// multiple wallets.
 export async function setRemaining(userId: number, amount: number): Promise<number> {
   await ensureSchema();
+  const { rows: walletRows } = await sql<{ id: number }>`
+    SELECT id FROM wallets WHERE user_id = ${userId} ORDER BY sort_order, id LIMIT 1;
+  `;
+  const targetId = walletRows[0]?.id;
+  if (!targetId) return amount;
+
+  const [current, targetBalance] = await Promise.all([getRemaining(userId), getWalletBalance(targetId)]);
+  const delta = amount - current;
   await sql`
-    UPDATE app_settings
-    SET starting_balance = ${amount}, starting_balance_set_at = now()
-    WHERE user_id = ${userId};
+    UPDATE wallets
+    SET starting_balance = ${targetBalance + delta}, starting_balance_set_at = now()
+    WHERE id = ${targetId};
   `;
   return amount;
 }
