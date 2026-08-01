@@ -1,6 +1,7 @@
 import { sql, db } from "@vercel/postgres";
 import type { ExpenseInput } from "@/lib/validation";
 import { hashPassword } from "@/lib/password";
+import { normalizeDashboardWidgets, type DashboardWidgetConfig } from "@/lib/dashboard-widgets";
 
 export type Expense = {
   id: number;
@@ -230,6 +231,14 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS timezone TEXT NOT NULL DEFAULT 'auto';`;
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS show_week_numbers BOOLEAN NOT NULL DEFAULT false;`;
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS alternate_calendar TEXT NOT NULL DEFAULT 'none';`;
+
+      // Ordered list of {id, visible} for the Dashboard's widgets — stored
+      // as JSON text rather than JSONB to match how every other setting on
+      // this table is a plain scalar column.
+      await sql`
+        ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS dashboard_widgets TEXT NOT NULL DEFAULT
+          '[{"id":"summary","visible":true},{"id":"categoryOverview","visible":true},{"id":"wallets","visible":true},{"id":"recentTransactions","visible":true}]';
+      `;
       // Once the multi-user migration has hardened this table (see
       // hardenMultiUserConstraints), `id` no longer has any constraint for
       // ON CONFLICT to target — and the legacy singleton row is obsolete by
@@ -669,6 +678,32 @@ export async function setAutoConvertCurrency(userId: number, enabled: boolean): 
   await ensureSchema();
   await sql`UPDATE app_settings SET auto_convert_currency = ${enabled} WHERE user_id = ${userId};`;
   return enabled;
+}
+
+export async function getDashboardWidgets(userId: number): Promise<DashboardWidgetConfig[]> {
+  await ensureSchema();
+  const { rows } = await sql<{ dashboard_widgets: string }>`
+    SELECT dashboard_widgets FROM app_settings WHERE user_id = ${userId};
+  `;
+  let parsed: unknown = null;
+  try {
+    parsed = rows[0] ? JSON.parse(rows[0].dashboard_widgets) : null;
+  } catch {
+    parsed = null;
+  }
+  return normalizeDashboardWidgets(parsed);
+}
+
+export async function setDashboardWidgets(
+  userId: number,
+  widgets: DashboardWidgetConfig[],
+): Promise<DashboardWidgetConfig[]> {
+  await ensureSchema();
+  const normalized = normalizeDashboardWidgets(widgets);
+  await sql`
+    UPDATE app_settings SET dashboard_widgets = ${JSON.stringify(normalized)} WHERE user_id = ${userId};
+  `;
+  return normalized;
 }
 
 export type CalendarSettings = {

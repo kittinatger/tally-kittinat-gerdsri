@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TRANSACTION_TYPES, TRANSFER_DIRECTIONS } from "@/lib/categories";
 import { WALLET_KINDS } from "@/lib/wallets";
+import { DASHBOARD_WIDGET_IDS } from "@/lib/dashboard-widgets";
 
 const sharedFields = {
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
@@ -93,6 +94,12 @@ export const walletUpdateSchema = z
       data.name !== undefined || data.color !== undefined || data.kind !== undefined || data.startingBalance !== undefined,
     { message: "Provide name, color, kind, and/or startingBalance" },
   );
+
+export const dashboardWidgetsInputSchema = z.object({
+  widgets: z
+    .array(z.object({ id: z.enum(DASHBOARD_WIDGET_IDS), visible: z.boolean() }))
+    .min(1),
+});
 
 export const categoryInputSchema = z.object({
   type: z.enum(TRANSACTION_TYPES),
