@@ -7,8 +7,12 @@ import { APP_VERSION } from "@/lib/version";
 import PullToRefresh from "./PullToRefresh";
 import AppHeader from "./AppHeader";
 import AccountPanel from "./AccountPanel";
-import SettingsPanel from "./SettingsPanel";
+import ThemeSetting from "./ThemeSetting";
+import CurrencySettings from "./CurrencySettings";
+import PermissionsSettings from "./PermissionsSettings";
 import CategoryManager from "./CategoryManager";
+import SettingsSection from "./SettingsSection";
+import ComingSoonRow from "./ComingSoonRow";
 
 export default function SettingsView({
   categories,
@@ -28,15 +32,23 @@ export default function SettingsView({
           <main className="flex-1 px-1 py-6 sm:px-2">
             <h2 className="mb-5 font-display text-2xl text-foreground">Settings</h2>
 
-            <div className="mb-8">
+            <SettingsSection title="App settings">
               <AccountPanel initialUsername={username} />
-            </div>
+              <PermissionsSettings />
+            </SettingsSection>
 
-            <div className="mb-8 rounded-card border border-line bg-surface p-5">
-              <SettingsPanel />
-            </div>
+            <SettingsSection title="Records">
+              <CategoryManager categories={categories} />
+              <ComingSoonRow label="Manage tags" description="Rename or delete existing tags." />
+              <ComingSoonRow label="Export data" description="Download your transactions as a file." />
+            </SettingsSection>
 
-            <CategoryManager categories={categories} />
+            <SettingsSection title="Display">
+              <ComingSoonRow label="Calendar settings" description="Choose your week start day and date format." />
+              <ThemeSetting />
+              <CurrencySettings />
+              <ComingSoonRow label="Language" />
+            </SettingsSection>
 
             <footer className="mt-12 flex flex-col items-center gap-2 border-t border-line pt-6 text-center text-xs text-ink-soft">
               <p>Tally v{APP_VERSION}</p>
