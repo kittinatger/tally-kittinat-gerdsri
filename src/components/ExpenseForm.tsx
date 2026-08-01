@@ -5,6 +5,8 @@ import type { TransactionType } from "@/lib/categories";
 import { useAllCategories } from "@/lib/categories-context";
 import { todayInputValue } from "@/lib/format";
 import TagInput from "./TagInput";
+import DatePicker from "./DatePicker";
+import SelectDropdown from "./SelectDropdown";
 
 export type ExpenseFormValues = {
   type: TransactionType;
@@ -96,14 +98,7 @@ export default function ExpenseForm({
           <label className={labelClass} htmlFor="date">
             Date
           </label>
-          <input
-            id="date"
-            type="date"
-            required
-            value={values.date}
-            onChange={(e) => update("date", e.target.value)}
-            className={inputClass}
-          />
+          <DatePicker id="date" value={values.date} onChange={(date) => update("date", date)} required />
         </div>
         <div>
           <label className={labelClass} htmlFor="amount">
@@ -143,18 +138,12 @@ export default function ExpenseForm({
         <label className={labelClass} htmlFor="category">
           Category
         </label>
-        <select
+        <SelectDropdown
           id="category"
           value={values.category}
-          onChange={(e) => update("category", e.target.value)}
-          className={inputClass}
-        >
-          {categories.map((c) => (
-            <option key={c.id} value={c.name}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+          options={categories.map((c) => c.name)}
+          onChange={(name) => update("category", name)}
+        />
       </div>
 
       <div>
