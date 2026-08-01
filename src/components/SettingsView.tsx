@@ -105,6 +105,52 @@ function GlobeIcon() {
   );
 }
 
+function BookIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <path d="M4 5.5C4 4.7 4.7 4 5.5 4H12v16H5.5c-.8 0-1.5-.7-1.5-1.5v-13z" />
+      <path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H12v16h6.5c.8 0 1.5-.7 1.5-1.5v-13z" />
+    </svg>
+  );
+}
+
+function QuestionIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9.2c.3-1.4 1.5-2.2 2.9-2.2 1.6 0 2.9 1 2.9 2.4 0 1.6-1.6 2-2.6 2.9-.4.4-.6.8-.6 1.4" />
+      <circle cx="12" cy="17" r="0.9" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <rect x="3.5" y="5.5" width="17" height="13" rx="2" />
+      <path d="M4.5 7l7.5 6 7.5-6" />
+    </svg>
+  );
+}
+
+function FlagIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <path d="M5 21V4" />
+      <path d="M5 4.5c1.6-1 3.4-1 5 0s3.4 1 5 0v8c-1.6 1-3.4 1-5 0s-3.4-1-5 0" />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5.5l3.5 2" />
+    </svg>
+  );
+}
+
 function BackIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0">
@@ -171,6 +217,14 @@ export default function SettingsView({
                   <SettingsListItem icon={<SunMoonIcon />} label="Theme" onClick={() => setPanel("theme")} />
                   <SettingsListItem icon={<CoinIcon />} label="Currency" onClick={() => setPanel("currency")} />
                   <SettingsListItem icon={<GlobeIcon />} label="Language" badge="Coming soon" />
+                </SettingsSection>
+
+                <SettingsSection title="Support">
+                  <SettingsListItem icon={<BookIcon />} label="Usage guide" href="/usage-guide" />
+                  <SettingsListItem icon={<QuestionIcon />} label="FAQs" href="/faq" />
+                  <SettingsListItem icon={<MailIcon />} label="Contact" href="/contact" />
+                  <SettingsListItem icon={<FlagIcon />} label="Report an issue" href="/report-issue" />
+                  <SettingsListItem icon={<ClockIcon />} label="Changelog" href="/changelog" />
                 </SettingsSection>
               </div>
             )}

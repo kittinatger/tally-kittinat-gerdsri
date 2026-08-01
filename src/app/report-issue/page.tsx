@@ -1,0 +1,66 @@
+import Link from "next/link";
+import AppHeader from "@/components/AppHeader";
+
+export default function ReportIssuePage() {
+  return (
+    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-10 pt-3 sm:px-4">
+      <AppHeader />
+
+      <main className="flex-1 px-1 py-6 sm:px-2">
+        <h2 className="mb-5 font-display text-2xl text-foreground">Report an Issue</h2>
+
+        <div className="space-y-6 rounded-card border border-line bg-surface p-5 text-sm leading-relaxed text-ink-soft">
+          <section>
+            <h3 className="mb-1.5 font-semibold text-foreground">Bugs &amp; feature requests</h3>
+            <p>
+              Open a{" "}
+              <a
+                href="https://github.com/kittinatger/tally-kittinat-gerdsri/issues/new"
+                target="_blank"
+                rel="noreferrer"
+                className="text-navy underline hover:no-underline dark:text-blue-300"
+              >
+                new GitHub issue
+              </a>{" "}
+              describing what happened (or what you&apos;d like to see), what you expected, steps to reproduce, and
+              your environment (OS, browser, deployment method).
+            </p>
+          </section>
+
+          <section>
+            <h3 className="mb-1.5 font-semibold text-foreground">Security vulnerabilities</h3>
+            <p>
+              <span className="font-semibold text-foreground">Please do not</span> open a public GitHub issue for
+              security vulnerabilities. Instead, email{" "}
+              <a href="mailto:kittinatg@gmail.com" className="text-navy underline hover:no-underline dark:text-blue-300">
+                kittinatg@gmail.com
+              </a>{" "}
+              with a description, affected versions, steps to reproduce, and potential impact. Don&apos;t include
+              working exploit code, and don&apos;t test vulnerabilities on instances you don&apos;t own. See the full{" "}
+              <a
+                href="https://github.com/kittinatger/tally-kittinat-gerdsri/blob/master/.github/SECURITY.md"
+                target="_blank"
+                rel="noreferrer"
+                className="text-navy underline hover:no-underline dark:text-blue-300"
+              >
+                Security Policy
+              </a>
+              .
+            </p>
+          </section>
+
+          <section>
+            <h3 className="mb-1.5 font-semibold text-foreground">Response timeline</h3>
+            <p>Reports are acknowledged within 2 business days; critical fixes are targeted within 2 weeks.</p>
+          </section>
+        </div>
+
+        <p className="mt-6 text-center text-sm text-ink-soft">
+          <Link href="/settings" className="text-navy hover:underline dark:text-blue-300">
+            Back to Settings
+          </Link>
+        </p>
+      </main>
+    </div>
+  );
+}
