@@ -101,7 +101,7 @@ export default function AppHeader({ onAddClick }: { onAddClick?: () => void }) {
             <button
               onClick={confirmLogout}
               disabled={loggingOut}
-              className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+              className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-red-700 disabled:opacity-60"
             >
               {loggingOut ? "Signing out..." : "Sign out"}
             </button>
