@@ -52,6 +52,27 @@ export const settingsInputSchema = z
     { message: "Provide remaining, currency, and/or autoConvertCurrency" },
   );
 
+export const DEFAULT_VIEWS = ["today", "week", "month", "all"] as const;
+export const TIMEZONE_MODES = ["auto", "custom"] as const;
+
+export const calendarSettingsInputSchema = z
+  .object({
+    weekStartDay: z.number().int().min(0).max(6).optional(),
+    monthStartDay: z.number().int().min(1).max(28).optional(),
+    biweeklyAnchorDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD")
+      .nullable()
+      .optional(),
+    defaultView: z.enum(DEFAULT_VIEWS).optional(),
+    timezone: z.string().trim().min(1).max(100).optional(),
+    showWeekNumbers: z.boolean().optional(),
+    alternateCalendar: z.string().trim().min(1).max(30).optional(),
+  })
+  .refine((data) => Object.values(data).some((v) => v !== undefined), {
+    message: "Provide at least one calendar setting to update",
+  });
+
 export const categoryInputSchema = z.object({
   type: z.enum(TRANSACTION_TYPES),
   name: z.string().trim().min(1).max(40),

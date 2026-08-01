@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { formatDateShort, todayInputValue } from "@/lib/format";
+import { useCalendarSettings } from "@/lib/use-calendar-settings";
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
@@ -12,6 +13,15 @@ function toKey(y: number, m: number, d: number): string {
 function parseKey(key: string): { y: number; m: number; d: number } {
   const [y, m, d] = key.split("-").map(Number);
   return { y, m: m - 1, d };
+}
+
+// ISO-8601 week number of the year for the given date.
+function weekNumber(y: number, m: number, d: number): number {
+  const date = new Date(Date.UTC(y, m, d));
+  const day = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 }
 
 export default function DateRangeFilter({
@@ -37,6 +47,11 @@ export default function DateRangeFilter({
   const [viewMonth, setViewMonth] = useState(() => parseKey(todayInputValue()).m);
   const [popoverPos, setPopoverPos] = useState<{ top: number; right: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { weekStartDay, showWeekNumbers } = useCalendarSettings();
+  const weekdayLabels = useMemo(
+    () => WEEKDAYS.slice(weekStartDay).concat(WEEKDAYS.slice(0, weekStartDay)),
+    [weekStartDay],
+  );
 
   useEffect(() => {
     function onPointerDown(e: MouseEvent) {
@@ -91,29 +106,35 @@ export default function DateRangeFilter({
 
   const days = useMemo(() => {
     const firstOfMonth = new Date(viewYear, viewMonth, 1);
-    const startWeekday = firstOfMonth.getDay();
+    const startWeekday = (firstOfMonth.getDay() - weekStartDay + 7) % 7;
     const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
     const daysInPrevMonth = new Date(viewYear, viewMonth, 0).getDate();
 
-    const cells: Array<{ key: string; label: number; inMonth: boolean }> = [];
+    const cells: Array<{ key: string; label: number; inMonth: boolean; y: number; m: number; d: number }> = [];
     for (let i = startWeekday - 1; i >= 0; i--) {
       const d = daysInPrevMonth - i;
       const y = viewMonth === 0 ? viewYear - 1 : viewYear;
       const m = viewMonth === 0 ? 11 : viewMonth - 1;
-      cells.push({ key: toKey(y, m, d), label: d, inMonth: false });
+      cells.push({ key: toKey(y, m, d), label: d, inMonth: false, y, m, d });
     }
     for (let d = 1; d <= daysInMonth; d++) {
-      cells.push({ key: toKey(viewYear, viewMonth, d), label: d, inMonth: true });
+      cells.push({ key: toKey(viewYear, viewMonth, d), label: d, inMonth: true, y: viewYear, m: viewMonth, d });
     }
     let nextDay = 1;
     while (cells.length % 7 !== 0) {
       const y = viewMonth === 11 ? viewYear + 1 : viewYear;
       const m = viewMonth === 11 ? 0 : viewMonth + 1;
-      cells.push({ key: toKey(y, m, nextDay), label: nextDay, inMonth: false });
+      cells.push({ key: toKey(y, m, nextDay), label: nextDay, inMonth: false, y, m, d: nextDay });
       nextDay++;
     }
     return cells;
-  }, [viewYear, viewMonth]);
+  }, [viewYear, viewMonth, weekStartDay]);
+
+  const weeks = useMemo(() => {
+    const chunks: (typeof days)[] = [];
+    for (let i = 0; i < days.length; i += 7) chunks.push(days.slice(i, i + 7));
+    return chunks;
+  }, [days]);
 
   function changeMonth(delta: number) {
     let m = viewMonth + delta;
@@ -247,38 +268,48 @@ export default function DateRangeFilter({
             </button>
           </div>
 
-          <div className="grid grid-cols-7 gap-y-0.5 text-center">
-            {WEEKDAYS.map((w) => (
+          <div className={`grid gap-y-0.5 text-center ${showWeekNumbers ? "grid-cols-8" : "grid-cols-7"}`}>
+            {showWeekNumbers && <span className="py-1 text-[11px] font-semibold text-ink-soft/60">Wk</span>}
+            {weekdayLabels.map((w) => (
               <span key={w} className="py-1 text-[11px] font-semibold text-ink-soft">
                 {w}
               </span>
             ))}
-            {days.map((cell) => {
-              const isFrom = cell.key === draftFrom;
-              const isTo = cell.key === draftTo;
-              const inRange = draftFrom && draftTo && cell.key > draftFrom && cell.key < draftTo;
-              const isToday = cell.key === todayInputValue();
-              return (
-                <button
-                  key={cell.key}
-                  type="button"
-                  onClick={() => pickDay(cell.key)}
-                  className={`relative h-8 w-full text-sm transition ${
-                    cell.inMonth ? "text-foreground" : "text-ink-soft/40"
-                  } ${isFrom || isTo ? "font-semibold text-white" : "hover:bg-bg-soft"} ${
-                    isFrom ? "rounded-l-full" : ""
-                  } ${isTo ? "rounded-r-full" : ""} ${isFrom && isTo ? "rounded-full" : ""}`}
-                  style={{
-                    backgroundColor: isFrom || isTo ? "var(--navy)" : inRange ? "var(--navy-soft, rgba(24,64,58,0.12))" : undefined,
-                  }}
-                >
-                  {isToday && !(isFrom || isTo) && (
-                    <span className="absolute inset-x-2 bottom-1 h-0.5 rounded-full bg-navy" />
-                  )}
-                  {cell.label}
-                </button>
-              );
-            })}
+            {weeks.map((week) => (
+              <Fragment key={week[0].key}>
+                {showWeekNumbers && (
+                  <span className="flex h-8 w-full items-center justify-center text-[11px] text-ink-soft/60">
+                    {weekNumber(week[0].y, week[0].m, week[0].d)}
+                  </span>
+                )}
+                {week.map((cell) => {
+                  const isFrom = cell.key === draftFrom;
+                  const isTo = cell.key === draftTo;
+                  const inRange = draftFrom && draftTo && cell.key > draftFrom && cell.key < draftTo;
+                  const isToday = cell.key === todayInputValue();
+                  return (
+                    <button
+                      key={cell.key}
+                      type="button"
+                      onClick={() => pickDay(cell.key)}
+                      className={`relative h-8 w-full text-sm transition ${
+                        cell.inMonth ? "text-foreground" : "text-ink-soft/40"
+                      } ${isFrom || isTo ? "font-semibold text-white" : "hover:bg-bg-soft"} ${
+                        isFrom ? "rounded-l-full" : ""
+                      } ${isTo ? "rounded-r-full" : ""} ${isFrom && isTo ? "rounded-full" : ""}`}
+                      style={{
+                        backgroundColor: isFrom || isTo ? "var(--navy)" : inRange ? "var(--navy-soft, rgba(24,64,58,0.12))" : undefined,
+                      }}
+                    >
+                      {isToday && !(isFrom || isTo) && (
+                        <span className="absolute inset-x-2 bottom-1 h-0.5 rounded-full bg-navy" />
+                      )}
+                      {cell.label}
+                    </button>
+                  );
+                })}
+              </Fragment>
+            ))}
           </div>
 
           <div className="mt-3.5 flex items-center justify-between gap-2">

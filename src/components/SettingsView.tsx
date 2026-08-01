@@ -10,6 +10,7 @@ import AppHeader from "./AppHeader";
 import AccountPanel from "./AccountPanel";
 import ThemeSetting from "./ThemeSetting";
 import CurrencySettings from "./CurrencySettings";
+import CalendarSettings from "./CalendarSettings";
 import PermissionsSettings from "./PermissionsSettings";
 import CategoryManager from "./CategoryManager";
 import TagManager from "./TagManager";
@@ -17,7 +18,7 @@ import ExportDataButton from "./ExportDataButton";
 import SettingsSection from "./SettingsSection";
 import SettingsListItem from "./SettingsListItem";
 
-type Panel = "account" | "permissions" | "categories" | "tags" | "theme" | "currency";
+type Panel = "account" | "permissions" | "categories" | "tags" | "theme" | "currency" | "calendar";
 
 const PANEL_TITLES: Record<Panel, string> = {
   account: "Account",
@@ -26,6 +27,7 @@ const PANEL_TITLES: Record<Panel, string> = {
   tags: "Manage tags",
   theme: "Theme",
   currency: "Currency",
+  calendar: "Calendar settings",
 };
 
 function AccountIcon() {
@@ -175,7 +177,7 @@ export default function SettingsView({
                   <BackIcon />
                   Settings
                 </button>
-                {(panel === "theme" || panel === "currency" || panel === "tags") && (
+                {(panel === "theme" || panel === "currency" || panel === "tags" || panel === "calendar") && (
                   <h2 className="mb-5 font-display text-2xl text-foreground">{PANEL_TITLES[panel]}</h2>
                 )}
 
@@ -185,6 +187,7 @@ export default function SettingsView({
                 {panel === "tags" && <TagManager />}
                 {panel === "theme" && <ThemeSetting />}
                 {panel === "currency" && <CurrencySettings />}
+                {panel === "calendar" && <CalendarSettings />}
               </div>
             ) : (
               <div>
@@ -202,7 +205,7 @@ export default function SettingsView({
                 </SettingsSection>
 
                 <SettingsSection title="Display">
-                  <SettingsListItem icon={<CalendarIcon />} label="Calendar settings" badge="Coming soon" />
+                  <SettingsListItem icon={<CalendarIcon />} label="Calendar settings" onClick={() => setPanel("calendar")} />
                   <SettingsListItem icon={<SunMoonIcon />} label="Theme" onClick={() => setPanel("theme")} />
                   <SettingsListItem icon={<CoinIcon />} label="Currency" onClick={() => setPanel("currency")} />
                   <SettingsListItem icon={<GlobeIcon />} label="Language" badge="Coming soon" />

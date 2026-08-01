@@ -216,6 +216,18 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS starting_balance_set_at TIMESTAMPTZ NOT NULL DEFAULT now();`;
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS currency TEXT NOT NULL DEFAULT 'USD';`;
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS auto_convert_currency BOOLEAN NOT NULL DEFAULT false;`;
+
+      // Calendar preferences: week_start_day is 0 (Sunday) through 6
+      // (Saturday); month_start_day/biweekly_anchor_date define custom
+      // budgeting periods; default_view/timezone/show_week_numbers/
+      // alternate_calendar are user display preferences.
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS week_start_day SMALLINT NOT NULL DEFAULT 0;`;
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS month_start_day SMALLINT NOT NULL DEFAULT 1;`;
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS biweekly_anchor_date DATE;`;
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS default_view TEXT NOT NULL DEFAULT 'today';`;
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS timezone TEXT NOT NULL DEFAULT 'auto';`;
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS show_week_numbers BOOLEAN NOT NULL DEFAULT false;`;
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS alternate_calendar TEXT NOT NULL DEFAULT 'none';`;
       // Once the multi-user migration has hardened this table (see
       // hardenMultiUserConstraints), `id` no longer has any constraint for
       // ON CONFLICT to target — and the legacy singleton row is obsolete by
@@ -429,6 +441,71 @@ export async function setAutoConvertCurrency(userId: number, enabled: boolean): 
   await ensureSchema();
   await sql`UPDATE app_settings SET auto_convert_currency = ${enabled} WHERE user_id = ${userId};`;
   return enabled;
+}
+
+export type CalendarSettings = {
+  weekStartDay: number;
+  monthStartDay: number;
+  biweeklyAnchorDate: string | null;
+  defaultView: string;
+  timezone: string;
+  showWeekNumbers: boolean;
+  alternateCalendar: string;
+};
+
+export async function getCalendarSettings(userId: number): Promise<CalendarSettings> {
+  await ensureSchema();
+  const { rows } = await sql<{
+    week_start_day: number;
+    month_start_day: number;
+    biweekly_anchor_date: string | null;
+    default_view: string;
+    timezone: string;
+    show_week_numbers: boolean;
+    alternate_calendar: string;
+  }>`
+    SELECT week_start_day, month_start_day, biweekly_anchor_date, default_view, timezone, show_week_numbers, alternate_calendar
+    FROM app_settings WHERE user_id = ${userId};
+  `;
+  const row = rows[0];
+  return {
+    weekStartDay: row?.week_start_day ?? 0,
+    monthStartDay: row?.month_start_day ?? 1,
+    biweeklyAnchorDate: row?.biweekly_anchor_date ?? null,
+    defaultView: row?.default_view ?? "today",
+    timezone: row?.timezone ?? "auto",
+    showWeekNumbers: row?.show_week_numbers ?? false,
+    alternateCalendar: row?.alternate_calendar ?? "none",
+  };
+}
+
+export async function setCalendarSettings(
+  userId: number,
+  patch: Partial<CalendarSettings>,
+): Promise<CalendarSettings> {
+  await ensureSchema();
+  if (patch.weekStartDay !== undefined) {
+    await sql`UPDATE app_settings SET week_start_day = ${patch.weekStartDay} WHERE user_id = ${userId};`;
+  }
+  if (patch.monthStartDay !== undefined) {
+    await sql`UPDATE app_settings SET month_start_day = ${patch.monthStartDay} WHERE user_id = ${userId};`;
+  }
+  if (patch.biweeklyAnchorDate !== undefined) {
+    await sql`UPDATE app_settings SET biweekly_anchor_date = ${patch.biweeklyAnchorDate} WHERE user_id = ${userId};`;
+  }
+  if (patch.defaultView !== undefined) {
+    await sql`UPDATE app_settings SET default_view = ${patch.defaultView} WHERE user_id = ${userId};`;
+  }
+  if (patch.timezone !== undefined) {
+    await sql`UPDATE app_settings SET timezone = ${patch.timezone} WHERE user_id = ${userId};`;
+  }
+  if (patch.showWeekNumbers !== undefined) {
+    await sql`UPDATE app_settings SET show_week_numbers = ${patch.showWeekNumbers} WHERE user_id = ${userId};`;
+  }
+  if (patch.alternateCalendar !== undefined) {
+    await sql`UPDATE app_settings SET alternate_calendar = ${patch.alternateCalendar} WHERE user_id = ${userId};`;
+  }
+  return getCalendarSettings(userId);
 }
 
 export async function listExpenses(userId: number): Promise<Expense[]> {
