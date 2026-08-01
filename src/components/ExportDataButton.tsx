@@ -47,6 +47,8 @@ export default function ExportDataButton() {
           notes: e.notes,
           tags: e.tags,
           hasReceipt: false,
+          walletId: null,
+          walletName: null,
         });
         lines.push(
           [

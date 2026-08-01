@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { TransactionType, TransferDirection } from "@/lib/categories";
 import { useAllCategories } from "@/lib/categories-context";
+import { useWallets } from "@/lib/wallets-context";
 import { todayInputValue } from "@/lib/format";
 import TagInput from "./TagInput";
 import DatePicker from "./DatePicker";
@@ -18,6 +19,8 @@ export type ExpenseFormValues = {
   category: string;
   notes: string;
   tags: string[];
+  /** null means "use the default wallet" — resolved server-side. */
+  walletId: number | null;
 };
 
 export const emptyExpenseFormValues: ExpenseFormValues = {
@@ -29,6 +32,7 @@ export const emptyExpenseFormValues: ExpenseFormValues = {
   category: "Other",
   notes: "",
   tags: [],
+  walletId: null,
 };
 
 const inputClass =
@@ -54,7 +58,10 @@ export default function ExpenseForm({
 }) {
   const [values, setValues] = useState<ExpenseFormValues>(initialValues);
   const allCategories = useAllCategories();
+  const wallets = useWallets();
   const categories = allCategories.filter((c) => c.type === values.type);
+  const selectedWalletId = values.walletId ?? wallets[0]?.id ?? null;
+  const selectedWalletName = wallets.find((w) => w.id === selectedWalletId)?.name ?? "";
   const sourceLabel = values.type === "income" ? "Source" : values.type === "transfer" ? "Description" : "Merchant";
 
   function update<K extends keyof ExpenseFormValues>(key: K, value: ExpenseFormValues[K]) {
@@ -192,6 +199,23 @@ export default function ExpenseForm({
           onChange={(name) => update("category", name)}
         />
       </div>
+
+      {wallets.length > 1 && (
+        <div>
+          <label className={labelClass} htmlFor="wallet">
+            Wallet
+          </label>
+          <SelectDropdown
+            id="wallet"
+            value={selectedWalletName}
+            options={wallets.map((w) => w.name)}
+            onChange={(name) => {
+              const wallet = wallets.find((w) => w.name === name);
+              if (wallet) update("walletId", wallet.id);
+            }}
+          />
+        </div>
+      )}
 
       <div>
         <label className={labelClass}>Tags (optional)</label>

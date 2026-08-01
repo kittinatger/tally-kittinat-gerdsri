@@ -80,6 +80,7 @@ export default function AddExpenseModal({
         category: categoryValid ? extraction.category : "Other",
         notes: "",
         tags: [],
+        walletId: null,
       });
       setScanConversion(
         extraction.originalAmount !== undefined && extraction.originalCurrency
@@ -138,6 +139,7 @@ export default function AddExpenseModal({
         category: categoryValid ? extraction.category : "Other",
         notes: extraction.notes ?? "",
         tags: [],
+        walletId: null,
       });
       setVoiceConversion(
         extraction.originalAmount !== undefined && extraction.originalCurrency
@@ -432,6 +434,7 @@ async function createExpense(values: ExpenseFormValues): Promise<Expense> {
       category: values.category,
       notes: values.notes || undefined,
       tags: values.tags,
+      walletId: values.walletId,
     }),
   });
   const data = await res.json();
@@ -449,5 +452,7 @@ async function createExpense(values: ExpenseFormValues): Promise<Expense> {
     notes: data.expense.notes,
     tags: data.expense.tags ?? [],
     hasReceipt: data.expense.has_receipt ?? false,
+    walletId: data.expense.wallet_id ?? null,
+    walletName: data.expense.wallet_name ?? null,
   };
 }

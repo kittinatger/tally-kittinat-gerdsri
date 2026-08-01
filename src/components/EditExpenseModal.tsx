@@ -30,6 +30,7 @@ export default function EditExpenseModal({
     category: expense.category,
     notes: expense.notes ?? "",
     tags: expense.tags,
+    walletId: expense.walletId,
   };
 
   async function handleSubmit(values: ExpenseFormValues) {
@@ -48,6 +49,7 @@ export default function EditExpenseModal({
           category: values.category,
           notes: values.notes || undefined,
           tags: values.tags,
+          walletId: values.walletId,
         }),
       });
       const data = await res.json();
@@ -66,6 +68,8 @@ export default function EditExpenseModal({
         notes: data.expense.notes,
         tags: data.expense.tags ?? [],
         hasReceipt: expense.hasReceipt,
+        walletId: data.expense.wallet_id ?? null,
+        walletName: data.expense.wallet_name ?? null,
       });
     } catch {
       setError("Network error while saving.");

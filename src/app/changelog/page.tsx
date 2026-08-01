@@ -3,6 +3,21 @@ import AppHeader from "@/components/AppHeader";
 
 const RELEASES: { version: string; date: string; sections: { heading: string; items: string[] }[] }[] = [
   {
+    version: "0.8.0",
+    date: "2026-08-01",
+    sections: [
+      {
+        heading: "Added",
+        items: [
+          "Multiple wallets — track cash, bank accounts, and e-wallets separately, each with its own balance",
+          "Wallets management in Settings > Records, with add/rename/recolor/delete and a per-wallet starting balance",
+          "Wallet selector on the transaction form once more than one wallet exists",
+          "Calendar settings in Settings > Display: week start day and show/hide week numbers now actually change the date pickers; month-start day, bi-weekly period anchor, default launch view, time zone, and alternate calendar are saved as preferences",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.7.0",
     date: "2026-08-01",
     sections: [

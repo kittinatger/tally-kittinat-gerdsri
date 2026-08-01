@@ -1,9 +1,10 @@
-import { listExpenses, getRemaining, listCategories, getCurrency } from "@/lib/db";
+import { listExpenses, getRemaining, listCategories, getCurrency, listWallets } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import Dashboard from "@/components/Dashboard";
 import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
 import { isTransactionType } from "@/lib/categories";
 import type { CategoryOption } from "@/types/category";
+import type { WalletOption } from "@/types/wallet";
 
 // Always render fresh: the expense list changes on every write, and this
 // also avoids the build needing a reachable database at build time.
@@ -11,11 +12,12 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const userId = await getUserId();
-  const [rows, remaining, categoryRows, currency] = await Promise.all([
+  const [rows, remaining, categoryRows, currency, walletRows] = await Promise.all([
     listExpenses(userId),
     getRemaining(userId),
     listCategories(userId),
     getCurrency(userId),
+    listWallets(userId),
   ]);
   const expenses: Expense[] = rows.map((r) => ({
     id: r.id,
@@ -28,6 +30,8 @@ export default async function HomePage() {
     notes: r.notes,
     tags: r.tags ?? [],
     hasReceipt: r.has_receipt,
+    walletId: r.wallet_id,
+    walletName: r.wallet_name,
   }));
   const categories: CategoryOption[] = categoryRows.map((c) => ({
     id: c.id,
@@ -35,8 +39,20 @@ export default async function HomePage() {
     name: c.name,
     color: c.color,
   }));
+  const wallets: WalletOption[] = walletRows.map((w) => ({
+    id: w.id,
+    name: w.name,
+    color: w.color,
+    balance: Number(w.balance),
+  }));
 
   return (
-    <Dashboard initialExpenses={expenses} initialRemaining={remaining} categories={categories} currency={currency} />
+    <Dashboard
+      initialExpenses={expenses}
+      initialRemaining={remaining}
+      categories={categories}
+      currency={currency}
+      wallets={wallets}
+    />
   );
 }

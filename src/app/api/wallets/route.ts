@@ -1,0 +1,21 @@
+import { NextRequest, NextResponse } from "next/server";
+import { listWallets, createWallet } from "@/lib/db";
+import { walletInputSchema } from "@/lib/validation";
+import { getUserId } from "@/lib/auth";
+
+export async function GET() {
+  const userId = await getUserId();
+  const wallets = await listWallets(userId);
+  return NextResponse.json({ wallets });
+}
+
+export async function POST(req: NextRequest) {
+  const userId = await getUserId();
+  const body = await req.json().catch(() => null);
+  const parsed = walletInputSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+  const wallet = await createWallet(userId, parsed.data.name, parsed.data.color);
+  return NextResponse.json({ wallet }, { status: 201 });
+}

@@ -13,6 +13,8 @@ export type Expense = {
   notes: string | null;
   tags: string[];
   has_receipt: boolean;
+  wallet_id: number | null;
+  wallet_name: string | null;
 };
 
 // Dates and amounts are cast explicitly to text in every query so the
@@ -269,8 +271,43 @@ function ensureSchema(): Promise<void> {
       // so it stays fast as transaction history grows.
       await sql`CREATE INDEX IF NOT EXISTS expenses_user_date_idx ON expenses (user_id, date DESC, id DESC);`;
 
+      // Wallets: named money pools (cash, bank, e-wallet, etc.) each with
+      // their own starting balance, so a user can track more than one
+      // account. Every expense optionally belongs to one; deleting a wallet
+      // reassigns its expenses rather than orphaning them (see deleteWallet).
+      await sql`
+        CREATE TABLE IF NOT EXISTS wallets (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          name TEXT NOT NULL,
+          color TEXT NOT NULL DEFAULT 'slate',
+          starting_balance NUMERIC(12, 2) NOT NULL DEFAULT 0,
+          starting_balance_set_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          sort_order INTEGER NOT NULL DEFAULT 0,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `;
+      await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS wallet_id INTEGER REFERENCES wallets(id) ON DELETE SET NULL;`;
+      await sql`CREATE INDEX IF NOT EXISTS expenses_wallet_idx ON expenses (wallet_id);`;
+
       await bootstrapAdminIfNeeded();
       await hardenMultiUserConstraints();
+
+      // Every account that existed before wallets shipped needs a default
+      // wallet seeded (registration seeds one for brand-new accounts going
+      // forward — see seedDefaultWalletForUser), and any of their expenses
+      // left without a wallet_id get assigned to it.
+      await sql`
+        INSERT INTO wallets (user_id, name, color, sort_order)
+        SELECT u.id, 'Cash', 'slate', 0 FROM users u
+        WHERE NOT EXISTS (SELECT 1 FROM wallets w WHERE w.user_id = u.id);
+      `;
+      await sql`
+        UPDATE expenses e
+        SET wallet_id = w.id
+        FROM wallets w
+        WHERE e.wallet_id IS NULL AND w.user_id = e.user_id AND w.sort_order = 0;
+      `;
 
       // Transfer categories were added after the initial multi-user release,
       // so existing accounts (seeded before this point) need them backfilled.
@@ -383,6 +420,135 @@ export async function deleteCategory(
   `;
   await sql`DELETE FROM categories WHERE id = ${id} AND user_id = ${userId};`;
   return { ok: true };
+}
+
+export type WalletRow = {
+  id: number;
+  name: string;
+  color: string;
+  balance: string;
+};
+
+export async function listWallets(userId: number): Promise<WalletRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<WalletRow>`
+    SELECT
+      w.id,
+      w.name,
+      w.color,
+      (
+        w.starting_balance + COALESCE((
+          SELECT SUM(
+            CASE
+              WHEN e.type = 'income' THEN e.amount
+              WHEN e.type = 'transfer' AND e.direction = 'in' THEN e.amount
+              ELSE -e.amount
+            END
+          )
+          FROM expenses e
+          WHERE e.wallet_id = w.id AND e.created_at > w.starting_balance_set_at
+        ), 0)
+      )::text AS balance
+    FROM wallets w
+    WHERE w.user_id = ${userId}
+    ORDER BY w.sort_order, w.id;
+  `;
+  return rows;
+}
+
+export async function createWallet(userId: number, name: string, color: string): Promise<WalletRow> {
+  await ensureSchema();
+  const { rows: maxRows } = await sql<{ max: number | null }>`
+    SELECT MAX(sort_order) AS max FROM wallets WHERE user_id = ${userId};
+  `;
+  const nextSort = (maxRows[0]?.max ?? -1) + 1;
+  const { rows } = await sql<{ id: number; name: string; color: string }>`
+    INSERT INTO wallets (user_id, name, color, sort_order)
+    VALUES (${userId}, ${name}, ${color}, ${nextSort})
+    RETURNING id, name, color;
+  `;
+  return { ...rows[0], balance: "0" };
+}
+
+export async function updateWallet(
+  userId: number,
+  id: number,
+  input: { name?: string; color?: string; startingBalance?: number },
+): Promise<WalletRow | null> {
+  await ensureSchema();
+  const { rows: existingRows } = await sql<{ name: string; color: string }>`
+    SELECT name, color FROM wallets WHERE id = ${id} AND user_id = ${userId};
+  `;
+  const existing = existingRows[0];
+  if (!existing) return null;
+
+  const newName = input.name?.trim() ?? existing.name;
+  const newColor = input.color ?? existing.color;
+
+  if (input.startingBalance !== undefined) {
+    await sql`
+      UPDATE wallets
+      SET name = ${newName}, color = ${newColor}, starting_balance = ${input.startingBalance}, starting_balance_set_at = now()
+      WHERE id = ${id} AND user_id = ${userId};
+    `;
+  } else {
+    await sql`
+      UPDATE wallets SET name = ${newName}, color = ${newColor} WHERE id = ${id} AND user_id = ${userId};
+    `;
+  }
+
+  const { rows } = await sql<WalletRow>`
+    SELECT
+      w.id, w.name, w.color,
+      (
+        w.starting_balance + COALESCE((
+          SELECT SUM(
+            CASE
+              WHEN e.type = 'income' THEN e.amount
+              WHEN e.type = 'transfer' AND e.direction = 'in' THEN e.amount
+              ELSE -e.amount
+            END
+          )
+          FROM expenses e
+          WHERE e.wallet_id = w.id AND e.created_at > w.starting_balance_set_at
+        ), 0)
+      )::text AS balance
+    FROM wallets w
+    WHERE w.id = ${id} AND w.user_id = ${userId};
+  `;
+  return rows[0] ?? null;
+}
+
+export async function deleteWallet(
+  userId: number,
+  id: number,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await ensureSchema();
+  const { rows: countRows } = await sql<{ n: number }>`SELECT COUNT(*)::int AS n FROM wallets WHERE user_id = ${userId};`;
+  if ((countRows[0]?.n ?? 0) <= 1) {
+    return { ok: false, error: "You need at least one wallet." };
+  }
+
+  const { rows: fallbackRows } = await sql<{ id: number }>`
+    SELECT id FROM wallets WHERE user_id = ${userId} AND id != ${id} ORDER BY sort_order, id LIMIT 1;
+  `;
+  const fallbackId = fallbackRows[0]?.id;
+  if (!fallbackId) {
+    return { ok: false, error: "You need at least one wallet." };
+  }
+
+  await sql`UPDATE expenses SET wallet_id = ${fallbackId} WHERE wallet_id = ${id} AND user_id = ${userId};`;
+  await sql`DELETE FROM wallets WHERE id = ${id} AND user_id = ${userId};`;
+  return { ok: true };
+}
+
+export async function seedDefaultWalletForUser(userId: number): Promise<void> {
+  await ensureSchema();
+  await sql`
+    INSERT INTO wallets (user_id, name, color, sort_order)
+    SELECT ${userId}, 'Cash', 'slate', 0
+    WHERE NOT EXISTS (SELECT 1 FROM wallets WHERE user_id = ${userId});
+  `;
 }
 
 export async function getRemaining(userId: number): Promise<number> {
@@ -512,19 +678,22 @@ export async function listExpenses(userId: number): Promise<Expense[]> {
   await ensureSchema();
   const { rows } = await sql<Expense>`
     SELECT
-      id,
-      type,
-      direction,
-      to_char(date, 'YYYY-MM-DD') AS date,
-      amount::text AS amount,
-      merchant,
-      category,
-      notes,
-      tags,
-      (receipt_image IS NOT NULL) AS has_receipt
-    FROM expenses
-    WHERE user_id = ${userId}
-    ORDER BY date DESC, id DESC;
+      e.id,
+      e.type,
+      e.direction,
+      to_char(e.date, 'YYYY-MM-DD') AS date,
+      e.amount::text AS amount,
+      e.merchant,
+      e.category,
+      e.notes,
+      e.tags,
+      (e.receipt_image IS NOT NULL) AS has_receipt,
+      e.wallet_id,
+      w.name AS wallet_name
+    FROM expenses e
+    LEFT JOIN wallets w ON w.id = e.wallet_id
+    WHERE e.user_id = ${userId}
+    ORDER BY e.date DESC, e.id DESC;
   `;
   return rows;
 }
@@ -564,27 +733,44 @@ export async function deleteTag(userId: number, name: string): Promise<void> {
   `;
 }
 
+// Resolves an expense's wallet: the caller's chosen wallet if it's actually
+// theirs, otherwise their first (default) wallet.
+async function resolveWalletId(userId: number, walletId: number | null | undefined): Promise<number | null> {
+  if (walletId !== undefined && walletId !== null) {
+    const { rows } = await sql<{ id: number }>`SELECT id FROM wallets WHERE id = ${walletId} AND user_id = ${userId};`;
+    if (rows[0]) return rows[0].id;
+  }
+  const { rows: fallback } = await sql<{ id: number }>`
+    SELECT id FROM wallets WHERE user_id = ${userId} ORDER BY sort_order, id LIMIT 1;
+  `;
+  return fallback[0]?.id ?? null;
+}
+
 export async function createExpense(userId: number, input: ExpenseInput): Promise<Expense> {
   await ensureSchema();
   const direction = input.type === "transfer" ? input.direction : null;
+  const walletId = await resolveWalletId(userId, input.walletId);
   const { rows } = await sql<Expense>`
     WITH inserted AS (
-      INSERT INTO expenses (user_id, type, direction, date, amount, merchant, category, notes, tags)
-      VALUES (${userId}, ${input.type}, ${direction}, ${input.date}, ${input.amount}, ${input.merchant}, ${input.category}, ${input.notes ?? null}, ${toPgTextArray(input.tags ?? [])}::text[])
+      INSERT INTO expenses (user_id, type, direction, date, amount, merchant, category, notes, tags, wallet_id)
+      VALUES (${userId}, ${input.type}, ${direction}, ${input.date}, ${input.amount}, ${input.merchant}, ${input.category}, ${input.notes ?? null}, ${toPgTextArray(input.tags ?? [])}::text[], ${walletId})
       RETURNING *
     )
     SELECT
-      id,
-      type,
-      direction,
-      to_char(date, 'YYYY-MM-DD') AS date,
-      amount::text AS amount,
-      merchant,
-      category,
-      notes,
-      tags,
-      (receipt_image IS NOT NULL) AS has_receipt
-    FROM inserted;
+      inserted.id,
+      inserted.type,
+      inserted.direction,
+      to_char(inserted.date, 'YYYY-MM-DD') AS date,
+      inserted.amount::text AS amount,
+      inserted.merchant,
+      inserted.category,
+      inserted.notes,
+      inserted.tags,
+      (inserted.receipt_image IS NOT NULL) AS has_receipt,
+      inserted.wallet_id,
+      w.name AS wallet_name
+    FROM inserted
+    LEFT JOIN wallets w ON w.id = inserted.wallet_id;
   `;
   return rows[0];
 }
@@ -592,6 +778,7 @@ export async function createExpense(userId: number, input: ExpenseInput): Promis
 export async function updateExpense(userId: number, id: number, input: ExpenseInput): Promise<Expense | null> {
   await ensureSchema();
   const direction = input.type === "transfer" ? input.direction : null;
+  const walletId = await resolveWalletId(userId, input.walletId);
   const { rows } = await sql<Expense>`
     WITH updated AS (
       UPDATE expenses
@@ -602,22 +789,26 @@ export async function updateExpense(userId: number, id: number, input: ExpenseIn
           merchant = ${input.merchant},
           category = ${input.category},
           notes = ${input.notes ?? null},
-          tags = ${toPgTextArray(input.tags ?? [])}::text[]
+          tags = ${toPgTextArray(input.tags ?? [])}::text[],
+          wallet_id = ${walletId}
       WHERE id = ${id} AND user_id = ${userId}
       RETURNING *
     )
     SELECT
-      id,
-      type,
-      direction,
-      to_char(date, 'YYYY-MM-DD') AS date,
-      amount::text AS amount,
-      merchant,
-      category,
-      notes,
-      tags,
-      (receipt_image IS NOT NULL) AS has_receipt
-    FROM updated;
+      updated.id,
+      updated.type,
+      updated.direction,
+      to_char(updated.date, 'YYYY-MM-DD') AS date,
+      updated.amount::text AS amount,
+      updated.merchant,
+      updated.category,
+      updated.notes,
+      updated.tags,
+      (updated.receipt_image IS NOT NULL) AS has_receipt,
+      updated.wallet_id,
+      w.name AS wallet_name
+    FROM updated
+    LEFT JOIN wallets w ON w.id = updated.wallet_id;
   `;
   return rows[0] ?? null;
 }

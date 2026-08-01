@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSessionToken, SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "@/lib/session";
 import { hashPassword } from "@/lib/password";
-import { createUser, getUserByUsername, seedDefaultCategoriesForUser } from "@/lib/db";
+import { createUser, getUserByUsername, seedDefaultCategoriesForUser, seedDefaultWalletForUser } from "@/lib/db";
 
 const USERNAME_PATTERN = /^[a-zA-Z0-9_.-]{3,32}$/;
 
@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
   }
 
   await seedDefaultCategoriesForUser(user.id);
+  await seedDefaultWalletForUser(user.id);
 
   const token = await createSessionToken(user.id);
   const res = NextResponse.json({ ok: true }, { status: 201 });

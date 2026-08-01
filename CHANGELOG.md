@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.8.0] - 2026-08-01
+
+### Added
+- Multiple wallets — track cash, bank accounts, and e-wallets separately, each with its own balance
+- Wallets management in Settings > Records, with add/rename/recolor/delete and a per-wallet starting balance
+- Wallet selector on the transaction form once more than one wallet exists
+- Calendar settings in Settings > Display: week start day and show/hide week numbers now actually change the date pickers; month-start day, bi-weekly period anchor, default launch view, time zone, and alternate calendar are saved as preferences
+
 ## [0.7.0] - 2026-08-01
 
 ### Added

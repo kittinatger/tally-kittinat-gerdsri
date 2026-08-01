@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { CategoryOption } from "@/types/category";
+import type { WalletOption } from "@/types/wallet";
 import { CurrencyProvider } from "@/lib/currency-context";
 import { APP_VERSION } from "@/lib/version";
 import PullToRefresh from "./PullToRefresh";
@@ -14,17 +15,19 @@ import CalendarSettings from "./CalendarSettings";
 import PermissionsSettings from "./PermissionsSettings";
 import CategoryManager from "./CategoryManager";
 import TagManager from "./TagManager";
+import WalletManager from "./WalletManager";
 import ExportDataButton from "./ExportDataButton";
 import SettingsSection from "./SettingsSection";
 import SettingsListItem from "./SettingsListItem";
 
-type Panel = "account" | "permissions" | "categories" | "tags" | "theme" | "currency" | "calendar";
+type Panel = "account" | "permissions" | "categories" | "tags" | "wallets" | "theme" | "currency" | "calendar";
 
 const PANEL_TITLES: Record<Panel, string> = {
   account: "Account",
   permissions: "Permissions",
   categories: "Manage categories",
   tags: "Manage tags",
+  wallets: "Wallets",
   theme: "Theme",
   currency: "Currency",
   calendar: "Calendar settings",
@@ -58,6 +61,14 @@ function HashIcon() {
   return (
     <svg viewBox="0 0 28.2935 29.3042" fill="currentColor" className="h-5 w-5">
       <path d="M14.6399 27.9871L26.9739 15.6238C27.8626 14.7351 27.9309 14.2566 27.9309 12.9285L27.9309 8.13355C27.9309 6.86402 27.6672 6.48316 26.7102 5.53589L23.7805 2.6062C22.8333 1.64917 22.4524 1.3855 21.1829 1.3855L16.3879 1.3855C15.0598 1.3855 14.5813 1.45386 13.6926 2.34253L1.30982 14.6765C-0.428464 16.4148-0.447995 18.2312 1.31958 19.989L9.3274 27.9773C11.1047 29.7546 12.9016 29.7351 14.6399 27.9871ZM19.093 11.1804C18.1848 11.1804 17.4915 10.4773 17.4915 9.57886C17.4915 8.68042 18.1848 7.9773 19.093 7.9773C20.011 7.9773 20.7043 8.68042 20.7043 9.57886C20.7043 10.4773 20.011 11.1804 19.093 11.1804Z" />
+    </svg>
+  );
+}
+
+function WalletIcon() {
+  return (
+    <svg viewBox="0 0 25.0195 22.9004" fill="currentColor" className="h-5 w-5">
+      <path d="M3.66211 22.8809L21.3477 22.8809C23.877 22.8809 25.0195 21.7188 25.0195 19.209L25.0195 8.29102C25.0195 5.78125 23.877 4.60938 21.3477 4.60938L3.66211 4.60938C1.14258 4.60938 0 5.77148 0 8.29102L0 19.209C0 21.7285 1.14258 22.8809 3.66211 22.8809ZM3.69141 20.752C2.5 20.752 1.8457 20.1074 1.8457 18.8672L1.8457 8.63281C1.8457 7.39258 2.5 6.73828 3.69141 6.73828L21.3184 6.73828C22.5 6.73828 23.1738 7.39258 23.1738 8.63281L23.1738 18.8672C23.1738 20.1074 22.5 20.752 21.3184 20.752ZM4.375 0.673828C3.66211 1.10352 3.53516 1.86133 4.03320 2.5293L6.11328 5.29297L8.85742 5.29297L5.60547 1.02539C5.10742 0.351562 5.08789 0.253906 4.375 0.673828ZM10.1953 0.673828C9.48242 1.10352 9.35547 1.86133 9.85352 2.5293L11.9336 5.29297L14.6777 5.29297L11.4258 1.02539C10.9277 0.351562 10.9082 0.253906 10.1953 0.673828ZM16.0156 0.673828C15.3027 1.10352 15.1758 1.86133 15.6738 2.5293L17.7539 5.29297L20.498 5.29297L17.2461 1.02539C16.748 0.351562 16.7285 0.253906 16.0156 0.673828ZM18.4082 15.8887C19.209 15.8887 19.8535 15.2246 19.8535 14.4141C19.8535 13.6035 19.209 12.9395 18.4082 12.9395C17.5977 12.9395 16.9434 13.6035 16.9434 14.4141C16.9434 15.2246 17.5977 15.8887 18.4082 15.8887Z" />
     </svg>
   );
 }
@@ -153,10 +164,12 @@ export default function SettingsView({
   categories,
   currency,
   username,
+  wallets,
 }: {
   categories: CategoryOption[];
   currency: string;
   username: string;
+  wallets: WalletOption[];
 }) {
   const [panel, setPanel] = useState<Panel | null>(null);
 
@@ -185,6 +198,7 @@ export default function SettingsView({
                 {panel === "permissions" && <PermissionsSettings />}
                 {panel === "categories" && <CategoryManager categories={categories} />}
                 {panel === "tags" && <TagManager />}
+                {panel === "wallets" && <WalletManager wallets={wallets} />}
                 {panel === "theme" && <ThemeSetting />}
                 {panel === "currency" && <CurrencySettings />}
                 {panel === "calendar" && <CalendarSettings />}
@@ -201,6 +215,7 @@ export default function SettingsView({
                 <SettingsSection title="Records">
                   <SettingsListItem icon={<GridIcon />} label="Manage categories" onClick={() => setPanel("categories")} />
                   <SettingsListItem icon={<HashIcon />} label="Manage tags" onClick={() => setPanel("tags")} />
+                  <SettingsListItem icon={<WalletIcon />} label="Wallets" onClick={() => setPanel("wallets")} />
                   <ExportDataButton />
                 </SettingsSection>
 

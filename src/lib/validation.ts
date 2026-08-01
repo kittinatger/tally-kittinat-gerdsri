@@ -10,6 +10,7 @@ const sharedFields = {
   // whatever categories currently exist rather than a fixed enum.
   category: z.string().trim().min(1).max(60),
   notes: z.string().trim().max(500).nullable().optional(),
+  walletId: z.number().int().positive().nullable().optional(),
   tags: z
     .array(z.string().trim().min(1).max(30))
     .max(10)
@@ -71,6 +72,21 @@ export const calendarSettingsInputSchema = z
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
     message: "Provide at least one calendar setting to update",
+  });
+
+export const walletInputSchema = z.object({
+  name: z.string().trim().min(1).max(40),
+  color: z.string().trim().min(1).max(30),
+});
+
+export const walletUpdateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(40).optional(),
+    color: z.string().trim().min(1).max(30).optional(),
+    startingBalance: z.number().finite().optional(),
+  })
+  .refine((data) => data.name !== undefined || data.color !== undefined || data.startingBalance !== undefined, {
+    message: "Provide name, color, and/or startingBalance",
   });
 
 export const categoryInputSchema = z.object({

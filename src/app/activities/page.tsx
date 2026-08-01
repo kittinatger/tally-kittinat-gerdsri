@@ -1,19 +1,21 @@
-import { listExpenses, listCategories, getCurrency } from "@/lib/db";
+import { listExpenses, listCategories, getCurrency, listWallets } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import ActivitiesView from "@/components/ActivitiesView";
 import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
 import { isTransactionType } from "@/lib/categories";
 import type { CategoryOption } from "@/types/category";
+import type { WalletOption } from "@/types/wallet";
 
 // Always render fresh, same reasoning as the dashboard page.
 export const dynamic = "force-dynamic";
 
 export default async function ActivitiesPage() {
   const userId = await getUserId();
-  const [rows, categoryRows, currency] = await Promise.all([
+  const [rows, categoryRows, currency, walletRows] = await Promise.all([
     listExpenses(userId),
     listCategories(userId),
     getCurrency(userId),
+    listWallets(userId),
   ]);
   const expenses: Expense[] = rows.map((r) => ({
     id: r.id,
@@ -26,6 +28,8 @@ export default async function ActivitiesPage() {
     notes: r.notes,
     tags: r.tags ?? [],
     hasReceipt: r.has_receipt,
+    walletId: r.wallet_id,
+    walletName: r.wallet_name,
   }));
   const categories: CategoryOption[] = categoryRows.map((c) => ({
     id: c.id,
@@ -33,6 +37,12 @@ export default async function ActivitiesPage() {
     name: c.name,
     color: c.color,
   }));
+  const wallets: WalletOption[] = walletRows.map((w) => ({
+    id: w.id,
+    name: w.name,
+    color: w.color,
+    balance: Number(w.balance),
+  }));
 
-  return <ActivitiesView initialExpenses={expenses} categories={categories} currency={currency} />;
+  return <ActivitiesView initialExpenses={expenses} categories={categories} currency={currency} wallets={wallets} />;
 }

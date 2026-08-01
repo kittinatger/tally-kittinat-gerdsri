@@ -21,6 +21,8 @@ export type Expense = {
   notes: string | null;
   tags: string[];
   hasReceipt: boolean;
+  walletId: number | null;
+  walletName: string | null;
 };
 
 export function signedAmount(expense: Expense): number {
