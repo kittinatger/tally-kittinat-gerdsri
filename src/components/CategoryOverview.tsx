@@ -8,6 +8,7 @@ import type { TransactionType } from "@/lib/categories";
 import type { CategoryOption } from "@/types/category";
 import { useCurrency } from "@/lib/currency-context";
 import FilterDropdown from "./FilterDropdown";
+import SpendingTrendChart, { ChartTypeDropdown, type ChartType } from "./SpendingTrendChart";
 
 type Range = "today" | "month" | "2months" | "3months" | "6months" | "year" | "all";
 
@@ -37,6 +38,7 @@ export default function CategoryOverview({
   const currency = useCurrency();
   const [type, setType] = useState<TransactionType>("expense");
   const [range, setRange] = useState<Range>("month");
+  const [chartType, setChartType] = useState<ChartType>("bar");
 
   const categoriesForType = useMemo(
     () => categories.filter((c) => c.type === type).sort((a, b) => a.id - b.id),
@@ -85,22 +87,46 @@ export default function CategoryOverview({
     return { rows, total, count: filtered.length };
   }, [expenses, type, range]);
 
-  const trend = useMemo(() => {
+  const trendMonths = useMemo(() => {
     const now = new Date(`${todayInputValue()}T00:00:00`);
     const months: string[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
     }
-    const totals = new Map(months.map((m) => [m, 0]));
+    return months;
+  }, []);
+
+  const trend = useMemo(() => {
+    const totals = new Map(trendMonths.map((m) => [m, 0]));
     for (const e of expenses) {
       if (e.type !== type) continue;
       const key = monthKey(e.date);
       if (totals.has(key)) totals.set(key, totals.get(key)! + e.amount);
     }
-    const max = Math.max(...totals.values(), 0);
-    return months.map((key) => ({ key, amount: totals.get(key) ?? 0, pct: max > 0 ? (totals.get(key)! / max) * 100 : 0 }));
-  }, [expenses, type]);
+    return trendMonths.map((key) => ({ key, label: monthShortLabel(key), amount: totals.get(key) ?? 0 }));
+  }, [expenses, type, trendMonths]);
+
+  const stackedTrend = useMemo(() => {
+    const perMonth = new Map<string, Map<string, number>>(trendMonths.map((m) => [m, new Map()]));
+    for (const e of expenses) {
+      if (e.type !== type) continue;
+      const bucket = perMonth.get(monthKey(e.date));
+      if (!bucket) continue;
+      bucket.set(e.category, (bucket.get(e.category) ?? 0) + e.amount);
+    }
+    return trendMonths.map((key) => {
+      const bucket = perMonth.get(key)!;
+      const segments = Array.from(bucket.entries())
+        .map(([name, amount]) => ({
+          name,
+          amount,
+          color: categoriesForType.find((c) => c.name === name)?.color,
+        }))
+        .sort((a, b) => b.amount - a.amount);
+      return { key, label: monthShortLabel(key), segments };
+    });
+  }, [expenses, type, trendMonths, categoriesForType]);
 
   return (
     <div>
@@ -151,27 +177,20 @@ export default function CategoryOverview({
       </div>
 
       <div className="mb-6 rounded-card border border-line bg-surface p-5">
-        <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-          {type === "income" ? "Income" : "Spending"} trend
-        </p>
-        <div className="flex items-end justify-between gap-2">
-          {trend.map((m) => (
-            <div key={m.key} className="flex flex-1 flex-col items-center gap-1.5">
-              <span className="text-[11px] font-semibold text-foreground">
-                {m.amount > 0 ? formatCurrency(m.amount, currency) : ""}
-              </span>
-              <div className="flex h-24 w-full items-end">
-                <div
-                  className={`w-full rounded-t-md transition-all ${
-                    type === "income" ? "bg-emerald-500 dark:bg-emerald-400" : "bg-navy"
-                  }`}
-                  style={{ height: `${Math.max(m.pct, m.amount > 0 ? 4 : 0)}%` }}
-                />
-              </div>
-              <span className="text-xs text-ink-soft">{monthShortLabel(m.key)}</span>
-            </div>
-          ))}
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            {type === "income" ? "Income" : "Spending"} trend
+          </p>
+          <ChartTypeDropdown value={chartType} onChange={setChartType} />
         </div>
+        <SpendingTrendChart
+          chartType={chartType}
+          points={trend}
+          stackedPoints={stackedTrend}
+          currency={currency}
+          seriesTextClass={type === "income" ? "text-emerald-500 dark:text-emerald-400" : "text-navy"}
+          seriesBgClass={type === "income" ? "bg-emerald-500 dark:bg-emerald-400" : "bg-navy"}
+        />
       </div>
 
       {breakdown.rows.length === 0 ? (
