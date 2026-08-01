@@ -7,8 +7,25 @@ import { badgeClasses } from "@/lib/category-styles";
 import type { TransactionType } from "@/lib/categories";
 import type { CategoryOption } from "@/types/category";
 import { useCurrency } from "@/lib/currency-context";
+import FilterDropdown from "./FilterDropdown";
 
-type Range = "month" | "all";
+type Range = "today" | "month" | "2months" | "3months" | "6months" | "year" | "all";
+
+const RANGE_ORDER: Range[] = ["today", "month", "2months", "3months", "6months", "year"];
+const RANGE_LABELS: Record<Range, string> = {
+  today: "Today",
+  month: "This month",
+  "2months": "2 months",
+  "3months": "3 months",
+  "6months": "6 months",
+  year: "Year",
+  all: "All time",
+};
+const LABEL_TO_RANGE = Object.fromEntries(RANGE_ORDER.map((r) => [RANGE_LABELS[r], r])) as Record<string, Range>;
+
+function dateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
 export default function CategoryOverview({
   expenses,
@@ -31,10 +48,23 @@ export default function CategoryOverview({
   }
 
   const breakdown = useMemo(() => {
-    const currentMonthKey = monthKey(todayInputValue());
+    const today = todayInputValue();
+    const now = new Date(`${today}T00:00:00`);
+
+    let cutoff: string | null = null; // inclusive lower bound on date; null = no bound (all time)
+    if (range === "month") {
+      cutoff = dateKey(new Date(now.getFullYear(), now.getMonth(), 1));
+    } else if (range === "2months" || range === "3months" || range === "6months") {
+      const n = range === "2months" ? 2 : range === "3months" ? 3 : 6;
+      cutoff = dateKey(new Date(now.getFullYear(), now.getMonth() - (n - 1), 1));
+    } else if (range === "year") {
+      cutoff = dateKey(new Date(now.getFullYear(), 0, 1));
+    }
+
     const filtered = expenses.filter((e) => {
       if (e.type !== type) return false;
-      if (range === "month" && monthKey(e.date) !== currentMonthKey) return false;
+      if (range === "today") return e.date === today;
+      if (cutoff && e.date < cutoff) return false;
       return true;
     });
 
@@ -95,24 +125,12 @@ export default function CategoryOverview({
               Income
             </button>
           </div>
-          <div className="flex gap-1 rounded-full bg-bg-soft p-1">
-            <button
-              onClick={() => setRange("month")}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-                range === "month" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
-              }`}
-            >
-              This month
-            </button>
-            <button
-              onClick={() => setRange("all")}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-                range === "all" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
-              }`}
-            >
-              All time
-            </button>
-          </div>
+          <FilterDropdown
+            value={range === "all" ? "all" : RANGE_LABELS[range]}
+            allLabel={RANGE_LABELS.all}
+            options={RANGE_ORDER.map((r) => RANGE_LABELS[r])}
+            onChange={(next) => setRange(next === "all" ? "all" : LABEL_TO_RANGE[next])}
+          />
         </div>
       </div>
 
