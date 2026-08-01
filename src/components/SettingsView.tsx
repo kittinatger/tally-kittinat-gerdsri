@@ -12,15 +12,18 @@ import ThemeSetting from "./ThemeSetting";
 import CurrencySettings from "./CurrencySettings";
 import PermissionsSettings from "./PermissionsSettings";
 import CategoryManager from "./CategoryManager";
+import TagManager from "./TagManager";
+import ExportDataButton from "./ExportDataButton";
 import SettingsSection from "./SettingsSection";
 import SettingsListItem from "./SettingsListItem";
 
-type Panel = "account" | "permissions" | "categories" | "theme" | "currency";
+type Panel = "account" | "permissions" | "categories" | "tags" | "theme" | "currency";
 
 const PANEL_TITLES: Record<Panel, string> = {
   account: "Account",
   permissions: "Permissions",
   categories: "Manage categories",
+  tags: "Manage tags",
   theme: "Theme",
   currency: "Currency",
 };
@@ -57,14 +60,6 @@ function HashIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
       <path d="M9 3L7 21M17 3l-2 18M4 9h16M3 15h16" />
-    </svg>
-  );
-}
-
-function TrayIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M12 3v11m0 0l-4-4m4 4l4-4M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3" />
     </svg>
   );
 }
@@ -187,13 +182,14 @@ export default function SettingsView({
                   <BackIcon />
                   Settings
                 </button>
-                {(panel === "theme" || panel === "currency") && (
+                {(panel === "theme" || panel === "currency" || panel === "tags") && (
                   <h2 className="mb-5 font-display text-2xl text-foreground">{PANEL_TITLES[panel]}</h2>
                 )}
 
                 {panel === "account" && <AccountPanel initialUsername={username} />}
                 {panel === "permissions" && <PermissionsSettings />}
                 {panel === "categories" && <CategoryManager categories={categories} />}
+                {panel === "tags" && <TagManager />}
                 {panel === "theme" && <ThemeSetting />}
                 {panel === "currency" && <CurrencySettings />}
               </div>
@@ -208,8 +204,8 @@ export default function SettingsView({
 
                 <SettingsSection title="Records">
                   <SettingsListItem icon={<GridIcon />} label="Manage categories" onClick={() => setPanel("categories")} />
-                  <SettingsListItem icon={<HashIcon />} label="Manage tags" badge="Coming soon" />
-                  <SettingsListItem icon={<TrayIcon />} label="Export data" badge="Coming soon" />
+                  <SettingsListItem icon={<HashIcon />} label="Manage tags" onClick={() => setPanel("tags")} />
+                  <ExportDataButton />
                 </SettingsSection>
 
                 <SettingsSection title="Display">

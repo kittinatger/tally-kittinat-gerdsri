@@ -415,6 +415,41 @@ export async function listExpenses(userId: number): Promise<Expense[]> {
   return rows;
 }
 
+export type TagCount = { name: string; count: number };
+
+export async function listTags(userId: number): Promise<TagCount[]> {
+  await ensureSchema();
+  const { rows } = await sql<{ tag: string; count: number }>`
+    SELECT tag, COUNT(*)::int AS count
+    FROM expenses, unnest(tags) AS tag
+    WHERE user_id = ${userId}
+    GROUP BY tag
+    ORDER BY tag ASC;
+  `;
+  return rows.map((r) => ({ name: r.tag, count: r.count }));
+}
+
+export async function renameTag(userId: number, oldName: string, newName: string): Promise<void> {
+  await ensureSchema();
+  await sql`
+    UPDATE expenses
+    SET tags = (
+      SELECT array_agg(DISTINCT CASE WHEN t = ${oldName} THEN ${newName} ELSE t END)
+      FROM unnest(tags) AS t
+    )
+    WHERE user_id = ${userId} AND ${oldName} = ANY(tags);
+  `;
+}
+
+export async function deleteTag(userId: number, name: string): Promise<void> {
+  await ensureSchema();
+  await sql`
+    UPDATE expenses
+    SET tags = array_remove(tags, ${name})
+    WHERE user_id = ${userId} AND ${name} = ANY(tags);
+  `;
+}
+
 export async function createExpense(userId: number, input: ExpenseInput): Promise<Expense> {
   await ensureSchema();
   const { rows } = await sql<Expense>`
