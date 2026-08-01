@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserId } from "@/lib/auth";
-import { getUserById, getUserByUsername, updatePasswordHash, updateUsername } from "@/lib/db";
+import { deleteUser, getUserById, getUserByUsername, updatePasswordHash, updateUsername } from "@/lib/db";
 import { hashPassword, verifyPasswordHash } from "@/lib/password";
+import { SESSION_COOKIE_NAME } from "@/lib/session";
 
 const USERNAME_PATTERN = /^[a-zA-Z0-9_.-]{3,32}$/;
 
@@ -72,4 +73,26 @@ export async function PATCH(req: NextRequest) {
   }
 
   return NextResponse.json({ username });
+}
+
+export async function DELETE(req: NextRequest) {
+  const userId = await getUserId();
+  const body = await req.json().catch(() => null);
+  const currentPassword = typeof body?.currentPassword === "string" ? body.currentPassword : "";
+
+  const user = await getUserById(userId);
+  if (!user) {
+    return NextResponse.json({ error: "Account not found." }, { status: 404 });
+  }
+
+  const currentOk = await verifyPasswordHash(currentPassword, user.password_hash);
+  if (!currentOk) {
+    return NextResponse.json({ error: "Current password is incorrect." }, { status: 401 });
+  }
+
+  await deleteUser(userId);
+
+  const res = NextResponse.json({ ok: true });
+  res.cookies.set(SESSION_COOKIE_NAME, "", { path: "/", maxAge: 0 });
+  return res;
 }

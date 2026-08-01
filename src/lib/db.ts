@@ -615,6 +615,13 @@ export async function updatePasswordHash(userId: number, passwordHash: string): 
   await sql`UPDATE users SET password_hash = ${passwordHash} WHERE id = ${userId};`;
 }
 
+// expenses/categories/app_settings all reference users(id) ON DELETE CASCADE
+// (see ensureSchema), so deleting the user row removes everything else too.
+export async function deleteUser(userId: number): Promise<void> {
+  await ensureSchema();
+  await sql`DELETE FROM users WHERE id = ${userId};`;
+}
+
 export async function createUser(username: string, passwordHash: string): Promise<{ id: number; username: string }> {
   await ensureSchema();
   const { rows } = await sql<{ id: number; username: string }>`
