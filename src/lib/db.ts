@@ -290,6 +290,10 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS wallet_id INTEGER REFERENCES wallets(id) ON DELETE SET NULL;`;
       await sql`CREATE INDEX IF NOT EXISTS expenses_wallet_idx ON expenses (wallet_id);`;
 
+      // Whether a wallet represents physical cash or a digital account (bank,
+      // e-wallet, card) — purely descriptive, doesn't affect balance math.
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'cash';`;
+
       // One-time guard so the default wallet's balance gets synced from the
       // pre-wallets app_settings starting balance exactly once — otherwise
       // every new account's wallet (correctly starting at 0) would get
@@ -445,6 +449,7 @@ export type WalletRow = {
   id: number;
   name: string;
   color: string;
+  kind: string;
   balance: string;
 };
 
@@ -455,6 +460,7 @@ export async function listWallets(userId: number): Promise<WalletRow[]> {
       w.id,
       w.name,
       w.color,
+      w.kind,
       (
         w.starting_balance + COALESCE((
           SELECT SUM(
@@ -475,16 +481,16 @@ export async function listWallets(userId: number): Promise<WalletRow[]> {
   return rows;
 }
 
-export async function createWallet(userId: number, name: string, color: string): Promise<WalletRow> {
+export async function createWallet(userId: number, name: string, color: string, kind: string): Promise<WalletRow> {
   await ensureSchema();
   const { rows: maxRows } = await sql<{ max: number | null }>`
     SELECT MAX(sort_order) AS max FROM wallets WHERE user_id = ${userId};
   `;
   const nextSort = (maxRows[0]?.max ?? -1) + 1;
-  const { rows } = await sql<{ id: number; name: string; color: string }>`
-    INSERT INTO wallets (user_id, name, color, sort_order)
-    VALUES (${userId}, ${name}, ${color}, ${nextSort})
-    RETURNING id, name, color;
+  const { rows } = await sql<{ id: number; name: string; color: string; kind: string }>`
+    INSERT INTO wallets (user_id, name, color, kind, sort_order)
+    VALUES (${userId}, ${name}, ${color}, ${kind}, ${nextSort})
+    RETURNING id, name, color, kind;
   `;
   return { ...rows[0], balance: "0" };
 }
@@ -492,33 +498,34 @@ export async function createWallet(userId: number, name: string, color: string):
 export async function updateWallet(
   userId: number,
   id: number,
-  input: { name?: string; color?: string; startingBalance?: number },
+  input: { name?: string; color?: string; kind?: string; startingBalance?: number },
 ): Promise<WalletRow | null> {
   await ensureSchema();
-  const { rows: existingRows } = await sql<{ name: string; color: string }>`
-    SELECT name, color FROM wallets WHERE id = ${id} AND user_id = ${userId};
+  const { rows: existingRows } = await sql<{ name: string; color: string; kind: string }>`
+    SELECT name, color, kind FROM wallets WHERE id = ${id} AND user_id = ${userId};
   `;
   const existing = existingRows[0];
   if (!existing) return null;
 
   const newName = input.name?.trim() ?? existing.name;
   const newColor = input.color ?? existing.color;
+  const newKind = input.kind ?? existing.kind;
 
   if (input.startingBalance !== undefined) {
     await sql`
       UPDATE wallets
-      SET name = ${newName}, color = ${newColor}, starting_balance = ${input.startingBalance}, starting_balance_set_at = now()
+      SET name = ${newName}, color = ${newColor}, kind = ${newKind}, starting_balance = ${input.startingBalance}, starting_balance_set_at = now()
       WHERE id = ${id} AND user_id = ${userId};
     `;
   } else {
     await sql`
-      UPDATE wallets SET name = ${newName}, color = ${newColor} WHERE id = ${id} AND user_id = ${userId};
+      UPDATE wallets SET name = ${newName}, color = ${newColor}, kind = ${newKind} WHERE id = ${id} AND user_id = ${userId};
     `;
   }
 
   const { rows } = await sql<WalletRow>`
     SELECT
-      w.id, w.name, w.color,
+      w.id, w.name, w.color, w.kind,
       (
         w.starting_balance + COALESCE((
           SELECT SUM(

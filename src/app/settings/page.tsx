@@ -2,6 +2,7 @@ import { listCategories, getCurrency, getUserById, listWallets } from "@/lib/db"
 import { getUserId } from "@/lib/auth";
 import SettingsView from "@/components/SettingsView";
 import { isTransactionType } from "@/lib/categories";
+import { isWalletKind } from "@/lib/wallets";
 import type { CategoryOption } from "@/types/category";
 import type { WalletOption } from "@/types/wallet";
 
@@ -26,6 +27,7 @@ export default async function SettingsPage() {
     id: w.id,
     name: w.name,
     color: w.color,
+    kind: isWalletKind(w.kind) ? w.kind : "cash",
     balance: Number(w.balance),
   }));
 

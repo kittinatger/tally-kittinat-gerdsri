@@ -79,7 +79,9 @@ export default function WalletManager({ wallets }: { wallets: WalletOption[] }) 
               <span className={`h-3 w-3 shrink-0 rounded-full ${dotClasses(w.color)}`} />
               <div className="min-w-0">
                 <p className="truncate font-medium text-foreground">{w.name}</p>
-                <p className="text-xs text-ink-soft">{formatCurrency(w.balance, currency)}</p>
+                <p className="text-xs text-ink-soft">
+                  {w.kind === "digital" ? "Digital" : "Cash"} · {formatCurrency(w.balance, currency)}
+                </p>
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-1">

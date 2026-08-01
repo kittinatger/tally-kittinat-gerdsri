@@ -5,6 +5,7 @@ import Modal from "./Modal";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import { dotClasses } from "@/lib/category-styles";
 import { useCurrency } from "@/lib/currency-context";
+import type { WalletKind } from "@/lib/wallets";
 import type { WalletOption } from "@/types/wallet";
 
 export default function WalletModal({
@@ -20,6 +21,7 @@ export default function WalletModal({
   const isEdit = Boolean(wallet);
   const [name, setName] = useState(wallet?.name ?? "");
   const [color, setColor] = useState<string>(wallet?.color ?? CATEGORY_PALETTE[0]);
+  const [kind, setKind] = useState<WalletKind>(wallet?.kind ?? "cash");
   const [startingBalance, setStartingBalance] = useState(isEdit ? String(wallet!.balance) : "0");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,12 +35,12 @@ export default function WalletModal({
         ? await fetch(`/api/wallets/${wallet!.id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, color, startingBalance: Number(startingBalance) }),
+            body: JSON.stringify({ name, color, kind, startingBalance: Number(startingBalance) }),
           })
         : await fetch("/api/wallets", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, color }),
+            body: JSON.stringify({ name, color, kind }),
           });
       const data = await res.json();
       if (!res.ok) {
@@ -70,6 +72,30 @@ export default function WalletModal({
             placeholder="e.g. Cash, Bank, E-wallet"
             className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">Type</label>
+          <div className="flex gap-1 rounded-full bg-bg-soft p-1">
+            <button
+              type="button"
+              onClick={() => setKind("cash")}
+              className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+                kind === "cash" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+              }`}
+            >
+              Cash
+            </button>
+            <button
+              type="button"
+              onClick={() => setKind("digital")}
+              className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+                kind === "digital" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+              }`}
+            >
+              Digital
+            </button>
+          </div>
         </div>
 
         <div>

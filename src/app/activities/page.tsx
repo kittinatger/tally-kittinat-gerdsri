@@ -3,6 +3,7 @@ import { getUserId } from "@/lib/auth";
 import ActivitiesView from "@/components/ActivitiesView";
 import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
 import { isTransactionType } from "@/lib/categories";
+import { isWalletKind } from "@/lib/wallets";
 import type { CategoryOption } from "@/types/category";
 import type { WalletOption } from "@/types/wallet";
 
@@ -41,6 +42,7 @@ export default async function ActivitiesPage() {
     id: w.id,
     name: w.name,
     color: w.color,
+    kind: isWalletKind(w.kind) ? w.kind : "cash",
     balance: Number(w.balance),
   }));
 

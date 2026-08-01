@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { TRANSACTION_TYPES, TRANSFER_DIRECTIONS } from "@/lib/categories";
+import { WALLET_KINDS } from "@/lib/wallets";
 
 const sharedFields = {
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
@@ -77,17 +78,21 @@ export const calendarSettingsInputSchema = z
 export const walletInputSchema = z.object({
   name: z.string().trim().min(1).max(40),
   color: z.string().trim().min(1).max(30),
+  kind: z.enum(WALLET_KINDS).default("cash"),
 });
 
 export const walletUpdateSchema = z
   .object({
     name: z.string().trim().min(1).max(40).optional(),
     color: z.string().trim().min(1).max(30).optional(),
+    kind: z.enum(WALLET_KINDS).optional(),
     startingBalance: z.number().finite().optional(),
   })
-  .refine((data) => data.name !== undefined || data.color !== undefined || data.startingBalance !== undefined, {
-    message: "Provide name, color, and/or startingBalance",
-  });
+  .refine(
+    (data) =>
+      data.name !== undefined || data.color !== undefined || data.kind !== undefined || data.startingBalance !== undefined,
+    { message: "Provide name, color, kind, and/or startingBalance" },
+  );
 
 export const categoryInputSchema = z.object({
   type: z.enum(TRANSACTION_TYPES),
