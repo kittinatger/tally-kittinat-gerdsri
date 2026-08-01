@@ -3,6 +3,49 @@ import AppHeader from "@/components/AppHeader";
 
 const RELEASES: { version: string; date: string; sections: { heading: string; items: string[] }[] }[] = [
   {
+    version: "0.7.0",
+    date: "2026-08-01",
+    sections: [
+      {
+        heading: "Added",
+        items: [
+          "Transfer transaction type for self-transfers and e-wallet top-ups — moves your Remaining balance like an expense/income would, but isn't counted in Income/Expenses totals",
+          "Working “Export data” and “Manage tags” in Settings > Records (previously placeholders) — export your full transaction history as CSV, and rename/delete tags across every transaction that has them",
+          "Delete account, in Settings > Account's new Danger zone — requires ticking an acknowledgement checkbox, typing a confirmation phrase, and your current password",
+          "Replaced the dropdown chevron icon across all dropdowns with a consistent style",
+        ],
+      },
+      {
+        heading: "Changed",
+        items: ["Sign out moved from the nav header into Settings > Account, alongside the new delete-account option"],
+      },
+    ],
+  },
+  {
+    version: "0.6.0",
+    date: "2026-08-01",
+    sections: [
+      {
+        heading: "Added",
+        items: [
+          "Selectable chart type for the Dashboard's spending trend — Bar, Line, Area, Pie, Radar, or Stacked Bar (by category)",
+          "More date range options for the Dashboard's category breakdown: Today, 2/3/6 months, and Year, alongside the existing This month / All time",
+          "Settings reorganized into a navigable list (App settings, Records, Display, Support) with dedicated detail pages instead of one long scrolling page",
+          "Support section in Settings: Usage guide, FAQs, Contact, Report an issue, and Changelog pages",
+          "Custom date picker and category dropdown in the transaction form, replacing the OS-native date input and select",
+        ],
+      },
+      {
+        heading: "Fixed",
+        items: [
+          "Receipt scanning and voice entry failing with a raw “heavy traffic” error from Gemini — now retries transient overload errors automatically and shows a clear message if one still fails",
+          "Replaced remaining emoji and system symbols (search icon, close buttons) with a consistent icon set",
+          "Sign-out confirmation button is now red to signal it's a destructive action",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.5.0",
     date: "2026-07-31",
     sections: [

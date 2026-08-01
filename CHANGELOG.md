@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.7.0] - 2026-08-01
+
+### Added
+- Transfer transaction type for self-transfers and e-wallet top-ups — moves your Remaining balance like an expense/income would, but isn't counted in Income/Expenses totals
+- Working "Export data" and "Manage tags" in Settings > Records (previously placeholders) — export your full transaction history as CSV, and rename/delete tags across every transaction that has them
+- Delete account, in Settings > Account's new Danger zone — requires ticking an acknowledgement checkbox, typing a confirmation phrase, and your current password
+- Replaced the dropdown chevron icon across all dropdowns with a consistent style
+
+### Changed
+- Sign out moved from the nav header into Settings > Account, alongside the new delete-account option
+
 ## [0.6.0] - 2026-08-01
 
 ### Added
