@@ -19,6 +19,17 @@ export type CategoriesByType = {
 
 const MODEL = "gemini-3.5-flash";
 
+function getClient(): GoogleGenAI {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY environment variable is not set.");
+  }
+  // Gemini occasionally returns transient 429/503 "overloaded" errors;
+  // retrying with the SDK's built-in backoff avoids surfacing those to the
+  // user as a hard failure on the first blip.
+  return new GoogleGenAI({ apiKey, httpOptions: { retryOptions: { attempts: 3 } } });
+}
+
 function buildPrompt(categories: CategoriesByType): string {
   const currentYear = new Date().getFullYear();
   const allCategories = [...new Set([...categories.expense, ...categories.income])];
@@ -128,13 +139,8 @@ export async function extractTransaction(
   mimeType: string,
   categories: CategoriesByType,
 ): Promise<TransactionExtraction> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY environment variable is not set.");
-  }
-
   const allCategories = [...new Set([...categories.expense, ...categories.income])];
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = getClient();
 
   const response = await ai.models.generateContent({
     model: MODEL,
@@ -163,13 +169,8 @@ export async function extractTransactionFromAudio(
   mimeType: string,
   categories: CategoriesByType,
 ): Promise<TransactionExtraction> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY environment variable is not set.");
-  }
-
   const allCategories = [...new Set([...categories.expense, ...categories.income])];
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = getClient();
 
   const response = await ai.models.generateContent({
     model: MODEL,

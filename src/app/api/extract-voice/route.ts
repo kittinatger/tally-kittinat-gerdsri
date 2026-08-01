@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ApiError } from "@google/genai";
 import { extractTransactionFromAudio } from "@/lib/gemini";
 import { getAutoConvertCurrency, getCurrency, listCategories } from "@/lib/db";
 import { maybeAutoConvert } from "@/lib/exchange-rate";
@@ -53,6 +54,12 @@ export async function POST(req: NextRequest) {
     const result = await maybeAutoConvert(extraction, defaultCurrency, autoConvertEnabled);
     return NextResponse.json({ extraction: result });
   } catch (err) {
+    if (err instanceof ApiError && (err.status === 429 || err.status === 503)) {
+      return NextResponse.json(
+        { error: "Gemini is busy right now. Please try again in a moment." },
+        { status: 502 },
+      );
+    }
     const message = err instanceof Error ? err.message : "Failed to understand that recording.";
     return NextResponse.json({ error: message }, { status: 502 });
   }
