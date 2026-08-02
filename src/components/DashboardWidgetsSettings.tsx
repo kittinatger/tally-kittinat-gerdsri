@@ -53,6 +53,7 @@ export default function DashboardWidgetsSettings({
 }) {
   const [widgets, setWidgets] = useState<DashboardWidgetInstance[]>(() => DEFAULT_DASHBOARD_WIDGETS());
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -91,16 +92,33 @@ export default function DashboardWidgetsSettings({
     }
   }
 
-  function handleDrop(targetIndex: number) {
-    if (dragIndex === null || dragIndex === targetIndex) {
-      setDragIndex(null);
-      return;
+  // Pointer Events (not HTML5 drag-and-drop) so this works with touch as
+  // well as mouse — native HTML5 DnD never fires from a touch gesture.
+  function handlePointerDown(e: React.PointerEvent, index: number) {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDragIndex(index);
+    setOverIndex(index);
+  }
+
+  function handlePointerMove(e: React.PointerEvent) {
+    if (dragIndex === null) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const tile = el?.closest("[data-widget-index]");
+    if (!tile) return;
+    const idx = Number(tile.getAttribute("data-widget-index"));
+    if (!Number.isNaN(idx)) setOverIndex(idx);
+  }
+
+  function handlePointerUp() {
+    if (dragIndex !== null && overIndex !== null && overIndex !== dragIndex) {
+      const next = [...widgets];
+      const [moved] = next.splice(dragIndex, 1);
+      next.splice(overIndex, 0, moved);
+      persist(next);
     }
-    const next = [...widgets];
-    const [moved] = next.splice(dragIndex, 1);
-    next.splice(targetIndex, 0, moved);
     setDragIndex(null);
-    persist(next);
+    setOverIndex(null);
   }
 
   function toggleWidth(index: number) {
@@ -128,23 +146,24 @@ export default function DashboardWidgetsSettings({
           Your dashboard is empty. Add a widget below to get started.
         </p>
       ) : (
-        <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="mb-5 grid grid-cols-2 gap-3">
           {widgets.map((w, i) => {
             const info = DASHBOARD_WIDGET_INFO[w.type];
             return (
               <div
                 key={w.id}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => handleDrop(i)}
+                data-widget-index={i}
                 className={`rounded-card border bg-surface p-3 transition ${
-                  w.width === "half" ? "" : "sm:col-span-2"
-                } ${dragIndex === i ? "opacity-40" : "border-line"}`}
+                  w.width === "half" ? "" : "col-span-2"
+                } ${dragIndex === i ? "opacity-40" : overIndex === i && dragIndex !== null ? "border-navy" : "border-line"}`}
               >
                 <div className="mb-2 flex items-center gap-2">
                   <span
-                    draggable
-                    onDragStart={() => setDragIndex(i)}
-                    onDragEnd={() => setDragIndex(null)}
+                    onPointerDown={(e) => handlePointerDown(e, i)}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}
+                    onPointerCancel={handlePointerUp}
+                    style={{ touchAction: "none" }}
                     className="cursor-grab rounded p-1 text-ink-soft transition hover:bg-bg-soft hover:text-foreground active:cursor-grabbing"
                     aria-label={`Drag to reorder ${info.title}`}
                   >

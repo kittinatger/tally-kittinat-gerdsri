@@ -60,9 +60,9 @@ export default function Dashboard({
             <AppHeader />
 
             <main className="flex-1 px-1 py-6 sm:px-2">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-2 gap-4">
                 {widgets.map((w) => (
-                  <div key={w.id} className={w.width === "half" ? "sm:col-span-1" : "sm:col-span-2"}>
+                  <div key={w.id} className={w.width === "half" ? "col-span-1" : "col-span-2"}>
                     <DashboardWidgetContent
                       type={w.type}
                       expenses={expenses}
