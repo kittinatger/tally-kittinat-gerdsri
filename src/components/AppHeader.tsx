@@ -55,10 +55,20 @@ function AddIcon() {
 // the equivalent top nav pill / inline Add button (in the header below)
 // covers this role on larger screens instead. The logo lives here too on
 // mobile (the top header is hidden there), rather than at the top. Exported
-// so each route's loading.tsx can render the identical bar and avoid a
-// flash while the top header/bottom nav would otherwise disappear and
-// reappear across the navigation.
-export function BottomNav({ pathname, onAddClick }: { pathname: string; onAddClick?: () => void }) {
+// so each route's (server-rendered) loading.tsx can render the identical
+// bar and avoid a flash while the top header/bottom nav would otherwise
+// disappear and reappear across the navigation — loading.tsx can't pass
+// onAddClick itself (functions can't cross the server->client boundary),
+// so it uses showAdd instead to render an inert placeholder button.
+export function BottomNav({
+  pathname,
+  showAdd = false,
+  onAddClick,
+}: {
+  pathname: string;
+  showAdd?: boolean;
+  onAddClick?: () => void;
+}) {
   return (
     <div className="fixed inset-x-3 bottom-3 z-20 flex items-center gap-2 sm:hidden">
       <div
@@ -85,7 +95,7 @@ export function BottomNav({ pathname, onAddClick }: { pathname: string; onAddCli
           );
         })}
       </nav>
-      {onAddClick && (
+      {(showAdd || onAddClick) && (
         <button
           onClick={onAddClick}
           aria-label="Add transaction"

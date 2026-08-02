@@ -32,7 +32,7 @@ export default function ActivitiesLoading() {
         </div>
       </header>
 
-      <BottomNav pathname="/activities" onAddClick={() => {}} />
+      <BottomNav pathname="/activities" showAdd />
 
       <main className="flex-1 px-1 py-6 sm:px-2">
         <div className="mb-3 h-[52px] animate-pulse rounded-card border border-line bg-surface" />

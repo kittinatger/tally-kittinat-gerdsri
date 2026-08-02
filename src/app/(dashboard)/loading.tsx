@@ -30,7 +30,7 @@ export default function DashboardLoading() {
         </div>
       </header>
 
-      <BottomNav pathname="/" onAddClick={() => {}} />
+      <BottomNav pathname="/" showAdd />
 
       <main className="flex-1 px-1 py-6 sm:px-2">
         <div className="mb-6 grid grid-cols-3 gap-3">
