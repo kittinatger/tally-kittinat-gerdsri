@@ -7,8 +7,11 @@ import {
   DASHBOARD_WIDGET_TYPES,
   DASHBOARD_WIDGET_INFO,
   DEFAULT_DASHBOARD_WIDGETS,
+  SUMMARY_CARDS,
+  SUMMARY_CARD_LABELS,
   newWidgetInstance,
   type DashboardWidgetInstance,
+  type SummaryCardId,
   type WidgetWidth,
 } from "@/lib/dashboard-widgets";
 import DashboardWidgetContent from "./DashboardWidgetContent";
@@ -126,6 +129,14 @@ export default function DashboardWidgetsSettings({
     persist(widgets.map((w, i) => (i === index ? { ...w, width } : w)));
   }
 
+  function toggleCard(index: number, card: SummaryCardId) {
+    const current = widgets[index].cards ?? [...SUMMARY_CARDS];
+    const included = current.includes(card);
+    if (included && current.length <= 1) return; // keep at least one card visible
+    const next = included ? current.filter((c) => c !== card) : [...current, card];
+    persist(widgets.map((w, i) => (i === index ? { ...w, cards: next } : w)));
+  }
+
   function removeWidget(index: number) {
     persist(widgets.filter((_, i) => i !== index));
   }
@@ -188,13 +199,31 @@ export default function DashboardWidgetsSettings({
                     <XIcon />
                   </button>
                 </div>
+
+                {w.type === "summary" && (
+                  <div className="mb-2.5 flex flex-wrap gap-1.5">
+                    {SUMMARY_CARDS.map((card) => {
+                      const included = (w.cards ?? [...SUMMARY_CARDS]).includes(card);
+                      return (
+                        <button
+                          key={card}
+                          type="button"
+                          onClick={() => toggleCard(i, card)}
+                          className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                            included
+                              ? "bg-navy text-white"
+                              : "bg-bg-soft text-ink-soft hover:text-foreground"
+                          }`}
+                        >
+                          {SUMMARY_CARD_LABELS[card]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
                 <div className="pointer-events-none select-none opacity-90">
-                  <DashboardWidgetContent
-                    type={w.type}
-                    expenses={expenses}
-                    categories={categories}
-                    remaining={remaining}
-                  />
+                  <DashboardWidgetContent widget={w} expenses={expenses} categories={categories} remaining={remaining} />
                 </div>
               </div>
             );

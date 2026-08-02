@@ -64,7 +64,7 @@ export default function Dashboard({
                 {widgets.map((w) => (
                   <div key={w.id} className={w.width === "half" ? "col-span-1" : "col-span-2"}>
                     <DashboardWidgetContent
-                      type={w.type}
+                      widget={w}
                       expenses={expenses}
                       categories={categories}
                       remaining={remaining}
