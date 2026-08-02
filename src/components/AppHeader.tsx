@@ -53,10 +53,19 @@ function AddIcon() {
 
 // Fixed capsule nav + separate round Add button, shown on mobile only —
 // the equivalent top nav pill / inline Add button (in the header below)
-// covers this role on larger screens instead.
+// covers this role on larger screens instead. The logo lives here too on
+// mobile (the top header is hidden there), rather than at the top.
 function BottomNav({ pathname, onAddClick }: { pathname: string; onAddClick?: () => void }) {
   return (
     <div className="fixed inset-x-3 bottom-3 z-20 flex items-center gap-2 sm:hidden">
+      <Link
+        href="/"
+        aria-label="Tally home"
+        className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] shadow-soft backdrop-blur-xl"
+      >
+        <img src="/favicon-light.svg" alt="" className="h-6 w-6 shrink-0 dark:hidden" />
+        <img src="/favicon-dark.svg" alt="" className="hidden h-6 w-6 shrink-0 dark:block" />
+      </Link>
       <nav className="flex flex-1 items-center gap-1 rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-1.5 shadow-soft backdrop-blur-xl">
         {BOTTOM_NAV_LINKS.map((link) => {
           const active = pathname === link.href;
@@ -92,7 +101,7 @@ export default function AppHeader({ onAddClick }: { onAddClick?: () => void }) {
 
   return (
     <>
-      <header className="sticky top-3 z-10 flex items-center justify-between gap-2 rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] px-3 py-2 shadow-soft backdrop-blur-xl sm:gap-3 sm:px-5 sm:py-2.5">
+      <header className="sticky top-3 z-10 hidden items-center justify-between gap-2 rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] px-3 py-2 shadow-soft backdrop-blur-xl sm:flex sm:gap-3 sm:px-5 sm:py-2.5">
         <div className="flex shrink-0 items-center gap-2">
           <img src="/favicon-light.svg" alt="Tally" className="h-8 w-8 shrink-0 dark:hidden" />
           <img src="/favicon-dark.svg" alt="Tally" className="hidden h-8 w-8 shrink-0 dark:block" />
