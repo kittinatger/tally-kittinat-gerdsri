@@ -1,6 +1,14 @@
 export type MiniBar = { label: string; value: number };
 
-export default function MiniBarChartWidget({ title, bars }: { title: string; bars: MiniBar[] }) {
+export default function MiniBarChartWidget({
+  title,
+  bars,
+  barClassName = "bg-surface-accent",
+}: {
+  title: string;
+  bars: MiniBar[];
+  barClassName?: string;
+}) {
   const max = Math.max(...bars.map((b) => b.value), 1);
 
   return (
@@ -11,7 +19,7 @@ export default function MiniBarChartWidget({ title, bars }: { title: string; bar
           <div key={i} className="flex flex-1 flex-col items-center gap-1">
             <div className="flex h-16 w-full items-end">
               <div
-                className="w-full rounded-t bg-surface-accent"
+                className={`w-full rounded-t ${barClassName}`}
                 style={{ height: `${Math.max(3, (b.value / max) * 100)}%` }}
                 title={b.label}
               />

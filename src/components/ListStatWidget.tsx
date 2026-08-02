@@ -1,6 +1,14 @@
 export type ListStatItem = { label: string; value: number; displayValue: string };
 
-export default function ListStatWidget({ title, items }: { title: string; items: ListStatItem[] }) {
+export default function ListStatWidget({
+  title,
+  items,
+  barClassName = "bg-surface-accent",
+}: {
+  title: string;
+  items: ListStatItem[];
+  barClassName?: string;
+}) {
   const max = Math.max(...items.map((i) => i.value), 1);
 
   return (
@@ -18,7 +26,7 @@ export default function ListStatWidget({ title, items }: { title: string; items:
               </div>
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-bg-soft">
                 <div
-                  className="h-full rounded-full bg-surface-accent"
+                  className={`h-full rounded-full ${barClassName}`}
                   style={{ width: `${Math.max(4, (it.value / max) * 100)}%` }}
                 />
               </div>

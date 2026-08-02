@@ -48,3 +48,34 @@ export function dotClasses(color: string | undefined): string {
   if (!color) return FALLBACK_DOT;
   return CATEGORY_DOT_CLASSES[color as CategoryColor] ?? FALLBACK_DOT;
 }
+
+// Same palette, used to let a Dashboard widget's headline number/bars/bars
+// take on a chosen accent instead of the neutral default — same color
+// tokens as categories/wallets so it always matches the app's theme.
+export const CATEGORY_ACCENT_TEXT_CLASSES: Record<CategoryColor, string> = {
+  emerald: "text-emerald-600 dark:text-emerald-400",
+  green: "text-green-600 dark:text-green-400",
+  teal: "text-teal-600 dark:text-teal-400",
+  cyan: "text-cyan-600 dark:text-cyan-400",
+  sky: "text-sky-600 dark:text-sky-400",
+  blue: "text-blue-600 dark:text-blue-400",
+  indigo: "text-indigo-600 dark:text-indigo-400",
+  violet: "text-violet-600 dark:text-violet-400",
+  fuchsia: "text-fuchsia-600 dark:text-fuchsia-400",
+  pink: "text-pink-600 dark:text-pink-400",
+  rose: "text-rose-600 dark:text-rose-400",
+  orange: "text-orange-600 dark:text-orange-400",
+  amber: "text-amber-600 dark:text-amber-400",
+  lime: "text-lime-600 dark:text-lime-400",
+  slate: "text-surface-foreground",
+};
+
+export function accentTextClasses(color: string | undefined): string {
+  if (!color) return "text-surface-foreground";
+  return CATEGORY_ACCENT_TEXT_CLASSES[color as CategoryColor] ?? "text-surface-foreground";
+}
+
+export function accentBgClasses(color: string | undefined): string {
+  if (!color) return "bg-surface-accent";
+  return CATEGORY_DOT_CLASSES[color as CategoryColor] ?? "bg-surface-accent";
+}

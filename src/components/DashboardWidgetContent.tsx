@@ -4,6 +4,7 @@ import type { Expense } from "@/types/expense";
 import type { CategoryOption } from "@/types/category";
 import type { DashboardWidgetInstance } from "@/lib/dashboard-widgets";
 import { formatCurrency, monthKey, todayInputValue } from "@/lib/format";
+import { accentTextClasses, accentBgClasses } from "@/lib/category-styles";
 import { useCurrency } from "@/lib/currency-context";
 import { useWallets } from "@/lib/wallets-context";
 import SummaryCards from "./SummaryCards";
@@ -94,6 +95,8 @@ export default function DashboardWidgetContent({
   const monthIncomeItems = thisMonth.filter((e) => e.type === "income");
   const monthIncome = sum(monthIncomeItems);
   const monthSpent = sum(monthExpenses);
+  const accentText = accentTextClasses(widget.accent);
+  const accentBg = accentBgClasses(widget.accent);
 
   switch (widget.type) {
     case "summary":
@@ -112,32 +115,46 @@ export default function DashboardWidgetContent({
     case "wallets":
       return <WalletsWidget />;
     case "recentTransactions":
-      return <RecentTransactionsWidget expenses={expenses} />;
+      return <RecentTransactionsWidget expenses={expenses} limit={widget.limit} />;
 
     case "todaySpending": {
       const value = sum(expenses.filter((e) => e.type === "expense" && e.date === today));
-      return <StatWidget label="Today's spending" value={formatCurrency(value, currency)} />;
+      return <StatWidget label="Today's spending" value={formatCurrency(value, currency)} valueClassName={accentText} />;
     }
     case "weekSpending": {
       const value = sum(expenses.filter((e) => e.type === "expense" && e.date >= weekStart));
-      return <StatWidget label="This week's spending" value={formatCurrency(value, currency)} />;
+      return <StatWidget label="This week's spending" value={formatCurrency(value, currency)} valueClassName={accentText} />;
     }
     case "yearSpending": {
       const value = sum(expenses.filter((e) => e.type === "expense" && e.date.startsWith(thisYear)));
-      return <StatWidget label="This year's spending" value={formatCurrency(value, currency)} />;
+      return <StatWidget label="This year's spending" value={formatCurrency(value, currency)} valueClassName={accentText} />;
     }
     case "avgDailySpending": {
       const dayOfMonth = Number(today.slice(8, 10));
       const value = monthSpent / Math.max(1, dayOfMonth);
-      return <StatWidget label="Average daily spending" value={formatCurrency(value, currency)} sublabel="This month" />;
+      return (
+        <StatWidget
+          label="Average daily spending"
+          value={formatCurrency(value, currency)}
+          sublabel="This month"
+          valueClassName={accentText}
+        />
+      );
     }
     case "avgTransactionAmount": {
       const value = monthExpenses.length > 0 ? monthSpent / monthExpenses.length : 0;
-      return <StatWidget label="Average transaction" value={formatCurrency(value, currency)} sublabel="This month" />;
+      return (
+        <StatWidget
+          label="Average transaction"
+          value={formatCurrency(value, currency)}
+          sublabel="This month"
+          valueClassName={accentText}
+        />
+      );
     }
     case "transactionCount": {
       return (
-        <StatWidget label="Transaction count" value={String(thisMonth.length)} sublabel="This month" />
+        <StatWidget label="Transaction count" value={String(thisMonth.length)} sublabel="This month" valueClassName={accentText} />
       );
     }
     case "biggestExpense": {
@@ -150,6 +167,7 @@ export default function DashboardWidgetContent({
           label="Biggest expense"
           value={biggest ? formatCurrency(biggest.amount, currency) : "—"}
           sublabel={biggest ? biggest.merchant : "No expenses this month"}
+          valueClassName={accentText}
         />
       );
     }
@@ -160,6 +178,7 @@ export default function DashboardWidgetContent({
           label="Top category"
           value={top ? top[0] : "—"}
           sublabel={top ? formatCurrency(top[1], currency) : "No expenses this month"}
+          valueClassName={accentText}
         />
       );
     }
@@ -170,6 +189,7 @@ export default function DashboardWidgetContent({
           label="Top merchant"
           value={top ? top[0] : "—"}
           sublabel={top ? formatCurrency(top[1], currency) : "No expenses this month"}
+          valueClassName={accentText}
         />
       );
     }
@@ -185,7 +205,14 @@ export default function DashboardWidgetContent({
       );
     }
     case "netWorth":
-      return <StatWidget label="Net worth" value={formatCurrency(remaining, currency)} sublabel="All wallets combined" />;
+      return (
+        <StatWidget
+          label="Net worth"
+          value={formatCurrency(remaining, currency)}
+          sublabel="All wallets combined"
+          valueClassName={accentText}
+        />
+      );
     case "monthComparison": {
       const lastMonthSpent = sum(
         expenses.filter((e) => e.type === "expense" && monthKey(e.date) === lastMonthKey),
@@ -203,7 +230,7 @@ export default function DashboardWidgetContent({
     }
     case "transfersTotal": {
       const value = sum(thisMonth.filter((e) => e.type === "transfer"));
-      return <StatWidget label="Transfers total" value={formatCurrency(value, currency)} sublabel="This month" />;
+      return <StatWidget label="Transfers total" value={formatCurrency(value, currency)} sublabel="This month" valueClassName={accentText} />;
     }
     case "topIncomeSource": {
       const top = topEntry(groupSum(monthIncomeItems, (e) => e.category));
@@ -212,6 +239,7 @@ export default function DashboardWidgetContent({
           label="Top income source"
           value={top ? top[0] : "—"}
           sublabel={top ? formatCurrency(top[1], currency) : "No income this month"}
+          valueClassName={accentText}
         />
       );
     }
@@ -220,34 +248,34 @@ export default function DashboardWidgetContent({
         const key = daysAgoKey(6 - i);
         return { label: weekdayLabel(key), value: sum(expenses.filter((e) => e.type === "expense" && e.date === key)) };
       });
-      return <MiniBarChartWidget title="Last 7 days" bars={bars} />;
+      return <MiniBarChartWidget title="Last 7 days" bars={bars} barClassName={accentBg} />;
     }
     case "last30Days": {
       const bars = Array.from({ length: 30 }, (_, i) => {
         const key = daysAgoKey(29 - i);
         return { label: key, value: sum(expenses.filter((e) => e.type === "expense" && e.date === key)) };
       });
-      return <MiniBarChartWidget title="Last 30 days" bars={bars} />;
+      return <MiniBarChartWidget title="Last 30 days" bars={bars} barClassName={accentBg} />;
     }
     case "topCategories": {
       const items = [...groupSum(monthExpenses, (e) => e.category).entries()]
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
+        .slice(0, widget.limit ?? 5)
         .map(([label, value]) => ({ label, value, displayValue: formatCurrency(value, currency) }));
-      return <ListStatWidget title="Top categories" items={items} />;
+      return <ListStatWidget title="Top categories" items={items} barClassName={accentBg} />;
     }
     case "walletDistribution": {
       const items = wallets.map((w) => ({ label: w.name, value: Math.max(w.balance, 0), displayValue: formatCurrency(w.balance, currency) }));
-      return <ListStatWidget title="Wallet distribution" items={items} />;
+      return <ListStatWidget title="Wallet distribution" items={items} barClassName={accentBg} />;
     }
     case "topTags": {
       const counts = new Map<string, number>();
       for (const e of expenses) for (const tag of e.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
       const items = [...counts.entries()]
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
+        .slice(0, widget.limit ?? 5)
         .map(([label, value]) => ({ label: `#${label}`, value, displayValue: String(value) }));
-      return <ListStatWidget title="Top tags" items={items} />;
+      return <ListStatWidget title="Top tags" items={items} barClassName={accentBg} />;
     }
     case "quickStats": {
       const avg = monthExpenses.length > 0 ? monthSpent / monthExpenses.length : 0;
@@ -257,8 +285,8 @@ export default function DashboardWidgetContent({
           stats={[
             { label: "Income", value: formatCurrency(monthIncome, currency), valueClassName: "text-emerald-600 dark:text-emerald-400" },
             { label: "Expenses", value: formatCurrency(monthSpent, currency), valueClassName: "text-red-600 dark:text-red-400" },
-            { label: "Transactions", value: String(thisMonth.length) },
-            { label: "Avg. transaction", value: formatCurrency(avg, currency) },
+            { label: "Transactions", value: String(thisMonth.length), valueClassName: accentText },
+            { label: "Avg. transaction", value: formatCurrency(avg, currency), valueClassName: accentText },
           ]}
         />
       );
@@ -267,7 +295,7 @@ export default function DashboardWidgetContent({
       const items = [...groupSum(monthExpenses, (e) => e.walletName ?? "Unassigned").entries()]
         .sort((a, b) => b[1] - a[1])
         .map(([label, value]) => ({ label, value, displayValue: formatCurrency(value, currency) }));
-      return <ListStatWidget title="Spending by wallet" items={items} />;
+      return <ListStatWidget title="Spending by wallet" items={items} barClassName={accentBg} />;
     }
     case "yearToDateIncome": {
       const value = sum(expenses.filter((e) => e.type === "income" && e.date.startsWith(thisYear)));
@@ -283,6 +311,7 @@ export default function DashboardWidgetContent({
           label="Largest wallet"
           value={largest ? largest.name : "—"}
           sublabel={largest ? formatCurrency(largest.balance, currency) : "No wallets yet"}
+          valueClassName={accentText}
         />
       );
     }

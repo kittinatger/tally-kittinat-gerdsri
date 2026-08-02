@@ -9,11 +9,17 @@ import {
   DEFAULT_DASHBOARD_WIDGETS,
   SUMMARY_CARDS,
   SUMMARY_CARD_LABELS,
+  WIDGET_ACCENTS,
+  LIMIT_OPTIONS,
+  ACCENT_CAPABLE_TYPES,
+  LIMIT_CAPABLE_TYPES,
   newWidgetInstance,
   type DashboardWidgetInstance,
   type SummaryCardId,
+  type WidgetAccent,
   type WidgetWidth,
 } from "@/lib/dashboard-widgets";
+import { dotClasses } from "@/lib/category-styles";
 import DashboardWidgetContent from "./DashboardWidgetContent";
 
 function GripIcon() {
@@ -137,6 +143,14 @@ export default function DashboardWidgetsSettings({
     persist(widgets.map((w, i) => (i === index ? { ...w, cards: next } : w)));
   }
 
+  function setAccent(index: number, accent: WidgetAccent) {
+    persist(widgets.map((w, i) => (i === index ? { ...w, accent: w.accent === accent ? undefined : accent } : w)));
+  }
+
+  function setLimit(index: number, limit: number) {
+    persist(widgets.map((w, i) => (i === index ? { ...w, limit } : w)));
+  }
+
   function removeWidget(index: number) {
     persist(widgets.filter((_, i) => i !== index));
   }
@@ -219,6 +233,41 @@ export default function DashboardWidgetsSettings({
                         </button>
                       );
                     })}
+                  </div>
+                )}
+
+                {LIMIT_CAPABLE_TYPES.includes(w.type) && (
+                  <div className="mb-2.5 flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-semibold text-ink-soft">Show</span>
+                    {LIMIT_OPTIONS.map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setLimit(i, n)}
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                          (w.limit ?? 5) === n ? "bg-navy text-white" : "bg-bg-soft text-ink-soft hover:text-foreground"
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {ACCENT_CAPABLE_TYPES.includes(w.type) && (
+                  <div className="mb-2.5 flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-semibold text-ink-soft">Color</span>
+                    {WIDGET_ACCENTS.map((accent) => (
+                      <button
+                        key={accent}
+                        type="button"
+                        onClick={() => setAccent(i, accent)}
+                        aria-label={accent}
+                        className={`h-5 w-5 rounded-full transition ${dotClasses(accent)} ${
+                          w.accent === accent ? "ring-2 ring-navy ring-offset-1 ring-offset-surface" : ""
+                        }`}
+                      />
+                    ))}
                   </div>
                 )}
 

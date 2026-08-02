@@ -39,8 +39,8 @@ function Row({ expense }: { expense: Expense }) {
   );
 }
 
-export default function RecentTransactionsWidget({ expenses }: { expenses: Expense[] }) {
-  const recent = expenses.slice(0, 5);
+export default function RecentTransactionsWidget({ expenses, limit = 5 }: { expenses: Expense[]; limit?: number }) {
+  const recent = expenses.slice(0, limit);
 
   return (
     <div className="rounded-card border border-surface-line bg-surface p-4">

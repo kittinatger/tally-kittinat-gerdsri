@@ -1,7 +1,13 @@
 import { z } from "zod";
 import { TRANSACTION_TYPES, TRANSFER_DIRECTIONS } from "@/lib/categories";
 import { WALLET_KINDS } from "@/lib/wallets";
-import { DASHBOARD_WIDGET_TYPES, WIDGET_WIDTHS, SUMMARY_CARDS } from "@/lib/dashboard-widgets";
+import {
+  DASHBOARD_WIDGET_TYPES,
+  WIDGET_WIDTHS,
+  SUMMARY_CARDS,
+  WIDGET_ACCENTS,
+  LIMIT_OPTIONS,
+} from "@/lib/dashboard-widgets";
 
 const sharedFields = {
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
@@ -103,6 +109,12 @@ export const dashboardWidgetsInputSchema = z.object({
         type: z.enum(DASHBOARD_WIDGET_TYPES),
         width: z.enum(WIDGET_WIDTHS),
         cards: z.array(z.enum(SUMMARY_CARDS)).optional(),
+        accent: z.enum(WIDGET_ACCENTS).optional(),
+        limit: z
+          .number()
+          .int()
+          .refine((n) => (LIMIT_OPTIONS as readonly number[]).includes(n))
+          .optional(),
       }),
     )
     .max(20),

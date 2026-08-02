@@ -56,6 +56,63 @@ export const SUMMARY_CARD_LABELS: Record<SummaryCardId, string> = {
   remaining: "Remaining",
 };
 
+// Reuses the same 15-color palette categories/wallets already use (see
+// lib/categories.ts CATEGORY_PALETTE) so an accented widget always matches
+// the app's existing theme rather than introducing new colors.
+export const WIDGET_ACCENTS = [
+  "emerald",
+  "green",
+  "teal",
+  "cyan",
+  "sky",
+  "blue",
+  "indigo",
+  "violet",
+  "fuchsia",
+  "pink",
+  "rose",
+  "orange",
+  "amber",
+  "lime",
+  "slate",
+] as const;
+export type WidgetAccent = (typeof WIDGET_ACCENTS)[number];
+
+export function isWidgetAccent(value: string): value is WidgetAccent {
+  return (WIDGET_ACCENTS as readonly string[]).includes(value);
+}
+
+export const LIMIT_OPTIONS = [3, 5, 10, 15, 20] as const;
+
+// Widgets whose headline number/bars can take a chosen accent color instead
+// of the neutral default (excludes ones with their own multi-color content —
+// category chips, wallet dots — or meaningful semantic red/green coloring).
+export const ACCENT_CAPABLE_TYPES: readonly DashboardWidgetType[] = [
+  "todaySpending",
+  "weekSpending",
+  "yearSpending",
+  "avgDailySpending",
+  "avgTransactionAmount",
+  "transactionCount",
+  "biggestExpense",
+  "topCategory",
+  "topMerchant",
+  "netWorth",
+  "transfersTotal",
+  "topIncomeSource",
+  "last7Days",
+  "last30Days",
+  "quickStats",
+  "largestWallet",
+  "topCategories",
+  "walletDistribution",
+  "topTags",
+  "expensesByWallet",
+];
+
+// Widgets with a "how many to show" list length.
+export const LIMIT_CAPABLE_TYPES: readonly DashboardWidgetType[] = ["recentTransactions", "topCategories", "topTags"];
+
 // A single tile on the Dashboard — its own id (so the same widget type can
 // appear more than once, e.g. two category charts side by side), which
 // widget it renders, how much of the grid row it takes up, and (for widgets
@@ -66,6 +123,10 @@ export type DashboardWidgetInstance = {
   width: WidgetWidth;
   /** Only meaningful when type is "summary". Undefined means "show all". */
   cards?: SummaryCardId[];
+  /** Only meaningful for ACCENT_CAPABLE_TYPES. Undefined means the widget's neutral default. */
+  accent?: WidgetAccent;
+  /** Only meaningful for LIMIT_CAPABLE_TYPES. Undefined means that widget's own default. */
+  limit?: number;
 };
 
 export const DASHBOARD_WIDGET_INFO: Record<DashboardWidgetType, { title: string; description: string }> = {
@@ -144,7 +205,24 @@ export function normalizeDashboardWidgets(raw: unknown): DashboardWidgetInstance
             ? rawCards.filter((c): c is SummaryCardId => typeof c === "string" && isSummaryCardId(c))
             : [...SUMMARY_CARDS]
           : undefined;
-      result.push({ id, type, width, cards: cards && cards.length > 0 ? cards : type === "summary" ? [...SUMMARY_CARDS] : undefined });
+      const rawAccent = (item as { accent?: unknown }).accent;
+      const accent =
+        ACCENT_CAPABLE_TYPES.includes(type) && typeof rawAccent === "string" && isWidgetAccent(rawAccent)
+          ? rawAccent
+          : undefined;
+      const rawLimit = (item as { limit?: unknown }).limit;
+      const limit =
+        LIMIT_CAPABLE_TYPES.includes(type) && typeof rawLimit === "number" && (LIMIT_OPTIONS as readonly number[]).includes(rawLimit)
+          ? rawLimit
+          : undefined;
+      result.push({
+        id,
+        type,
+        width,
+        cards: cards && cards.length > 0 ? cards : type === "summary" ? [...SUMMARY_CARDS] : undefined,
+        accent,
+        limit,
+      });
     }
   }
   if (result.length === 0 && raw.length === 0) return [];
