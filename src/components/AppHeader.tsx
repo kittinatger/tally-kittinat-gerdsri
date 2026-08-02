@@ -54,18 +54,20 @@ function AddIcon() {
 // Fixed capsule nav + separate round Add button, shown on mobile only —
 // the equivalent top nav pill / inline Add button (in the header below)
 // covers this role on larger screens instead. The logo lives here too on
-// mobile (the top header is hidden there), rather than at the top.
-function BottomNav({ pathname, onAddClick }: { pathname: string; onAddClick?: () => void }) {
+// mobile (the top header is hidden there), rather than at the top. Exported
+// so each route's loading.tsx can render the identical bar and avoid a
+// flash while the top header/bottom nav would otherwise disappear and
+// reappear across the navigation.
+export function BottomNav({ pathname, onAddClick }: { pathname: string; onAddClick?: () => void }) {
   return (
     <div className="fixed inset-x-3 bottom-3 z-20 flex items-center gap-2 sm:hidden">
-      <Link
-        href="/"
-        aria-label="Tally home"
+      <div
+        aria-hidden="true"
         className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] shadow-soft backdrop-blur-xl"
       >
         <img src="/favicon-light.svg" alt="" className="h-6 w-6 shrink-0 dark:hidden" />
         <img src="/favicon-dark.svg" alt="" className="hidden h-6 w-6 shrink-0 dark:block" />
-      </Link>
+      </div>
       <nav className="flex flex-1 items-center gap-1 rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-1.5 shadow-soft backdrop-blur-xl">
         {BOTTOM_NAV_LINKS.map((link) => {
           const active = pathname === link.href;
