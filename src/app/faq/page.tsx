@@ -60,7 +60,7 @@ const FAQS: { q: string; a: React.ReactNode }[] = [
 
 export default function FaqPage() {
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-10 pt-3 sm:px-4">
+    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10">
       <AppHeader />
 
       <main className="flex-1 px-1 py-6 sm:px-2">

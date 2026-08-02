@@ -51,7 +51,7 @@ export default function ActivitiesView({
     <CategoriesProvider categories={categories}>
       <WalletsProvider wallets={wallets}>
       <CurrencyProvider currency={currency}>
-        <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-24 pt-3 sm:px-4 sm:pb-10">
+        <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10">
           <PullToRefresh>
             <AppHeader onAddClick={() => setAddOpen(true)} />
 
@@ -59,14 +59,6 @@ export default function ActivitiesView({
               <ExpenseList expenses={expenses} onSelect={setEditing} />
             </main>
           </PullToRefresh>
-
-          <button
-            onClick={() => setAddOpen(true)}
-            className="fixed bottom-6 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--fab-glass-border)] bg-[image:var(--fab-glass-bg)] text-2xl font-light text-white shadow-[var(--shadow-soft),var(--fab-glass-shadow)] backdrop-blur-xl transition hover:brightness-110 sm:hidden"
-            aria-label="Add expense"
-          >
-            +
-          </button>
 
           {addOpen && <AddExpenseModal onClose={() => setAddOpen(false)} onCreated={handleCreated} />}
           {editing && (
