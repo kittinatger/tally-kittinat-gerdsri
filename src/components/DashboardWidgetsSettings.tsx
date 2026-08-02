@@ -10,6 +10,9 @@ import {
   SUMMARY_CARDS,
   SUMMARY_CARD_LABELS,
   WIDGET_ACCENTS,
+  WIDGET_WIDTH_LABELS,
+  WIDGET_WIDTH_COLSPAN,
+  SUPPORTED_WIDTHS,
   LIMIT_OPTIONS,
   ACCENT_CAPABLE_TYPES,
   LIMIT_CAPABLE_TYPES,
@@ -17,7 +20,6 @@ import {
   type DashboardWidgetInstance,
   type SummaryCardId,
   type WidgetAccent,
-  type WidgetWidth,
 } from "@/lib/dashboard-widgets";
 import { dotClasses } from "@/lib/category-styles";
 import DashboardWidgetContent from "./DashboardWidgetContent";
@@ -130,9 +132,11 @@ export default function DashboardWidgetsSettings({
     setOverIndex(null);
   }
 
-  function toggleWidth(index: number) {
-    const width: WidgetWidth = widgets[index].width === "full" ? "half" : "full";
-    persist(widgets.map((w, i) => (i === index ? { ...w, width } : w)));
+  function cycleWidth(index: number) {
+    const w = widgets[index];
+    const supported = SUPPORTED_WIDTHS[w.type];
+    const next = supported[(supported.indexOf(w.width) + 1) % supported.length];
+    persist(widgets.map((wi, i) => (i === index ? { ...wi, width: next } : wi)));
   }
 
   function toggleCard(index: number, card: SummaryCardId) {
@@ -162,8 +166,9 @@ export default function DashboardWidgetsSettings({
   return (
     <div>
       <p className="mb-4 text-[11px] leading-snug text-ink-soft">
-        Drag tiles to rearrange them, toggle a tile to half-width to fit two side by side, or add the same widget
-        more than once — for example two category charts at once.
+        Drag tiles to rearrange them, tap the size button to cycle through the sizes that widget supports (some
+        don&apos;t fit every size), or add the same widget more than once — for example two category charts at
+        once.
       </p>
 
       {widgets.length === 0 ? (
@@ -171,16 +176,17 @@ export default function DashboardWidgetsSettings({
           Your dashboard is empty. Add a widget below to get started.
         </p>
       ) : (
-        <div className="mb-5 grid grid-cols-2 gap-3">
+        <div className="mb-5 grid grid-cols-4 gap-3">
           {widgets.map((w, i) => {
             const info = DASHBOARD_WIDGET_INFO[w.type];
+            const supported = SUPPORTED_WIDTHS[w.type];
             return (
               <div
                 key={w.id}
                 data-widget-index={i}
-                className={`rounded-card border bg-surface p-3 transition ${
-                  w.width === "half" ? "" : "col-span-2"
-                } ${dragIndex === i ? "opacity-40" : overIndex === i && dragIndex !== null ? "border-navy" : "border-line"}`}
+                className={`rounded-card border bg-surface p-3 transition ${WIDGET_WIDTH_COLSPAN[w.width]} ${
+                  dragIndex === i ? "opacity-40" : overIndex === i && dragIndex !== null ? "border-navy" : "border-line"
+                }`}
               >
                 <div className="mb-2 flex items-center gap-2">
                   <span
@@ -197,13 +203,16 @@ export default function DashboardWidgetsSettings({
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-foreground">{info.title}</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => toggleWidth(i)}
-                    className="shrink-0 rounded-full bg-bg-soft px-2.5 py-1 text-[11px] font-semibold text-ink-soft transition hover:text-foreground"
-                  >
-                    {w.width === "half" ? "Half" : "Full"}
-                  </button>
+                  {supported.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => cycleWidth(i)}
+                      title={`Sizes available: ${supported.map((s) => WIDGET_WIDTH_LABELS[s]).join(", ")}`}
+                      className="shrink-0 rounded-full bg-bg-soft px-2.5 py-1 text-[11px] font-semibold text-ink-soft transition hover:text-foreground"
+                    >
+                      {WIDGET_WIDTH_LABELS[w.width]}
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => removeWidget(i)}

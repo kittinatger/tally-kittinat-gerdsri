@@ -5,7 +5,7 @@ import { signedAmount, type Expense } from "@/types/expense";
 import type { CategoryOption } from "@/types/category";
 import type { TransactionType } from "@/lib/categories";
 import type { WalletOption } from "@/types/wallet";
-import type { DashboardWidgetInstance } from "@/lib/dashboard-widgets";
+import { WIDGET_WIDTH_COLSPAN, type DashboardWidgetInstance } from "@/lib/dashboard-widgets";
 import { CategoriesProvider } from "@/lib/categories-context";
 import { CurrencyProvider } from "@/lib/currency-context";
 import { WalletsProvider } from "@/lib/wallets-context";
@@ -60,9 +60,9 @@ export default function Dashboard({
             <AppHeader />
 
             <main className="flex-1 px-1 py-6 sm:px-2">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-4 gap-4">
                 {widgets.map((w) => (
-                  <div key={w.id} className={w.width === "half" ? "col-span-1" : "col-span-2"}>
+                  <div key={w.id} className={WIDGET_WIDTH_COLSPAN[w.width]}>
                     <DashboardWidgetContent
                       widget={w}
                       expenses={expenses}
