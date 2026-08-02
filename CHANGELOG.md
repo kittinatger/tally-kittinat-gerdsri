@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.8.1] - 2026-08-02
+
+### Changed
+- Replaced the icons on the mobile navbar (Dashboard, Activities, Settings) with a new custom SVG icon set
+
+
 ## [0.8.0] - 2026-08-01
 
 ### Added
