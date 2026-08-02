@@ -3,6 +3,39 @@ import AppHeader from "@/components/AppHeader";
 
 const RELEASES: { version: string; date: string; sections: { heading: string; items: string[] }[] }[] = [
   {
+    version: "0.9.0",
+    date: "2026-08-02",
+    sections: [
+      {
+        heading: "Added",
+        items: [
+          "Transfer between wallets, in Settings > Wallets — moves money between two of your own wallets as a linked pair of transactions; doesn't count as income or spending, and deleting either side deletes both",
+          "Default wallet, in Settings > Wallets — new/edited transactions fall back to it when you don't choose one",
+          "Archive wallet, in Settings > Wallets — hides a wallet from pickers and balance totals without deleting its history; still viewable and reversible",
+          "Per-wallet currency label, in Settings > Wallets (display only — amounts aren't converted between currencies)",
+          "\"Total balance\" Dashboard widget — sum of every active wallet's balance",
+          "Receipt scanning and voice entry now detect which wallet a transaction was paid with/into and pre-select it when confident",
+        ],
+      },
+      {
+        heading: "Changed",
+        items: [
+          "The wallet selector in the transaction form now always shows (previously only with 2+ wallets), and defaults to your default wallet",
+        ],
+      },
+    ],
+  },
+  {
+    version: "0.8.1",
+    date: "2026-08-02",
+    sections: [
+      {
+        heading: "Changed",
+        items: ["Replaced the icons on the mobile navbar (Dashboard, Activities, Settings) with a new custom SVG icon set"],
+      },
+    ],
+  },
+  {
     version: "0.8.0",
     date: "2026-08-01",
     sections: [
@@ -25,7 +58,7 @@ const RELEASES: { version: string; date: string; sections: { heading: string; it
         heading: "Added",
         items: [
           "Transfer transaction type for self-transfers and e-wallet top-ups — moves your Remaining balance like an expense/income would, but isn't counted in Income/Expenses totals",
-          "Working “Export data” and “Manage tags” in Settings > Records (previously placeholders) — export your full transaction history as CSV, and rename/delete tags across every transaction that has them",
+          "Working \"Export data\" and \"Manage tags\" in Settings > Records (previously placeholders) — export your full transaction history as CSV, and rename/delete tags across every transaction that has them",
           "Delete account, in Settings > Account's new Danger zone — requires ticking an acknowledgement checkbox, typing a confirmation phrase, and your current password",
           "Replaced the dropdown chevron icon across all dropdowns with a consistent style",
         ],
@@ -53,7 +86,7 @@ const RELEASES: { version: string; date: string; sections: { heading: string; it
       {
         heading: "Fixed",
         items: [
-          "Receipt scanning and voice entry failing with a raw “heavy traffic” error from Gemini — now retries transient overload errors automatically and shows a clear message if one still fails",
+          "Receipt scanning and voice entry failing with a raw \"heavy traffic\" error from Gemini — now retries transient overload errors automatically and shows a clear message if one still fails",
           "Replaced remaining emoji and system symbols (search icon, close buttons) with a consistent icon set",
           "Sign-out confirmation button is now red to signal it's a destructive action",
         ],
@@ -76,8 +109,8 @@ const RELEASES: { version: string; date: string; sections: { heading: string; it
       {
         heading: "Changed",
         items: [
-          "Replaced the edit-balance pencil icon on the Dashboard's “Remaining” card",
-          "Replaced the “+ Add” / “+ Add category” text with a plus icon, the receipt-scan camera emoji, the voice-entry microphone icon, the dropdown chevrons, and the date-range calendar icon with a consistent icon set",
+          "Replaced the edit-balance pencil icon on the Dashboard's \"Remaining\" card",
+          "Replaced the \"+ Add\" / \"+ Add category\" text with a plus icon, the receipt-scan camera emoji, the voice-entry microphone icon, the dropdown chevrons, and the date-range calendar icon with a consistent icon set",
         ],
       },
     ],
@@ -111,7 +144,7 @@ const RELEASES: { version: string; date: string; sections: { heading: string; it
       {
         heading: "Added",
         items: [
-          "“Your account” section in Settings — view your username, change your username (checked for availability before saving), and change your password, both requiring your current password to confirm",
+          "\"Your account\" section in Settings — view your username, change your username (checked for availability before saving), and change your password, both requiring your current password to confirm",
         ],
       },
     ],

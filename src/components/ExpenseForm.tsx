@@ -60,7 +60,8 @@ export default function ExpenseForm({
   const allCategories = useAllCategories();
   const wallets = useWallets();
   const categories = allCategories.filter((c) => c.type === values.type);
-  const selectedWalletId = values.walletId ?? wallets[0]?.id ?? null;
+  const defaultWallet = wallets.find((w) => w.isDefault) ?? wallets[0];
+  const selectedWalletId = values.walletId ?? defaultWallet?.id ?? null;
   const selectedWalletName = wallets.find((w) => w.id === selectedWalletId)?.name ?? "";
   const sourceLabel = values.type === "income" ? "Source" : values.type === "transfer" ? "Description" : "Merchant";
 
@@ -200,7 +201,7 @@ export default function ExpenseForm({
         />
       </div>
 
-      {wallets.length > 1 && (
+      {wallets.length > 0 && (
         <div>
           <label className={labelClass} htmlFor="wallet">
             Wallet

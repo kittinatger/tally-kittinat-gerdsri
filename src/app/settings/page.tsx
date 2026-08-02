@@ -16,7 +16,7 @@ export default async function SettingsPage() {
     listCategories(userId),
     getCurrency(userId),
     getUserById(userId),
-    listWallets(userId),
+    listWallets(userId, { includeArchived: true }),
     listExpenses(userId),
     getRemaining(userId),
   ]);
@@ -31,6 +31,9 @@ export default async function SettingsPage() {
     name: w.name,
     color: w.color,
     kind: isWalletKind(w.kind) ? w.kind : "cash",
+    currency: w.currency,
+    isDefault: w.is_default,
+    archived: w.archived,
     balance: Number(w.balance),
   }));
   const expenses: Expense[] = expenseRows.map((r) => ({

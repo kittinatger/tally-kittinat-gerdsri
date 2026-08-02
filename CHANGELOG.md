@@ -9,11 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.9.0] - 2026-08-02
+
+### Added
+- Transfer between wallets, in Settings > Wallets — moves money between two of your own wallets as a linked pair of transactions; doesn't count as income or spending, and deleting either side deletes both
+- Default wallet, in Settings > Wallets — new/edited transactions fall back to it when you don't choose one
+- Archive wallet, in Settings > Wallets — hides a wallet from pickers and balance totals without deleting its history; still viewable and reversible
+- Per-wallet currency label, in Settings > Wallets (display only — amounts aren't converted between currencies)
+- "Total balance" Dashboard widget — sum of every active wallet's balance
+- Receipt scanning and voice entry now detect which wallet a transaction was paid with/into and pre-select it when confident
+
+### Changed
+- The wallet selector in the transaction form now always shows (previously only with 2+ wallets), and defaults to your default wallet
+
 ## [0.8.1] - 2026-08-02
 
 ### Changed
 - Replaced the icons on the mobile navbar (Dashboard, Activities, Settings) with a new custom SVG icon set
-
 
 ## [0.8.0] - 2026-08-01
 

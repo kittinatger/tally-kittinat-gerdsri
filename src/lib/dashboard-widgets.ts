@@ -26,6 +26,7 @@ export const DASHBOARD_WIDGET_TYPES = [
   "expensesByWallet",
   "yearToDateIncome",
   "largestWallet",
+  "totalBalance",
 ] as const;
 export type DashboardWidgetType = (typeof DASHBOARD_WIDGET_TYPES)[number];
 
@@ -128,6 +129,7 @@ export const ACCENT_CAPABLE_TYPES: readonly DashboardWidgetType[] = [
   "walletDistribution",
   "topTags",
   "expensesByWallet",
+  "totalBalance",
 ];
 
 // Widgets with a "how many to show" list length.
@@ -166,6 +168,7 @@ export const SUPPORTED_WIDTHS: Record<DashboardWidgetType, readonly WidgetWidth[
   expensesByWallet: ["medium", "large"],
   yearToDateIncome: ["small", "medium", "large"],
   largestWallet: ["small", "medium", "large"],
+  totalBalance: ["small", "medium", "large"],
 };
 
 export function defaultWidthForType(type: DashboardWidgetType): WidgetWidth {
@@ -222,6 +225,7 @@ export const DASHBOARD_WIDGET_INFO: Record<DashboardWidgetType, { title: string;
   expensesByWallet: { title: "Spending by wallet", description: "This month's spending broken down by wallet" },
   yearToDateIncome: { title: "Year-to-date income", description: "Total income so far this year" },
   largestWallet: { title: "Largest wallet", description: "Your wallet with the highest balance" },
+  totalBalance: { title: "Total balance", description: "Sum of every active wallet's balance" },
 };
 
 function makeId(type: DashboardWidgetType): string {

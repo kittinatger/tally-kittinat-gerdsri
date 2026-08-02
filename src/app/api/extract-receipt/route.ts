@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ApiError } from "@google/genai";
 import { extractTransaction } from "@/lib/gemini";
-import { getAutoConvertCurrency, getCurrency, listCategories } from "@/lib/db";
+import { getAutoConvertCurrency, getCurrency, listCategories, listWallets } from "@/lib/db";
 import { maybeAutoConvert } from "@/lib/exchange-rate";
 import { getUserId } from "@/lib/auth";
 
@@ -29,17 +29,18 @@ export async function POST(req: NextRequest) {
   const base64 = buffer.toString("base64");
 
   try {
-    const [categoryRows, defaultCurrency, autoConvertEnabled] = await Promise.all([
+    const [categoryRows, defaultCurrency, autoConvertEnabled, walletRows] = await Promise.all([
       listCategories(userId),
       getCurrency(userId),
       getAutoConvertCurrency(userId),
+      listWallets(userId),
     ]);
     const categories = {
       expense: categoryRows.filter((c) => c.type === "expense").map((c) => c.name),
       income: categoryRows.filter((c) => c.type === "income").map((c) => c.name),
       transfer: categoryRows.filter((c) => c.type === "transfer").map((c) => c.name),
     };
-    const extraction = await extractTransaction(base64, file.type, categories);
+    const extraction = await extractTransaction(base64, file.type, categories, walletRows.map((w) => w.name));
     const result = await maybeAutoConvert(extraction, defaultCurrency, autoConvertEnabled);
     return NextResponse.json({ extraction: result });
   } catch (err) {

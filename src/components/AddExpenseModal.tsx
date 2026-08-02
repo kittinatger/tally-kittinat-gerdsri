@@ -8,6 +8,7 @@ import VoiceRecorder from "./VoiceRecorder";
 import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
 import { isTransactionType, isTransferDirection, type TransactionType } from "@/lib/categories";
 import { useAllCategories } from "@/lib/categories-context";
+import { useWallets } from "@/lib/wallets-context";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency } from "@/lib/format";
 
@@ -25,6 +26,7 @@ export default function AddExpenseModal({
   initialType?: TransactionType;
 }) {
   const allCategories = useAllCategories();
+  const wallets = useWallets();
   const currency = useCurrency();
   const [tab, setTab] = useState<Tab>("manual");
   const [queue, setQueue] = useState<File[]>([]);
@@ -65,12 +67,14 @@ export default function AddExpenseModal({
         amount: number;
         date: string;
         category: string;
+        wallet?: string;
         originalAmount?: number;
         originalCurrency?: string;
       };
       const type = isTransactionType(extraction.type) ? extraction.type : "expense";
       const direction = extraction.direction && isTransferDirection(extraction.direction) ? extraction.direction : "out";
       const categoryValid = allCategories.some((c) => c.type === type && c.name === extraction.category);
+      const matchedWallet = wallets.find((w) => w.name === extraction.wallet);
       setScanValues({
         type,
         direction,
@@ -80,7 +84,7 @@ export default function AddExpenseModal({
         category: categoryValid ? extraction.category : "Other",
         notes: "",
         tags: [],
-        walletId: null,
+        walletId: matchedWallet?.id ?? null,
       });
       setScanConversion(
         extraction.originalAmount !== undefined && extraction.originalCurrency
@@ -124,12 +128,14 @@ export default function AddExpenseModal({
         date: string;
         category: string;
         notes?: string;
+        wallet?: string;
         originalAmount?: number;
         originalCurrency?: string;
       };
       const type = isTransactionType(extraction.type) ? extraction.type : "expense";
       const direction = extraction.direction && isTransferDirection(extraction.direction) ? extraction.direction : "out";
       const categoryValid = allCategories.some((c) => c.type === type && c.name === extraction.category);
+      const matchedWallet = wallets.find((w) => w.name === extraction.wallet);
       setVoiceValues({
         type,
         direction,
@@ -139,7 +145,7 @@ export default function AddExpenseModal({
         category: categoryValid ? extraction.category : "Other",
         notes: extraction.notes ?? "",
         tags: [],
-        walletId: null,
+        walletId: matchedWallet?.id ?? null,
       });
       setVoiceConversion(
         extraction.originalAmount !== undefined && extraction.originalCurrency

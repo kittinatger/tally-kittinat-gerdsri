@@ -315,6 +315,17 @@ export default function DashboardWidgetContent({
         />
       );
     }
+    case "totalBalance": {
+      const total = wallets.reduce((sum, w) => sum + w.balance, 0);
+      return (
+        <StatWidget
+          label="Total balance"
+          value={formatCurrency(total, currency)}
+          sublabel={`Across ${wallets.length} active wallet${wallets.length === 1 ? "" : "s"}`}
+          valueClassName={accentText}
+        />
+      );
+    }
     default:
       return null;
   }

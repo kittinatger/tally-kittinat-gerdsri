@@ -82,10 +82,18 @@ export const calendarSettingsInputSchema = z
     message: "Provide at least one calendar setting to update",
   });
 
+const walletCurrencySchema = z
+  .string()
+  .trim()
+  .length(3)
+  .transform((v) => v.toUpperCase())
+  .nullable();
+
 export const walletInputSchema = z.object({
   name: z.string().trim().min(1).max(40),
   color: z.string().trim().min(1).max(30),
   kind: z.enum(WALLET_KINDS).default("cash"),
+  currency: walletCurrencySchema.optional(),
 });
 
 export const walletUpdateSchema = z
@@ -93,13 +101,27 @@ export const walletUpdateSchema = z
     name: z.string().trim().min(1).max(40).optional(),
     color: z.string().trim().min(1).max(30).optional(),
     kind: z.enum(WALLET_KINDS).optional(),
+    currency: walletCurrencySchema.optional(),
+    isDefault: z.literal(true).optional(),
+    archived: z.boolean().optional(),
     startingBalance: z.number().finite().optional(),
   })
-  .refine(
-    (data) =>
-      data.name !== undefined || data.color !== undefined || data.kind !== undefined || data.startingBalance !== undefined,
-    { message: "Provide name, color, kind, and/or startingBalance" },
-  );
+  .refine((data) => Object.values(data).some((v) => v !== undefined), {
+    message: "Provide at least one field to update",
+  });
+
+export const walletTransferInputSchema = z
+  .object({
+    fromWalletId: z.number().int().positive(),
+    toWalletId: z.number().int().positive(),
+    amount: z.number().positive().finite(),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
+    notes: z.string().trim().max(500).nullable().optional(),
+  })
+  .refine((data) => data.fromWalletId !== data.toWalletId, {
+    message: "Choose two different wallets",
+    path: ["toWalletId"],
+  });
 
 export const dashboardWidgetsInputSchema = z.object({
   widgets: z

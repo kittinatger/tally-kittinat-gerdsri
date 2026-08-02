@@ -198,10 +198,11 @@ export default function SettingsView({
   remaining: number;
 }) {
   const [panel, setPanel] = useState<Panel | null>(null);
+  const activeWallets = wallets.filter((w) => !w.archived);
 
   return (
     <CategoriesProvider categories={categories}>
-    <WalletsProvider wallets={wallets}>
+    <WalletsProvider wallets={activeWallets}>
     <CurrencyProvider currency={currency}>
       <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10">
         <PullToRefresh>

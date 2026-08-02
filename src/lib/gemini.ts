@@ -12,6 +12,8 @@ export type TransactionExtraction = {
   notes?: string;
   /** ISO 4217 code of the currency the amount was originally denominated in, if detected. */
   currency?: string;
+  /** Name of one of the user's existing wallets, if mentioned/shown (e.g. "paid with cash", "on my Kasikorn card"). */
+  wallet?: string;
 };
 
 export type CategoriesByType = {
@@ -33,7 +35,7 @@ function getClient(): GoogleGenAI {
   return new GoogleGenAI({ apiKey, httpOptions: { retryOptions: { attempts: 3 } } });
 }
 
-function buildPrompt(categories: CategoriesByType): string {
+function buildPrompt(categories: CategoriesByType, walletNames: string[]): string {
   const currentYear = new Date().getFullYear();
   const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
 
@@ -56,12 +58,13 @@ First decide which of the three it is, then extract:
 - currency: the ISO 4217 currency code (e.g. USD, EUR, GBP, THB, JPY) the amount is denominated
   in, inferred from any symbol ($, €, £, ¥, ฿, etc.), currency name/code text, or country context
   on the document. Empty string if you genuinely cannot tell.
+${walletNames.length > 0 ? `- wallet: which of the user's own wallets this was paid with/into, if the document indicates it (e.g. a card name/number matching a wallet, "cash" for a cash receipt). Choose EXACTLY one from: ${walletNames.join(", ")}. Empty string if you can't tell.` : ""}
 
 If any field is illegible or absent, make your best reasonable guess rather than leaving it blank.
 Respond with JSON only, matching the provided schema.`;
 }
 
-function buildVoicePrompt(categories: CategoriesByType): string {
+function buildVoicePrompt(categories: CategoriesByType, walletNames: string[]): string {
   const currentYear = new Date().getFullYear();
   const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
 
@@ -101,12 +104,13 @@ then extract:
 - currency: the ISO 4217 currency code (e.g. USD, EUR, GBP, THB, JPY) if a specific currency was
   named or clearly implied (e.g. "euros", "baht", "quid"). Empty string if no currency was
   specified — do not guess one from context alone.
+${walletNames.length > 0 ? `- wallet: which of the user's own wallets this was paid with/into, if they said so (e.g. "with cash", "on my Kasikorn card", "from savings"). Choose EXACTLY one from: ${walletNames.join(", ")}. Empty string if not mentioned — do not guess.` : ""}
 
 If any field is unclear, make your best reasonable guess rather than leaving it blank.
 Respond with JSON only, matching the provided schema.`;
 }
 
-function responseSchema(allCategories: string[], includeNotes: boolean) {
+function responseSchema(allCategories: string[], includeNotes: boolean, walletNames: string[]) {
   return {
     type: Type.OBJECT,
     properties: {
@@ -118,12 +122,13 @@ function responseSchema(allCategories: string[], includeNotes: boolean) {
       category: { type: Type.STRING, enum: allCategories },
       currency: { type: Type.STRING },
       ...(includeNotes ? { notes: { type: Type.STRING } } : {}),
+      ...(walletNames.length > 0 ? { wallet: { type: Type.STRING, enum: [...walletNames, ""] } } : {}),
     },
     required: ["type", "merchant", "amount", "date", "category"],
   };
 }
 
-function parseExtraction(text: string, categories: CategoriesByType): TransactionExtraction {
+function parseExtraction(text: string, categories: CategoriesByType, walletNames: string[]): TransactionExtraction {
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
@@ -152,14 +157,17 @@ function parseExtraction(text: string, categories: CategoriesByType): Transactio
   const notes = typeof record.notes === "string" ? record.notes.trim() : "";
   const currencyRaw = typeof record.currency === "string" ? record.currency.trim().toUpperCase() : "";
   const currency = /^[A-Z]{3}$/.test(currencyRaw) ? currencyRaw : undefined;
+  const walletRaw = typeof record.wallet === "string" ? record.wallet.trim() : "";
+  const wallet = walletNames.find((w) => w.toLowerCase() === walletRaw.toLowerCase());
 
-  return { type, direction, merchant, amount, date, category, notes: notes || undefined, currency };
+  return { type, direction, merchant, amount, date, category, notes: notes || undefined, currency, wallet };
 }
 
 export async function extractTransaction(
   imageBase64: string,
   mimeType: string,
   categories: CategoriesByType,
+  walletNames: string[] = [],
 ): Promise<TransactionExtraction> {
   const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
   const ai = getClient();
@@ -169,12 +177,12 @@ export async function extractTransaction(
     contents: [
       {
         role: "user",
-        parts: [{ text: buildPrompt(categories) }, { inlineData: { mimeType, data: imageBase64 } }],
+        parts: [{ text: buildPrompt(categories, walletNames) }, { inlineData: { mimeType, data: imageBase64 } }],
       },
     ],
     config: {
       responseMimeType: "application/json",
-      responseSchema: responseSchema(allCategories, false),
+      responseSchema: responseSchema(allCategories, false, walletNames),
     },
   });
 
@@ -183,13 +191,14 @@ export async function extractTransaction(
     throw new Error("The vision model returned an empty response.");
   }
 
-  return parseExtraction(text, categories);
+  return parseExtraction(text, categories, walletNames);
 }
 
 export async function extractTransactionFromAudio(
   audioBase64: string,
   mimeType: string,
   categories: CategoriesByType,
+  walletNames: string[] = [],
 ): Promise<TransactionExtraction> {
   const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
   const ai = getClient();
@@ -199,12 +208,12 @@ export async function extractTransactionFromAudio(
     contents: [
       {
         role: "user",
-        parts: [{ text: buildVoicePrompt(categories) }, { inlineData: { mimeType, data: audioBase64 } }],
+        parts: [{ text: buildVoicePrompt(categories, walletNames) }, { inlineData: { mimeType, data: audioBase64 } }],
       },
     ],
     config: {
       responseMimeType: "application/json",
-      responseSchema: responseSchema(allCategories, true),
+      responseSchema: responseSchema(allCategories, true, walletNames),
     },
   });
 
@@ -213,5 +222,5 @@ export async function extractTransactionFromAudio(
     throw new Error("The model returned an empty response. Try recording again with a clearer description.");
   }
 
-  return parseExtraction(text, categories);
+  return parseExtraction(text, categories, walletNames);
 }

@@ -2,11 +2,15 @@
 
 import { useState } from "react";
 import Modal from "./Modal";
+import SelectDropdown from "./SelectDropdown";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import { dotClasses } from "@/lib/category-styles";
 import { useCurrency } from "@/lib/currency-context";
+import { CURRENCIES } from "@/lib/currencies";
 import type { WalletKind } from "@/lib/wallets";
 import type { WalletOption } from "@/types/wallet";
+
+const APP_DEFAULT_LABEL = "App default";
 
 export default function WalletModal({
   wallet,
@@ -17,14 +21,29 @@ export default function WalletModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const currency = useCurrency();
+  const appCurrency = useCurrency();
   const isEdit = Boolean(wallet);
   const [name, setName] = useState(wallet?.name ?? "");
   const [color, setColor] = useState<string>(wallet?.color ?? CATEGORY_PALETTE[0]);
   const [kind, setKind] = useState<WalletKind>(wallet?.kind ?? "cash");
+  const [currency, setCurrency] = useState<string | null>(wallet?.currency ?? null);
+  const [isDefault, setIsDefault] = useState(wallet?.isDefault ?? false);
   const [startingBalance, setStartingBalance] = useState(isEdit ? String(wallet!.balance) : "0");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const currencyOptions = [`${APP_DEFAULT_LABEL} (${appCurrency})`, ...CURRENCIES.map((c) => `${c.code} — ${c.name}`)];
+  const currencyValue = currency
+    ? (CURRENCIES.find((c) => c.code === currency) ? `${currency} — ${CURRENCIES.find((c) => c.code === currency)!.name}` : currency)
+    : `${APP_DEFAULT_LABEL} (${appCurrency})`;
+
+  function handleCurrencyChange(label: string) {
+    if (label.startsWith(APP_DEFAULT_LABEL)) {
+      setCurrency(null);
+      return;
+    }
+    setCurrency(label.split(" — ")[0]);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,17 +54,31 @@ export default function WalletModal({
         ? await fetch(`/api/wallets/${wallet!.id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, color, kind, startingBalance: Number(startingBalance) }),
+            body: JSON.stringify({
+              name,
+              color,
+              kind,
+              currency,
+              startingBalance: Number(startingBalance),
+              ...(isDefault && !wallet!.isDefault ? { isDefault: true } : {}),
+            }),
           })
         : await fetch("/api/wallets", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, color, kind }),
+            body: JSON.stringify({ name, color, kind, currency }),
           });
       const data = await res.json();
       if (!res.ok) {
         setError(typeof data.error === "string" ? data.error : "Could not save.");
         return;
+      }
+      if (!isEdit && isDefault && data.wallet?.id) {
+        await fetch(`/api/wallets/${data.wallet.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isDefault: true }),
+        });
       }
       onSaved();
     } catch {
@@ -115,10 +148,18 @@ export default function WalletModal({
           </div>
         </div>
 
+        <div>
+          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">Currency</label>
+          <SelectDropdown value={currencyValue} options={currencyOptions} onChange={handleCurrencyChange} />
+          <p className="mt-1.5 text-xs text-ink-soft">
+            A display label only — amounts aren&apos;t converted between currencies.
+          </p>
+        </div>
+
         {isEdit && (
           <div>
             <label htmlFor="walletBalance" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-              Balance ({currency})
+              Balance ({currency ?? appCurrency})
             </label>
             <input
               id="walletBalance"
@@ -134,6 +175,31 @@ export default function WalletModal({
             </p>
           </div>
         )}
+
+        <button
+          type="button"
+          onClick={() => setIsDefault((v) => !v)}
+          disabled={isEdit && wallet!.isDefault}
+          className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition disabled:opacity-60"
+        >
+          <span>
+            <span className="block text-sm font-medium text-foreground">Default wallet</span>
+            <span className="block text-xs text-ink-soft">Used for new transactions unless you pick another.</span>
+          </span>
+          <span
+            role="switch"
+            aria-checked={isDefault}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+              isDefault ? "bg-navy" : "bg-line"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                isDefault ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </span>
+        </button>
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 

@@ -43,6 +43,9 @@ export default async function ActivitiesPage() {
     name: w.name,
     color: w.color,
     kind: isWalletKind(w.kind) ? w.kind : "cash",
+    currency: w.currency,
+    isDefault: w.is_default,
+    archived: w.archived,
     balance: Number(w.balance),
   }));
 

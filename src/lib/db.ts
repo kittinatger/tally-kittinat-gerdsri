@@ -311,6 +311,21 @@ function ensureSchema(): Promise<void> {
       // re-synced from app_settings on every cold start too.
       await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS legacy_balance_synced BOOLEAN NOT NULL DEFAULT false;`;
 
+      // Links the two legs (one 'out', one 'in') of a wallet-to-wallet
+      // transfer created via createWalletTransfer, so deleting either side
+      // deletes both and the wallets don't end up out of sync.
+      await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS transfer_group_id TEXT;`;
+
+      // is_default: which wallet new/edited transactions fall back to when
+      // no wallet is explicitly chosen (see resolveWalletId). archived:
+      // hidden from wallet pickers and balance aggregates, but its history
+      // stays intact and it's still viewable/editable in Settings. currency:
+      // NULL means "use the app's default currency" — purely a display
+      // label for that wallet, amounts aren't converted.
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS is_default BOOLEAN NOT NULL DEFAULT false;`;
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT false;`;
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS currency TEXT;`;
+
       await bootstrapAdminIfNeeded();
       await hardenMultiUserConstraints();
 
@@ -319,8 +334,8 @@ function ensureSchema(): Promise<void> {
       // forward — see seedDefaultWalletForUser), and any of their expenses
       // left without a wallet_id get assigned to it.
       await sql`
-        INSERT INTO wallets (user_id, name, color, sort_order)
-        SELECT u.id, 'Cash', 'slate', 0 FROM users u
+        INSERT INTO wallets (user_id, name, color, sort_order, is_default)
+        SELECT u.id, 'Cash', 'slate', 0, true FROM users u
         WHERE NOT EXISTS (SELECT 1 FROM wallets w WHERE w.user_id = u.id);
       `;
       await sql`
@@ -328,6 +343,21 @@ function ensureSchema(): Promise<void> {
         SET wallet_id = w.id
         FROM wallets w
         WHERE e.wallet_id IS NULL AND w.user_id = e.user_id AND w.sort_order = 0;
+      `;
+
+      // Belt-and-suspenders: guarantees every user has exactly one default
+      // wallet even if is_default was never set for them (e.g. rows created
+      // before this column existed). No-ops once a user already has one.
+      await sql`
+        UPDATE wallets w
+        SET is_default = true
+        FROM (
+          SELECT DISTINCT ON (user_id) id, user_id
+          FROM wallets
+          ORDER BY user_id, sort_order, id
+        ) first_wallet
+        WHERE w.id = first_wallet.id
+          AND NOT EXISTS (SELECT 1 FROM wallets w2 WHERE w2.user_id = w.user_id AND w2.is_default = true);
       `;
 
       // The "Remaining" figure on the Dashboard used to be tracked
@@ -461,82 +491,169 @@ export type WalletRow = {
   name: string;
   color: string;
   kind: string;
+  currency: string | null;
+  is_default: boolean;
+  archived: boolean;
   balance: string;
 };
 
-export async function listWallets(userId: number): Promise<WalletRow[]> {
+export async function listWallets(userId: number, opts: { includeArchived?: boolean } = {}): Promise<WalletRow[]> {
   await ensureSchema();
-  const { rows } = await sql<WalletRow>`
-    SELECT
-      w.id,
-      w.name,
-      w.color,
-      w.kind,
-      (
-        w.starting_balance + COALESCE((
-          SELECT SUM(
-            CASE
-              WHEN e.type = 'income' THEN e.amount
-              WHEN e.type = 'transfer' AND e.direction = 'in' THEN e.amount
-              ELSE -e.amount
-            END
-          )
-          FROM expenses e
-          WHERE e.wallet_id = w.id AND e.created_at > w.starting_balance_set_at
-        ), 0)
-      )::text AS balance
-    FROM wallets w
-    WHERE w.user_id = ${userId}
-    ORDER BY w.sort_order, w.id;
-  `;
+  const { rows } = opts.includeArchived
+    ? await sql<WalletRow>`
+        SELECT
+          w.id, w.name, w.color, w.kind, w.currency, w.is_default, w.archived,
+          (
+            w.starting_balance + COALESCE((
+              SELECT SUM(
+                CASE
+                  WHEN e.type = 'income' THEN e.amount
+                  WHEN e.type = 'transfer' AND e.direction = 'in' THEN e.amount
+                  ELSE -e.amount
+                END
+              )
+              FROM expenses e
+              WHERE e.wallet_id = w.id AND e.created_at > w.starting_balance_set_at
+            ), 0)
+          )::text AS balance
+        FROM wallets w
+        WHERE w.user_id = ${userId}
+        ORDER BY w.archived, w.sort_order, w.id;
+      `
+    : await sql<WalletRow>`
+        SELECT
+          w.id, w.name, w.color, w.kind, w.currency, w.is_default, w.archived,
+          (
+            w.starting_balance + COALESCE((
+              SELECT SUM(
+                CASE
+                  WHEN e.type = 'income' THEN e.amount
+                  WHEN e.type = 'transfer' AND e.direction = 'in' THEN e.amount
+                  ELSE -e.amount
+                END
+              )
+              FROM expenses e
+              WHERE e.wallet_id = w.id AND e.created_at > w.starting_balance_set_at
+            ), 0)
+          )::text AS balance
+        FROM wallets w
+        WHERE w.user_id = ${userId} AND w.archived = false
+        ORDER BY w.sort_order, w.id;
+      `;
   return rows;
 }
 
-export async function createWallet(userId: number, name: string, color: string, kind: string): Promise<WalletRow> {
+export async function createWallet(
+  userId: number,
+  name: string,
+  color: string,
+  kind: string,
+  currency?: string | null,
+): Promise<WalletRow> {
   await ensureSchema();
   const { rows: maxRows } = await sql<{ max: number | null }>`
     SELECT MAX(sort_order) AS max FROM wallets WHERE user_id = ${userId};
   `;
   const nextSort = (maxRows[0]?.max ?? -1) + 1;
-  const { rows } = await sql<{ id: number; name: string; color: string; kind: string }>`
-    INSERT INTO wallets (user_id, name, color, kind, sort_order)
-    VALUES (${userId}, ${name}, ${color}, ${kind}, ${nextSort})
-    RETURNING id, name, color, kind;
+  const { rows } = await sql<{ id: number; name: string; color: string; kind: string; currency: string | null }>`
+    INSERT INTO wallets (user_id, name, color, kind, currency, sort_order)
+    VALUES (${userId}, ${name}, ${color}, ${kind}, ${currency ?? null}, ${nextSort})
+    RETURNING id, name, color, kind, currency;
   `;
-  return { ...rows[0], balance: "0" };
+  return { ...rows[0], is_default: false, archived: false, balance: "0" };
 }
 
 export async function updateWallet(
   userId: number,
   id: number,
-  input: { name?: string; color?: string; kind?: string; startingBalance?: number },
-): Promise<WalletRow | null> {
+  input: {
+    name?: string;
+    color?: string;
+    kind?: string;
+    currency?: string | null;
+    isDefault?: boolean;
+    archived?: boolean;
+    startingBalance?: number;
+  },
+): Promise<WalletRow | { ok: false; error: string } | null> {
   await ensureSchema();
-  const { rows: existingRows } = await sql<{ name: string; color: string; kind: string }>`
-    SELECT name, color, kind FROM wallets WHERE id = ${id} AND user_id = ${userId};
+  const { rows: existingRows } = await sql<{
+    name: string;
+    color: string;
+    kind: string;
+    currency: string | null;
+    is_default: boolean;
+    archived: boolean;
+  }>`
+    SELECT name, color, kind, currency, is_default, archived FROM wallets WHERE id = ${id} AND user_id = ${userId};
   `;
   const existing = existingRows[0];
   if (!existing) return null;
 
+  const archiving = input.archived === true && !existing.archived;
+  if (archiving) {
+    const { rows: activeRows } = await sql<{ id: number }>`
+      SELECT id FROM wallets WHERE user_id = ${userId} AND archived = false AND id != ${id};
+    `;
+    if (activeRows.length === 0) {
+      return { ok: false, error: "You need at least one active wallet — archive a different one first, or add a new wallet." };
+    }
+  }
+
   const newName = input.name?.trim() ?? existing.name;
   const newColor = input.color ?? existing.color;
   const newKind = input.kind ?? existing.kind;
+  const newCurrency = input.currency !== undefined ? input.currency : existing.currency;
+  const newArchived = input.archived ?? existing.archived;
 
-  if (input.startingBalance !== undefined) {
-    await sql`
-      UPDATE wallets
-      SET name = ${newName}, color = ${newColor}, kind = ${newKind}, starting_balance = ${input.startingBalance}, starting_balance_set_at = now()
-      WHERE id = ${id} AND user_id = ${userId};
-    `;
-  } else {
-    await sql`
-      UPDATE wallets SET name = ${newName}, color = ${newColor}, kind = ${newKind} WHERE id = ${id} AND user_id = ${userId};
-    `;
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+
+    if (input.startingBalance !== undefined) {
+      await client.sql`
+        UPDATE wallets
+        SET name = ${newName}, color = ${newColor}, kind = ${newKind}, currency = ${newCurrency},
+            archived = ${newArchived}, starting_balance = ${input.startingBalance}, starting_balance_set_at = now()
+        WHERE id = ${id} AND user_id = ${userId};
+      `;
+    } else {
+      await client.sql`
+        UPDATE wallets
+        SET name = ${newName}, color = ${newColor}, kind = ${newKind}, currency = ${newCurrency}, archived = ${newArchived}
+        WHERE id = ${id} AND user_id = ${userId};
+      `;
+    }
+
+    if (input.isDefault === true) {
+      await client.sql`UPDATE wallets SET is_default = false WHERE user_id = ${userId} AND id != ${id};`;
+      await client.sql`UPDATE wallets SET is_default = true WHERE id = ${id} AND user_id = ${userId};`;
+    }
+
+    // Archiving the default wallet hands default status to the wallet that
+    // inherited its expenses in an archive-triggered reassignment elsewhere,
+    // or — since archiving doesn't move expenses — simply to the next active
+    // wallet, so resolveWalletId always has a non-archived default to fall
+    // back to.
+    if (archiving && existing.is_default) {
+      await client.sql`UPDATE wallets SET is_default = false WHERE id = ${id} AND user_id = ${userId};`;
+      await client.sql`
+        UPDATE wallets SET is_default = true
+        WHERE id = (SELECT id FROM wallets WHERE user_id = ${userId} AND archived = false AND id != ${id} ORDER BY sort_order, id LIMIT 1);
+      `;
+    }
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
   }
 
   const { rows } = await sql<WalletRow>`
     SELECT
-      w.id, w.name, w.color, w.kind,
+      w.id, w.name, w.color, w.kind, w.currency, w.is_default, w.archived,
       (
         w.starting_balance + COALESCE((
           SELECT SUM(
@@ -566,24 +683,34 @@ export async function deleteWallet(
     return { ok: false, error: "You need at least one wallet." };
   }
 
+  const { rows: targetRows } = await sql<{ is_default: boolean }>`
+    SELECT is_default FROM wallets WHERE id = ${id} AND user_id = ${userId};
+  `;
+  if (!targetRows[0]) {
+    return { ok: false, error: "Not found." };
+  }
+
   const { rows: fallbackRows } = await sql<{ id: number }>`
-    SELECT id FROM wallets WHERE user_id = ${userId} AND id != ${id} ORDER BY sort_order, id LIMIT 1;
+    SELECT id FROM wallets WHERE user_id = ${userId} AND id != ${id} AND archived = false ORDER BY sort_order, id LIMIT 1;
   `;
   const fallbackId = fallbackRows[0]?.id;
   if (!fallbackId) {
-    return { ok: false, error: "You need at least one wallet." };
+    return { ok: false, error: "You need at least one active wallet." };
   }
 
   await sql`UPDATE expenses SET wallet_id = ${fallbackId} WHERE wallet_id = ${id} AND user_id = ${userId};`;
   await sql`DELETE FROM wallets WHERE id = ${id} AND user_id = ${userId};`;
+  if (targetRows[0].is_default) {
+    await sql`UPDATE wallets SET is_default = true WHERE id = ${fallbackId} AND user_id = ${userId};`;
+  }
   return { ok: true };
 }
 
 export async function seedDefaultWalletForUser(userId: number): Promise<void> {
   await ensureSchema();
   await sql`
-    INSERT INTO wallets (user_id, name, color, sort_order)
-    SELECT ${userId}, 'Cash', 'slate', 0
+    INSERT INTO wallets (user_id, name, color, sort_order, is_default)
+    SELECT ${userId}, 'Cash', 'slate', 0, true
     WHERE NOT EXISTS (SELECT 1 FROM wallets WHERE user_id = ${userId});
   `;
 }
@@ -608,7 +735,7 @@ export async function getRemaining(userId: number): Promise<number> {
       ), 0)
     ), 0)::text AS remaining
     FROM wallets w
-    WHERE w.user_id = ${userId};
+    WHERE w.user_id = ${userId} AND w.archived = false;
   `;
   return rows[0] ? Number(rows[0].remaining) : 0;
 }
@@ -641,7 +768,7 @@ async function getWalletBalance(walletId: number): Promise<number> {
 export async function setRemaining(userId: number, amount: number): Promise<number> {
   await ensureSchema();
   const { rows: walletRows } = await sql<{ id: number }>`
-    SELECT id FROM wallets WHERE user_id = ${userId} ORDER BY sort_order, id LIMIT 1;
+    SELECT id FROM wallets WHERE user_id = ${userId} AND archived = false ORDER BY is_default DESC, sort_order, id LIMIT 1;
   `;
   const targetId = walletRows[0]?.id;
   if (!targetId) return amount;
@@ -840,7 +967,7 @@ async function resolveWalletId(userId: number, walletId: number | null | undefin
     if (rows[0]) return rows[0].id;
   }
   const { rows: fallback } = await sql<{ id: number }>`
-    SELECT id FROM wallets WHERE user_id = ${userId} ORDER BY sort_order, id LIMIT 1;
+    SELECT id FROM wallets WHERE user_id = ${userId} AND archived = false ORDER BY is_default DESC, sort_order, id LIMIT 1;
   `;
   return fallback[0]?.id ?? null;
 }
@@ -914,8 +1041,62 @@ export async function updateExpense(userId: number, id: number, input: ExpenseIn
 
 export async function deleteExpense(userId: number, id: number): Promise<boolean> {
   await ensureSchema();
-  const { rowCount } = await sql`DELETE FROM expenses WHERE id = ${id} AND user_id = ${userId};`;
+  // Wallet-to-wallet transfers are two linked rows (see createWalletTransfer)
+  // — deleting one without the other would leave one wallet's balance moved
+  // but not the other's, so both legs go together.
+  const { rowCount } = await sql`
+    DELETE FROM expenses
+    WHERE user_id = ${userId}
+      AND (
+        id = ${id}
+        OR transfer_group_id = (SELECT transfer_group_id FROM expenses WHERE id = ${id} AND user_id = ${userId})
+      );
+  `;
   return (rowCount ?? 0) > 0;
+}
+
+// Moves money between two of the user's own wallets: one 'out' leg on the
+// source wallet and one 'in' leg on the destination, same amount and date,
+// linked by transfer_group_id. Neither counts toward Income/Expenses
+// totals (same as any other transfer), but each moves its wallet's balance.
+export async function createWalletTransfer(
+  userId: number,
+  input: { fromWalletId: number; toWalletId: number; amount: number; date: string; notes?: string | null },
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await ensureSchema();
+  if (input.fromWalletId === input.toWalletId) {
+    return { ok: false, error: "Choose two different wallets." };
+  }
+
+  const { rows: walletRows } = await sql<{ id: number; name: string }>`
+    SELECT id, name FROM wallets WHERE user_id = ${userId} AND id IN (${input.fromWalletId}, ${input.toWalletId});
+  `;
+  const fromWallet = walletRows.find((w) => w.id === input.fromWalletId);
+  const toWallet = walletRows.find((w) => w.id === input.toWalletId);
+  if (!fromWallet || !toWallet) {
+    return { ok: false, error: "Wallet not found." };
+  }
+
+  const groupId = `wt_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    await client.sql`
+      INSERT INTO expenses (user_id, type, direction, date, amount, merchant, category, notes, wallet_id, transfer_group_id)
+      VALUES (${userId}, 'transfer', 'out', ${input.date}, ${input.amount}, ${`Transfer to ${toWallet.name}`}, 'Self-transfer', ${input.notes ?? null}, ${fromWallet.id}, ${groupId});
+    `;
+    await client.sql`
+      INSERT INTO expenses (user_id, type, direction, date, amount, merchant, category, notes, wallet_id, transfer_group_id)
+      VALUES (${userId}, 'transfer', 'in', ${input.date}, ${input.amount}, ${`Transfer from ${fromWallet.name}`}, 'Self-transfer', ${input.notes ?? null}, ${toWallet.id}, ${groupId});
+    `;
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+  return { ok: true };
 }
 
 // BYTEA also isn't a Primitive the sql tag accepts directly, so the bytes

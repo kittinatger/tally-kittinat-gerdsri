@@ -22,11 +22,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const wallet = await updateWallet(userId, walletId, parsed.data);
-  if (!wallet) {
+  const result = await updateWallet(userId, walletId, parsed.data);
+  if (!result) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  return NextResponse.json({ wallet });
+  if ("ok" in result && result.ok === false) {
+    return NextResponse.json({ error: result.error }, { status: 400 });
+  }
+  return NextResponse.json({ wallet: result });
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
