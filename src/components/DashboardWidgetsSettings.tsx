@@ -1,47 +1,58 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { Expense } from "@/types/expense";
+import type { CategoryOption } from "@/types/category";
 import {
+  DASHBOARD_WIDGET_TYPES,
   DASHBOARD_WIDGET_INFO,
   DEFAULT_DASHBOARD_WIDGETS,
-  type DashboardWidgetConfig,
+  newWidgetInstance,
+  type DashboardWidgetInstance,
+  type WidgetWidth,
 } from "@/lib/dashboard-widgets";
+import DashboardWidgetContent from "./DashboardWidgetContent";
 
-function Toggle({
-  checked,
-  onChange,
-  disabled,
-  label,
-}: {
-  checked: boolean;
-  onChange: () => void;
-  disabled?: boolean;
-  label: string;
-}) {
+function GripIcon() {
   return (
-    <button
-      type="button"
-      onClick={onChange}
-      disabled={disabled}
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-60 ${
-        checked ? "bg-navy" : "bg-bg-soft"
-      }`}
-    >
-      <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-          checked ? "translate-x-6" : "translate-x-1"
-        }`}
-      />
-    </button>
+    <svg viewBox="0 0 10 16" fill="currentColor" className="h-4 w-4">
+      <circle cx="2.5" cy="2" r="1.4" />
+      <circle cx="7.5" cy="2" r="1.4" />
+      <circle cx="2.5" cy="8" r="1.4" />
+      <circle cx="7.5" cy="8" r="1.4" />
+      <circle cx="2.5" cy="14" r="1.4" />
+      <circle cx="7.5" cy="14" r="1.4" />
+    </svg>
   );
 }
 
-export default function DashboardWidgetsSettings() {
-  const [widgets, setWidgets] = useState<DashboardWidgetConfig[]>(DEFAULT_DASHBOARD_WIDGETS);
-  const [saving, setSaving] = useState(false);
+function XIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="h-3.5 w-3.5">
+      <path d="M5 5l10 10M15 5L5 15" />
+    </svg>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg viewBox="0 0 20.918 20.5762" fill="currentColor" className="h-3 w-3 shrink-0">
+      <path d="M11.2305 19.5996L11.2305 0.957031C11.2305 0.439453 10.8008 0 10.2734 0C9.75586 0 9.32617 0.439453 9.32617 0.957031L9.32617 19.5996C9.32617 20.1172 9.75586 20.5566 10.2734 20.5566C10.8008 20.5566 11.2305 20.1172 11.2305 19.5996ZM0.957031 11.2305L19.5996 11.2305C20.1172 11.2305 20.5566 10.8008 20.5566 10.2832C20.5566 9.75586 20.1172 9.32617 19.5996 9.32617L0.957031 9.32617C0.439453 9.32617 0 9.75586 0 10.2832C0 10.8008 0.439453 11.2305 0.957031 11.2305Z" />
+    </svg>
+  );
+}
+
+export default function DashboardWidgetsSettings({
+  expenses,
+  categories,
+  remaining,
+}: {
+  expenses: Expense[];
+  categories: CategoryOption[];
+  remaining: number;
+}) {
+  const [widgets, setWidgets] = useState<DashboardWidgetInstance[]>(() => DEFAULT_DASHBOARD_WIDGETS());
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -50,7 +61,7 @@ export default function DashboardWidgetsSettings() {
       .then((res) => res.json())
       .then((data) => {
         if (cancelled) return;
-        if (Array.isArray(data.widgets) && data.widgets.length > 0) setWidgets(data.widgets);
+        if (Array.isArray(data.widgets)) setWidgets(data.widgets);
       })
       .catch(() => {
         // Keep defaults; the user can still edit and save.
@@ -60,10 +71,9 @@ export default function DashboardWidgetsSettings() {
     };
   }, []);
 
-  async function save(next: DashboardWidgetConfig[]) {
+  async function persist(next: DashboardWidgetInstance[]) {
     const previous = widgets;
     setWidgets(next);
-    setSaving(true);
     setError(null);
     try {
       const res = await fetch("/api/dashboard-widgets", {
@@ -78,82 +88,117 @@ export default function DashboardWidgetsSettings() {
     } catch {
       setWidgets(previous);
       setError("Network error while saving.");
-    } finally {
-      setSaving(false);
     }
   }
 
-  function toggleVisible(index: number) {
-    const next = widgets.map((w, i) => (i === index ? { ...w, visible: !w.visible } : w));
-    save(next);
+  function handleDrop(targetIndex: number) {
+    if (dragIndex === null || dragIndex === targetIndex) {
+      setDragIndex(null);
+      return;
+    }
+    const next = [...widgets];
+    const [moved] = next.splice(dragIndex, 1);
+    next.splice(targetIndex, 0, moved);
+    setDragIndex(null);
+    persist(next);
   }
 
-  function move(index: number, delta: number) {
-    const target = index + delta;
-    if (target < 0 || target >= widgets.length) return;
-    const next = [...widgets];
-    [next[index], next[target]] = [next[target], next[index]];
-    save(next);
+  function toggleWidth(index: number) {
+    const width: WidgetWidth = widgets[index].width === "full" ? "half" : "full";
+    persist(widgets.map((w, i) => (i === index ? { ...w, width } : w)));
+  }
+
+  function removeWidget(index: number) {
+    persist(widgets.filter((_, i) => i !== index));
+  }
+
+  function addWidget(type: (typeof DASHBOARD_WIDGET_TYPES)[number]) {
+    persist([...widgets, newWidgetInstance(type)]);
   }
 
   return (
     <div>
       <p className="mb-4 text-[11px] leading-snug text-ink-soft">
-        Show, hide, and reorder the widgets on your Dashboard — like rearranging a home screen.
+        Drag tiles to rearrange them, toggle a tile to half-width to fit two side by side, or add the same widget
+        more than once — for example two category charts at once.
       </p>
 
-      <div className="overflow-hidden rounded-card border border-line bg-surface">
-        {widgets.map((w, i) => {
-          const info = DASHBOARD_WIDGET_INFO[w.id];
-          return (
-            <div
-              key={w.id}
-              className={`flex items-center gap-3 px-4 py-3.5 ${i === widgets.length - 1 ? "" : "border-b border-line"} ${
-                w.visible ? "" : "opacity-60"
-              }`}
-            >
-              <div className="flex shrink-0 flex-col">
-                <button
-                  type="button"
-                  onClick={() => move(i, -1)}
-                  disabled={i === 0 || saving}
-                  aria-label={`Move ${info.title} up`}
-                  className="rounded p-1 text-ink-soft transition hover:bg-bg-soft hover:text-foreground disabled:opacity-30"
-                >
-                  <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
-                    <path d="M10 5.5a.75.75 0 0 1 .53.22l4 4a.75.75 0 1 1-1.06 1.06L10 7.31l-3.47 3.47a.75.75 0 1 1-1.06-1.06l4-4A.75.75 0 0 1 10 5.5Z" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => move(i, 1)}
-                  disabled={i === widgets.length - 1 || saving}
-                  aria-label={`Move ${info.title} down`}
-                  className="rounded p-1 text-ink-soft transition hover:bg-bg-soft hover:text-foreground disabled:opacity-30"
-                >
-                  <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
-                    <path d="M10 14.5a.75.75 0 0 1-.53-.22l-4-4a.75.75 0 1 1 1.06-1.06L10 12.69l3.47-3.47a.75.75 0 1 1 1.06 1.06l-4 4a.75.75 0 0 1-.53.22Z" />
-                  </svg>
-                </button>
+      {widgets.length === 0 ? (
+        <p className="mb-4 rounded-card border border-dashed border-line px-4 py-6 text-center text-sm text-ink-soft">
+          Your dashboard is empty. Add a widget below to get started.
+        </p>
+      ) : (
+        <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {widgets.map((w, i) => {
+            const info = DASHBOARD_WIDGET_INFO[w.type];
+            return (
+              <div
+                key={w.id}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => handleDrop(i)}
+                className={`rounded-card border bg-surface p-3 transition ${
+                  w.width === "half" ? "" : "sm:col-span-2"
+                } ${dragIndex === i ? "opacity-40" : "border-line"}`}
+              >
+                <div className="mb-2 flex items-center gap-2">
+                  <span
+                    draggable
+                    onDragStart={() => setDragIndex(i)}
+                    onDragEnd={() => setDragIndex(null)}
+                    className="cursor-grab rounded p-1 text-ink-soft transition hover:bg-bg-soft hover:text-foreground active:cursor-grabbing"
+                    aria-label={`Drag to reorder ${info.title}`}
+                  >
+                    <GripIcon />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{info.title}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleWidth(i)}
+                    className="shrink-0 rounded-full bg-bg-soft px-2.5 py-1 text-[11px] font-semibold text-ink-soft transition hover:text-foreground"
+                  >
+                    {w.width === "half" ? "Half" : "Full"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeWidget(i)}
+                    aria-label={`Remove ${info.title}`}
+                    className="shrink-0 rounded-full p-1.5 text-ink-soft transition hover:bg-bg-soft hover:text-red-600 dark:hover:text-red-400"
+                  >
+                    <XIcon />
+                  </button>
+                </div>
+                <div className="pointer-events-none select-none opacity-90">
+                  <DashboardWidgetContent
+                    type={w.type}
+                    expenses={expenses}
+                    categories={categories}
+                    remaining={remaining}
+                  />
+                </div>
               </div>
+            );
+          })}
+        </div>
+      )}
 
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground">{info.title}</p>
-                <p className="mt-0.5 truncate text-[11px] leading-snug text-ink-soft">{info.description}</p>
-              </div>
+      {error && <p className="mb-3 text-xs text-red-600 dark:text-red-400">{error}</p>}
 
-              <Toggle
-                checked={w.visible}
-                onChange={() => toggleVisible(i)}
-                disabled={saving}
-                label={`Toggle ${info.title}`}
-              />
-            </div>
-          );
-        })}
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">Add a widget</p>
+      <div className="flex flex-wrap gap-2">
+        {DASHBOARD_WIDGET_TYPES.map((type) => (
+          <button
+            key={type}
+            type="button"
+            onClick={() => addWidget(type)}
+            className="flex items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 py-2 text-xs font-semibold text-foreground transition hover:border-navy"
+          >
+            <PlusIcon />
+            {DASHBOARD_WIDGET_INFO[type].title}
+          </button>
+        ))}
       </div>
-
-      {error && <p className="mt-3 text-xs text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { sql, db } from "@vercel/postgres";
 import type { ExpenseInput } from "@/lib/validation";
 import { hashPassword } from "@/lib/password";
-import { normalizeDashboardWidgets, type DashboardWidgetConfig } from "@/lib/dashboard-widgets";
+import { normalizeDashboardWidgets, type DashboardWidgetInstance } from "@/lib/dashboard-widgets";
 
 export type Expense = {
   id: number;
@@ -232,12 +232,14 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS show_week_numbers BOOLEAN NOT NULL DEFAULT false;`;
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS alternate_calendar TEXT NOT NULL DEFAULT 'none';`;
 
-      // Ordered list of {id, visible} for the Dashboard's widgets — stored
+      // Ordered list of {id, type, width} tiles for the Dashboard — stored
       // as JSON text rather than JSONB to match how every other setting on
-      // this table is a plain scalar column.
+      // this table is a plain scalar column. An empty array is a valid,
+      // intentional "cleared my dashboard" state (see normalizeDashboardWidgets),
+      // so brand-new rows need a real default layout here, not '[]'.
       await sql`
         ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS dashboard_widgets TEXT NOT NULL DEFAULT
-          '[{"id":"summary","visible":true},{"id":"categoryOverview","visible":true},{"id":"wallets","visible":true},{"id":"recentTransactions","visible":true}]';
+          '[{"id":"summary-default","type":"summary","width":"full"},{"id":"categoryOverview-default","type":"categoryOverview","width":"full"},{"id":"wallets-default","type":"wallets","width":"half"},{"id":"recentTransactions-default","type":"recentTransactions","width":"half"}]';
       `;
       // Once the multi-user migration has hardened this table (see
       // hardenMultiUserConstraints), `id` no longer has any constraint for
@@ -680,7 +682,7 @@ export async function setAutoConvertCurrency(userId: number, enabled: boolean): 
   return enabled;
 }
 
-export async function getDashboardWidgets(userId: number): Promise<DashboardWidgetConfig[]> {
+export async function getDashboardWidgets(userId: number): Promise<DashboardWidgetInstance[]> {
   await ensureSchema();
   const { rows } = await sql<{ dashboard_widgets: string }>`
     SELECT dashboard_widgets FROM app_settings WHERE user_id = ${userId};
@@ -696,8 +698,8 @@ export async function getDashboardWidgets(userId: number): Promise<DashboardWidg
 
 export async function setDashboardWidgets(
   userId: number,
-  widgets: DashboardWidgetConfig[],
-): Promise<DashboardWidgetConfig[]> {
+  widgets: DashboardWidgetInstance[],
+): Promise<DashboardWidgetInstance[]> {
   await ensureSchema();
   const normalized = normalizeDashboardWidgets(widgets);
   await sql`

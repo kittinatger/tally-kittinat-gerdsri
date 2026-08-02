@@ -4,7 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import type { CategoryOption } from "@/types/category";
 import type { WalletOption } from "@/types/wallet";
+import type { Expense } from "@/types/expense";
 import { CurrencyProvider } from "@/lib/currency-context";
+import { CategoriesProvider } from "@/lib/categories-context";
+import { WalletsProvider } from "@/lib/wallets-context";
 import { APP_VERSION } from "@/lib/version";
 import PullToRefresh from "./PullToRefresh";
 import AppHeader from "./AppHeader";
@@ -187,15 +190,21 @@ export default function SettingsView({
   currency,
   username,
   wallets,
+  expenses,
+  remaining,
 }: {
   categories: CategoryOption[];
   currency: string;
   username: string;
   wallets: WalletOption[];
+  expenses: Expense[];
+  remaining: number;
 }) {
   const [panel, setPanel] = useState<Panel | null>(null);
 
   return (
+    <CategoriesProvider categories={categories}>
+    <WalletsProvider wallets={wallets}>
     <CurrencyProvider currency={currency}>
       <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-10 pt-3 sm:px-4">
         <PullToRefresh>
@@ -228,7 +237,9 @@ export default function SettingsView({
                 {panel === "theme" && <ThemeSetting />}
                 {panel === "currency" && <CurrencySettings />}
                 {panel === "calendar" && <CalendarSettings />}
-                {panel === "dashboardWidgets" && <DashboardWidgetsSettings />}
+                {panel === "dashboardWidgets" && (
+                  <DashboardWidgetsSettings expenses={expenses} categories={categories} remaining={remaining} />
+                )}
               </div>
             ) : (
               <div>
@@ -284,5 +295,7 @@ export default function SettingsView({
         </PullToRefresh>
       </div>
     </CurrencyProvider>
+    </WalletsProvider>
+    </CategoriesProvider>
   );
 }

@@ -5,15 +5,12 @@ import { signedAmount, type Expense } from "@/types/expense";
 import type { CategoryOption } from "@/types/category";
 import type { TransactionType } from "@/lib/categories";
 import type { WalletOption } from "@/types/wallet";
-import type { DashboardWidgetConfig } from "@/lib/dashboard-widgets";
+import type { DashboardWidgetInstance } from "@/lib/dashboard-widgets";
 import { CategoriesProvider } from "@/lib/categories-context";
 import { CurrencyProvider } from "@/lib/currency-context";
 import { WalletsProvider } from "@/lib/wallets-context";
 import PullToRefresh from "./PullToRefresh";
-import SummaryCards from "./SummaryCards";
-import CategoryOverview from "./CategoryOverview";
-import WalletsWidget from "./WalletsWidget";
-import RecentTransactionsWidget from "./RecentTransactionsWidget";
+import DashboardWidgetContent from "./DashboardWidgetContent";
 import EditBalanceModal from "./EditBalanceModal";
 import AddExpenseModal from "./AddExpenseModal";
 import AppHeader from "./AppHeader";
@@ -29,14 +26,14 @@ export default function Dashboard({
   categories,
   currency,
   wallets,
-  widgetConfig,
+  widgets,
 }: {
   initialExpenses: Expense[];
   initialRemaining: number;
   categories: CategoryOption[];
   currency: string;
   wallets: WalletOption[];
-  widgetConfig: DashboardWidgetConfig[];
+  widgets: DashboardWidgetInstance[];
 }) {
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [remaining, setRemaining] = useState(initialRemaining);
@@ -63,43 +60,21 @@ export default function Dashboard({
             <AppHeader />
 
             <main className="flex-1 px-1 py-6 sm:px-2">
-              {widgetConfig
-                .filter((w) => w.visible)
-                .map((w) => {
-                  switch (w.id) {
-                    case "summary":
-                      return (
-                        <SummaryCards
-                          key="summary"
-                          expenses={expenses}
-                          remaining={remaining}
-                          onEditBalance={() => setEditingBalance(true)}
-                          onAddIncome={() => setAddingType("income")}
-                          onAddExpense={() => setAddingType("expense")}
-                        />
-                      );
-                    case "categoryOverview":
-                      return (
-                        <div key="categoryOverview" className="mb-8">
-                          <CategoryOverview expenses={expenses} categories={categories} />
-                        </div>
-                      );
-                    case "wallets":
-                      return (
-                        <div key="wallets" className="mb-8">
-                          <WalletsWidget />
-                        </div>
-                      );
-                    case "recentTransactions":
-                      return (
-                        <div key="recentTransactions" className="mb-8">
-                          <RecentTransactionsWidget expenses={expenses} />
-                        </div>
-                      );
-                    default:
-                      return null;
-                  }
-                })}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {widgets.map((w) => (
+                  <div key={w.id} className={w.width === "half" ? "sm:col-span-1" : "sm:col-span-2"}>
+                    <DashboardWidgetContent
+                      type={w.type}
+                      expenses={expenses}
+                      categories={categories}
+                      remaining={remaining}
+                      onEditBalance={() => setEditingBalance(true)}
+                      onAddIncome={() => setAddingType("income")}
+                      onAddExpense={() => setAddingType("expense")}
+                    />
+                  </div>
+                ))}
+              </div>
             </main>
           </PullToRefresh>
 

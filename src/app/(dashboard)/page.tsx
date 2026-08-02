@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const userId = await getUserId();
-  const [rows, remaining, categoryRows, currency, walletRows, widgetConfig] = await Promise.all([
+  const [rows, remaining, categoryRows, currency, walletRows, widgets] = await Promise.all([
     listExpenses(userId),
     getRemaining(userId),
     listCategories(userId),
@@ -56,7 +56,7 @@ export default async function HomePage() {
       categories={categories}
       currency={currency}
       wallets={wallets}
-      widgetConfig={widgetConfig}
+      widgets={widgets}
     />
   );
 }

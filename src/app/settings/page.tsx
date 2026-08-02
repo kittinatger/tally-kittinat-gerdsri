@@ -1,8 +1,9 @@
-import { listCategories, getCurrency, getUserById, listWallets } from "@/lib/db";
+import { listCategories, getCurrency, getUserById, listWallets, listExpenses, getRemaining } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import SettingsView from "@/components/SettingsView";
 import { isTransactionType } from "@/lib/categories";
 import { isWalletKind } from "@/lib/wallets";
+import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
 import type { CategoryOption } from "@/types/category";
 import type { WalletOption } from "@/types/wallet";
 
@@ -11,11 +12,13 @@ export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const userId = await getUserId();
-  const [categoryRows, currency, user, walletRows] = await Promise.all([
+  const [categoryRows, currency, user, walletRows, expenseRows, remaining] = await Promise.all([
     listCategories(userId),
     getCurrency(userId),
     getUserById(userId),
     listWallets(userId),
+    listExpenses(userId),
+    getRemaining(userId),
   ]);
   const categories: CategoryOption[] = categoryRows.map((c) => ({
     id: c.id,
@@ -30,8 +33,29 @@ export default async function SettingsPage() {
     kind: isWalletKind(w.kind) ? w.kind : "cash",
     balance: Number(w.balance),
   }));
+  const expenses: Expense[] = expenseRows.map((r) => ({
+    id: r.id,
+    type: normalizeExpenseType(r.type),
+    direction: normalizeDirection(r.direction),
+    date: r.date,
+    amount: Number(r.amount),
+    merchant: r.merchant,
+    category: r.category,
+    notes: r.notes,
+    tags: r.tags ?? [],
+    hasReceipt: r.has_receipt,
+    walletId: r.wallet_id,
+    walletName: r.wallet_name,
+  }));
 
   return (
-    <SettingsView categories={categories} currency={currency} username={user?.username ?? ""} wallets={wallets} />
+    <SettingsView
+      categories={categories}
+      currency={currency}
+      username={user?.username ?? ""}
+      wallets={wallets}
+      expenses={expenses}
+      remaining={remaining}
+    />
   );
 }
