@@ -72,6 +72,15 @@ export const DASHBOARD_WIDGET_TYPES = [
   "topCategoriesLeaderboard",
   // Bar chart
   "last7Days",
+  // Creative widgets
+  "netWorthTicker",
+  "walletTicker",
+  "todayPill",
+  "pacePill",
+  "noSpendDays",
+  "balanceHero",
+  "payPeriodStepper",
+  "spendingStreak",
 ] as const;
 export type DashboardWidgetType = (typeof DASHBOARD_WIDGET_TYPES)[number];
 
@@ -193,6 +202,8 @@ export const ACCENT_CAPABLE_TYPES: readonly DashboardWidgetType[] = [
   "walletDistribution",
   "expensesByWallet",
   "last7Days",
+  "netWorthTicker",
+  "walletTicker",
 ];
 
 // Widgets with a "how many to show" list length.
@@ -269,6 +280,14 @@ export const SUPPORTED_WIDTHS: Record<DashboardWidgetType, readonly WidgetWidth[
   topMerchantsLeaderboard: ["medium", "large"],
   topCategoriesLeaderboard: ["medium", "large"],
   last7Days: ["medium", "large"],
+  netWorthTicker: ["medium", "large"],
+  walletTicker: ["medium", "large"],
+  todayPill: ["medium", "large"],
+  pacePill: ["medium", "large"],
+  noSpendDays: ["small", "medium", "large"],
+  balanceHero: ["large"],
+  payPeriodStepper: ["medium", "large"],
+  spendingStreak: ["small", "medium", "large"],
 };
 
 export function defaultWidthForType(type: DashboardWidgetType): WidgetWidth {
@@ -366,6 +385,15 @@ export const DASHBOARD_WIDGET_INFO: Record<DashboardWidgetType, { title: string;
   topCategoriesLeaderboard: { title: "Category leaderboard", description: "Your top categories this month, ranked" },
 
   last7Days: { title: "Last 7 days", description: "Daily spending for the past week, as bars" },
+
+  netWorthTicker: { title: "Net worth ticker", description: "Your combined balance as a stock-style ticker card" },
+  walletTicker: { title: "Wallet ticker", description: "Your default wallet's balance as a stock-style ticker card" },
+  todayPill: { title: "Today pill", description: "Today's spending, as a compact pill" },
+  pacePill: { title: "Spending pace pill", description: "This month's spend pace vs. last month, with a progress ring" },
+  noSpendDays: { title: "No-spend streak", description: "Which days this week you didn't spend anything" },
+  balanceHero: { title: "Balance hero", description: "A big balance card with your wallets and quick add buttons" },
+  payPeriodStepper: { title: "Month progress stepper", description: "Where you are in the current month, as a stepper" },
+  spendingStreak: { title: "Under-budget streak", description: "Days this week you spent less than your daily average" },
 };
 
 function makeId(type: DashboardWidgetType): string {

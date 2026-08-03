@@ -25,6 +25,13 @@ import LeaderboardWidget from "./LeaderboardWidget";
 import ListStatWidget from "./ListStatWidget";
 import MiniBarChartWidget from "./MiniBarChartWidget";
 import ActionStatWidget from "./ActionStatWidget";
+import TickerCardWidget from "./TickerCardWidget";
+import PillStatWidget from "./PillStatWidget";
+import AlertPillWidget from "./AlertPillWidget";
+import WeekdayTrackerWidget from "./WeekdayTrackerWidget";
+import BalanceHeroWidget from "./BalanceHeroWidget";
+import StepperProgressWidget from "./StepperProgressWidget";
+import CornerArrowStatWidget from "./CornerArrowStatWidget";
 
 function noop() {}
 
@@ -41,6 +48,24 @@ function RemainingIcon() {
   return (
     <svg viewBox="0 0 20.3949 19.9823" fill="currentColor" className="h-full w-full">
       <path d="M3.24919 18.8046L17.3312 4.74211L15.3293 2.73039L1.24723 16.7929L0.0265306 19.4882C-0.0906569 19.7616 0.202312 20.0741 0.475749 19.957ZM18.3761 3.72649L19.5578 2.55461C20.1632 1.94914 20.1925 1.31438 19.6554 0.777268L19.3039 0.425706C18.7765-0.101638 18.132-0.0528096 17.5363 0.533128L16.3449 1.705Z" />
+    </svg>
+  );
+}
+
+function TickerIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+      <path d="M3 13l4-4 3 3 7-7" />
+      <path d="M13 5h4v4" />
+    </svg>
+  );
+}
+
+function PillIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+      <circle cx="10" cy="10" r="7" />
+      <path d="M10 6v4l3 2" />
     </svg>
   );
 }
@@ -70,6 +95,13 @@ function startOfWeekKey(): string {
   const [y, m, d] = today.split("-").map(Number);
   const date = new Date(y, m - 1, d);
   date.setDate(date.getDate() - date.getDay());
+  return toKey(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function toKeyOffsetFromWeekStart(weekStart: string, offset: number): string {
+  const [y, m, d] = weekStart.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() + offset);
   return toKey(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
@@ -612,6 +644,130 @@ export default function DashboardWidgetContent({
         return { label: weekdayLabel(key), value: sum(expenses.filter((e) => e.type === "expense" && e.date === key)) };
       });
       return <MiniBarChartWidget title="Last 7 days" bars={bars} barClassName={accentBg} />;
+    }
+
+    // ---- Creative widgets ----
+    case "netWorthTicker": {
+      const points = Array.from({ length: 14 }, (_, i) => {
+        const key = daysAgoKey(13 - i);
+        const spentUpTo = sum(expenses.filter((e) => e.type === "expense" && e.date <= key));
+        const earnedUpTo = sum(expenses.filter((e) => e.type === "income" && e.date <= key));
+        return remaining - earnedUpTo + spentUpTo;
+      });
+      const first = points[0] ?? remaining;
+      const deltaPct = first !== 0 ? ((remaining - first) / Math.abs(first)) * 100 : 0;
+      return (
+        <TickerCardWidget
+          icon={<TickerIcon />}
+          name="Net worth"
+          value={formatCurrency(remaining, currency)}
+          deltaLabel={`${deltaPct >= 0 ? "+" : ""}${deltaPct.toFixed(1)}%`}
+          deltaPositive={deltaPct >= 0}
+          points={points}
+        />
+      );
+    }
+    case "walletTicker": {
+      const wallet = wallets.find((w) => w.isDefault) ?? wallets[0];
+      if (!wallet) return <StatWidget label="Wallet ticker" value="—" sublabel="No wallets yet" />;
+      const points = Array.from({ length: 14 }, (_, i) => {
+        const key = daysAgoKey(13 - i);
+        const spentUpTo = sum(expenses.filter((e) => e.type === "expense" && e.walletName === wallet.name && e.date <= key));
+        const earnedUpTo = sum(expenses.filter((e) => e.type === "income" && e.walletName === wallet.name && e.date <= key));
+        return wallet.balance - earnedUpTo + spentUpTo;
+      });
+      const first = points[0] ?? wallet.balance;
+      const deltaPct = first !== 0 ? ((wallet.balance - first) / Math.abs(first)) * 100 : 0;
+      return (
+        <TickerCardWidget
+          icon={<TickerIcon />}
+          name={wallet.name}
+          value={formatCurrency(wallet.balance, currency)}
+          deltaLabel={`${deltaPct >= 0 ? "+" : ""}${deltaPct.toFixed(1)}%`}
+          deltaPositive={deltaPct >= 0}
+          points={points}
+        />
+      );
+    }
+    case "todayPill":
+      return (
+        <PillStatWidget
+          icon={<PillIcon />}
+          label="Today's spending"
+          value={formatCurrency(sum(expenses.filter((e) => e.type === "expense" && e.date === today)), currency)}
+        />
+      );
+    case "pacePill": {
+      const dayOfMonth = Number(today.slice(8, 10));
+      const daysInMonth = new Date(Number(today.slice(0, 4)), Number(today.slice(5, 7)), 0).getDate();
+      const expectedPct = (dayOfMonth / daysInMonth) * 100;
+      const lastMonthSpent = sum(expenses.filter((e) => e.type === "expense" && monthKey(e.date) === lastMonthKey));
+      const pacePct = lastMonthSpent > 0 ? (monthSpent / lastMonthSpent) * 100 : expectedPct;
+      return (
+        <AlertPillWidget
+          icon={<PillIcon />}
+          title="Spending pace"
+          subtitle={pacePct > expectedPct + 5 ? "Ahead of last month" : pacePct < expectedPct - 5 ? "Behind last month" : "On pace"}
+          percent={pacePct}
+          ringClassName={pacePct > expectedPct + 5 ? "text-red-400" : "text-emerald-400"}
+        />
+      );
+    }
+    case "noSpendDays": {
+      const days = Array.from({ length: 7 }, (_, i) => {
+        const key = toKeyOffsetFromWeekStart(weekStart, i);
+        const spent = sum(expenses.filter((e) => e.type === "expense" && e.date === key));
+        return { label: weekdayLabel(key), hit: spent === 0 && key <= today, display: spent === 0 ? "✓" : "·" };
+      });
+      const count = days.filter((d) => d.hit).length;
+      return <WeekdayTrackerWidget value={`${count}/7`} label="No-spend days this week" days={days} />;
+    }
+    case "balanceHero": {
+      const last = [...expenses].sort((a, b) => (a.date < b.date ? 1 : -1))[0];
+      return (
+        <BalanceHeroWidget
+          balance={formatCurrency(remaining, currency)}
+          wallets={wallets.map((w) => ({ id: w.id, name: w.name, color: w.color }))}
+          lastTransaction={
+            last
+              ? {
+                  label: last.merchant,
+                  date: last.date,
+                  value: `${last.type === "expense" ? "-" : "+"}${formatCurrency(last.amount, currency)}`,
+                }
+              : null
+          }
+          onAddIncome={onAddIncome ?? noop}
+          onAddExpense={onAddExpense ?? noop}
+        />
+      );
+    }
+    case "payPeriodStepper": {
+      const dayOfMonth = Number(today.slice(8, 10));
+      const daysInMonth = new Date(Number(today.slice(0, 4)), Number(today.slice(5, 7)), 0).getDate();
+      const pct = (dayOfMonth / daysInMonth) * 100;
+      const activeIndex = pct < 33 ? 0 : pct < 66 ? 1 : 2;
+      return (
+        <StepperProgressWidget
+          title="Month progress"
+          subtitle={`Day ${dayOfMonth} of ${daysInMonth}`}
+          stages={["Start", "Mid-month", "End"]}
+          activeIndex={activeIndex}
+          progressPercent={pct}
+          accentClassName={widget.accent ? accentBg : "bg-surface-accent"}
+        />
+      );
+    }
+    case "spendingStreak": {
+      const dayOfMonth = Number(today.slice(8, 10));
+      const avgDaily = monthSpent / Math.max(1, dayOfMonth);
+      const days = Array.from({ length: 7 }, (_, i) => {
+        const key = toKeyOffsetFromWeekStart(weekStart, i);
+        const spent = sum(expenses.filter((e) => e.type === "expense" && e.date === key));
+        return { label: weekdayLabel(key), active: key <= today && spent <= avgDaily };
+      });
+      const streak = days.filter((d) => d.active).length;
+      return <CornerArrowStatWidget value={`${streak} days`} label="Under-average spending this week" bars={days} />;
     }
 
     default:
