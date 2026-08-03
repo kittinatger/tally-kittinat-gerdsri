@@ -204,6 +204,10 @@ export const ACCENT_CAPABLE_TYPES: readonly DashboardWidgetType[] = [
   "last7Days",
   "netWorthTicker",
   "walletTicker",
+  "todayPill",
+  "noSpendDays",
+  "payPeriodStepper",
+  "spendingStreak",
 ];
 
 // Widgets with a "how many to show" list length.

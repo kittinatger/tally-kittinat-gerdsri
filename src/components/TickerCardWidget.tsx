@@ -5,7 +5,7 @@ export default function TickerCardWidget({
   deltaLabel,
   deltaPositive,
   points,
-  accentClassName = "text-emerald-400",
+  accentClassName = "text-emerald-600 dark:text-emerald-400",
 }: {
   icon: React.ReactNode;
   name: string;
@@ -25,22 +25,22 @@ export default function TickerCardWidget({
   const avgY = height - ((points.reduce((a, b) => a + b, 0) / points.length - min) / range) * height;
 
   return (
-    <div className="rounded-card border border-[#1f1f1f] bg-[#0b0b0c] p-4 text-white">
+    <div className="rounded-card border border-surface-line bg-surface p-4 text-surface-foreground">
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10">{icon}</span>
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg-soft">{icon}</span>
           <div className="min-w-0">
-            <p className="truncate text-[10px] uppercase tracking-wide text-white/50">{name}</p>
+            <p className="truncate text-[10px] uppercase tracking-wide text-surface-foreground-soft">{name}</p>
           </div>
         </div>
-        <p className="shrink-0 text-[10px] text-white/40">Updated now</p>
+        <p className="shrink-0 text-[10px] text-surface-foreground-soft">Updated now</p>
       </div>
       <div className="mt-2.5 flex items-baseline gap-2">
         <p className="truncate text-2xl font-semibold">{value}</p>
-        <span className={`shrink-0 text-xs font-semibold ${deltaPositive ? accentClassName : "text-red-400"}`}>{deltaLabel}</span>
+        <span className={`shrink-0 text-xs font-semibold ${deltaPositive ? accentClassName : "text-red-600 dark:text-red-400"}`}>{deltaLabel}</span>
       </div>
       <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="mt-2 h-9 w-full">
-        <line x1="0" y1={avgY} x2={width} y2={avgY} stroke="rgba(255,255,255,0.2)" strokeDasharray="2 2" strokeWidth="0.7" />
+        <line x1="0" y1={avgY} x2={width} y2={avgY} stroke="var(--surface-line)" strokeDasharray="2 2" strokeWidth="0.7" />
         <polyline points={coords} fill="none" strokeWidth="2" className={accentClassName} stroke="currentColor" />
       </svg>
     </div>

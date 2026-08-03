@@ -664,6 +664,7 @@ export default function DashboardWidgetContent({
           deltaLabel={`${deltaPct >= 0 ? "+" : ""}${deltaPct.toFixed(1)}%`}
           deltaPositive={deltaPct >= 0}
           points={points}
+          accentClassName={widget.accent ? accentText : undefined}
         />
       );
     }
@@ -686,6 +687,7 @@ export default function DashboardWidgetContent({
           deltaLabel={`${deltaPct >= 0 ? "+" : ""}${deltaPct.toFixed(1)}%`}
           deltaPositive={deltaPct >= 0}
           points={points}
+          accentClassName={widget.accent ? accentText : undefined}
         />
       );
     }
@@ -695,6 +697,7 @@ export default function DashboardWidgetContent({
           icon={<PillIcon />}
           label="Today's spending"
           value={formatCurrency(sum(expenses.filter((e) => e.type === "expense" && e.date === today)), currency)}
+          iconBgClassName={widget.accent ? `${accentBg} text-white` : undefined}
         />
       );
     case "pacePill": {
@@ -720,7 +723,14 @@ export default function DashboardWidgetContent({
         return { label: weekdayLabel(key), hit: spent === 0 && key <= today, display: spent === 0 ? "✓" : "·" };
       });
       const count = days.filter((d) => d.hit).length;
-      return <WeekdayTrackerWidget value={`${count}/7`} label="No-spend days this week" days={days} />;
+      return (
+        <WeekdayTrackerWidget
+          value={`${count}/7`}
+          label="No-spend days this week"
+          days={days}
+          cardClassName={widget.accent ? `${accentBg} text-white` : undefined}
+        />
+      );
     }
     case "balanceHero": {
       const last = [...expenses].sort((a, b) => (a.date < b.date ? 1 : -1))[0];
@@ -767,7 +777,14 @@ export default function DashboardWidgetContent({
         return { label: weekdayLabel(key), active: key <= today && spent <= avgDaily };
       });
       const streak = days.filter((d) => d.active).length;
-      return <CornerArrowStatWidget value={`${streak} days`} label="Under-average spending this week" bars={days} />;
+      return (
+        <CornerArrowStatWidget
+          value={`${streak} days`}
+          label="Under-average spending this week"
+          bars={days}
+          cardClassName={widget.accent ? `${accentBg} text-white` : undefined}
+        />
+      );
     }
 
     default:
