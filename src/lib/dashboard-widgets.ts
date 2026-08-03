@@ -1,32 +1,73 @@
+// Four core, richly-interactive building blocks (own add-transaction
+// buttons, its own chart-type controls, etc.) plus 50 small single-purpose
+// visual widgets — see DASHBOARD_WIDGET_INFO for the full catalog and
+// DashboardWidgetContent.tsx for what each one actually renders.
 export const DASHBOARD_WIDGET_TYPES = [
   "summary",
   "categoryOverview",
   "wallets",
   "recentTransactions",
+  // Big numbers
   "todaySpending",
+  "yesterdaySpending",
   "weekSpending",
+  "monthSpending",
   "yearSpending",
+  "todayIncome",
+  "monthIncome",
+  "yearIncome",
+  "netWorth",
+  "totalBalance",
   "avgDailySpending",
   "avgTransactionAmount",
-  "transactionCount",
+  "avgIncomeAmount",
   "biggestExpense",
-  "topCategory",
-  "topMerchant",
-  "savingsRate",
-  "netWorth",
-  "monthComparison",
+  "biggestIncome",
+  "transactionCount",
   "transfersTotal",
-  "topIncomeSource",
-  "last7Days",
-  "last30Days",
+  "walletCount",
+  "categoryCount",
+  "tagCount",
+  // Trend arrows
+  "monthComparison",
+  "incomeComparison",
+  "weekComparison",
+  "yearOverYear",
+  // Rings & gauges
+  "savingsRate",
+  "monthProgress",
+  "yearProgress",
+  "spendPace",
+  "walletUsage",
+  // Sparklines
+  "last14DaysSpark",
+  "last14DaysIncomeSpark",
+  "last6MonthsSpark",
+  // Donuts
+  "categoryDonut",
+  "typeDonut",
+  "walletDonut",
+  // Heatmaps
+  "last30DaysHeatmap",
+  "last90DaysHeatmap",
+  // Stacked bars
+  "walletShareBar",
+  "categoryShareBar",
+  // Comparison bars
+  "incomeVsExpenseBars",
+  "cashVsDigitalBars",
+  // Ranked bar lists
   "topCategories",
-  "walletDistribution",
+  "topMerchants",
   "topTags",
-  "quickStats",
+  "topIncomeSources",
+  "walletDistribution",
   "expensesByWallet",
-  "yearToDateIncome",
-  "largestWallet",
-  "totalBalance",
+  // Leaderboards
+  "topMerchantsLeaderboard",
+  "topCategoriesLeaderboard",
+  // Bar chart
+  "last7Days",
 ] as const;
 export type DashboardWidgetType = (typeof DASHBOARD_WIDGET_TYPES)[number];
 
@@ -36,7 +77,7 @@ export function isDashboardWidgetType(value: string): value is DashboardWidgetTy
 
 // Three sizes on a 4-column grid — small is a quarter row, medium is half,
 // large is the full row. Not every widget supports every size (see
-// SUPPORTED_WIDTHS): a 3-card summary or a 30-bar chart genuinely breaks at
+// SUPPORTED_WIDTHS): a 3-card summary or a wide chart genuinely breaks at
 // quarter width, so those simply never offer "small" as an option.
 export const WIDGET_WIDTHS = ["small", "medium", "large"] as const;
 export type WidgetWidth = (typeof WIDGET_WIDTHS)[number];
@@ -105,70 +146,122 @@ export function isWidgetAccent(value: string): value is WidgetAccent {
 
 export const LIMIT_OPTIONS = [3, 5, 10, 15, 20] as const;
 
-// Widgets whose headline number/bars can take a chosen accent color instead
-// of the neutral default (excludes ones with their own multi-color content —
-// category chips, wallet dots — or meaningful semantic red/green coloring).
+// Widgets whose headline number/line/ring/bars can take a chosen accent
+// color instead of the neutral default (excludes ones with their own
+// inherently multi-color content — donuts, stacked bars, leaderboards — or
+// meaningful semantic red/green coloring — trend arrows, income/expense
+// comparisons).
 export const ACCENT_CAPABLE_TYPES: readonly DashboardWidgetType[] = [
   "todaySpending",
+  "yesterdaySpending",
   "weekSpending",
+  "monthSpending",
   "yearSpending",
+  "todayIncome",
+  "monthIncome",
+  "yearIncome",
+  "netWorth",
+  "totalBalance",
   "avgDailySpending",
   "avgTransactionAmount",
-  "transactionCount",
+  "avgIncomeAmount",
   "biggestExpense",
-  "topCategory",
-  "topMerchant",
-  "netWorth",
+  "biggestIncome",
+  "transactionCount",
   "transfersTotal",
-  "topIncomeSource",
-  "last7Days",
-  "last30Days",
-  "quickStats",
-  "largestWallet",
+  "walletCount",
+  "categoryCount",
+  "tagCount",
+  "savingsRate",
+  "monthProgress",
+  "yearProgress",
+  "spendPace",
+  "walletUsage",
+  "last14DaysSpark",
+  "last14DaysIncomeSpark",
+  "last6MonthsSpark",
+  "last30DaysHeatmap",
+  "last90DaysHeatmap",
   "topCategories",
-  "walletDistribution",
+  "topMerchants",
   "topTags",
+  "topIncomeSources",
+  "walletDistribution",
   "expensesByWallet",
-  "totalBalance",
+  "last7Days",
 ];
 
 // Widgets with a "how many to show" list length.
-export const LIMIT_CAPABLE_TYPES: readonly DashboardWidgetType[] = ["recentTransactions", "topCategories", "topTags"];
+export const LIMIT_CAPABLE_TYPES: readonly DashboardWidgetType[] = [
+  "recentTransactions",
+  "topCategories",
+  "topMerchants",
+  "topTags",
+  "topIncomeSources",
+  "topMerchantsLeaderboard",
+  "topCategoriesLeaderboard",
+];
 
 // Which sizes each widget type can actually be displayed at, ordered
-// smallest first. Single-number stat widgets look fine as a quarter-row
-// tile; anything with a multi-item list, a chart with many bars, or
-// SummaryCards' own internal 1-3 column grid gets cramped or unreadable
-// at "small" and simply doesn't offer it.
+// smallest first. Single-number/ring/gauge widgets look fine as a
+// quarter-row tile; anything with a chart, multi-item list, or SummaryCards'
+// own internal 1-3 column grid gets cramped or unreadable at "small" and
+// simply doesn't offer it.
 export const SUPPORTED_WIDTHS: Record<DashboardWidgetType, readonly WidgetWidth[]> = {
   summary: ["medium", "large"],
   categoryOverview: ["medium", "large"],
   wallets: ["medium", "large"],
   recentTransactions: ["medium", "large"],
   todaySpending: ["small", "medium", "large"],
+  yesterdaySpending: ["small", "medium", "large"],
   weekSpending: ["small", "medium", "large"],
+  monthSpending: ["small", "medium", "large"],
   yearSpending: ["small", "medium", "large"],
+  todayIncome: ["small", "medium", "large"],
+  monthIncome: ["small", "medium", "large"],
+  yearIncome: ["small", "medium", "large"],
+  netWorth: ["small", "medium", "large"],
+  totalBalance: ["small", "medium", "large"],
   avgDailySpending: ["small", "medium", "large"],
   avgTransactionAmount: ["small", "medium", "large"],
-  transactionCount: ["small", "medium", "large"],
+  avgIncomeAmount: ["small", "medium", "large"],
   biggestExpense: ["small", "medium", "large"],
-  topCategory: ["small", "medium", "large"],
-  topMerchant: ["small", "medium", "large"],
-  savingsRate: ["small", "medium", "large"],
-  netWorth: ["small", "medium", "large"],
-  monthComparison: ["small", "medium", "large"],
+  biggestIncome: ["small", "medium", "large"],
+  transactionCount: ["small", "medium", "large"],
   transfersTotal: ["small", "medium", "large"],
-  topIncomeSource: ["small", "medium", "large"],
-  last7Days: ["medium", "large"],
-  last30Days: ["large"],
+  walletCount: ["small", "medium", "large"],
+  categoryCount: ["small", "medium", "large"],
+  tagCount: ["small", "medium", "large"],
+  monthComparison: ["small", "medium", "large"],
+  incomeComparison: ["small", "medium", "large"],
+  weekComparison: ["small", "medium", "large"],
+  yearOverYear: ["small", "medium", "large"],
+  savingsRate: ["small", "medium", "large"],
+  monthProgress: ["small", "medium", "large"],
+  yearProgress: ["small", "medium", "large"],
+  spendPace: ["small", "medium", "large"],
+  walletUsage: ["small", "medium", "large"],
+  last14DaysSpark: ["small", "medium", "large"],
+  last14DaysIncomeSpark: ["small", "medium", "large"],
+  last6MonthsSpark: ["small", "medium", "large"],
+  categoryDonut: ["medium", "large"],
+  typeDonut: ["medium", "large"],
+  walletDonut: ["medium", "large"],
+  last30DaysHeatmap: ["medium", "large"],
+  last90DaysHeatmap: ["medium", "large"],
+  walletShareBar: ["medium", "large"],
+  categoryShareBar: ["medium", "large"],
+  incomeVsExpenseBars: ["medium", "large"],
+  cashVsDigitalBars: ["medium", "large"],
   topCategories: ["medium", "large"],
-  walletDistribution: ["medium", "large"],
+  topMerchants: ["medium", "large"],
   topTags: ["medium", "large"],
-  quickStats: ["medium", "large"],
+  topIncomeSources: ["medium", "large"],
+  walletDistribution: ["medium", "large"],
   expensesByWallet: ["medium", "large"],
-  yearToDateIncome: ["small", "medium", "large"],
-  largestWallet: ["small", "medium", "large"],
-  totalBalance: ["small", "medium", "large"],
+  topMerchantsLeaderboard: ["medium", "large"],
+  topCategoriesLeaderboard: ["medium", "large"],
+  last7Days: ["medium", "large"],
 };
 
 export function defaultWidthForType(type: DashboardWidgetType): WidgetWidth {
@@ -201,31 +294,68 @@ export const DASHBOARD_WIDGET_INFO: Record<DashboardWidgetType, { title: string;
   summary: { title: "Summary cards", description: "This month's income, expenses, and your remaining balance" },
   categoryOverview: { title: "Category breakdown", description: "Spending trend chart and category totals" },
   wallets: { title: "Wallets", description: "Each wallet's balance at a glance" },
-  recentTransactions: { title: "Recent transactions", description: "Your latest 5 transactions" },
+  recentTransactions: { title: "Recent transactions", description: "Your latest transactions" },
+
   todaySpending: { title: "Today's spending", description: "Total spent so far today" },
+  yesterdaySpending: { title: "Yesterday's spending", description: "Total spent yesterday" },
   weekSpending: { title: "This week's spending", description: "Total spent since the start of the week" },
+  monthSpending: { title: "This month's spending", description: "Total spent so far this month" },
   yearSpending: { title: "This year's spending", description: "Total spent so far this year" },
+  todayIncome: { title: "Today's income", description: "Total received so far today" },
+  monthIncome: { title: "This month's income", description: "Total received so far this month" },
+  yearIncome: { title: "This year's income", description: "Total received so far this year" },
+  netWorth: { title: "Net worth", description: "Combined balance across every wallet" },
+  totalBalance: { title: "Total balance", description: "Sum of every active wallet's balance" },
   avgDailySpending: { title: "Average daily spending", description: "This month's spending divided by days elapsed" },
   avgTransactionAmount: { title: "Average transaction", description: "Average expense amount this month" },
-  transactionCount: { title: "Transaction count", description: "Number of transactions logged this month" },
+  avgIncomeAmount: { title: "Average income", description: "Average income amount this month" },
   biggestExpense: { title: "Biggest expense", description: "Your largest single expense this month" },
-  topCategory: { title: "Top category", description: "Highest-spending category this month" },
-  topMerchant: { title: "Top merchant", description: "Merchant you've spent the most with this month" },
-  savingsRate: { title: "Savings rate", description: "Share of this month's income you kept" },
-  netWorth: { title: "Net worth", description: "Combined balance across every wallet" },
-  monthComparison: { title: "Month vs last month", description: "How this month's spending compares to last month's" },
+  biggestIncome: { title: "Biggest income", description: "Your largest single income this month" },
+  transactionCount: { title: "Transaction count", description: "Number of transactions logged this month" },
   transfersTotal: { title: "Transfers total", description: "Total moved via transfers this month" },
-  topIncomeSource: { title: "Top income source", description: "Highest-earning income category this month" },
-  last7Days: { title: "Last 7 days", description: "Daily spending for the past week" },
-  last30Days: { title: "Last 30 days", description: "Daily spending for the past month" },
-  topCategories: { title: "Top categories", description: "Your top 5 spending categories this month" },
+  walletCount: { title: "Wallet count", description: "Number of active wallets" },
+  categoryCount: { title: "Categories used", description: "Distinct categories used this month" },
+  tagCount: { title: "Tags used", description: "Distinct tags used this month" },
+
+  monthComparison: { title: "Month vs last month", description: "How this month's spending compares to last month's" },
+  incomeComparison: { title: "Income vs last month", description: "How this month's income compares to last month's" },
+  weekComparison: { title: "Week vs last week", description: "How this week's spending compares to last week's" },
+  yearOverYear: { title: "Year over year", description: "How this year's spending compares to last year's" },
+
+  savingsRate: { title: "Savings rate", description: "Share of this month's income you kept" },
+  monthProgress: { title: "Month progress", description: "How far through the current month you are" },
+  yearProgress: { title: "Year progress", description: "How far through the current year you are" },
+  spendPace: { title: "Spending pace", description: "This month's spend vs. an even day-by-day pace" },
+  walletUsage: { title: "Wallet usage", description: "Your default wallet's share of your total balance" },
+
+  last14DaysSpark: { title: "14-day spending trend", description: "A quick line of the last two weeks' spending" },
+  last14DaysIncomeSpark: { title: "14-day income trend", description: "A quick line of the last two weeks' income" },
+  last6MonthsSpark: { title: "6-month spending trend", description: "A quick line of the last six months' spending" },
+
+  categoryDonut: { title: "Category split", description: "This month's spending by category, as a donut" },
+  typeDonut: { title: "Transaction mix", description: "Share of expense/income/transfer transactions this month" },
+  walletDonut: { title: "Balance split", description: "Share of your total balance held in each wallet" },
+
+  last30DaysHeatmap: { title: "30-day activity", description: "A calendar heatmap of the last 30 days' spending" },
+  last90DaysHeatmap: { title: "90-day activity", description: "A calendar heatmap of the last 90 days' spending" },
+
+  walletShareBar: { title: "Wallet share bar", description: "Every wallet's share of your total balance, as one bar" },
+  categoryShareBar: { title: "Category share bar", description: "This month's top categories, as one segmented bar" },
+
+  incomeVsExpenseBars: { title: "Income vs expenses", description: "This month's income and spending side by side" },
+  cashVsDigitalBars: { title: "Cash vs digital", description: "Balance held in cash wallets vs digital wallets" },
+
+  topCategories: { title: "Top categories", description: "Your top spending categories this month" },
+  topMerchants: { title: "Top merchants", description: "Merchants you've spent the most with this month" },
+  topTags: { title: "Top tags", description: "Your most-used tags" },
+  topIncomeSources: { title: "Top income sources", description: "Your highest-earning income categories this month" },
   walletDistribution: { title: "Wallet distribution", description: "Balance breakdown across your wallets" },
-  topTags: { title: "Top tags", description: "Your 5 most-used tags" },
-  quickStats: { title: "Quick stats", description: "Income, expenses, transaction count, and average at a glance" },
   expensesByWallet: { title: "Spending by wallet", description: "This month's spending broken down by wallet" },
-  yearToDateIncome: { title: "Year-to-date income", description: "Total income so far this year" },
-  largestWallet: { title: "Largest wallet", description: "Your wallet with the highest balance" },
-  totalBalance: { title: "Total balance", description: "Sum of every active wallet's balance" },
+
+  topMerchantsLeaderboard: { title: "Merchant leaderboard", description: "Your top merchants this month, ranked" },
+  topCategoriesLeaderboard: { title: "Category leaderboard", description: "Your top categories this month, ranked" },
+
+  last7Days: { title: "Last 7 days", description: "Daily spending for the past week, as bars" },
 };
 
 function makeId(type: DashboardWidgetType): string {
