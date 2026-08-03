@@ -7,6 +7,10 @@ export const DASHBOARD_WIDGET_TYPES = [
   "categoryOverview",
   "wallets",
   "recentTransactions",
+  // Summary cards, split into individual clickable widgets
+  "incomeCard",
+  "expensesCard",
+  "remainingCard",
   // Big numbers
   "todaySpending",
   "yesterdaySpending",
@@ -212,6 +216,9 @@ export const SUPPORTED_WIDTHS: Record<DashboardWidgetType, readonly WidgetWidth[
   categoryOverview: ["medium", "large"],
   wallets: ["medium", "large"],
   recentTransactions: ["medium", "large"],
+  incomeCard: ["small", "medium", "large"],
+  expensesCard: ["small", "medium", "large"],
+  remainingCard: ["small", "medium", "large"],
   todaySpending: ["small", "medium", "large"],
   yesterdaySpending: ["small", "medium", "large"],
   weekSpending: ["small", "medium", "large"],
@@ -294,7 +301,10 @@ export const DASHBOARD_WIDGET_INFO: Record<DashboardWidgetType, { title: string;
   summary: { title: "Summary cards", description: "This month's income, expenses, and your remaining balance" },
   categoryOverview: { title: "Category breakdown", description: "Spending trend chart and category totals" },
   wallets: { title: "Wallets", description: "Each wallet's balance at a glance" },
-  recentTransactions: { title: "Recent transactions", description: "Your latest transactions" },
+  recentTransactions: { title: "Recent transactions", description: "Your latest transactions, as a timeline" },
+  incomeCard: { title: "Income card", description: "This month's income — tap to add income" },
+  expensesCard: { title: "Expenses card", description: "This month's expenses — tap to add an expense" },
+  remainingCard: { title: "Remaining card", description: "Your remaining balance — tap to edit it" },
 
   todaySpending: { title: "Today's spending", description: "Total spent so far today" },
   yesterdaySpending: { title: "Yesterday's spending", description: "Total spent yesterday" },

@@ -6,6 +6,23 @@ import { useCurrency } from "@/lib/currency-context";
 import { useWallets } from "@/lib/wallets-context";
 import { formatCurrency } from "@/lib/format";
 
+function WalletKindIcon({ kind }: { kind: string }) {
+  if (kind === "digital") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+        <rect x="2" y="5" width="20" height="14" rx="2.5" />
+        <path d="M2 10h20" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+      <rect x="2" y="6" width="20" height="12" rx="2.5" />
+      <circle cx="12" cy="12" r="2.5" />
+    </svg>
+  );
+}
+
 export default function WalletsWidget() {
   const wallets = useWallets();
   const currency = useCurrency();
@@ -20,20 +37,23 @@ export default function WalletsWidget() {
           Manage
         </Link>
       </div>
-      <div className="space-y-2.5">
+      <div className="-mx-1 flex snap-x gap-2.5 overflow-x-auto px-1 pb-1">
         {wallets.map((w) => (
-          <div key={w.id} className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dotClasses(w.color)}`} />
-              <span className="truncate text-sm font-medium text-surface-foreground">{w.name}</span>
+          <div
+            key={w.id}
+            className="w-32 shrink-0 snap-start rounded-2xl border border-surface-line bg-surface-soft p-3"
+          >
+            <div className={`mb-2 flex h-7 w-7 items-center justify-center rounded-full text-white ${dotClasses(w.color)}`}>
+              <WalletKindIcon kind={w.kind} />
             </div>
-            <span
-              className={`shrink-0 text-sm font-semibold ${
+            <p className="truncate text-xs font-semibold text-surface-foreground">{w.name}</p>
+            <p
+              className={`mt-0.5 truncate text-sm font-bold ${
                 w.balance < 0 ? "text-red-600 dark:text-red-400" : "text-surface-foreground"
               }`}
             >
-              {formatCurrency(w.balance, currency)}
-            </span>
+              {formatCurrency(w.balance, w.currency ?? currency)}
+            </p>
           </div>
         ))}
       </div>
