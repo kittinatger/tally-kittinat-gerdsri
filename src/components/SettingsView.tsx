@@ -211,19 +211,17 @@ export default function SettingsView({
           <main className="flex-1 px-1 py-6 sm:px-2">
             {panel ? (
               <div>
-                <button
-                  type="button"
-                  onClick={() => setPanel(null)}
-                  className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-ink-soft transition hover:text-foreground"
-                >
-                  <BackIcon />
-                  Settings
-                </button>
-                {(panel === "theme" ||
-                  panel === "currency" ||
-                  panel === "tags" ||
-                  panel === "calendar" ||
-                  panel === "dashboardWidgets") && (
+                {panel !== "dashboardWidgets" && (
+                  <button
+                    type="button"
+                    onClick={() => setPanel(null)}
+                    className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-ink-soft transition hover:text-foreground"
+                  >
+                    <BackIcon />
+                    Settings
+                  </button>
+                )}
+                {(panel === "theme" || panel === "currency" || panel === "tags" || panel === "calendar") && (
                   <h2 className="mb-5 font-display text-2xl text-foreground">{PANEL_TITLES[panel]}</h2>
                 )}
 
@@ -236,7 +234,12 @@ export default function SettingsView({
                 {panel === "currency" && <CurrencySettings />}
                 {panel === "calendar" && <CalendarSettings />}
                 {panel === "dashboardWidgets" && (
-                  <DashboardWidgetsSettings expenses={expenses} categories={categories} remaining={remaining} />
+                  <DashboardWidgetsSettings
+                    expenses={expenses}
+                    categories={categories}
+                    remaining={remaining}
+                    onDone={() => setPanel(null)}
+                  />
                 )}
               </div>
             ) : (
