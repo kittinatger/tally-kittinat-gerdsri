@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ApiError } from "@google/genai";
-import { extractTransactionFromAudio } from "@/lib/gemini";
+import { extractTransactionsFromAudio } from "@/lib/gemini";
 import { getAutoConvertCurrency, getCurrency, listCategories, listWallets } from "@/lib/db";
 import { maybeAutoConvert } from "@/lib/exchange-rate";
 import { getUserId } from "@/lib/auth";
@@ -52,9 +52,11 @@ export async function POST(req: NextRequest) {
       income: categoryRows.filter((c) => c.type === "income").map((c) => c.name),
       transfer: categoryRows.filter((c) => c.type === "transfer").map((c) => c.name),
     };
-    const extraction = await extractTransactionFromAudio(base64, baseType, categories, walletRows.map((w) => w.name));
-    const result = await maybeAutoConvert(extraction, defaultCurrency, autoConvertEnabled);
-    return NextResponse.json({ extraction: result });
+    const extractions = await extractTransactionsFromAudio(base64, baseType, categories, walletRows.map((w) => w.name));
+    const results = await Promise.all(
+      extractions.map((extraction) => maybeAutoConvert(extraction, defaultCurrency, autoConvertEnabled)),
+    );
+    return NextResponse.json({ extractions: results });
   } catch (err) {
     if (err instanceof ApiError && (err.status === 429 || err.status === 503)) {
       return NextResponse.json(

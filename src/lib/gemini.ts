@@ -68,19 +68,21 @@ function buildVoicePrompt(categories: CategoriesByType, walletNames: string[]): 
   const currentYear = new Date().getFullYear();
   const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
 
-  return `You are listening to a short voice memo where someone is logging a single financial
-transaction out loud for a personal finance tracker, e.g. "I spent twelve fifty on coffee at
-Starbucks this morning", "got paid two thousand dollars from my freelance client yesterday", or
-"moved fifty bucks into my e-wallet".
+  return `You are listening to a voice memo where someone is logging financial transactions out
+loud for a personal finance tracker. They may describe just ONE transaction, e.g. "I spent twelve
+fifty on coffee at Starbucks this morning", or SEVERAL in one recording, e.g. "I spent twelve fifty
+on coffee at Starbucks, then forty on lunch at Chipotle, and got paid two thousand dollars from my
+freelance client yesterday". Treat each distinct transaction mentioned as a separate entry --
+do not merge them into one, and do not invent transactions that weren't actually described.
 
-First decide whether they are describing:
+For EACH transaction, first decide whether it's:
 - an EXPENSE (money they spent to someone/somewhere else)
 - INCOME (money they received from someone/somewhere else)
 - a TRANSFER (money moved between their OWN accounts/wallets -- e.g. an e-wallet top-up, moving
   money to savings, a self-transfer between their own bank accounts. This is NOT income and NOT
   an expense, since it's still their money.)
 
-then extract:
+then extract, for that transaction:
 - type: exactly "expense", "income", or "transfer"
 - direction: ONLY if type is "transfer" -- "out" if the money left the account/cash tracked in this
   app (e.g. topping up an e-wallet), or "in" if it came back into it (e.g. withdrawing from the
@@ -107,7 +109,8 @@ then extract:
 ${walletNames.length > 0 ? `- wallet: which of the user's own wallets this was paid with/into, if they said so (e.g. "with cash", "on my Kasikorn card", "from savings"). Choose EXACTLY one from: ${walletNames.join(", ")}. Empty string if not mentioned — do not guess.` : ""}
 
 If any field is unclear, make your best reasonable guess rather than leaving it blank.
-Respond with JSON only, matching the provided schema.`;
+Respond with a JSON array with one entry per transaction described (a single-item array if only
+one was mentioned), matching the provided schema.`;
 }
 
 function responseSchema(allCategories: string[], includeNotes: boolean, walletNames: string[]) {
@@ -128,19 +131,15 @@ function responseSchema(allCategories: string[], includeNotes: boolean, walletNa
   };
 }
 
-function parseExtraction(text: string, categories: CategoriesByType, walletNames: string[]): TransactionExtraction {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(text);
-  } catch {
-    throw new Error("The model returned a response that was not valid JSON.");
-  }
+function arrayResponseSchema(allCategories: string[], walletNames: string[]) {
+  return {
+    type: Type.ARRAY,
+    items: responseSchema(allCategories, true, walletNames),
+    minItems: 1,
+  };
+}
 
-  if (typeof parsed !== "object" || parsed === null) {
-    throw new Error("Unexpected response shape from the model.");
-  }
-
-  const record = parsed as Record<string, unknown>;
+function parseOne(record: Record<string, unknown>, categories: CategoriesByType, walletNames: string[]): TransactionExtraction {
   const typeRaw = typeof record.type === "string" ? record.type.trim().toLowerCase() : "";
   const type: TransactionType = isTransactionType(typeRaw) ? typeRaw : "expense";
   const directionRaw = typeof record.direction === "string" ? record.direction.trim().toLowerCase() : "";
@@ -161,6 +160,38 @@ function parseExtraction(text: string, categories: CategoriesByType, walletNames
   const wallet = walletNames.find((w) => w.toLowerCase() === walletRaw.toLowerCase());
 
   return { type, direction, merchant, amount, date, category, notes: notes || undefined, currency, wallet };
+}
+
+function parseExtraction(text: string, categories: CategoriesByType, walletNames: string[]): TransactionExtraction {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error("The model returned a response that was not valid JSON.");
+  }
+  if (typeof parsed !== "object" || parsed === null) {
+    throw new Error("Unexpected response shape from the model.");
+  }
+  return parseOne(parsed as Record<string, unknown>, categories, walletNames);
+}
+
+function parseExtractions(text: string, categories: CategoriesByType, walletNames: string[]): TransactionExtraction[] {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error("The model returned a response that was not valid JSON.");
+  }
+  // The model can return a single object instead of a one-item array despite
+  // the schema when there's clearly only one transaction — tolerate that.
+  const items = Array.isArray(parsed) ? parsed : [parsed];
+  const results = items
+    .filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null)
+    .map((item) => parseOne(item, categories, walletNames));
+  if (results.length === 0) {
+    throw new Error("Unexpected response shape from the model.");
+  }
+  return results;
 }
 
 export async function extractTransaction(
@@ -194,12 +225,15 @@ export async function extractTransaction(
   return parseExtraction(text, categories, walletNames);
 }
 
-export async function extractTransactionFromAudio(
+// Voice entry supports logging several transactions in one recording (e.g.
+// "twelve fifty on coffee, then forty on lunch"), so this always returns an
+// array — one item for a single-transaction recording, more for a bulk one.
+export async function extractTransactionsFromAudio(
   audioBase64: string,
   mimeType: string,
   categories: CategoriesByType,
   walletNames: string[] = [],
-): Promise<TransactionExtraction> {
+): Promise<TransactionExtraction[]> {
   const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
   const ai = getClient();
 
@@ -213,7 +247,7 @@ export async function extractTransactionFromAudio(
     ],
     config: {
       responseMimeType: "application/json",
-      responseSchema: responseSchema(allCategories, true, walletNames),
+      responseSchema: arrayResponseSchema(allCategories, walletNames),
     },
   });
 
@@ -222,5 +256,5 @@ export async function extractTransactionFromAudio(
     throw new Error("The model returned an empty response. Try recording again with a clearer description.");
   }
 
-  return parseExtraction(text, categories, walletNames);
+  return parseExtractions(text, categories, walletNames);
 }

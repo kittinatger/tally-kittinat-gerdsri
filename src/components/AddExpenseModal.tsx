@@ -38,8 +38,8 @@ export default function AddExpenseModal({
   const [scanConversion, setScanConversion] = useState<ConversionInfo | null>(null);
   const [voiceStatus, setVoiceStatus] = useState<ScanStatus>("idle");
   const [voiceError, setVoiceError] = useState<string | null>(null);
-  const [voiceValues, setVoiceValues] = useState<ExpenseFormValues | null>(null);
-  const [voiceConversion, setVoiceConversion] = useState<ConversionInfo | null>(null);
+  const [voiceQueue, setVoiceQueue] = useState<{ values: ExpenseFormValues; conversion: ConversionInfo | null }[]>([]);
+  const [voiceQueueIndex, setVoiceQueueIndex] = useState(0);
   const [lastRecording, setLastRecording] = useState<{ blob: Blob; mimeType: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -120,7 +120,7 @@ export default function AddExpenseModal({
         setVoiceStatus("error");
         return;
       }
-      const extraction = data.extraction as {
+      const extractions = data.extractions as {
         type: string;
         direction?: string;
         merchant: string;
@@ -131,27 +131,34 @@ export default function AddExpenseModal({
         wallet?: string;
         originalAmount?: number;
         originalCurrency?: string;
-      };
-      const type = isTransactionType(extraction.type) ? extraction.type : "expense";
-      const direction = extraction.direction && isTransferDirection(extraction.direction) ? extraction.direction : "out";
-      const categoryValid = allCategories.some((c) => c.type === type && c.name === extraction.category);
-      const matchedWallet = wallets.find((w) => w.name === extraction.wallet);
-      setVoiceValues({
-        type,
-        direction,
-        date: extraction.date,
-        amount: String(extraction.amount),
-        merchant: extraction.merchant,
-        category: categoryValid ? extraction.category : "Other",
-        notes: extraction.notes ?? "",
-        tags: [],
-        walletId: matchedWallet?.id ?? null,
-      });
-      setVoiceConversion(
-        extraction.originalAmount !== undefined && extraction.originalCurrency
-          ? { originalAmount: extraction.originalAmount, originalCurrency: extraction.originalCurrency }
-          : null,
+      }[];
+      setVoiceQueue(
+        extractions.map((extraction) => {
+          const type = isTransactionType(extraction.type) ? extraction.type : "expense";
+          const direction =
+            extraction.direction && isTransferDirection(extraction.direction) ? extraction.direction : "out";
+          const categoryValid = allCategories.some((c) => c.type === type && c.name === extraction.category);
+          const matchedWallet = wallets.find((w) => w.name === extraction.wallet);
+          return {
+            values: {
+              type,
+              direction,
+              date: extraction.date,
+              amount: String(extraction.amount),
+              merchant: extraction.merchant,
+              category: categoryValid ? extraction.category : "Other",
+              notes: extraction.notes ?? "",
+              tags: [],
+              walletId: matchedWallet?.id ?? null,
+            },
+            conversion:
+              extraction.originalAmount !== undefined && extraction.originalCurrency
+                ? { originalAmount: extraction.originalAmount, originalCurrency: extraction.originalCurrency }
+                : null,
+          };
+        }),
       );
+      setVoiceQueueIndex(0);
       setVoiceStatus("review");
     } catch {
       setVoiceError("Network error while reading the recording.");
@@ -162,9 +169,19 @@ export default function AddExpenseModal({
   function resetVoice() {
     setVoiceStatus("idle");
     setVoiceError(null);
-    setVoiceValues(null);
-    setVoiceConversion(null);
+    setVoiceQueue([]);
+    setVoiceQueueIndex(0);
     setLastRecording(null);
+  }
+
+  function advanceVoiceQueue() {
+    const nextIndex = voiceQueueIndex + 1;
+    if (nextIndex < voiceQueue.length) {
+      setVoiceQueueIndex(nextIndex);
+    } else {
+      resetVoice();
+      onClose();
+    }
   }
 
   function advanceQueue() {
@@ -235,8 +252,7 @@ export default function AddExpenseModal({
     try {
       const expense = await createExpense(values);
       onCreated(expense);
-      resetVoice();
-      onClose();
+      advanceVoiceQueue();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Could not save that entry.");
     } finally {
@@ -397,25 +413,36 @@ export default function AddExpenseModal({
             </div>
           )}
 
-          {voiceStatus === "review" && voiceValues && (
+          {voiceStatus === "review" && voiceQueue[voiceQueueIndex] && (
             <div>
               <div className="mb-4 rounded-card bg-surface-soft p-3">
+                {voiceQueue.length > 1 && (
+                  <p className="mb-1 text-xs font-semibold text-surface-accent">
+                    Reviewing {voiceQueueIndex + 1} of {voiceQueue.length}
+                  </p>
+                )}
                 <p className="text-xs text-surface-foreground-soft">
-                  Review the details below before saving — double-check the amount and expense/income toggle, since
-                  spoken numbers can occasionally be misheard.
+                  {voiceQueue.length > 1
+                    ? "Heard multiple transactions — review each before saving. Double-check the amounts and expense/income toggles, since spoken numbers can occasionally be misheard."
+                    : "Review the details below before saving — double-check the amount and expense/income toggle, since spoken numbers can occasionally be misheard."}
                 </p>
               </div>
-              {voiceConversion && (
+              {voiceQueue[voiceQueueIndex].conversion && (
                 <p className="mb-4 rounded-card bg-surface-soft px-3 py-2 text-xs font-medium text-surface-accent">
-                  Converted from {formatCurrency(voiceConversion.originalAmount, voiceConversion.originalCurrency)} to{" "}
-                  {currency}.
+                  Converted from{" "}
+                  {formatCurrency(
+                    voiceQueue[voiceQueueIndex].conversion!.originalAmount,
+                    voiceQueue[voiceQueueIndex].conversion!.originalCurrency,
+                  )}{" "}
+                  to {currency}.
                 </p>
               )}
               <ExpenseForm
-                initialValues={voiceValues}
-                submitLabel="Save transaction"
+                key={voiceQueueIndex}
+                initialValues={voiceQueue[voiceQueueIndex].values}
+                submitLabel={voiceQueueIndex + 1 < voiceQueue.length ? "Save & next" : "Save transaction"}
                 onSubmit={handleVoiceSubmit}
-                onCancel={resetVoice}
+                onCancel={advanceVoiceQueue}
                 submitting={submitting}
                 error={submitError}
               />
