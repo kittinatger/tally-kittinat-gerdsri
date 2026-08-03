@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.10.0] - 2026-08-03
+
+### Added
+- Voice entry now supports logging multiple transactions in one recording ("twelve fifty on coffee, then forty on lunch") — the review screen becomes a queue, same as bulk receipt scanning
+- Customize dashboard reworked as a live iOS-style editor: a paintbrush/checkmark toolbar over a real preview of your Dashboard, with small overlay badges per tile (remove, resize, configure) instead of an always-expanded control list
+- The whole dashboard widget catalog rebuilt from scratch — 50 new widgets across 9 new visual forms (progress rings, gauges, sparklines, donut charts, calendar heatmaps, comparison bars, stacked bars, trend arrows, leaderboards), on top of the existing stat card/bar list/bar chart shapes
+- Income, Expenses, and Remaining are now also individually selectable as standalone clickable widgets, alongside the combined Summary cards widget
+- The "Add a widget" picker now shows a live, scaled-down preview of each widget with your real data instead of just its name
+
+### Changed
+- Wallets widget redesigned as a horizontal scroll of cards with a cash/digital icon; Recent transactions widget redesigned as a connected timeline
+
 ## [0.9.0] - 2026-08-02
 
 ### Added

@@ -61,11 +61,31 @@ function GearIcon() {
   );
 }
 
-function PlusIcon() {
+// A real, non-interactive, scaled-down render of the widget — like the
+// live tiles above but frozen at a fixed thumbnail size — so the add-widget
+// list shows what each option actually looks like instead of just its name.
+function WidgetThumbnail({
+  type,
+  expenses,
+  categories,
+  remaining,
+}: {
+  type: DashboardWidgetInstance["type"];
+  expenses: Expense[];
+  categories: CategoryOption[];
+  remaining: number;
+}) {
   return (
-    <svg viewBox="0 0 20.918 20.5762" fill="currentColor" className="h-3 w-3 shrink-0">
-      <path d="M11.2305 19.5996L11.2305 0.957031C11.2305 0.439453 10.8008 0 10.2734 0C9.75586 0 9.32617 0.439453 9.32617 0.957031L9.32617 19.5996C9.32617 20.1172 9.75586 20.5566 10.2734 20.5566C10.8008 20.5566 11.2305 20.1172 11.2305 19.5996ZM0.957031 11.2305L19.5996 11.2305C20.1172 11.2305 20.5566 10.8008 20.5566 10.2832C20.5566 9.75586 20.1172 9.32617 19.5996 9.32617L0.957031 9.32617C0.439453 9.32617 0 9.75586 0 10.2832C0 10.8008 0.439453 11.2305 0.957031 11.2305Z" />
-    </svg>
+    <div className="h-16 w-24 shrink-0 overflow-hidden rounded-lg border border-surface-line bg-surface-soft">
+      <div className="pointer-events-none w-[260px] origin-top-left select-none" style={{ transform: "scale(0.37)" }}>
+        <DashboardWidgetContent
+          widget={{ id: `preview-${type}`, type, width: "large" }}
+          expenses={expenses}
+          categories={categories}
+          remaining={remaining}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -355,9 +375,7 @@ export default function DashboardWidgetsSettings({
                 onClick={() => addWidget(type)}
                 className="flex w-full items-center gap-3 rounded-card border border-surface-line bg-surface-soft px-3.5 py-3 text-left transition hover:border-surface-accent"
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--surface-nav-hover)] text-surface-foreground-soft">
-                  <PlusIcon />
-                </span>
+                <WidgetThumbnail type={type} expenses={expenses} categories={categories} remaining={remaining} />
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-semibold text-surface-foreground">
                     {DASHBOARD_WIDGET_INFO[type].title}
