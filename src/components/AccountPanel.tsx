@@ -36,6 +36,10 @@ export default function AccountPanel({
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
 
+  const [sendingReset, setSendingReset] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -155,6 +159,29 @@ export default function AccountPanel({
       setPasswordError("Network error while saving.");
     } finally {
       setSavingPassword(false);
+    }
+  }
+
+  async function handleSendResetLink() {
+    if (!email) return;
+    setSendingReset(true);
+    setResetError(null);
+    setResetSent(false);
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
+        setResetError("Could not send the reset link. Please try again.");
+        return;
+      }
+      setResetSent(true);
+    } catch {
+      setResetError("Network error while sending.");
+    } finally {
+      setSendingReset(false);
     }
   }
 
@@ -315,6 +342,29 @@ export default function AccountPanel({
         >
           {savingPassword ? "Saving..." : "Save password"}
         </button>
+
+        {email && (
+          <div className="mt-4 border-t border-line pt-4">
+            <p className="mb-2 text-xs text-ink-soft">
+              Forgot your current password instead? Email yourself a reset link.
+            </p>
+            {resetError && <p className="mb-2 text-sm text-red-600 dark:text-red-400">{resetError}</p>}
+            {resetSent ? (
+              <p className="text-sm text-emerald-600 dark:text-emerald-400">
+                Reset link sent to {email} — check your inbox.
+              </p>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSendResetLink}
+                disabled={sendingReset}
+                className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-60"
+              >
+                {sendingReset ? "Sending..." : "Send reset link to my email"}
+              </button>
+            )}
+          </div>
+        )}
       </form>
 
       <div className="mt-6 border-t border-line pt-4">
