@@ -174,9 +174,26 @@ async function hardenMultiUserConstraints(): Promise<void> {
 
 let schemaReady: Promise<void> | null = null;
 
+// Bump this whenever a new ALTER/CREATE is added below the version check.
+// Every schema statement in here is already idempotent (IF NOT EXISTS), so
+// re-running them is always *safe* — but on serverless, schemaReady's
+// in-memory cache is wiped on every cold start, and this function used to
+// unconditionally re-run all ~50 of them (each its own network round trip
+// to Neon) before the very first query of a cold request could proceed.
+// Tracking a version in the DB means a cold start pays for one fast SELECT
+// instead, in the common case where nothing's actually changed.
+const CURRENT_SCHEMA_VERSION = 1;
+
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
     schemaReady = (async () => {
+      await sql`CREATE TABLE IF NOT EXISTS schema_meta (version INTEGER NOT NULL DEFAULT 0);`;
+      await sql`INSERT INTO schema_meta (version) SELECT 0 WHERE NOT EXISTS (SELECT 1 FROM schema_meta);`;
+      const { rows: metaRows } = await sql<{ version: number }>`SELECT version FROM schema_meta LIMIT 1;`;
+      if ((metaRows[0]?.version ?? 0) >= CURRENT_SCHEMA_VERSION) {
+        return;
+      }
+
       await sql`
         CREATE TABLE IF NOT EXISTS expenses (
           id SERIAL PRIMARY KEY,
@@ -502,6 +519,8 @@ function ensureSchema(): Promise<void> {
           `;
         }
       }
+
+      await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
   return schemaReady;
