@@ -12,6 +12,7 @@ import { CategoriesProvider } from "@/lib/categories-context";
 import { CurrencyProvider } from "@/lib/currency-context";
 import { WalletsProvider } from "@/lib/wallets-context";
 import PullToRefresh from "./PullToRefresh";
+import BudgetAlerts from "./BudgetAlerts";
 import DashboardWidgetContent from "./DashboardWidgetContent";
 import EditBalanceModal from "./EditBalanceModal";
 import AddExpenseModal from "./AddExpenseModal";
@@ -66,6 +67,7 @@ export default function Dashboard({
             <AppHeader onAddClick={() => setAddingType("expense")} />
 
             <main className="flex-1 px-1 py-6 sm:px-2">
+              <BudgetAlerts expenses={expenses} budgets={budgets} />
               <div className="grid grid-cols-4 gap-4">
                 {widgets.map((w) => (
                   <div key={w.id} className={WIDGET_WIDTH_COLSPAN[w.width]}>

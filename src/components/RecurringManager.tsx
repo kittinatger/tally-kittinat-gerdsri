@@ -31,10 +31,11 @@ export default function RecurringManager() {
 
   const [rules, setRules] = useState<RecurringRule[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [adding, setAdding] = useState(false);
+  const [formMode, setFormMode] = useState<"closed" | "add" | number>("closed");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const adding = formMode !== "closed";
 
   const [type, setType] = useState<TransactionType>("expense");
   const [direction, setDirection] = useState<TransferDirection>("out");
@@ -64,35 +65,70 @@ export default function RecurringManager() {
   const defaultWallet = wallets.find((w) => w.isDefault) ?? wallets[0];
   const selectedWalletName = wallets.find((w) => w.id === (walletId ?? defaultWallet?.id))?.name ?? "";
 
-  async function handleAdd(e: React.FormEvent) {
+  function resetForm() {
+    setFormMode("closed");
+    setAmount("");
+    setMerchant("");
+    setCategory("Other");
+    setType("expense");
+    setWalletId(null);
+    setFrequency("monthly");
+    setStartDate(todayInputValue());
+  }
+
+  function startAdd() {
+    resetForm();
+    setFormMode("add");
+  }
+
+  function startEdit(rule: RecurringRule) {
+    setType(rule.type === "income" || rule.type === "transfer" ? rule.type : "expense");
+    setDirection(rule.direction === "in" ? "in" : "out");
+    setAmount(rule.amount);
+    setMerchant(rule.merchant);
+    setCategory(rule.category);
+    setWalletId(rule.wallet_id);
+    setFrequency(rule.frequency);
+    setError(null);
+    setFormMode(rule.id);
+  }
+
+  async function handleSubmitForm(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/recurring", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type,
-          direction: type === "transfer" ? direction : undefined,
-          amount: Number(amount),
-          merchant,
-          category,
-          walletId,
-          frequency,
-          startDate,
-        }),
-      });
+      const isEdit = typeof formMode === "number";
+      const res = isEdit
+        ? await fetch(`/api/recurring/${formMode}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ amount: Number(amount), merchant, category, walletId, frequency }),
+          })
+        : await fetch("/api/recurring", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type,
+              direction: type === "transfer" ? direction : undefined,
+              amount: Number(amount),
+              merchant,
+              category,
+              walletId,
+              frequency,
+              startDate,
+            }),
+          });
       const data = await res.json();
       if (!res.ok) {
         setError(typeof data.error === "string" ? data.error : "Could not save that rule.");
         return;
       }
-      setRules((prev) => [...(prev ?? []), data.rule]);
-      setAdding(false);
-      setAmount("");
-      setMerchant("");
-      setCategory("Other");
+      const saved = isEdit ? data.rule : data.rule;
+      setRules((prev) =>
+        isEdit ? (prev ?? []).map((r) => (r.id === saved.id ? saved : r)) : [...(prev ?? []), saved],
+      );
+      resetForm();
     } catch {
       setError("Network error while saving.");
     } finally {
@@ -134,7 +170,7 @@ export default function RecurringManager() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className="font-display text-xl text-foreground">Recurring transactions</h3>
         <button
-          onClick={() => setAdding((v) => !v)}
+          onClick={() => (adding ? resetForm() : startAdd())}
           className="flex items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark"
         >
           {adding ? "Cancel" : "Add rule"}
@@ -146,27 +182,33 @@ export default function RecurringManager() {
       </p>
 
       {adding && (
-        <form onSubmit={handleAdd} className="mt-4 space-y-3 rounded-card border border-line bg-surface p-4">
-          <div className="flex gap-1 rounded-full bg-bg-soft p-1">
-            {(["expense", "income", "transfer"] as TransactionType[]).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => {
-                  setType(t);
-                  const stillValid = allCategories.some((c) => c.type === t && c.name === category);
-                  if (!stillValid) setCategory("Other");
-                }}
-                className={`flex-1 rounded-full py-2 text-sm font-semibold capitalize transition ${
-                  type === t ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+        <form onSubmit={handleSubmitForm} className="mt-4 space-y-3 rounded-card border border-line bg-surface p-4">
+          {typeof formMode === "number" ? (
+            <p className="text-sm font-semibold capitalize text-surface-foreground-soft">
+              Editing {type} rule — type can&apos;t be changed; delete and re-add to change it.
+            </p>
+          ) : (
+            <div className="flex gap-1 rounded-full bg-bg-soft p-1">
+              {(["expense", "income", "transfer"] as TransactionType[]).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => {
+                    setType(t);
+                    const stillValid = allCategories.some((c) => c.type === t && c.name === category);
+                    if (!stillValid) setCategory("Other");
+                  }}
+                  className={`flex-1 rounded-full py-2 text-sm font-semibold capitalize transition ${
+                    type === t ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          )}
 
-          {type === "transfer" && (
+          {type === "transfer" && typeof formMode !== "number" && (
             <div className="flex gap-1 rounded-full bg-bg-soft p-1">
               <button
                 type="button"
@@ -251,16 +293,18 @@ export default function RecurringManager() {
             )}
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">Starts on</label>
-            <input
-              type="date"
-              required
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full rounded-card border border-surface-line bg-surface-soft px-3.5 py-2.5 text-base text-surface-foreground outline-none transition focus:border-surface-accent focus:ring-2 focus:ring-surface-accent/20"
-            />
-          </div>
+          {typeof formMode !== "number" && (
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">Starts on</label>
+              <input
+                type="date"
+                required
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full rounded-card border border-surface-line bg-surface-soft px-3.5 py-2.5 text-base text-surface-foreground outline-none transition focus:border-surface-accent focus:ring-2 focus:ring-surface-accent/20"
+              />
+            </div>
+          )}
 
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
@@ -270,7 +314,7 @@ export default function RecurringManager() {
               disabled={submitting}
               className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
             >
-              {submitting ? "Saving..." : "Save rule"}
+              {submitting ? "Saving..." : typeof formMode === "number" ? "Save changes" : "Save rule"}
             </button>
           </div>
         </form>
@@ -297,6 +341,12 @@ export default function RecurringManager() {
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-1">
+                <button
+                  onClick={() => startEdit(r)}
+                  className="rounded-full px-2.5 py-1.5 text-[11px] font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
+                >
+                  Edit
+                </button>
                 <button
                   onClick={() => toggleActive(r)}
                   disabled={busyId === r.id}

@@ -50,6 +50,7 @@ export default async function SettingsPage() {
     hasReceipt: r.has_receipt,
     walletId: r.wallet_id,
     walletName: r.wallet_name,
+    splitGroupId: r.split_group_id,
   }));
 
   return (

@@ -491,6 +491,7 @@ async function createSplitExpense(values: ExpenseFormValues): Promise<Expense[]>
     hasReceipt: (e.has_receipt as boolean) ?? false,
     walletId: (e.wallet_id as number | null) ?? null,
     walletName: (e.wallet_name as string | null) ?? null,
+    splitGroupId: (e.split_group_id as string | null) ?? null,
   }));
 }
 
@@ -527,5 +528,6 @@ async function createExpense(values: ExpenseFormValues): Promise<Expense> {
     hasReceipt: data.expense.has_receipt ?? false,
     walletId: data.expense.wallet_id ?? null,
     walletName: data.expense.wallet_name ?? null,
+    splitGroupId: data.expense.split_group_id ?? null,
   };
 }

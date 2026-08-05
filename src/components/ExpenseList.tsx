@@ -5,12 +5,34 @@ import { signedAmount, type Expense } from "@/types/expense";
 import type { TransactionType } from "@/lib/categories";
 import { monthKey, monthLabel, formatCurrency, todayInputValue } from "@/lib/format";
 import { useAllCategories } from "@/lib/categories-context";
+import { useWallets } from "@/lib/wallets-context";
 import { useCurrency } from "@/lib/currency-context";
 import ExpenseRow from "./ExpenseRow";
+import SplitExpenseGroup from "./SplitExpenseGroup";
 import FilterDropdown from "./FilterDropdown";
 import DateRangeFilter from "./DateRangeFilter";
 
 type TypeFilter = "all" | TransactionType;
+
+type DisplayRow = { kind: "single"; expense: Expense } | { kind: "split"; groupId: string; items: Expense[] };
+
+// Splits share a split_group_id purely for display grouping (see
+// createSplitExpense) — collapses each group into one row here, in the
+// list's normal sort order, rather than showing every line separately.
+function buildDisplayRows(items: Expense[]): DisplayRow[] {
+  const seen = new Set<string>();
+  const rows: DisplayRow[] = [];
+  for (const e of items) {
+    if (e.splitGroupId) {
+      if (seen.has(e.splitGroupId)) continue;
+      seen.add(e.splitGroupId);
+      rows.push({ kind: "split", groupId: e.splitGroupId, items: items.filter((x) => x.splitGroupId === e.splitGroupId) });
+    } else {
+      rows.push({ kind: "single", expense: e });
+    }
+  }
+  return rows;
+}
 
 export default function ExpenseList({
   expenses,
@@ -24,11 +46,13 @@ export default function ExpenseList({
   onBulkUpdated: (expenses: Expense[]) => void;
 }) {
   const allCategories = useAllCategories();
+  const wallets = useWallets();
   const currency = useCurrency();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState("all");
+  const [walletFilter, setWalletFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const filterBarRef = useRef<HTMLDivElement>(null);
@@ -165,6 +189,7 @@ export default function ExpenseList({
       if (typeFilter !== "all" && e.type !== typeFilter) return false;
       if (categoryFilter !== "all" && e.category !== categoryFilter) return false;
       if (tagFilter !== "all" && !e.tags.includes(tagFilter)) return false;
+      if (walletFilter !== "all" && e.walletName !== walletFilter) return false;
       if (dateFrom && e.date < dateFrom) return false;
       if (dateTo && e.date > dateTo) return false;
       if (q) {
@@ -173,7 +198,7 @@ export default function ExpenseList({
       }
       return true;
     });
-  }, [expenses, search, typeFilter, categoryFilter, tagFilter, dateFrom, dateTo]);
+  }, [expenses, search, typeFilter, categoryFilter, tagFilter, walletFilter, dateFrom, dateTo]);
 
   function exportCsv() {
     const header = ["Date", "Type", "Merchant", "Category", "Tags", "Amount", "Notes"];
@@ -276,6 +301,15 @@ export default function ExpenseList({
 
         {tagOptions.length > 0 && (
           <FilterDropdown value={tagFilter} allLabel="All tags" options={tagOptions} onChange={setTagFilter} />
+        )}
+
+        {wallets.length > 1 && (
+          <FilterDropdown
+            value={walletFilter}
+            allLabel="All wallets"
+            options={wallets.map((w) => w.name)}
+            onChange={setWalletFilter}
+          />
         )}
 
         <DateRangeFilter
@@ -386,17 +420,35 @@ export default function ExpenseList({
                   </span>
                 </div>
                 <div className="overflow-hidden rounded-card border border-surface-line bg-surface">
-                  {items.map((expense, i) => (
-                    <ExpenseRow
-                      key={expense.id}
-                      expense={expense}
-                      onClick={() => onSelect(expense)}
-                      isLast={i === items.length - 1}
-                      selectMode={selectMode}
-                      selected={selectedIds.has(expense.id)}
-                      onToggleSelect={() => toggleSelected(expense.id)}
-                    />
-                  ))}
+                  {selectMode
+                    ? items.map((expense, i) => (
+                        <ExpenseRow
+                          key={expense.id}
+                          expense={expense}
+                          onClick={() => onSelect(expense)}
+                          isLast={i === items.length - 1}
+                          selectMode
+                          selected={selectedIds.has(expense.id)}
+                          onToggleSelect={() => toggleSelected(expense.id)}
+                        />
+                      ))
+                    : buildDisplayRows(items).map((row, i, arr) =>
+                        row.kind === "split" ? (
+                          <SplitExpenseGroup
+                            key={row.groupId}
+                            items={row.items}
+                            onSelectLine={onSelect}
+                            isLast={i === arr.length - 1}
+                          />
+                        ) : (
+                          <ExpenseRow
+                            key={row.expense.id}
+                            expense={row.expense}
+                            onClick={() => onSelect(row.expense)}
+                            isLast={i === arr.length - 1}
+                          />
+                        ),
+                      )}
                 </div>
               </section>
             );

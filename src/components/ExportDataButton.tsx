@@ -49,6 +49,7 @@ export default function ExportDataButton() {
           hasReceipt: false,
           walletId: null,
           walletName: null,
+          splitGroupId: null,
         });
         lines.push(
           [

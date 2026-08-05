@@ -156,9 +156,19 @@ export const recurringRuleInputSchema = z.object({
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
 });
 
-export const recurringRuleUpdateSchema = z.object({
-  active: z.boolean(),
-});
+export const recurringRuleUpdateSchema = z
+  .object({
+    active: z.boolean().optional(),
+    amount: z.number().positive().finite().optional(),
+    merchant: z.string().trim().min(1).max(200).optional(),
+    category: z.string().trim().min(1).max(60).optional(),
+    notes: z.string().trim().max(500).nullable().optional(),
+    walletId: z.number().int().positive().nullable().optional(),
+    frequency: z.enum(RECURRING_FREQUENCIES).optional(),
+  })
+  .refine((data) => Object.values(data).some((v) => v !== undefined), {
+    message: "Provide at least one field to update",
+  });
 
 export const budgetInputSchema = z.object({
   category: z.string().trim().min(1).max(60),

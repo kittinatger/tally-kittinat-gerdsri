@@ -23,6 +23,7 @@ export type Expense = {
   hasReceipt: boolean;
   walletId: number | null;
   walletName: string | null;
+  splitGroupId: string | null;
 };
 
 export function signedAmount(expense: Expense): number {

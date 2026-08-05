@@ -16,6 +16,7 @@ export type Expense = {
   has_receipt: boolean;
   wallet_id: number | null;
   wallet_name: string | null;
+  split_group_id: string | null;
 };
 
 // Dates and amounts are cast explicitly to text in every query so the
@@ -983,7 +984,8 @@ export async function listExpenses(userId: number): Promise<Expense[]> {
       e.tags,
       (e.receipt_image IS NOT NULL) AS has_receipt,
       e.wallet_id,
-      w.name AS wallet_name
+      w.name AS wallet_name,
+      e.split_group_id
     FROM expenses e
     LEFT JOIN wallets w ON w.id = e.wallet_id
     WHERE e.user_id = ${userId}
@@ -1062,7 +1064,8 @@ export async function createExpense(userId: number, input: ExpenseInput): Promis
       inserted.tags,
       (inserted.receipt_image IS NOT NULL) AS has_receipt,
       inserted.wallet_id,
-      w.name AS wallet_name
+      w.name AS wallet_name,
+      inserted.split_group_id
     FROM inserted
     LEFT JOIN wallets w ON w.id = inserted.wallet_id;
   `;
@@ -1100,7 +1103,8 @@ export async function updateExpense(userId: number, id: number, input: ExpenseIn
       updated.tags,
       (updated.receipt_image IS NOT NULL) AS has_receipt,
       updated.wallet_id,
-      w.name AS wallet_name
+      w.name AS wallet_name,
+      updated.split_group_id
     FROM updated
     LEFT JOIN wallets w ON w.id = updated.wallet_id;
   `;
@@ -1324,18 +1328,36 @@ export async function createRecurringRule(
 export async function updateRecurringRule(
   userId: number,
   id: number,
-  input: { active?: boolean },
+  input: {
+    active?: boolean;
+    amount?: number;
+    merchant?: string;
+    category?: string;
+    notes?: string | null;
+    walletId?: number | null;
+    frequency?: string;
+  },
 ): Promise<RecurringRuleRow | null> {
   await ensureSchema();
-  if (input.active === undefined) {
-    const { rows } = await sql<RecurringRuleRow>`
-      SELECT id, type, direction, amount::text AS amount, merchant, category, notes, wallet_id, frequency, to_char(next_run_date, 'YYYY-MM-DD') AS next_run_date, active
-      FROM recurring_rules WHERE id = ${id} AND user_id = ${userId};
-    `;
-    return rows[0] ?? null;
-  }
+  const { rows: existingRows } = await sql<RecurringRuleRow>`
+    SELECT id, type, direction, amount::text AS amount, merchant, category, notes, wallet_id, frequency, to_char(next_run_date, 'YYYY-MM-DD') AS next_run_date, active
+    FROM recurring_rules WHERE id = ${id} AND user_id = ${userId};
+  `;
+  const existing = existingRows[0];
+  if (!existing) return null;
+
+  const newWalletId =
+    input.walletId !== undefined ? await resolveWalletId(userId, input.walletId) : existing.wallet_id;
+
   const { rows } = await sql<RecurringRuleRow>`
-    UPDATE recurring_rules SET active = ${input.active}
+    UPDATE recurring_rules
+    SET active = ${input.active ?? existing.active},
+        amount = ${input.amount ?? Number(existing.amount)},
+        merchant = ${input.merchant ?? existing.merchant},
+        category = ${input.category ?? existing.category},
+        notes = ${input.notes !== undefined ? input.notes : existing.notes},
+        wallet_id = ${newWalletId},
+        frequency = ${input.frequency ?? existing.frequency}
     WHERE id = ${id} AND user_id = ${userId}
     RETURNING id, type, direction, amount::text AS amount, merchant, category, notes, wallet_id, frequency, to_char(next_run_date, 'YYYY-MM-DD') AS next_run_date, active;
   `;
@@ -1517,7 +1539,7 @@ export async function createSplitExpense(
         inserted.id, inserted.type, inserted.direction,
         to_char(inserted.date, 'YYYY-MM-DD') AS date,
         inserted.amount::text AS amount, inserted.merchant, inserted.category, inserted.notes, inserted.tags,
-        (inserted.receipt_image IS NOT NULL) AS has_receipt, inserted.wallet_id, w.name AS wallet_name
+        (inserted.receipt_image IS NOT NULL) AS has_receipt, inserted.wallet_id, w.name AS wallet_name, inserted.split_group_id
       FROM inserted
       LEFT JOIN wallets w ON w.id = inserted.wallet_id;
     `;

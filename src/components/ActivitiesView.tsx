@@ -82,6 +82,7 @@ export default function ActivitiesView({
               onClose={() => setEditing(null)}
               onUpdated={handleUpdated}
               onDeleted={handleDeleted}
+              onDuplicated={handleCreated}
             />
           )}
         </div>
