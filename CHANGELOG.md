@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.11.0] - 2026-08-05
+
+### Added
+- 8 new dashboard widgets: net worth & wallet ticker cards with sparklines, today/pace pills, a no-spend day tracker, a balance hero card with quick Add Income/Expense buttons, a month-progress stepper, and an under-average spending streak card
+- Recurring transactions, in the new Settings > Budgeting section — rent, subscriptions, salary logged automatically on a weekly/monthly/yearly schedule; editable, pausable, and reorderable
+- Budgets, in Settings > Budgeting — a monthly spending limit per category, a Dashboard widget showing progress, and a dismissible alert banner when a category nears or goes over its limit
+- Savings goals, in Settings > Budgeting — track progress toward something you're saving for, with manual contribute/withdraw and a Dashboard progress widget
+- CSV export and import of your full transaction history — import accepts common column-name synonyms and infers expense vs. income from the amount's sign when a file has no explicit type column
+- Split transactions — log one receipt as multiple category lines from Add > Manual entry; shown as a single grouped card in Activities
+- Bulk select in Activities — delete or add a tag to multiple transactions at once
+- Category icons — an optional emoji alongside each category's color
+- Wallet filter in Activities, alongside the existing category/tag/date filters
+- Attach a receipt photo to a manually-entered transaction after the fact
+- Duplicate a transaction from the edit screen
+- Photos permission row in Settings > Permissions, alongside Camera and Microphone
+- Email-based password reset — set an email in Settings > Account, then use "Forgot password?" on the login screen, or "Send reset link to my email" right there in Account settings without logging out
+
+### Changed
+- The ticker cards, pills, no-spend tracker, and streak card now use the app's light/dark theme and accent palette instead of fixed colors
+- Customize dashboard's paintbrush icon now matches the "Customize dashboard" icon used in Settings
+
 ## [0.10.0] - 2026-08-03
 
 ### Added
