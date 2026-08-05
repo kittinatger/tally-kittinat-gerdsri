@@ -1,0 +1,21 @@
+{
+  "name": "Tally — Personal Expense Tracker",
+  "short_name": "Tally",
+  "description": "A private, personal expense tracker with receipt scanning, voice entry, and automatic currency conversion.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#eef4ef",
+  "theme_color": "#eef4ef",
+  "icons": [
+    {
+      "src": "/apple-icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Radley, Arimo } from "next/font/google";
 import ThemeSync from "@/components/ThemeSync";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
 const radley = Radley({
@@ -18,6 +19,12 @@ const arimo = Arimo({
 export const metadata: Metadata = {
   title: "Tally — Personal Expense Tracker",
   description: "A private, personal expense tracker with receipt scanning.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Tally",
+  },
   icons: {
     icon: [
       { url: "/favicon-light.svg", type: "image/svg+xml", media: "(prefers-color-scheme: light)" },
@@ -54,6 +61,7 @@ export default function RootLayout({
       </head>
       <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
         <ThemeSync />
+        <ServiceWorkerRegister />
         {children}
       </body>
     </html>
