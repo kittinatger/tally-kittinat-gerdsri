@@ -107,7 +107,7 @@ https://tally-xyz123.vercel.app
 2. **You'll see empty boxes to fill in**
    - Click in the first box labeled "Name"
 
-3. **Add these three secrets one at a time** (follow the exact steps below)
+3. **Add these three required secrets one at a time** (follow the exact steps below), plus the optional `RESEND_API_KEY` one further down if you want password reset / notification emails to work
 
 ---
 
@@ -178,6 +178,27 @@ This tells Tally where to store your expenses.
 
 8. **Click "Save"**
 
+---
+
+### Optional: `RESEND_API_KEY` (for password reset & notification emails)
+
+Skip this if you don't need email — everything except password reset and the
+optional recurring/budget notification emails works without it.
+
+1. **Get a free API key**: [Get Resend API Key](https://resend.com/api-keys) (sign up first if you don't have an account)
+2. **Click "Add new..."** in Vercel's Environment Variables screen
+3. **In the "Name" box**, type exactly:
+   ```
+   RESEND_API_KEY
+   ```
+4. **In the "Value" box**, paste your Resend API key
+5. **Click "Save"**
+
+By default, emails send from Resend's shared testing address, which only
+delivers to the email on your own Resend account — fine for trying it out.
+For real use, verify a domain in Resend and add one more variable,
+`EMAIL_FROM`, set to an address on that domain (e.g. `Tally <noreply@yourdomain.com>`).
+
 ## Step 5: Redeploy (2 minutes)
 
 1. Go to **Deployments** (left sidebar)
@@ -217,6 +238,10 @@ Anyone else who wants to use this same deployment (family, friends) can go to th
 - Make sure `GEMINI_API_KEY` is set correctly in Environment Variables
 - Click **Redeploy**
 - Manual expense entry still works without the API key
+
+### "Forgot password email never arrives" / notification emails don't send
+- Make sure `RESEND_API_KEY` is set in Environment Variables, then **Redeploy** — this is optional, so the app runs fine without it, but email features silently do nothing until it's set
+- If you haven't set `EMAIL_FROM`, emails only deliver to the address on your own Resend account (Resend's shared testing sender) — verify a domain in Resend and set `EMAIL_FROM` for real delivery
 
 ## You're Done!
 
