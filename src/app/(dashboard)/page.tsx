@@ -10,6 +10,7 @@ import {
   listBudgets,
   listSavingsGoals,
 } from "@/lib/db";
+import { after } from "next/server";
 import { getUserId } from "@/lib/auth";
 import { sendPendingNotifications } from "@/lib/notifications";
 import Dashboard from "@/components/Dashboard";
@@ -85,7 +86,10 @@ export default async function HomePage() {
     balance: Number(w.balance),
   }));
 
-  await sendPendingNotifications(userId, loggedRecurring, budgetRows, expenses, currency);
+  // Scheduled to run after the response is sent, not awaited here — email
+  // notifications (and the DB/Resend calls they involve) have no business
+  // delaying the page render itself.
+  after(() => sendPendingNotifications(userId, loggedRecurring, budgetRows, expenses, currency));
 
   return (
     <Dashboard
