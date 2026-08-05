@@ -51,15 +51,15 @@ export default function NotificationSettings({ hasEmail }: { hasEmail: boolean }
   }
 
   return (
-    <div className="rounded-card border border-line bg-surface p-5">
-      <h3 className="mb-1 font-display text-xl text-foreground">Email notifications</h3>
+    <div>
+      <p className="mb-3.5 text-sm font-medium text-foreground">Email notifications</p>
       {!hasEmail ? (
-        <p className="text-sm text-ink-soft">
-          Set an email in Settings &gt; Account to enable email notifications.
+        <p className="text-[11px] leading-snug text-ink-soft">
+          Add an email in Account first to enable email notifications.
         </p>
       ) : (
         <>
-          <p className="mb-3.5 text-sm text-ink-soft">
+          <p className="mb-3.5 text-[11px] leading-snug text-ink-soft">
             There&apos;s no background worker in this app — notifications send the next time you open Tally after
             the triggering event, not the instant it happens.
           </p>

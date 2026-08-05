@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import NotificationSettings from "./NotificationSettings";
 
 type PermissionStatus = "granted" | "denied" | "prompt" | "unsupported";
 
-export default function PermissionsSettings() {
+export default function PermissionsSettings({ hasEmail }: { hasEmail: boolean }) {
   const [micStatus, setMicStatus] = useState<PermissionStatus>("unsupported");
   const [cameraStatus, setCameraStatus] = useState<PermissionStatus>("unsupported");
   const [photosStatus, setPhotosStatus] = useState<PermissionStatus>("prompt");
@@ -103,6 +104,10 @@ export default function PermissionsSettings() {
           e.target.value = "";
         }}
       />
+      </div>
+
+      <div className="mt-3.5 border-t border-[var(--glass-border)] pt-3.5">
+        <NotificationSettings hasEmail={hasEmail} />
       </div>
     </div>
   );
