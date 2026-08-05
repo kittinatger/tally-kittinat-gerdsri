@@ -25,6 +25,7 @@ import ImportDataButton from "./ImportDataButton";
 import RecurringManager from "./RecurringManager";
 import BudgetManager from "./BudgetManager";
 import SavingsGoalsManager from "./SavingsGoalsManager";
+import NotificationSettings from "./NotificationSettings";
 import SettingsSection from "./SettingsSection";
 import SettingsListItem from "./SettingsListItem";
 
@@ -40,7 +41,8 @@ type Panel =
   | "dashboardWidgets"
   | "recurring"
   | "budgets"
-  | "savingsGoals";
+  | "savingsGoals"
+  | "notifications";
 
 const PANEL_TITLES: Record<Panel, string> = {
   account: "Account",
@@ -55,6 +57,7 @@ const PANEL_TITLES: Record<Panel, string> = {
   recurring: "Recurring transactions",
   budgets: "Budgets",
   savingsGoals: "Savings goals",
+  notifications: "Email notifications",
 };
 
 function AccountIcon() {
@@ -212,6 +215,15 @@ function GoalIcon() {
   );
 }
 
+function BellIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </svg>
+  );
+}
+
 function BackIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0">
@@ -276,6 +288,7 @@ export default function SettingsView({
                 {panel === "recurring" && <RecurringManager />}
                 {panel === "budgets" && <BudgetManager />}
                 {panel === "savingsGoals" && <SavingsGoalsManager />}
+                {panel === "notifications" && <NotificationSettings hasEmail={Boolean(email)} />}
                 {panel === "dashboardWidgets" && (
                   <DashboardWidgetsSettings
                     expenses={expenses}
@@ -306,6 +319,7 @@ export default function SettingsView({
                   <SettingsListItem icon={<RecurringIcon />} label="Recurring transactions" onClick={() => setPanel("recurring")} />
                   <SettingsListItem icon={<BudgetIcon />} label="Budgets" onClick={() => setPanel("budgets")} />
                   <SettingsListItem icon={<GoalIcon />} label="Savings goals" onClick={() => setPanel("savingsGoals")} />
+                  <SettingsListItem icon={<BellIcon />} label="Email notifications" onClick={() => setPanel("notifications")} />
                 </SettingsSection>
 
                 <SettingsSection title="Display">

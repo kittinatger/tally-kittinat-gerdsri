@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAllCategories } from "@/lib/categories-context";
 import { useWallets } from "@/lib/wallets-context";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency, todayInputValue } from "@/lib/format";
 import type { TransactionType, TransferDirection } from "@/lib/categories";
 import SelectDropdown from "./SelectDropdown";
+import CsvManagerButtons from "./CsvManagerButtons";
 
 type RecurringRule = {
   id: number;
@@ -46,20 +47,16 @@ export default function RecurringManager() {
   const [frequency, setFrequency] = useState("monthly");
   const [startDate, setStartDate] = useState(todayInputValue());
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/recurring")
+  const refetch = useCallback(() => {
+    return fetch("/api/recurring")
       .then((res) => res.json())
-      .then((data) => {
-        if (!cancelled) setRules(data.rules ?? []);
-      })
-      .catch(() => {
-        if (!cancelled) setLoadError("Could not load your recurring transactions.");
-      });
-    return () => {
-      cancelled = true;
-    };
+      .then((data) => setRules(data.rules ?? []))
+      .catch(() => setLoadError("Could not load your recurring transactions."));
   }, []);
+
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   const categories = allCategories.filter((c) => c.type === type);
   const defaultWallet = wallets.find((w) => w.isDefault) ?? wallets[0];
@@ -153,6 +150,23 @@ export default function RecurringManager() {
     }
   }
 
+  async function handleSkip(rule: RecurringRule) {
+    setBusyId(rule.id);
+    try {
+      const res = await fetch(`/api/recurring/${rule.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ skip: true }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRules((prev) => (prev ?? []).map((r) => (r.id === rule.id ? data.rule : r)));
+      }
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function handleMove(id: number, move: "up" | "down") {
     setBusyId(id);
     try {
@@ -195,6 +209,10 @@ export default function RecurringManager() {
         Rent, subscriptions, salary — logged automatically on the schedule you set, next time you open Tally on or
         after the due date.
       </p>
+
+      <div className="mt-3">
+        <CsvManagerButtons exportHref="/api/recurring/export" importUrl="/api/recurring/import" onImported={refetch} />
+      </div>
 
       {adding && (
         <form onSubmit={handleSubmitForm} className="mt-4 space-y-3 rounded-card border border-line bg-surface p-4">
@@ -384,6 +402,15 @@ export default function RecurringManager() {
                 >
                   Edit
                 </button>
+                {r.active && (
+                  <button
+                    onClick={() => handleSkip(r)}
+                    disabled={busyId === r.id}
+                    className="rounded-full px-2.5 py-1.5 text-[11px] font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
+                  >
+                    Skip next
+                  </button>
+                )}
                 <button
                   onClick={() => toggleActive(r)}
                   disabled={busyId === r.id}

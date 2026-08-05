@@ -41,3 +41,33 @@ export function passwordResetEmailHtml(resetUrl: string): string {
     </div>
   `;
 }
+
+export function recurringLoggedEmailHtml(
+  items: { merchant: string; amount: number; date: string; type: string }[],
+  currency: string,
+): string {
+  const rows = items
+    .map(
+      (i) =>
+        `<tr><td style="padding:6px 0;color:#333;">${i.merchant}</td><td style="padding:6px 0;color:#666;text-align:right;">${i.type === "income" ? "+" : "-"}${i.amount.toFixed(2)} ${currency}</td><td style="padding:6px 0;color:#999;text-align:right;">${i.date}</td></tr>`,
+    )
+    .join("");
+  return `
+    <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto;">
+      <h2 style="color: #1f7a5c;">Recurring transactions logged</h2>
+      <p>Tally just auto-logged ${items.length} recurring transaction${items.length === 1 ? "" : "s"} on your account:</p>
+      <table style="width:100%; border-collapse:collapse; font-size:14px;">${rows}</table>
+      <p style="color: #666; font-size: 13px; margin-top: 20px;">Manage recurring transactions in Settings &gt; Budgeting.</p>
+    </div>
+  `;
+}
+
+export function budgetOverLimitEmailHtml(category: string, spent: number, limit: number, currency: string): string {
+  return `
+    <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto;">
+      <h2 style="color: #dc2626;">Over budget: ${category}</h2>
+      <p>You've spent ${spent.toFixed(2)} ${currency} against your ${limit.toFixed(2)} ${currency} monthly budget for <strong>${category}</strong> this month.</p>
+      <p style="color: #666; font-size: 13px; margin-top: 20px;">Manage budgets in Settings &gt; Budgeting.</p>
+    </div>
+  `;
+}

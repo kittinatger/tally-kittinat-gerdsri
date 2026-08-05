@@ -14,6 +14,10 @@ export default function CurrencySettings() {
   const [savingAutoConvert, setSavingAutoConvert] = useState(false);
   const [autoConvertError, setAutoConvertError] = useState<string | null>(null);
 
+  const [convertBalances, setConvertBalances] = useState(false);
+  const [savingConvertBalances, setSavingConvertBalances] = useState(false);
+  const [convertBalancesError, setConvertBalancesError] = useState<string | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     fetch("/api/settings")
@@ -21,9 +25,10 @@ export default function CurrencySettings() {
       .then((data) => {
         if (cancelled) return;
         setAutoConvert(Boolean(data.autoConvertCurrency));
+        setConvertBalances(Boolean(data.convertWalletBalances));
       })
       .catch(() => {
-        // Leave the toggle at its default; the user can still flip it.
+        // Leave the toggles at their defaults; the user can still flip them.
       });
     return () => {
       cancelled = true;
@@ -75,6 +80,31 @@ export default function CurrencySettings() {
     }
   }
 
+  async function handleConvertBalancesToggle() {
+    const next = !convertBalances;
+    setConvertBalances(next);
+    setSavingConvertBalances(true);
+    setConvertBalancesError(null);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ convertWalletBalances: next }),
+      });
+      if (!res.ok) {
+        setConvertBalances(!next);
+        setConvertBalancesError("Could not save.");
+        return;
+      }
+      router.refresh();
+    } catch {
+      setConvertBalances(!next);
+      setConvertBalancesError("Network error while saving.");
+    } finally {
+      setSavingConvertBalances(false);
+    }
+  }
+
   return (
     <div className="rounded-card border border-line bg-surface p-5">
       <div>
@@ -110,6 +140,35 @@ export default function CurrencySettings() {
           </button>
         </div>
         {autoConvertError && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{autoConvertError}</p>}
+      </div>
+
+      <div className="mt-3.5 border-t border-[var(--glass-border)] pt-3.5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-foreground">Convert wallet balances</p>
+            <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">
+              Convert wallets in a different currency to {currency} for the Dashboard&apos;s Net worth total.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleConvertBalancesToggle}
+            disabled={savingConvertBalances}
+            role="switch"
+            aria-checked={convertBalances}
+            aria-label="Toggle wallet balance conversion"
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-60 ${
+              convertBalances ? "bg-navy" : "bg-bg-soft"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                convertBalances ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+        {convertBalancesError && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{convertBalancesError}</p>}
       </div>
     </div>
   );

@@ -26,6 +26,7 @@ function sortByDateDesc(a: Expense, b: Expense): number {
 export default function Dashboard({
   initialExpenses,
   initialRemaining,
+  convertedNetWorth,
   categories,
   currency,
   wallets,
@@ -35,6 +36,8 @@ export default function Dashboard({
 }: {
   initialExpenses: Expense[];
   initialRemaining: number;
+  /** Net worth with each wallet's non-default-currency balance converted, when the user opts in — display-only, never fed back into editing "Remaining". */
+  convertedNetWorth: number;
   categories: CategoryOption[];
   currency: string;
   wallets: WalletOption[];
@@ -81,6 +84,7 @@ export default function Dashboard({
                       expenses={expenses}
                       categories={categories}
                       remaining={remaining}
+                      convertedNetWorth={convertedNetWorth}
                       budgets={budgets}
                       savingsGoals={savingsGoals}
                       onEditBalance={() => setEditingBalance(true)}

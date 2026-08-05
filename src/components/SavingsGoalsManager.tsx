@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { dotClasses } from "@/lib/category-styles";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency } from "@/lib/format";
 import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
+import CsvManagerButtons from "./CsvManagerButtons";
 
 type SavingsGoal = { id: number; name: string; color: string; target_amount: string; current_amount: string };
 
@@ -23,20 +24,16 @@ export default function SavingsGoalsManager() {
   const [target, setTarget] = useState("");
   const [color, setColor] = useState<string>(WIDGET_ACCENTS[0]);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/savings-goals")
+  const refetch = useCallback(() => {
+    return fetch("/api/savings-goals")
       .then((res) => res.json())
-      .then((data) => {
-        if (!cancelled) setGoals(data.goals ?? []);
-      })
-      .catch(() => {
-        if (!cancelled) setLoadError("Could not load your savings goals.");
-      });
-    return () => {
-      cancelled = true;
-    };
+      .then((data) => setGoals(data.goals ?? []))
+      .catch(() => setLoadError("Could not load your savings goals."));
   }, []);
+
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -124,6 +121,10 @@ export default function SavingsGoalsManager() {
       <p className="mt-2 text-[11px] leading-snug text-ink-soft">
         Track progress toward something you&apos;re saving for. Add contributions manually as you set money aside.
       </p>
+
+      <div className="mt-3">
+        <CsvManagerButtons exportHref="/api/savings-goals/export" importUrl="/api/savings-goals/import" onImported={refetch} />
+      </div>
 
       {adding && (
         <form onSubmit={handleAdd} className="mt-4 space-y-3 rounded-card border border-line bg-surface p-4">

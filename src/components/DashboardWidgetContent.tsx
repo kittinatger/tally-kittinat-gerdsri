@@ -6,6 +6,7 @@ import type { Budget } from "@/types/budget";
 import type { SavingsGoal } from "@/types/savings-goal";
 import type { DashboardWidgetInstance } from "@/lib/dashboard-widgets";
 import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
+import { computeEffectiveBudgetLimit } from "@/lib/budget-rollover";
 import { formatCurrency, monthKey, todayInputValue } from "@/lib/format";
 import { accentTextClasses, accentBgClasses } from "@/lib/category-styles";
 import { useCurrency } from "@/lib/currency-context";
@@ -136,6 +137,7 @@ export default function DashboardWidgetContent({
   expenses,
   categories,
   remaining,
+  convertedNetWorth,
   budgets = [],
   savingsGoals = [],
   onEditBalance,
@@ -146,6 +148,8 @@ export default function DashboardWidgetContent({
   expenses: Expense[];
   categories: CategoryOption[];
   remaining: number;
+  /** Optional currency-converted net worth for the "netWorth" widget — falls back to `remaining` when not provided (e.g. in the Customize dashboard preview). */
+  convertedNetWorth?: number;
   budgets?: Budget[];
   savingsGoals?: SavingsGoal[];
   onEditBalance?: () => void;
@@ -279,7 +283,12 @@ export default function DashboardWidgetContent({
       );
     case "netWorth":
       return (
-        <StatWidget label="Net worth" value={formatCurrency(remaining, currency)} sublabel="All wallets combined" valueClassName={accentText} />
+        <StatWidget
+          label="Net worth"
+          value={formatCurrency(convertedNetWorth ?? remaining, currency)}
+          sublabel="All wallets combined"
+          valueClassName={accentText}
+        />
       );
     case "totalBalance": {
       const total = wallets.reduce((s, w) => s + w.balance, 0);
@@ -797,14 +806,18 @@ export default function DashboardWidgetContent({
 
     // ---- Budgets & goals ----
     case "budgetOverview": {
-      const items = budgets.map((b, i) => ({
-        category: b.category,
-        spent: sum(monthExpenses.filter((e) => e.category === b.category)),
-        limit: b.monthlyLimit,
-        displaySpent: formatCurrency(sum(monthExpenses.filter((e) => e.category === b.category)), currency),
-        displayLimit: formatCurrency(b.monthlyLimit, currency),
-        colorClassName: accentBgClasses(colorFor(i)),
-      }));
+      const items = budgets.map((b, i) => {
+        const limit = computeEffectiveBudgetLimit(expenses, b, currentMonthKey);
+        const spentAmount = sum(monthExpenses.filter((e) => e.category === b.category));
+        return {
+          category: b.category,
+          spent: spentAmount,
+          limit,
+          displaySpent: formatCurrency(spentAmount, currency),
+          displayLimit: formatCurrency(limit, currency),
+          colorClassName: accentBgClasses(colorFor(i)),
+        };
+      });
       return <BudgetOverviewWidget items={items} />;
     }
     case "savingsGoals": {

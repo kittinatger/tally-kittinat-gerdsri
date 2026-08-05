@@ -2,6 +2,7 @@ import { sql, db } from "@vercel/postgres";
 import { createHash, randomBytes } from "crypto";
 import type { ExpenseInput } from "@/lib/validation";
 import { hashPassword } from "@/lib/password";
+import { convertAmount } from "@/lib/exchange-rate";
 import { normalizeDashboardWidgets, type DashboardWidgetInstance } from "@/lib/dashboard-widgets";
 
 export type Expense = {
@@ -222,6 +223,17 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS currency TEXT NOT NULL DEFAULT 'USD';`;
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS auto_convert_currency BOOLEAN NOT NULL DEFAULT false;`;
 
+      // convert_wallet_balances: when a wallet's own currency differs from
+      // the app's default, convert it before summing into the Dashboard's
+      // Remaining/net-worth figure — off by default since it costs a live
+      // exchange-rate lookup per distinct wallet currency on every load.
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS convert_wallet_balances BOOLEAN NOT NULL DEFAULT false;`;
+      // Opt-in email notifications, sent the next time the dashboard loads
+      // after the triggering event (there's no cron worker in this
+      // deployment — see processDueRecurringRules).
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS notify_recurring_email BOOLEAN NOT NULL DEFAULT false;`;
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS notify_budget_email BOOLEAN NOT NULL DEFAULT false;`;
+
       // Calendar preferences: week_start_day is 0 (Sunday) through 6
       // (Saturday); month_start_day/biweekly_anchor_date define custom
       // budgeting periods; default_view/timezone/show_week_numbers/
@@ -397,6 +409,13 @@ function ensureSchema(): Promise<void> {
       // dismissed for — a dismissal only silences the alert for that one
       // month; it reappears once a new month starts.
       await sql`ALTER TABLE budgets ADD COLUMN IF NOT EXISTS dismissed_alert_month TEXT;`;
+      // Whether unused budget carries forward into the next month (compounding,
+      // capped at a 12-month lookback — see computeEffectiveBudgetLimit).
+      await sql`ALTER TABLE budgets ADD COLUMN IF NOT EXISTS rollover BOOLEAN NOT NULL DEFAULT false;`;
+      // Separate from dismissed_alert_month: tracks which month we last sent
+      // an over-budget email for, so it only ever sends once per month even
+      // if the in-app banner was dismissed (or wasn't).
+      await sql`ALTER TABLE budgets ADD COLUMN IF NOT EXISTS notified_alert_month TEXT;`;
 
       // Manually-tracked savings goals — current_amount is nudged by the
       // user via contributeToSavingsGoal rather than derived from real
@@ -904,6 +923,74 @@ export async function setAutoConvertCurrency(userId: number, enabled: boolean): 
   await ensureSchema();
   await sql`UPDATE app_settings SET auto_convert_currency = ${enabled} WHERE user_id = ${userId};`;
   return enabled;
+}
+
+export async function getConvertWalletBalances(userId: number): Promise<boolean> {
+  await ensureSchema();
+  const { rows } = await sql<{ convert_wallet_balances: boolean }>`
+    SELECT convert_wallet_balances FROM app_settings WHERE user_id = ${userId};
+  `;
+  return rows[0]?.convert_wallet_balances ?? false;
+}
+
+export async function setConvertWalletBalances(userId: number, enabled: boolean): Promise<boolean> {
+  await ensureSchema();
+  await sql`UPDATE app_settings SET convert_wallet_balances = ${enabled} WHERE user_id = ${userId};`;
+  return enabled;
+}
+
+export async function getNotifyRecurringEmail(userId: number): Promise<boolean> {
+  await ensureSchema();
+  const { rows } = await sql<{ notify_recurring_email: boolean }>`
+    SELECT notify_recurring_email FROM app_settings WHERE user_id = ${userId};
+  `;
+  return rows[0]?.notify_recurring_email ?? false;
+}
+
+export async function setNotifyRecurringEmail(userId: number, enabled: boolean): Promise<boolean> {
+  await ensureSchema();
+  await sql`UPDATE app_settings SET notify_recurring_email = ${enabled} WHERE user_id = ${userId};`;
+  return enabled;
+}
+
+export async function getNotifyBudgetEmail(userId: number): Promise<boolean> {
+  await ensureSchema();
+  const { rows } = await sql<{ notify_budget_email: boolean }>`
+    SELECT notify_budget_email FROM app_settings WHERE user_id = ${userId};
+  `;
+  return rows[0]?.notify_budget_email ?? false;
+}
+
+export async function setNotifyBudgetEmail(userId: number, enabled: boolean): Promise<boolean> {
+  await ensureSchema();
+  await sql`UPDATE app_settings SET notify_budget_email = ${enabled} WHERE user_id = ${userId};`;
+  return enabled;
+}
+
+// When enabled, converts each wallet's balance from its own currency label
+// (if set and different from the app default) into the app's default
+// currency before summing — so a mixed-currency Remaining/net-worth figure
+// is an actual total rather than raw addition across currencies. Falls back
+// to the plain (unconverted) sum if disabled, if a wallet has no currency
+// label, or if a conversion lookup fails.
+export async function getConvertedRemaining(userId: number): Promise<number> {
+  await ensureSchema();
+  const enabled = await getConvertWalletBalances(userId);
+  if (!enabled) return getRemaining(userId);
+
+  const [appCurrency, wallets] = await Promise.all([getCurrency(userId), listWallets(userId)]);
+
+  let total = 0;
+  for (const w of wallets) {
+    const balance = Number(w.balance);
+    if (!w.currency || w.currency === appCurrency) {
+      total += balance;
+      continue;
+    }
+    const converted = await convertAmount(balance, w.currency, appCurrency);
+    total += converted ?? balance;
+  }
+  return total;
 }
 
 export async function getDashboardWidgets(userId: number): Promise<DashboardWidgetInstance[]> {
@@ -1482,12 +1569,35 @@ export async function deleteRecurringRule(userId: number, id: number): Promise<b
   return (rowCount ?? 0) > 0;
 }
 
+// Advances next_run_date by one occurrence without logging an expense —
+// for "not this time" without pausing or deleting the whole rule.
+export async function skipRecurringRule(userId: number, id: number): Promise<RecurringRuleRow | null> {
+  await ensureSchema();
+  const { rows: existingRows } = await sql<{ next_run_date: string; frequency: string }>`
+    SELECT to_char(next_run_date, 'YYYY-MM-DD') AS next_run_date, frequency
+    FROM recurring_rules WHERE id = ${id} AND user_id = ${userId};
+  `;
+  const existing = existingRows[0];
+  if (!existing) return null;
+  const nextRunDate = advanceDate(existing.next_run_date, existing.frequency);
+  const { rows } = await sql<RecurringRuleRow>`
+    UPDATE recurring_rules SET next_run_date = ${nextRunDate}
+    WHERE id = ${id} AND user_id = ${userId}
+    RETURNING id, type, direction, amount::text AS amount, merchant, category, notes, wallet_id, frequency, to_char(next_run_date, 'YYYY-MM-DD') AS next_run_date, active;
+  `;
+  return rows[0] ?? null;
+}
+
 // Materializes any recurring rule whose next occurrence has arrived into a
 // real expense row, then advances next_run_date — called on every dashboard
 // load rather than via a separate cron job/worker, which this deployment
 // doesn't have. Caps catch-up at 36 occurrences per rule so a long-dormant
 // rule (e.g. re-activated after months) can't flood the ledger.
-export async function processDueRecurringRules(userId: number): Promise<void> {
+export type AutoLoggedTransaction = { merchant: string; amount: number; date: string; type: string };
+
+// Returns what it logged so callers can decide whether to notify the user —
+// see notifyRecurringEmail in page.tsx, which is the only current consumer.
+export async function processDueRecurringRules(userId: number): Promise<AutoLoggedTransaction[]> {
   await ensureSchema();
   const { rows } = await sql<RecurringRuleRow>`
     SELECT id, type, direction, amount::text AS amount, merchant, category, notes, wallet_id, frequency, to_char(next_run_date, 'YYYY-MM-DD') AS next_run_date, active
@@ -1495,6 +1605,7 @@ export async function processDueRecurringRules(userId: number): Promise<void> {
     WHERE user_id = ${userId} AND active = true AND next_run_date <= CURRENT_DATE;
   `;
   const today = toDateStr(new Date());
+  const logged: AutoLoggedTransaction[] = [];
   for (const rule of rows) {
     let nextRunDate = rule.next_run_date;
     let iterations = 0;
@@ -1513,11 +1624,13 @@ export async function processDueRecurringRules(userId: number): Promise<void> {
           ? { type: "transfer", direction: rule.direction === "in" ? "in" : "out", ...base }
           : { type: rule.type === "income" ? "income" : "expense", ...base };
       await createExpense(userId, ruleInput);
+      logged.push({ merchant: rule.merchant, amount: Number(rule.amount), date: nextRunDate, type: rule.type });
       nextRunDate = advanceDate(nextRunDate, rule.frequency);
       iterations += 1;
     }
     await sql`UPDATE recurring_rules SET next_run_date = ${nextRunDate} WHERE id = ${rule.id};`;
   }
+  return logged;
 }
 
 // ---- Budgets ----
@@ -1527,24 +1640,31 @@ export type BudgetRow = {
   category: string;
   monthly_limit: string;
   dismissed_alert_month: string | null;
+  rollover: boolean;
+  notified_alert_month: string | null;
 };
 
 export async function listBudgets(userId: number): Promise<BudgetRow[]> {
   await ensureSchema();
   const { rows } = await sql<BudgetRow>`
-    SELECT id, category, monthly_limit::text AS monthly_limit, dismissed_alert_month
+    SELECT id, category, monthly_limit::text AS monthly_limit, dismissed_alert_month, rollover, notified_alert_month
     FROM budgets WHERE user_id = ${userId} ORDER BY category;
   `;
   return rows;
 }
 
-export async function upsertBudget(userId: number, category: string, monthlyLimit: number): Promise<BudgetRow> {
+export async function upsertBudget(
+  userId: number,
+  category: string,
+  monthlyLimit: number,
+  rollover: boolean,
+): Promise<BudgetRow> {
   await ensureSchema();
   const { rows } = await sql<BudgetRow>`
-    INSERT INTO budgets (user_id, category, monthly_limit)
-    VALUES (${userId}, ${category}, ${monthlyLimit})
-    ON CONFLICT (user_id, category) DO UPDATE SET monthly_limit = ${monthlyLimit}
-    RETURNING id, category, monthly_limit::text AS monthly_limit, dismissed_alert_month;
+    INSERT INTO budgets (user_id, category, monthly_limit, rollover)
+    VALUES (${userId}, ${category}, ${monthlyLimit}, ${rollover})
+    ON CONFLICT (user_id, category) DO UPDATE SET monthly_limit = ${monthlyLimit}, rollover = ${rollover}
+    RETURNING id, category, monthly_limit::text AS monthly_limit, dismissed_alert_month, rollover, notified_alert_month;
   `;
   return rows[0];
 }
@@ -1560,9 +1680,14 @@ export async function dismissBudgetAlert(userId: number, id: number, month: stri
   const { rows } = await sql<BudgetRow>`
     UPDATE budgets SET dismissed_alert_month = ${month}
     WHERE id = ${id} AND user_id = ${userId}
-    RETURNING id, category, monthly_limit::text AS monthly_limit, dismissed_alert_month;
+    RETURNING id, category, monthly_limit::text AS monthly_limit, dismissed_alert_month, rollover, notified_alert_month;
   `;
   return rows[0] ?? null;
+}
+
+export async function markBudgetNotified(userId: number, id: number, month: string): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE budgets SET notified_alert_month = ${month} WHERE id = ${id} AND user_id = ${userId};`;
 }
 
 // ---- Savings goals ----

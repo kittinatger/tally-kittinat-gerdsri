@@ -16,6 +16,6 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
-  const budget = await upsertBudget(userId, parsed.data.category, parsed.data.monthlyLimit);
+  const budget = await upsertBudget(userId, parsed.data.category, parsed.data.monthlyLimit, parsed.data.rollover);
   return NextResponse.json({ budget }, { status: 201 });
 }

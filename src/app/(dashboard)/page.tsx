@@ -1,6 +1,7 @@
 import {
   listExpenses,
   getRemaining,
+  getConvertedRemaining,
   listCategories,
   getCurrency,
   listWallets,
@@ -10,6 +11,7 @@ import {
   listSavingsGoals,
 } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
+import { sendPendingNotifications } from "@/lib/notifications";
 import Dashboard from "@/components/Dashboard";
 import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
 import { isTransactionType } from "@/lib/categories";
@@ -23,22 +25,25 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const userId = await getUserId();
-  await processDueRecurringRules(userId);
-  const [rows, remaining, categoryRows, currency, walletRows, widgets, budgetRows, savingsGoalRows] = await Promise.all([
-    listExpenses(userId),
-    getRemaining(userId),
-    listCategories(userId),
-    getCurrency(userId),
-    listWallets(userId),
-    getDashboardWidgets(userId),
-    listBudgets(userId),
-    listSavingsGoals(userId),
-  ]);
+  const loggedRecurring = await processDueRecurringRules(userId);
+  const [rows, remaining, convertedNetWorth, categoryRows, currency, walletRows, widgets, budgetRows, savingsGoalRows] =
+    await Promise.all([
+      listExpenses(userId),
+      getRemaining(userId),
+      getConvertedRemaining(userId),
+      listCategories(userId),
+      getCurrency(userId),
+      listWallets(userId),
+      getDashboardWidgets(userId),
+      listBudgets(userId),
+      listSavingsGoals(userId),
+    ]);
   const budgets = budgetRows.map((b) => ({
     id: b.id,
     category: b.category,
     monthlyLimit: Number(b.monthly_limit),
     dismissedAlertMonth: b.dismissed_alert_month,
+    rollover: b.rollover,
   }));
   const savingsGoals = savingsGoalRows.map((g) => ({
     id: g.id,
@@ -80,10 +85,13 @@ export default async function HomePage() {
     balance: Number(w.balance),
   }));
 
+  await sendPendingNotifications(userId, loggedRecurring, budgetRows, expenses, currency);
+
   return (
     <Dashboard
       initialExpenses={expenses}
       initialRemaining={remaining}
+      convertedNetWorth={convertedNetWorth}
       categories={categories}
       currency={currency}
       wallets={wallets}

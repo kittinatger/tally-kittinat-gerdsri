@@ -64,11 +64,13 @@ export const settingsInputSchema = z
       .transform((v) => v.toUpperCase())
       .optional(),
     autoConvertCurrency: z.boolean().optional(),
+    convertWalletBalances: z.boolean().optional(),
+    notifyRecurringEmail: z.boolean().optional(),
+    notifyBudgetEmail: z.boolean().optional(),
   })
-  .refine(
-    (data) => data.remaining !== undefined || data.currency !== undefined || data.autoConvertCurrency !== undefined,
-    { message: "Provide remaining, currency, and/or autoConvertCurrency" },
-  );
+  .refine((data) => Object.values(data).some((v) => v !== undefined), {
+    message: "Provide at least one setting to update",
+  });
 
 export const DEFAULT_VIEWS = ["today", "week", "month", "all"] as const;
 export const TIMEZONE_MODES = ["auto", "custom"] as const;
@@ -182,6 +184,7 @@ export const recurringRuleUpdateSchema = z
 export const budgetInputSchema = z.object({
   category: z.string().trim().min(1).max(60),
   monthlyLimit: z.number().positive().finite(),
+  rollover: z.boolean().optional().default(false),
 });
 
 export const budgetDismissAlertSchema = z.object({
@@ -190,6 +193,10 @@ export const budgetDismissAlertSchema = z.object({
 
 export const reorderMoveSchema = z.object({
   move: z.enum(["up", "down"]),
+});
+
+export const skipRecurringSchema = z.object({
+  skip: z.literal(true),
 });
 
 export const savingsGoalInputSchema = z.object({

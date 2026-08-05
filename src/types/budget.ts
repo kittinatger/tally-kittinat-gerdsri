@@ -3,4 +3,5 @@ export type Budget = {
   category: string;
   monthlyLimit: number;
   dismissedAlertMonth: string | null;
+  rollover: boolean;
 };

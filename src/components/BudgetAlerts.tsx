@@ -5,6 +5,7 @@ import type { Expense } from "@/types/expense";
 import type { Budget } from "@/types/budget";
 import { monthKey, todayInputValue, formatCurrency } from "@/lib/format";
 import { useCurrency } from "@/lib/currency-context";
+import { computeEffectiveBudgetLimit } from "@/lib/budget-rollover";
 
 export default function BudgetAlerts({
   expenses,
@@ -22,11 +23,12 @@ export default function BudgetAlerts({
   const alerts = useMemo(() => {
     return budgets
       .map((b) => {
+        const limit = computeEffectiveBudgetLimit(expenses, b, currentMonthKey);
         const spent = expenses
           .filter((e) => e.type === "expense" && e.category === b.category && monthKey(e.date) === currentMonthKey)
           .reduce((sum, e) => sum + e.amount, 0);
-        const percent = b.monthlyLimit > 0 ? (spent / b.monthlyLimit) * 100 : 0;
-        return { budget: b, spent, percent };
+        const percent = limit > 0 ? (spent / limit) * 100 : 0;
+        return { budget: b, spent, limit, percent };
       })
       .filter((a) => a.percent >= 90 && a.budget.dismissedAlertMonth !== currentMonthKey)
       .sort((a, b) => b.percent - a.percent);
@@ -51,7 +53,7 @@ export default function BudgetAlerts({
 
   return (
     <div className="mb-4 space-y-2">
-      {alerts.map(({ budget, spent, percent }) => {
+      {alerts.map(({ budget, spent, limit, percent }) => {
         const over = percent >= 100;
         return (
           <div
@@ -65,7 +67,7 @@ export default function BudgetAlerts({
             <p className={`text-sm font-medium ${over ? "text-red-700 dark:text-red-300" : "text-amber-700 dark:text-amber-300"}`}>
               {over ? "Over budget: " : "Near budget limit: "}
               <span className="font-semibold">{budget.category}</span> — {formatCurrency(spent, currency)} of{" "}
-              {formatCurrency(budget.monthlyLimit, currency)} ({percent.toFixed(0)}%)
+              {formatCurrency(limit, currency)} ({percent.toFixed(0)}%)
             </p>
             <button
               onClick={() => handleDismiss(budget.id)}

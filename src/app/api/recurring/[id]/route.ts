@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { updateRecurringRule, deleteRecurringRule, moveRecurringRule, listRecurringRules } from "@/lib/db";
-import { recurringRuleUpdateSchema, reorderMoveSchema } from "@/lib/validation";
+import { updateRecurringRule, deleteRecurringRule, moveRecurringRule, listRecurringRules, skipRecurringRule } from "@/lib/db";
+import { recurringRuleUpdateSchema, reorderMoveSchema, skipRecurringSchema } from "@/lib/validation";
 import { getUserId } from "@/lib/auth";
 
 function parseId(id: string): number | null {
@@ -23,6 +23,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     await moveRecurringRule(userId, ruleId, moveParsed.data.move);
     const rules = await listRecurringRules(userId);
     return NextResponse.json({ rules });
+  }
+
+  const skipParsed = skipRecurringSchema.safeParse(body);
+  if (skipParsed.success) {
+    const rule = await skipRecurringRule(userId, ruleId);
+    if (!rule) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    return NextResponse.json({ rule });
   }
 
   const parsed = recurringRuleUpdateSchema.safeParse(body);
