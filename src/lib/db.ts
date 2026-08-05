@@ -2,7 +2,6 @@ import { sql, db } from "@vercel/postgres";
 import { createHash, randomBytes } from "crypto";
 import type { ExpenseInput } from "@/lib/validation";
 import { hashPassword } from "@/lib/password";
-import { convertAmount } from "@/lib/exchange-rate";
 import { normalizeDashboardWidgets, type DashboardWidgetInstance } from "@/lib/dashboard-widgets";
 
 export type Expense = {
@@ -997,26 +996,6 @@ export async function setNotifyBudgetEmail(userId: number, enabled: boolean): Pr
 // is an actual total rather than raw addition across currencies. Falls back
 // to the plain (unconverted) sum if disabled, if a wallet has no currency
 // label, or if a conversion lookup fails.
-export async function getConvertedRemaining(userId: number): Promise<number> {
-  await ensureSchema();
-  const enabled = await getConvertWalletBalances(userId);
-  if (!enabled) return getRemaining(userId);
-
-  const [appCurrency, wallets] = await Promise.all([getCurrency(userId), listWallets(userId)]);
-
-  let total = 0;
-  for (const w of wallets) {
-    const balance = Number(w.balance);
-    if (!w.currency || w.currency === appCurrency) {
-      total += balance;
-      continue;
-    }
-    const converted = await convertAmount(balance, w.currency, appCurrency);
-    total += converted ?? balance;
-  }
-  return total;
-}
-
 export async function getDashboardWidgets(userId: number): Promise<DashboardWidgetInstance[]> {
   await ensureSchema();
   const { rows } = await sql<{ dashboard_widgets: string }>`

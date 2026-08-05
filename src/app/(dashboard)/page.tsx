@@ -1,7 +1,7 @@
 import {
   listExpenses,
   getRemaining,
-  getConvertedRemaining,
+  getConvertWalletBalances,
   listCategories,
   getCurrency,
   listWallets,
@@ -13,6 +13,7 @@ import {
 import { after } from "next/server";
 import { getUserId } from "@/lib/auth";
 import { sendPendingNotifications } from "@/lib/notifications";
+import { computeConvertedTotal } from "@/lib/wallet-conversion";
 import Dashboard from "@/components/Dashboard";
 import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
 import { isTransactionType } from "@/lib/categories";
@@ -27,18 +28,22 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   const userId = await getUserId();
   const loggedRecurring = await processDueRecurringRules(userId);
-  const [rows, remaining, convertedNetWorth, categoryRows, currency, walletRows, widgets, budgetRows, savingsGoalRows] =
+  const [rows, remaining, categoryRows, currency, walletRows, widgets, budgetRows, savingsGoalRows, convertEnabled] =
     await Promise.all([
       listExpenses(userId),
       getRemaining(userId),
-      getConvertedRemaining(userId),
       listCategories(userId),
       getCurrency(userId),
       listWallets(userId),
       getDashboardWidgets(userId),
       listBudgets(userId),
       listSavingsGoals(userId),
+      getConvertWalletBalances(userId),
     ]);
+  // Reuses the wallets/currency already fetched above instead of re-querying
+  // them, and only touches the network (Frankfurter, with its own cache and
+  // timeout — see lib/exchange-rate.ts) when the user has actually opted in.
+  const convertedNetWorth = convertEnabled ? await computeConvertedTotal(walletRows, currency) : remaining;
   const budgets = budgetRows.map((b) => ({
     id: b.id,
     category: b.category,

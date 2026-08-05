@@ -16,9 +16,13 @@ import { sql } from "@vercel/postgres";
 const CACHE_TTL_MS = 60_000;
 const cache = new Map<number, { version: number; expiresAt: number }>();
 
+// No defensive column-creation here (unlike the first version of this file)
+// — db.ts's version-gated ensureSchema() now guarantees the column exists
+// after the very first request handled in a Node context. If this query
+// ever does hit a database that hasn't reached that point yet, the catch
+// below fails open exactly like any other transient error.
 async function fetchSessionVersion(userId: number): Promise<number | null> {
   try {
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS session_version INTEGER NOT NULL DEFAULT 0;`;
     const { rows } = await sql<{ session_version: number }>`
       SELECT session_version FROM users WHERE id = ${userId};
     `;
