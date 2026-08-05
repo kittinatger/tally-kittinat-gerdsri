@@ -181,7 +181,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 2;
+const CURRENT_SCHEMA_VERSION = 4;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -354,6 +354,37 @@ function ensureSchema(): Promise<void> {
         );
       `;
       await sql`CREATE INDEX IF NOT EXISTS api_tokens_hash_idx ON api_tokens (token_hash);`;
+
+      // One row per failed login attempt, keyed by the submitted username
+      // (not user id — the username may not even belong to a real account,
+      // which is the point: this rate-limits brute-forcing regardless of
+      // whether the account exists, without adding a distinguishable timing
+      // or response difference). See recordFailedLoginAttempt /
+      // countRecentLoginAttempts in api/auth/login.
+      await sql`
+        CREATE TABLE IF NOT EXISTS login_attempts (
+          id SERIAL PRIMARY KEY,
+          username TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `;
+      await sql`CREATE INDEX IF NOT EXISTS login_attempts_username_idx ON login_attempts (username, created_at);`;
+
+      // One row per Gemini API call (receipt/voice extraction), so those
+      // paid calls can be capped per user per day — see
+      // recordGeminiUsage/countRecentGeminiUsage. The unattended
+      // auto-import path is capped separately via countRecentAutoImports
+      // (counting created expenses, since every import there results in
+      // one), but interactive scans don't always result in a saved
+      // expense, so they need their own call-count table.
+      await sql`
+        CREATE TABLE IF NOT EXISTS gemini_usage (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `;
+      await sql`CREATE INDEX IF NOT EXISTS gemini_usage_user_idx ON gemini_usage (user_id, created_at);`;
 
       // Supports listExpenses' WHERE user_id = ... ORDER BY date DESC, id DESC
       // so it stays fast as transaction history grows.
@@ -1428,6 +1459,27 @@ export async function countRecentPasswordResetTokens(userId: number, minutes: nu
   return rows[0]?.n ?? 0;
 }
 
+// ---- Login rate limiting ----
+
+// Case-insensitive so "Alice"/"alice"/"ALICE" share one bucket.
+function normalizeLoginUsername(username: string): string {
+  return username.trim().toLowerCase();
+}
+
+export async function countRecentLoginAttempts(username: string, minutes: number): Promise<number> {
+  await ensureSchema();
+  const { rows } = await sql<{ n: number }>`
+    SELECT COUNT(*)::int AS n FROM login_attempts
+    WHERE username = ${normalizeLoginUsername(username)} AND created_at > now() - make_interval(mins => ${minutes});
+  `;
+  return rows[0]?.n ?? 0;
+}
+
+export async function recordFailedLoginAttempt(username: string): Promise<void> {
+  await ensureSchema();
+  await sql`INSERT INTO login_attempts (username) VALUES (${normalizeLoginUsername(username)});`;
+}
+
 export async function createPasswordResetToken(userId: number): Promise<string> {
   await ensureSchema();
   await sql`UPDATE password_reset_tokens SET used_at = now() WHERE user_id = ${userId} AND used_at IS NULL;`;
@@ -1513,6 +1565,22 @@ export async function countRecentAutoImports(userId: number, hours: number): Pro
     WHERE user_id = ${userId} AND 'auto-import' = ANY(tags) AND created_at > now() - make_interval(hours => ${hours});
   `;
   return rows[0]?.n ?? 0;
+}
+
+// ---- Gemini usage (interactive receipt/voice scans) ----
+
+export async function countRecentGeminiUsage(userId: number, hours: number): Promise<number> {
+  await ensureSchema();
+  const { rows } = await sql<{ n: number }>`
+    SELECT COUNT(*)::int AS n FROM gemini_usage
+    WHERE user_id = ${userId} AND created_at > now() - make_interval(hours => ${hours});
+  `;
+  return rows[0]?.n ?? 0;
+}
+
+export async function recordGeminiUsage(userId: number): Promise<void> {
+  await ensureSchema();
+  await sql`INSERT INTO gemini_usage (user_id) VALUES (${userId});`;
 }
 
 // expenses/categories/app_settings all reference users(id) ON DELETE CASCADE
@@ -1740,8 +1808,11 @@ export async function processDueRecurringRules(userId: number): Promise<AutoLogg
       logged.push({ merchant: rule.merchant, amount: Number(rule.amount), date: nextRunDate, type: rule.type });
       nextRunDate = advanceDate(nextRunDate, rule.frequency);
       iterations += 1;
+      // Advance next_run_date after each occurrence (not just once at the end
+      // of the catch-up loop) so a failure partway through a long catch-up
+      // run can't cause the next call to re-log transactions already created.
+      await sql`UPDATE recurring_rules SET next_run_date = ${nextRunDate} WHERE id = ${rule.id};`;
     }
-    await sql`UPDATE recurring_rules SET next_run_date = ${nextRunDate} WHERE id = ${rule.id};`;
   }
   return logged;
 }
@@ -1918,22 +1989,32 @@ export async function createSplitExpense(
   const walletId = await resolveWalletId(userId, input.walletId);
   const groupId = `sp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
   const results: Expense[] = [];
-  for (const line of input.lines) {
-    const { rows } = await sql<Expense>`
-      WITH inserted AS (
-        INSERT INTO expenses (user_id, type, date, amount, merchant, category, notes, tags, wallet_id, split_group_id)
-        VALUES (${userId}, ${input.type}, ${input.date}, ${line.amount}, ${input.merchant}, ${line.category}, ${input.notes ?? null}, ${toPgTextArray(input.tags ?? [])}::text[], ${walletId}, ${groupId})
-        RETURNING *
-      )
-      SELECT
-        inserted.id, inserted.type, inserted.direction,
-        to_char(inserted.date, 'YYYY-MM-DD') AS date,
-        inserted.amount::text AS amount, inserted.merchant, inserted.category, inserted.notes, inserted.tags,
-        (inserted.receipt_image IS NOT NULL) AS has_receipt, inserted.wallet_id, w.name AS wallet_name, inserted.split_group_id
-      FROM inserted
-      LEFT JOIN wallets w ON w.id = inserted.wallet_id;
-    `;
-    results.push(rows[0]);
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    for (const line of input.lines) {
+      const { rows } = await client.sql<Expense>`
+        WITH inserted AS (
+          INSERT INTO expenses (user_id, type, date, amount, merchant, category, notes, tags, wallet_id, split_group_id)
+          VALUES (${userId}, ${input.type}, ${input.date}, ${line.amount}, ${input.merchant}, ${line.category}, ${input.notes ?? null}, ${toPgTextArray(input.tags ?? [])}::text[], ${walletId}, ${groupId})
+          RETURNING *
+        )
+        SELECT
+          inserted.id, inserted.type, inserted.direction,
+          to_char(inserted.date, 'YYYY-MM-DD') AS date,
+          inserted.amount::text AS amount, inserted.merchant, inserted.category, inserted.notes, inserted.tags,
+          (inserted.receipt_image IS NOT NULL) AS has_receipt, inserted.wallet_id, w.name AS wallet_name, inserted.split_group_id
+        FROM inserted
+        LEFT JOIN wallets w ON w.id = inserted.wallet_id;
+      `;
+      results.push(rows[0]);
+    }
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
   }
   return results;
 }

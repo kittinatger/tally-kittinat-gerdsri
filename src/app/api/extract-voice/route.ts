@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ApiError } from "@google/genai";
 import { extractTransactionsFromAudio } from "@/lib/gemini";
-import { getAutoConvertCurrency, getCurrency, listCategories, listWallets } from "@/lib/db";
+import {
+  getAutoConvertCurrency,
+  getCurrency,
+  listCategories,
+  listWallets,
+  countRecentGeminiUsage,
+  recordGeminiUsage,
+} from "@/lib/db";
 import { maybeAutoConvert } from "@/lib/exchange-rate";
 import { getUserId } from "@/lib/auth";
 
@@ -15,6 +22,9 @@ const ALLOWED_TYPES = new Set([
   "audio/ogg",
   "audio/x-m4a",
 ]);
+
+// Shares its daily bucket with extract-receipt — see countRecentGeminiUsage.
+const MAX_GEMINI_CALLS_PER_DAY = 60;
 
 export async function POST(req: NextRequest) {
   const userId = await getUserId();
@@ -37,10 +47,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Recording is too long (max 15MB)." }, { status: 400 });
   }
 
+  const recentCalls = await countRecentGeminiUsage(userId, 24);
+  if (recentCalls >= MAX_GEMINI_CALLS_PER_DAY) {
+    return NextResponse.json({ error: "Daily scan limit reached. Try again tomorrow." }, { status: 429 });
+  }
+
   const buffer = Buffer.from(await file.arrayBuffer());
   const base64 = buffer.toString("base64");
 
   try {
+    await recordGeminiUsage(userId);
     const [categoryRows, defaultCurrency, autoConvertEnabled, walletRows] = await Promise.all([
       listCategories(userId),
       getCurrency(userId),
