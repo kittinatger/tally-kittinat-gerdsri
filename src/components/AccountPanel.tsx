@@ -6,15 +6,28 @@ import Modal from "./Modal";
 
 const DELETE_CONFIRM_PHRASE = "I wish to delete this account";
 
-export default function AccountPanel({ initialUsername }: { initialUsername: string }) {
+export default function AccountPanel({
+  initialUsername,
+  initialEmail,
+}: {
+  initialUsername: string;
+  initialEmail: string | null;
+}) {
   const router = useRouter();
   const [username, setUsername] = useState(initialUsername);
+  const [email, setEmail] = useState(initialEmail);
 
   const [newUsername, setNewUsername] = useState(initialUsername);
   const [usernamePassword, setUsernamePassword] = useState("");
   const [savingUsername, setSavingUsername] = useState(false);
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [usernameSuccess, setUsernameSuccess] = useState(false);
+
+  const [newEmail, setNewEmail] = useState(initialEmail ?? "");
+  const [emailPassword, setEmailPassword] = useState("");
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailSuccess, setEmailSuccess] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -67,6 +80,44 @@ export default function AccountPanel({ initialUsername }: { initialUsername: str
       setUsernameError("Network error while saving.");
     } finally {
       setSavingUsername(false);
+    }
+  }
+
+  async function handleEmailSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setEmailError(null);
+    setEmailSuccess(false);
+
+    const trimmed = newEmail.trim();
+    if (trimmed === (email ?? "")) {
+      setEmailError("That's already the email on file.");
+      return;
+    }
+    if (!emailPassword) {
+      setEmailError("Enter your current password to confirm this change.");
+      return;
+    }
+
+    setSavingEmail(true);
+    try {
+      const res = await fetch("/api/account", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newEmail: trimmed, currentPassword: emailPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setEmailError(data.error ?? "Could not update email.");
+        return;
+      }
+      setEmail(data.email);
+      setNewEmail(data.email ?? "");
+      setEmailPassword("");
+      setEmailSuccess(true);
+    } catch {
+      setEmailError("Network error while saving.");
+    } finally {
+      setSavingEmail(false);
     }
   }
 
@@ -193,6 +244,38 @@ export default function AccountPanel({ initialUsername }: { initialUsername: str
           className="mt-3 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
         >
           {savingUsername ? "Saving..." : "Save username"}
+        </button>
+      </form>
+
+      <form onSubmit={handleEmailSubmit} className="mt-6 border-t border-line pt-4">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">Email</p>
+        <p className="mb-2.5 text-xs text-ink-soft">
+          {email ? "Used to send password reset links." : "Add an email so you can reset your password if you forget it."}
+        </p>
+        <div className="grid gap-2.5 sm:grid-cols-2">
+          <input
+            type="email"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            placeholder="you@example.com"
+            className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+          />
+          <input
+            type="password"
+            value={emailPassword}
+            onChange={(e) => setEmailPassword(e.target.value)}
+            placeholder="Current password"
+            className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+          />
+        </div>
+        {emailError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{emailError}</p>}
+        {emailSuccess && <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">Email updated.</p>}
+        <button
+          type="submit"
+          disabled={savingEmail}
+          className="mt-3 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+        >
+          {savingEmail ? "Saving..." : "Save email"}
         </button>
       </form>
 

@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserId } from "@/lib/auth";
-import { deleteUser, getUserById, getUserByUsername, updatePasswordHash, updateUsername } from "@/lib/db";
+import {
+  deleteUser,
+  getUserById,
+  getUserByUsername,
+  getUserByEmail,
+  updatePasswordHash,
+  updateUsername,
+  updateUserEmail,
+} from "@/lib/db";
 import { hashPassword, verifyPasswordHash } from "@/lib/password";
 import { SESSION_COOKIE_NAME } from "@/lib/session";
 
 const USERNAME_PATTERN = /^[a-zA-Z0-9_.-]{3,32}$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function isUniqueViolation(err: unknown): boolean {
   return typeof err === "object" && err !== null && "code" in err && (err as { code?: string }).code === "23505";
@@ -16,7 +25,7 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ error: "Account not found." }, { status: 404 });
   }
-  return NextResponse.json({ username: user.username });
+  return NextResponse.json({ username: user.username, email: user.email });
 }
 
 export async function PATCH(req: NextRequest) {
@@ -26,8 +35,10 @@ export async function PATCH(req: NextRequest) {
   const currentPassword = typeof body?.currentPassword === "string" ? body.currentPassword : "";
   const newUsername = typeof body?.newUsername === "string" ? body.newUsername.trim() : undefined;
   const newPassword = typeof body?.newPassword === "string" ? body.newPassword : undefined;
+  const newEmailRaw = typeof body?.newEmail === "string" ? body.newEmail.trim() : undefined;
+  const newEmail = newEmailRaw === "" ? null : newEmailRaw;
 
-  if (!newUsername && !newPassword) {
+  if (!newUsername && !newPassword && newEmail === undefined) {
     return NextResponse.json({ error: "Nothing to update." }, { status: 400 });
   }
 
@@ -72,7 +83,29 @@ export async function PATCH(req: NextRequest) {
     await updatePasswordHash(userId, passwordHash);
   }
 
-  return NextResponse.json({ username });
+  let email = user.email;
+
+  if (newEmail !== undefined && newEmail !== user.email) {
+    if (newEmail !== null) {
+      if (!EMAIL_PATTERN.test(newEmail) || newEmail.length > 255) {
+        return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
+      }
+      const existing = await getUserByEmail(newEmail);
+      if (existing && existing.id !== userId) {
+        return NextResponse.json({ error: "That email is already in use." }, { status: 409 });
+      }
+    }
+    try {
+      email = await updateUserEmail(userId, newEmail);
+    } catch (err) {
+      if (isUniqueViolation(err)) {
+        return NextResponse.json({ error: "That email is already in use." }, { status: 409 });
+      }
+      throw err;
+    }
+  }
+
+  return NextResponse.json({ username, email });
 }
 
 export async function DELETE(req: NextRequest) {

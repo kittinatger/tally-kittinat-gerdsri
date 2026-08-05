@@ -1,4 +1,5 @@
 import { sql, db } from "@vercel/postgres";
+import { createHash, randomBytes } from "crypto";
 import type { ExpenseInput } from "@/lib/validation";
 import { hashPassword } from "@/lib/password";
 import { normalizeDashboardWidgets, type DashboardWidgetInstance } from "@/lib/dashboard-widgets";
@@ -282,6 +283,27 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;`;
       await sql`ALTER TABLE categories ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;`;
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;`;
+
+      // Optional — only needed for "forgot password" emails. Case-insensitive
+      // uniqueness (partial index so multiple accounts can still have no
+      // email at all, which is the pre-existing state for every account).
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;`;
+      await sql`CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique_idx ON users (lower(email)) WHERE email IS NOT NULL;`;
+
+      // Short-lived, single-use tokens for the forgot-password flow. Only
+      // token_hash is stored (sha256 of the raw token emailed to the user) so
+      // a database leak alone can't be used to reset anyone's password.
+      await sql`
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          token_hash TEXT NOT NULL,
+          expires_at TIMESTAMPTZ NOT NULL,
+          used_at TIMESTAMPTZ,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `;
+      await sql`CREATE INDEX IF NOT EXISTS password_reset_tokens_hash_idx ON password_reset_tokens (token_hash);`;
 
       // Supports listExpenses' WHERE user_id = ... ORDER BY date DESC, id DESC
       // so it stays fast as transaction history grows.
@@ -1210,12 +1232,13 @@ export type UserRow = {
   id: number;
   username: string;
   password_hash: string;
+  email: string | null;
 };
 
 export async function getUserByUsername(username: string): Promise<UserRow | null> {
   await ensureSchema();
   const { rows } = await sql<UserRow>`
-    SELECT id, username, password_hash FROM users WHERE username = ${username};
+    SELECT id, username, password_hash, email FROM users WHERE username = ${username};
   `;
   return rows[0] ?? null;
 }
@@ -1223,7 +1246,15 @@ export async function getUserByUsername(username: string): Promise<UserRow | nul
 export async function getUserById(id: number): Promise<UserRow | null> {
   await ensureSchema();
   const { rows } = await sql<UserRow>`
-    SELECT id, username, password_hash FROM users WHERE id = ${id};
+    SELECT id, username, password_hash, email FROM users WHERE id = ${id};
+  `;
+  return rows[0] ?? null;
+}
+
+export async function getUserByEmail(email: string): Promise<UserRow | null> {
+  await ensureSchema();
+  const { rows } = await sql<UserRow>`
+    SELECT id, username, password_hash, email FROM users WHERE lower(email) = lower(${email});
   `;
   return rows[0] ?? null;
 }
@@ -1236,9 +1267,52 @@ export async function updateUsername(userId: number, newUsername: string): Promi
   return rows[0].username;
 }
 
+export async function updateUserEmail(userId: number, email: string | null): Promise<string | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ email: string | null }>`
+    UPDATE users SET email = ${email} WHERE id = ${userId} RETURNING email;
+  `;
+  return rows[0]?.email ?? null;
+}
+
 export async function updatePasswordHash(userId: number, passwordHash: string): Promise<void> {
   await ensureSchema();
   await sql`UPDATE users SET password_hash = ${passwordHash} WHERE id = ${userId};`;
+}
+
+// ---- Password reset tokens ----
+
+function hashResetToken(rawToken: string): string {
+  return createHash("sha256").update(rawToken).digest("hex");
+}
+
+// Invalidates any still-usable tokens for this user first, so only the most
+// recently requested reset link works — otherwise an old, forwarded, or
+// leaked email would stay valid indefinitely alongside newer ones.
+export async function createPasswordResetToken(userId: number): Promise<string> {
+  await ensureSchema();
+  await sql`UPDATE password_reset_tokens SET used_at = now() WHERE user_id = ${userId} AND used_at IS NULL;`;
+  const rawToken = randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  await sql`
+    INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
+    VALUES (${userId}, ${hashResetToken(rawToken)}, ${expiresAt.toISOString()});
+  `;
+  return rawToken;
+}
+
+// Marks the token used and returns the owning user id, or null if the token
+// is unknown, expired, or already used — atomic single UPDATE so a token
+// can't be raced into being consumed twice.
+export async function consumePasswordResetToken(rawToken: string): Promise<number | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ user_id: number }>`
+    UPDATE password_reset_tokens
+    SET used_at = now()
+    WHERE token_hash = ${hashResetToken(rawToken)} AND used_at IS NULL AND expires_at > now()
+    RETURNING user_id;
+  `;
+  return rows[0]?.user_id ?? null;
 }
 
 // expenses/categories/app_settings all reference users(id) ON DELETE CASCADE

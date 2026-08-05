@@ -9,6 +9,15 @@ import {
   LIMIT_OPTIONS,
 } from "@/lib/dashboard-widgets";
 
+export const forgotPasswordInputSchema = z.object({
+  email: z.string().trim().email().max(255),
+});
+
+export const resetPasswordInputSchema = z.object({
+  token: z.string().trim().min(20).max(200),
+  password: z.string().min(8).max(200),
+});
+
 const sharedFields = {
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
   amount: z.number().positive().finite(),

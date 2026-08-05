@@ -58,6 +58,7 @@ export default async function SettingsPage() {
       categories={categories}
       currency={currency}
       username={user?.username ?? ""}
+      email={user?.email ?? null}
       wallets={wallets}
       expenses={expenses}
       remaining={remaining}

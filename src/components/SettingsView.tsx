@@ -224,6 +224,7 @@ export default function SettingsView({
   categories,
   currency,
   username,
+  email,
   wallets,
   expenses,
   remaining,
@@ -231,6 +232,7 @@ export default function SettingsView({
   categories: CategoryOption[];
   currency: string;
   username: string;
+  email: string | null;
   wallets: WalletOption[];
   expenses: Expense[];
   remaining: number;
@@ -263,7 +265,7 @@ export default function SettingsView({
                   <h2 className="mb-5 font-display text-2xl text-foreground">{PANEL_TITLES[panel]}</h2>
                 )}
 
-                {panel === "account" && <AccountPanel initialUsername={username} />}
+                {panel === "account" && <AccountPanel initialUsername={username} initialEmail={email} />}
                 {panel === "permissions" && <PermissionsSettings />}
                 {panel === "categories" && <CategoryManager categories={categories} />}
                 {panel === "tags" && <TagManager />}
