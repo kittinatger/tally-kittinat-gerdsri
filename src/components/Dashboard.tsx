@@ -5,6 +5,8 @@ import { signedAmount, type Expense } from "@/types/expense";
 import type { CategoryOption } from "@/types/category";
 import type { TransactionType } from "@/lib/categories";
 import type { WalletOption } from "@/types/wallet";
+import type { Budget } from "@/types/budget";
+import type { SavingsGoal } from "@/types/savings-goal";
 import { WIDGET_WIDTH_COLSPAN, type DashboardWidgetInstance } from "@/lib/dashboard-widgets";
 import { CategoriesProvider } from "@/lib/categories-context";
 import { CurrencyProvider } from "@/lib/currency-context";
@@ -27,6 +29,8 @@ export default function Dashboard({
   currency,
   wallets,
   widgets,
+  budgets,
+  savingsGoals,
 }: {
   initialExpenses: Expense[];
   initialRemaining: number;
@@ -34,6 +38,8 @@ export default function Dashboard({
   currency: string;
   wallets: WalletOption[];
   widgets: DashboardWidgetInstance[];
+  budgets: Budget[];
+  savingsGoals: SavingsGoal[];
 }) {
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [remaining, setRemaining] = useState(initialRemaining);
@@ -68,6 +74,8 @@ export default function Dashboard({
                       expenses={expenses}
                       categories={categories}
                       remaining={remaining}
+                      budgets={budgets}
+                      savingsGoals={savingsGoals}
                       onEditBalance={() => setEditingBalance(true)}
                       onAddIncome={() => setAddingType("income")}
                       onAddExpense={() => setAddingType("expense")}

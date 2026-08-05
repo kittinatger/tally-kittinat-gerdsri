@@ -1,4 +1,14 @@
-import { listExpenses, getRemaining, listCategories, getCurrency, listWallets, getDashboardWidgets } from "@/lib/db";
+import {
+  listExpenses,
+  getRemaining,
+  listCategories,
+  getCurrency,
+  listWallets,
+  getDashboardWidgets,
+  processDueRecurringRules,
+  listBudgets,
+  listSavingsGoals,
+} from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import Dashboard from "@/components/Dashboard";
 import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
@@ -13,14 +23,25 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const userId = await getUserId();
-  const [rows, remaining, categoryRows, currency, walletRows, widgets] = await Promise.all([
+  await processDueRecurringRules(userId);
+  const [rows, remaining, categoryRows, currency, walletRows, widgets, budgetRows, savingsGoalRows] = await Promise.all([
     listExpenses(userId),
     getRemaining(userId),
     listCategories(userId),
     getCurrency(userId),
     listWallets(userId),
     getDashboardWidgets(userId),
+    listBudgets(userId),
+    listSavingsGoals(userId),
   ]);
+  const budgets = budgetRows.map((b) => ({ id: b.id, category: b.category, monthlyLimit: Number(b.monthly_limit) }));
+  const savingsGoals = savingsGoalRows.map((g) => ({
+    id: g.id,
+    name: g.name,
+    color: g.color,
+    targetAmount: Number(g.target_amount),
+    currentAmount: Number(g.current_amount),
+  }));
   const expenses: Expense[] = rows.map((r) => ({
     id: r.id,
     type: normalizeExpenseType(r.type),
@@ -60,6 +81,8 @@ export default async function HomePage() {
       currency={currency}
       wallets={wallets}
       widgets={widgets}
+      budgets={budgets}
+      savingsGoals={savingsGoals}
     />
   );
 }

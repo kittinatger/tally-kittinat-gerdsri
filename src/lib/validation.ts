@@ -142,6 +142,68 @@ export const dashboardWidgetsInputSchema = z.object({
     .max(20),
 });
 
+export const RECURRING_FREQUENCIES = ["weekly", "monthly", "yearly"] as const;
+
+export const recurringRuleInputSchema = z.object({
+  type: z.enum(TRANSACTION_TYPES),
+  direction: z.enum(TRANSFER_DIRECTIONS).optional(),
+  amount: z.number().positive().finite(),
+  merchant: z.string().trim().min(1).max(200),
+  category: z.string().trim().min(1).max(60),
+  notes: z.string().trim().max(500).nullable().optional(),
+  walletId: z.number().int().positive().nullable().optional(),
+  frequency: z.enum(RECURRING_FREQUENCIES),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
+});
+
+export const recurringRuleUpdateSchema = z.object({
+  active: z.boolean(),
+});
+
+export const budgetInputSchema = z.object({
+  category: z.string().trim().min(1).max(60),
+  monthlyLimit: z.number().positive().finite(),
+});
+
+export const savingsGoalInputSchema = z.object({
+  name: z.string().trim().min(1).max(60),
+  color: z.string().trim().min(1).max(30).default("emerald"),
+  targetAmount: z.number().positive().finite(),
+});
+
+export const savingsGoalUpdateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(60).optional(),
+    color: z.string().trim().min(1).max(30).optional(),
+    targetAmount: z.number().positive().finite().optional(),
+    contributeDelta: z.number().finite().optional(),
+  })
+  .refine((data) => Object.values(data).some((v) => v !== undefined), {
+    message: "Provide at least one field to update",
+  });
+
+export const splitExpenseInputSchema = z.object({
+  type: z.enum(["expense", "income"]),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
+  merchant: z.string().trim().min(1).max(200),
+  notes: z.string().trim().max(500).nullable().optional(),
+  tags: z.array(z.string().trim().min(1).max(30)).max(10).optional(),
+  walletId: z.number().int().positive().nullable().optional(),
+  lines: z
+    .array(
+      z.object({
+        category: z.string().trim().min(1).max(60),
+        amount: z.number().positive().finite(),
+      }),
+    )
+    .min(2)
+    .max(10),
+});
+
+export const csvImportInputSchema = z.object({
+  csv: z.string().min(1).max(2_000_000),
+});
+
 export const categoryInputSchema = z.object({
   type: z.enum(TRANSACTION_TYPES),
   name: z.string().trim().min(1).max(40),

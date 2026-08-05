@@ -21,6 +21,8 @@ export type ExpenseFormValues = {
   tags: string[];
   /** null means "use the default wallet" — resolved server-side. */
   walletId: number | null;
+  /** Only meaningful when allowSplit is used and split mode is on — see AddExpenseModal. */
+  splitLines?: { category: string; amount: string }[];
 };
 
 export const emptyExpenseFormValues: ExpenseFormValues = {
@@ -47,6 +49,7 @@ export default function ExpenseForm({
   submitting = false,
   error = null,
   footerLeft,
+  allowSplit = false,
 }: {
   initialValues: ExpenseFormValues;
   submitLabel: string;
@@ -55,8 +58,15 @@ export default function ExpenseForm({
   submitting?: boolean;
   error?: string | null;
   footerLeft?: React.ReactNode;
+  /** Shows a "Split into multiple categories" toggle for expense/income entries — see AddExpenseModal. */
+  allowSplit?: boolean;
 }) {
   const [values, setValues] = useState<ExpenseFormValues>(initialValues);
+  const [splitMode, setSplitMode] = useState(false);
+  const [splitLines, setSplitLines] = useState<{ category: string; amount: string }[]>([
+    { category: "Other", amount: "" },
+    { category: "Other", amount: "" },
+  ]);
   const allCategories = useAllCategories();
   const wallets = useWallets();
   const categories = allCategories.filter((c) => c.type === values.type);
@@ -76,8 +86,26 @@ export default function ExpenseForm({
     });
   }
 
+  const splitTotal = splitLines.reduce((sum, l) => sum + (Number(l.amount) || 0), 0);
+
+  function updateSplitLine(index: number, patch: Partial<{ category: string; amount: string }>) {
+    setSplitLines((prev) => prev.map((l, i) => (i === index ? { ...l, ...patch } : l)));
+  }
+
+  function addSplitLine() {
+    setSplitLines((prev) => [...prev, { category: "Other", amount: "" }]);
+  }
+
+  function removeSplitLine(index: number) {
+    setSplitLines((prev) => (prev.length > 2 ? prev.filter((_, i) => i !== index) : prev));
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (splitMode) {
+      onSubmit({ ...values, splitLines });
+      return;
+    }
     onSubmit(values);
   }
 
@@ -157,18 +185,22 @@ export default function ExpenseForm({
           <label className={labelClass} htmlFor="amount">
             Amount
           </label>
-          <input
-            id="amount"
-            type="number"
-            inputMode="decimal"
-            step="0.01"
-            min="0"
-            required
-            value={values.amount}
-            onChange={(e) => update("amount", e.target.value)}
-            placeholder="0.00"
-            className={inputClass}
-          />
+          {splitMode ? (
+            <div className={`${inputClass} flex items-center text-surface-foreground-soft`}>{splitTotal.toFixed(2)}</div>
+          ) : (
+            <input
+              id="amount"
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              min="0"
+              required
+              value={values.amount}
+              onChange={(e) => update("amount", e.target.value)}
+              placeholder="0.00"
+              className={inputClass}
+            />
+          )}
         </div>
       </div>
 
@@ -189,17 +221,74 @@ export default function ExpenseForm({
         />
       </div>
 
-      <div>
-        <label className={labelClass} htmlFor="category">
-          Category
+      {allowSplit && values.type !== "transfer" && (
+        <label className="flex items-center gap-2 text-sm font-medium text-surface-foreground-soft">
+          <input
+            type="checkbox"
+            checked={splitMode}
+            onChange={(e) => setSplitMode(e.target.checked)}
+            className="h-4 w-4 rounded border-surface-line accent-surface-accent"
+          />
+          Split into multiple categories
         </label>
-        <SelectDropdown
-          id="category"
-          value={values.category}
-          options={categories.map((c) => c.name)}
-          onChange={(name) => update("category", name)}
-        />
-      </div>
+      )}
+
+      {splitMode ? (
+        <div className="space-y-2.5">
+          <label className={labelClass}>Categories &amp; amounts</label>
+          {splitLines.map((line, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <div className="flex-1">
+                <SelectDropdown
+                  value={line.category}
+                  options={categories.map((c) => c.name)}
+                  onChange={(name) => updateSplitLine(i, { category: name })}
+                />
+              </div>
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                required
+                value={line.amount}
+                onChange={(e) => updateSplitLine(i, { amount: e.target.value })}
+                placeholder="0.00"
+                className={`${inputClass} w-28`}
+              />
+              {splitLines.length > 2 && (
+                <button
+                  type="button"
+                  onClick={() => removeSplitLine(i)}
+                  aria-label="Remove line"
+                  className="shrink-0 rounded-full p-2 text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-red-600"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addSplitLine}
+            className="text-sm font-semibold text-surface-accent hover:underline"
+          >
+            + Add another category
+          </button>
+        </div>
+      ) : (
+        <div>
+          <label className={labelClass} htmlFor="category">
+            Category
+          </label>
+          <SelectDropdown
+            id="category"
+            value={values.category}
+            options={categories.map((c) => c.name)}
+            onChange={(name) => update("category", name)}
+          />
+        </div>
+      )}
 
       {wallets.length > 0 && (
         <div>

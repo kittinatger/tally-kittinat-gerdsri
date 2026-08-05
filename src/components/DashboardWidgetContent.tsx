@@ -2,6 +2,8 @@
 
 import type { Expense } from "@/types/expense";
 import type { CategoryOption } from "@/types/category";
+import type { Budget } from "@/types/budget";
+import type { SavingsGoal } from "@/types/savings-goal";
 import type { DashboardWidgetInstance } from "@/lib/dashboard-widgets";
 import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
 import { formatCurrency, monthKey, todayInputValue } from "@/lib/format";
@@ -32,6 +34,8 @@ import WeekdayTrackerWidget from "./WeekdayTrackerWidget";
 import BalanceHeroWidget from "./BalanceHeroWidget";
 import StepperProgressWidget from "./StepperProgressWidget";
 import CornerArrowStatWidget from "./CornerArrowStatWidget";
+import BudgetOverviewWidget from "./BudgetOverviewWidget";
+import SavingsGoalsWidget from "./SavingsGoalsWidget";
 
 function noop() {}
 
@@ -132,6 +136,8 @@ export default function DashboardWidgetContent({
   expenses,
   categories,
   remaining,
+  budgets = [],
+  savingsGoals = [],
   onEditBalance,
   onAddIncome,
   onAddExpense,
@@ -140,6 +146,8 @@ export default function DashboardWidgetContent({
   expenses: Expense[];
   categories: CategoryOption[];
   remaining: number;
+  budgets?: Budget[];
+  savingsGoals?: SavingsGoal[];
   onEditBalance?: () => void;
   onAddIncome?: () => void;
   onAddExpense?: () => void;
@@ -785,6 +793,30 @@ export default function DashboardWidgetContent({
           cardClassName={widget.accent ? `${accentBg} text-white` : undefined}
         />
       );
+    }
+
+    // ---- Budgets & goals ----
+    case "budgetOverview": {
+      const items = budgets.map((b, i) => ({
+        category: b.category,
+        spent: sum(monthExpenses.filter((e) => e.category === b.category)),
+        limit: b.monthlyLimit,
+        displaySpent: formatCurrency(sum(monthExpenses.filter((e) => e.category === b.category)), currency),
+        displayLimit: formatCurrency(b.monthlyLimit, currency),
+        colorClassName: accentBgClasses(colorFor(i)),
+      }));
+      return <BudgetOverviewWidget items={items} />;
+    }
+    case "savingsGoals": {
+      const items = savingsGoals.map((g) => ({
+        name: g.name,
+        current: g.currentAmount,
+        target: g.targetAmount,
+        displayCurrent: formatCurrency(g.currentAmount, currency),
+        displayTarget: formatCurrency(g.targetAmount, currency),
+        colorClassName: accentBgClasses(g.color),
+      }));
+      return <SavingsGoalsWidget items={items} />;
     }
 
     default:

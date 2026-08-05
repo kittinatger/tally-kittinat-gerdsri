@@ -326,6 +326,62 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT false;`;
       await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS currency TEXT;`;
 
+      // Links every line of a one-receipt-multiple-categories split to its
+      // siblings for display grouping — each line is otherwise a normal,
+      // independently editable/deletable expense row (see createSplitExpense).
+      await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS split_group_id TEXT;`;
+
+      // Auto-logged transactions on a schedule (rent, subscriptions, salary):
+      // one rule per recurring transaction, materialized into real expense
+      // rows by processDueRecurringRules whenever next_run_date has passed.
+      await sql`
+        CREATE TABLE IF NOT EXISTS recurring_rules (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          type TEXT NOT NULL,
+          direction TEXT,
+          amount NUMERIC(12, 2) NOT NULL,
+          merchant TEXT NOT NULL,
+          category TEXT NOT NULL,
+          notes TEXT,
+          wallet_id INTEGER REFERENCES wallets(id) ON DELETE SET NULL,
+          frequency TEXT NOT NULL,
+          next_run_date DATE NOT NULL,
+          active BOOLEAN NOT NULL DEFAULT true,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `;
+      await sql`CREATE INDEX IF NOT EXISTS recurring_rules_user_idx ON recurring_rules (user_id);`;
+
+      // Per-category monthly spending limits. One row per category the user
+      // has budgeted; categories with no row here are simply untracked.
+      await sql`
+        CREATE TABLE IF NOT EXISTS budgets (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          category TEXT NOT NULL,
+          monthly_limit NUMERIC(12, 2) NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT budgets_user_category_unique UNIQUE (user_id, category)
+        );
+      `;
+
+      // Manually-tracked savings goals — current_amount is nudged by the
+      // user via contributeToSavingsGoal rather than derived from real
+      // transactions, so a goal can represent cash saved anywhere (even
+      // outside a wallet Tally tracks).
+      await sql`
+        CREATE TABLE IF NOT EXISTS savings_goals (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          name TEXT NOT NULL,
+          color TEXT NOT NULL DEFAULT 'emerald',
+          target_amount NUMERIC(12, 2) NOT NULL,
+          current_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `;
+
       await bootstrapAdminIfNeeded();
       await hardenMultiUserConstraints();
 
@@ -1183,6 +1239,279 @@ export async function createUser(username: string, passwordHash: string): Promis
   // see hardenMultiUserConstraints) or with any other new user's own row.
   await sql`INSERT INTO app_settings (id, user_id, starting_balance) VALUES (${-user.id}, ${user.id}, 0);`;
   return user;
+}
+
+// ---- Recurring transactions ----
+
+export type RecurringRuleRow = {
+  id: number;
+  type: string;
+  direction: string | null;
+  amount: string;
+  merchant: string;
+  category: string;
+  notes: string | null;
+  wallet_id: number | null;
+  frequency: string;
+  next_run_date: string;
+  active: boolean;
+};
+
+function toDateStr(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+// Advances a YYYY-MM-DD date by one occurrence of the given frequency.
+// Monthly clamps the day to the target month's length (e.g. Jan 31 -> Feb
+// 28); yearly relies on the Date constructor's own Feb 29 -> Mar 1 rollover
+// in non-leap years, which matches how most billing dates actually behave.
+function advanceDate(dateStr: string, frequency: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  if (frequency === "weekly") return toDateStr(new Date(y, m - 1, d + 7));
+  if (frequency === "yearly") return toDateStr(new Date(y + 1, m - 1, d));
+  const daysInNextMonth = new Date(y, m + 1, 0).getDate();
+  return toDateStr(new Date(y, m, Math.min(d, daysInNextMonth)));
+}
+
+export async function listRecurringRules(userId: number): Promise<RecurringRuleRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<RecurringRuleRow>`
+    SELECT id, type, direction, amount::text AS amount, merchant, category, notes,
+           wallet_id, frequency, to_char(next_run_date, 'YYYY-MM-DD') AS next_run_date, active
+    FROM recurring_rules
+    WHERE user_id = ${userId}
+    ORDER BY active DESC, next_run_date, id;
+  `;
+  return rows;
+}
+
+export async function createRecurringRule(
+  userId: number,
+  input: {
+    type: string;
+    direction?: string | null;
+    amount: number;
+    merchant: string;
+    category: string;
+    notes?: string | null;
+    walletId?: number | null;
+    frequency: string;
+    startDate: string;
+  },
+): Promise<RecurringRuleRow> {
+  await ensureSchema();
+  const walletId = await resolveWalletId(userId, input.walletId);
+  const { rows } = await sql<RecurringRuleRow>`
+    INSERT INTO recurring_rules (user_id, type, direction, amount, merchant, category, notes, wallet_id, frequency, next_run_date)
+    VALUES (${userId}, ${input.type}, ${input.direction ?? null}, ${input.amount}, ${input.merchant}, ${input.category}, ${input.notes ?? null}, ${walletId}, ${input.frequency}, ${input.startDate})
+    RETURNING id, type, direction, amount::text AS amount, merchant, category, notes, wallet_id, frequency, to_char(next_run_date, 'YYYY-MM-DD') AS next_run_date, active;
+  `;
+  return rows[0];
+}
+
+export async function updateRecurringRule(
+  userId: number,
+  id: number,
+  input: { active?: boolean },
+): Promise<RecurringRuleRow | null> {
+  await ensureSchema();
+  if (input.active === undefined) {
+    const { rows } = await sql<RecurringRuleRow>`
+      SELECT id, type, direction, amount::text AS amount, merchant, category, notes, wallet_id, frequency, to_char(next_run_date, 'YYYY-MM-DD') AS next_run_date, active
+      FROM recurring_rules WHERE id = ${id} AND user_id = ${userId};
+    `;
+    return rows[0] ?? null;
+  }
+  const { rows } = await sql<RecurringRuleRow>`
+    UPDATE recurring_rules SET active = ${input.active}
+    WHERE id = ${id} AND user_id = ${userId}
+    RETURNING id, type, direction, amount::text AS amount, merchant, category, notes, wallet_id, frequency, to_char(next_run_date, 'YYYY-MM-DD') AS next_run_date, active;
+  `;
+  return rows[0] ?? null;
+}
+
+export async function deleteRecurringRule(userId: number, id: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`DELETE FROM recurring_rules WHERE id = ${id} AND user_id = ${userId};`;
+  return (rowCount ?? 0) > 0;
+}
+
+// Materializes any recurring rule whose next occurrence has arrived into a
+// real expense row, then advances next_run_date — called on every dashboard
+// load rather than via a separate cron job/worker, which this deployment
+// doesn't have. Caps catch-up at 36 occurrences per rule so a long-dormant
+// rule (e.g. re-activated after months) can't flood the ledger.
+export async function processDueRecurringRules(userId: number): Promise<void> {
+  await ensureSchema();
+  const { rows } = await sql<RecurringRuleRow>`
+    SELECT id, type, direction, amount::text AS amount, merchant, category, notes, wallet_id, frequency, to_char(next_run_date, 'YYYY-MM-DD') AS next_run_date, active
+    FROM recurring_rules
+    WHERE user_id = ${userId} AND active = true AND next_run_date <= CURRENT_DATE;
+  `;
+  const today = toDateStr(new Date());
+  for (const rule of rows) {
+    let nextRunDate = rule.next_run_date;
+    let iterations = 0;
+    while (nextRunDate <= today && iterations < 36) {
+      const base = {
+        date: nextRunDate,
+        amount: Number(rule.amount),
+        merchant: rule.merchant,
+        category: rule.category,
+        notes: rule.notes,
+        walletId: rule.wallet_id,
+        tags: [],
+      };
+      const ruleInput: ExpenseInput =
+        rule.type === "transfer"
+          ? { type: "transfer", direction: rule.direction === "in" ? "in" : "out", ...base }
+          : { type: rule.type === "income" ? "income" : "expense", ...base };
+      await createExpense(userId, ruleInput);
+      nextRunDate = advanceDate(nextRunDate, rule.frequency);
+      iterations += 1;
+    }
+    await sql`UPDATE recurring_rules SET next_run_date = ${nextRunDate} WHERE id = ${rule.id};`;
+  }
+}
+
+// ---- Budgets ----
+
+export type BudgetRow = {
+  id: number;
+  category: string;
+  monthly_limit: string;
+};
+
+export async function listBudgets(userId: number): Promise<BudgetRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<BudgetRow>`
+    SELECT id, category, monthly_limit::text AS monthly_limit
+    FROM budgets WHERE user_id = ${userId} ORDER BY category;
+  `;
+  return rows;
+}
+
+export async function upsertBudget(userId: number, category: string, monthlyLimit: number): Promise<BudgetRow> {
+  await ensureSchema();
+  const { rows } = await sql<BudgetRow>`
+    INSERT INTO budgets (user_id, category, monthly_limit)
+    VALUES (${userId}, ${category}, ${monthlyLimit})
+    ON CONFLICT (user_id, category) DO UPDATE SET monthly_limit = ${monthlyLimit}
+    RETURNING id, category, monthly_limit::text AS monthly_limit;
+  `;
+  return rows[0];
+}
+
+export async function deleteBudget(userId: number, id: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`DELETE FROM budgets WHERE id = ${id} AND user_id = ${userId};`;
+  return (rowCount ?? 0) > 0;
+}
+
+// ---- Savings goals ----
+
+export type SavingsGoalRow = {
+  id: number;
+  name: string;
+  color: string;
+  target_amount: string;
+  current_amount: string;
+};
+
+export async function listSavingsGoals(userId: number): Promise<SavingsGoalRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<SavingsGoalRow>`
+    SELECT id, name, color, target_amount::text AS target_amount, current_amount::text AS current_amount
+    FROM savings_goals WHERE user_id = ${userId} ORDER BY created_at, id;
+  `;
+  return rows;
+}
+
+export async function createSavingsGoal(
+  userId: number,
+  input: { name: string; color: string; targetAmount: number },
+): Promise<SavingsGoalRow> {
+  await ensureSchema();
+  const { rows } = await sql<SavingsGoalRow>`
+    INSERT INTO savings_goals (user_id, name, color, target_amount)
+    VALUES (${userId}, ${input.name}, ${input.color}, ${input.targetAmount})
+    RETURNING id, name, color, target_amount::text AS target_amount, current_amount::text AS current_amount;
+  `;
+  return rows[0];
+}
+
+export async function updateSavingsGoal(
+  userId: number,
+  id: number,
+  input: { name?: string; color?: string; targetAmount?: number; contributeDelta?: number },
+): Promise<SavingsGoalRow | null> {
+  await ensureSchema();
+  const { rows: existingRows } = await sql<SavingsGoalRow>`
+    SELECT id, name, color, target_amount::text AS target_amount, current_amount::text AS current_amount
+    FROM savings_goals WHERE id = ${id} AND user_id = ${userId};
+  `;
+  const existing = existingRows[0];
+  if (!existing) return null;
+
+  const newName = input.name?.trim() ?? existing.name;
+  const newColor = input.color ?? existing.color;
+  const newTarget = input.targetAmount ?? Number(existing.target_amount);
+  const newCurrent = Math.max(0, Number(existing.current_amount) + (input.contributeDelta ?? 0));
+
+  const { rows } = await sql<SavingsGoalRow>`
+    UPDATE savings_goals
+    SET name = ${newName}, color = ${newColor}, target_amount = ${newTarget}, current_amount = ${newCurrent}
+    WHERE id = ${id} AND user_id = ${userId}
+    RETURNING id, name, color, target_amount::text AS target_amount, current_amount::text AS current_amount;
+  `;
+  return rows[0] ?? null;
+}
+
+export async function deleteSavingsGoal(userId: number, id: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`DELETE FROM savings_goals WHERE id = ${id} AND user_id = ${userId};`;
+  return (rowCount ?? 0) > 0;
+}
+
+// ---- Split transactions ----
+
+// Creates one expense row per line, all sharing a split_group_id purely for
+// display grouping (see the split_group_id column comment in ensureSchema)
+// — each line is otherwise an ordinary, independently editable expense.
+export async function createSplitExpense(
+  userId: number,
+  input: {
+    type: string;
+    date: string;
+    merchant: string;
+    notes?: string | null;
+    tags?: string[];
+    walletId?: number | null;
+    lines: { category: string; amount: number }[];
+  },
+): Promise<Expense[]> {
+  await ensureSchema();
+  const walletId = await resolveWalletId(userId, input.walletId);
+  const groupId = `sp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  const results: Expense[] = [];
+  for (const line of input.lines) {
+    const { rows } = await sql<Expense>`
+      WITH inserted AS (
+        INSERT INTO expenses (user_id, type, date, amount, merchant, category, notes, tags, wallet_id, split_group_id)
+        VALUES (${userId}, ${input.type}, ${input.date}, ${line.amount}, ${input.merchant}, ${line.category}, ${input.notes ?? null}, ${toPgTextArray(input.tags ?? [])}::text[], ${walletId}, ${groupId})
+        RETURNING *
+      )
+      SELECT
+        inserted.id, inserted.type, inserted.direction,
+        to_char(inserted.date, 'YYYY-MM-DD') AS date,
+        inserted.amount::text AS amount, inserted.merchant, inserted.category, inserted.notes, inserted.tags,
+        (inserted.receipt_image IS NOT NULL) AS has_receipt, inserted.wallet_id, w.name AS wallet_name
+      FROM inserted
+      LEFT JOIN wallets w ON w.id = inserted.wallet_id;
+    `;
+    results.push(rows[0]);
+  }
+  return results;
 }
 
 export async function seedDefaultCategoriesForUser(userId: number): Promise<void> {

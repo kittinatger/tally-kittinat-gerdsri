@@ -81,6 +81,9 @@ export const DASHBOARD_WIDGET_TYPES = [
   "balanceHero",
   "payPeriodStepper",
   "spendingStreak",
+  // Budgets & goals
+  "budgetOverview",
+  "savingsGoals",
 ] as const;
 export type DashboardWidgetType = (typeof DASHBOARD_WIDGET_TYPES)[number];
 
@@ -292,6 +295,8 @@ export const SUPPORTED_WIDTHS: Record<DashboardWidgetType, readonly WidgetWidth[
   balanceHero: ["large"],
   payPeriodStepper: ["medium", "large"],
   spendingStreak: ["small", "medium", "large"],
+  budgetOverview: ["medium", "large"],
+  savingsGoals: ["medium", "large"],
 };
 
 export function defaultWidthForType(type: DashboardWidgetType): WidgetWidth {
@@ -398,6 +403,9 @@ export const DASHBOARD_WIDGET_INFO: Record<DashboardWidgetType, { title: string;
   balanceHero: { title: "Balance hero", description: "A big balance card with your wallets and quick add buttons" },
   payPeriodStepper: { title: "Month progress stepper", description: "Where you are in the current month, as a stepper" },
   spendingStreak: { title: "Under-budget streak", description: "Days this week you spent less than your daily average" },
+
+  budgetOverview: { title: "Budgets", description: "This month's spending against each category's budget" },
+  savingsGoals: { title: "Savings goals", description: "Progress toward each of your savings goals" },
 };
 
 function makeId(type: DashboardWidgetType): string {

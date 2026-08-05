@@ -207,8 +207,13 @@ export default function AddExpenseModal({
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const expense = await createExpense(values);
-      onCreated(expense);
+      if (values.splitLines && values.splitLines.length > 0) {
+        const expenses = await createSplitExpense(values);
+        expenses.forEach(onCreated);
+      } else {
+        const expense = await createExpense(values);
+        onCreated(expense);
+      }
       onClose();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Could not save that entry.");
@@ -296,6 +301,7 @@ export default function AddExpenseModal({
           onSubmit={handleManualSubmit}
           submitting={submitting}
           error={submitError}
+          allowSplit
         />
       )}
 
@@ -452,6 +458,40 @@ export default function AddExpenseModal({
       )}
     </Modal>
   );
+}
+
+async function createSplitExpense(values: ExpenseFormValues): Promise<Expense[]> {
+  const res = await fetch("/api/expenses/split", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: values.type,
+      date: values.date,
+      merchant: values.merchant,
+      notes: values.notes || undefined,
+      tags: values.tags,
+      walletId: values.walletId,
+      lines: (values.splitLines ?? []).map((l) => ({ category: l.category, amount: Number(l.amount) })),
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(typeof data.error === "string" ? data.error : "Could not save that split transaction.");
+  }
+  return (data.expenses as Record<string, unknown>[]).map((e) => ({
+    id: e.id as number,
+    type: normalizeExpenseType(e.type as string),
+    direction: normalizeDirection(e.direction as string | null),
+    date: e.date as string,
+    amount: Number(e.amount),
+    merchant: e.merchant as string,
+    category: e.category as string,
+    notes: e.notes as string | null,
+    tags: (e.tags as string[]) ?? [],
+    hasReceipt: (e.has_receipt as boolean) ?? false,
+    walletId: (e.wallet_id as number | null) ?? null,
+    walletName: (e.wallet_name as string | null) ?? null,
+  }));
 }
 
 async function createExpense(values: ExpenseFormValues): Promise<Expense> {
