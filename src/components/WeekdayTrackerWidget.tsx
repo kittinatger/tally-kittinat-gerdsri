@@ -2,7 +2,7 @@ export default function WeekdayTrackerWidget({
   value,
   label,
   days,
-  cardClassName = "bg-surface-accent text-white",
+  cardClassName = "bg-emerald-500 text-white",
 }: {
   value: string;
   label: string;

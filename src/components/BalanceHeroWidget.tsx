@@ -14,7 +14,7 @@ export default function BalanceHeroWidget({
   onAddExpense: () => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-card border border-surface-line bg-gradient-to-br from-navy to-navy-dark p-5 text-white">
+    <div className="overflow-hidden rounded-card border border-surface-line bg-gradient-to-br from-emerald-500 to-emerald-700 p-5 text-white">
       <p className="text-xs font-semibold uppercase tracking-wide text-white/70">Your balance</p>
       <p className="mt-1.5 truncate font-display text-3xl">{balance}</p>
 
@@ -24,7 +24,7 @@ export default function BalanceHeroWidget({
             <span
               key={w.id}
               title={w.name}
-              className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold text-white ring-2 ring-navy ${dotClasses(w.color)}`}
+              className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold text-white ring-2 ring-emerald-600 ${dotClasses(w.color)}`}
             >
               {w.name.slice(0, 1).toUpperCase()}
             </span>
@@ -51,7 +51,7 @@ export default function BalanceHeroWidget({
         </button>
         <button
           onClick={onAddExpense}
-          className="flex-1 rounded-full bg-white py-2.5 text-sm font-semibold text-navy transition hover:bg-white/90"
+          className="flex-1 rounded-full bg-white py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-white/90"
         >
           + Expense
         </button>

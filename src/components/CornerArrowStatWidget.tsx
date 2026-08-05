@@ -2,7 +2,7 @@ export default function CornerArrowStatWidget({
   value,
   label,
   bars,
-  cardClassName = "bg-surface-accent text-white",
+  cardClassName = "bg-emerald-500 text-white",
   barClassName = "bg-white/30",
   activeBarClassName = "bg-white",
 }: {
