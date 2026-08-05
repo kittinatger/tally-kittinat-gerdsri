@@ -26,6 +26,8 @@ import RecurringManager from "./RecurringManager";
 import BudgetManager from "./BudgetManager";
 import SavingsGoalsManager from "./SavingsGoalsManager";
 import NotificationSettings from "./NotificationSettings";
+import ApiTokensManager from "./ApiTokensManager";
+import AutoImportInstructions from "./AutoImportInstructions";
 import SettingsSection from "./SettingsSection";
 import SettingsListItem from "./SettingsListItem";
 
@@ -42,7 +44,8 @@ type Panel =
   | "recurring"
   | "budgets"
   | "savingsGoals"
-  | "notifications";
+  | "notifications"
+  | "autoImport";
 
 const PANEL_TITLES: Record<Panel, string> = {
   account: "Account",
@@ -58,6 +61,7 @@ const PANEL_TITLES: Record<Panel, string> = {
   budgets: "Budgets",
   savingsGoals: "Savings goals",
   notifications: "Email notifications",
+  autoImport: "Automatic import",
 };
 
 function AccountIcon() {
@@ -215,6 +219,17 @@ function GoalIcon() {
   );
 }
 
+function AutoImportIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <circle cx="9" cy="12" r="3" />
+      <path d="M17 8h.01" />
+      <path d="M7 5V3.5a1.5 1.5 0 0 1 1.5-1.5h7a1.5 1.5 0 0 1 1.5 1.5V5" />
+    </svg>
+  );
+}
+
 function BellIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
@@ -289,6 +304,12 @@ export default function SettingsView({
                 {panel === "budgets" && <BudgetManager />}
                 {panel === "savingsGoals" && <SavingsGoalsManager />}
                 {panel === "notifications" && <NotificationSettings hasEmail={Boolean(email)} />}
+                {panel === "autoImport" && (
+                  <div>
+                    <ApiTokensManager />
+                    <AutoImportInstructions />
+                  </div>
+                )}
                 {panel === "dashboardWidgets" && (
                   <DashboardWidgetsSettings
                     expenses={expenses}
@@ -320,6 +341,7 @@ export default function SettingsView({
                   <SettingsListItem icon={<BudgetIcon />} label="Budgets" onClick={() => setPanel("budgets")} />
                   <SettingsListItem icon={<GoalIcon />} label="Savings goals" onClick={() => setPanel("savingsGoals")} />
                   <SettingsListItem icon={<BellIcon />} label="Email notifications" onClick={() => setPanel("notifications")} />
+                  <SettingsListItem icon={<AutoImportIcon />} label="Automatic import" onClick={() => setPanel("autoImport")} />
                 </SettingsSection>
 
                 <SettingsSection title="Display">

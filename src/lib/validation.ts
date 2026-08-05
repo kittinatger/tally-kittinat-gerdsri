@@ -199,6 +199,10 @@ export const skipRecurringSchema = z.object({
   skip: z.literal(true),
 });
 
+export const apiTokenInputSchema = z.object({
+  name: z.string().trim().min(1).max(60),
+});
+
 export const savingsGoalInputSchema = z.object({
   name: z.string().trim().min(1).max(60),
   color: z.string().trim().min(1).max(30).default("emerald"),

@@ -31,6 +31,10 @@ export async function proxy(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!login|register|forgot-password|reset-password|offline|manifest.json|sw.js|api/auth/login|api/auth/register|api/auth/forgot-password|api/auth/reset-password|_next/static|_next/image|favicon.ico|favicon-light.svg|favicon-dark.svg).*)",
+    // api/intake/* authenticates itself via a Bearer token (see
+    // src/app/api/intake/receipt/route.ts) — it deliberately doesn't use
+    // the cookie session, since it's meant to be called by an unattended
+    // automation (e.g. an iOS Shortcut) with no browser involved.
+    "/((?!login|register|forgot-password|reset-password|offline|manifest.json|sw.js|api/auth/login|api/auth/register|api/auth/forgot-password|api/auth/reset-password|api/intake|_next/static|_next/image|favicon.ico|favicon-light.svg|favicon-dark.svg).*)",
   ],
 };

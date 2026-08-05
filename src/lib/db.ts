@@ -181,7 +181,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 1;
+const CURRENT_SCHEMA_VERSION = 2;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -337,6 +337,23 @@ function ensureSchema(): Promise<void> {
         );
       `;
       await sql`CREATE INDEX IF NOT EXISTS password_reset_tokens_hash_idx ON password_reset_tokens (token_hash);`;
+
+      // Personal access tokens for unattended receipt import (iOS Shortcuts
+      // automations, or any other personal-automation client) — see
+      // lib/receipt-intake.ts and /api/intake/receipt. Unlike password
+      // reset tokens these are reusable (no expiry/used_at), since they're
+      // meant to sit in a Shortcut and fire repeatedly.
+      await sql`
+        CREATE TABLE IF NOT EXISTS api_tokens (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          token_hash TEXT NOT NULL,
+          name TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          last_used_at TIMESTAMPTZ
+        );
+      `;
+      await sql`CREATE INDEX IF NOT EXISTS api_tokens_hash_idx ON api_tokens (token_hash);`;
 
       // Supports listExpenses' WHERE user_id = ... ORDER BY date DESC, id DESC
       // so it stays fast as transaction history grows.
@@ -1389,7 +1406,9 @@ export async function bumpSessionVersion(userId: number): Promise<number> {
 
 // ---- Password reset tokens ----
 
-function hashResetToken(rawToken: string): string {
+// Shared by password reset tokens and API tokens (below) — only the hash
+// is ever stored, so a database leak alone can't be used to authenticate.
+function hashToken(rawToken: string): string {
   return createHash("sha256").update(rawToken).digest("hex");
 }
 
@@ -1416,7 +1435,7 @@ export async function createPasswordResetToken(userId: number): Promise<string> 
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
   await sql`
     INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
-    VALUES (${userId}, ${hashResetToken(rawToken)}, ${expiresAt.toISOString()});
+    VALUES (${userId}, ${hashToken(rawToken)}, ${expiresAt.toISOString()});
   `;
   return rawToken;
 }
@@ -1429,10 +1448,71 @@ export async function consumePasswordResetToken(rawToken: string): Promise<numbe
   const { rows } = await sql<{ user_id: number }>`
     UPDATE password_reset_tokens
     SET used_at = now()
-    WHERE token_hash = ${hashResetToken(rawToken)} AND used_at IS NULL AND expires_at > now()
+    WHERE token_hash = ${hashToken(rawToken)} AND used_at IS NULL AND expires_at > now()
     RETURNING user_id;
   `;
   return rows[0]?.user_id ?? null;
+}
+
+// ---- Personal access tokens (unattended receipt import) ----
+
+export type ApiTokenRow = {
+  id: number;
+  name: string;
+  created_at: string;
+  last_used_at: string | null;
+};
+
+export async function listApiTokens(userId: number): Promise<ApiTokenRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<ApiTokenRow>`
+    SELECT id, name, created_at::text AS created_at, last_used_at::text AS last_used_at
+    FROM api_tokens WHERE user_id = ${userId} ORDER BY created_at DESC;
+  `;
+  return rows;
+}
+
+// Returns the raw token — shown to the user once, at creation, same as any
+// other personal-access-token UX. Only the hash is ever stored.
+export async function createApiToken(userId: number, name: string): Promise<{ id: number; token: string }> {
+  await ensureSchema();
+  const token = randomBytes(24).toString("hex");
+  const { rows } = await sql<{ id: number }>`
+    INSERT INTO api_tokens (user_id, token_hash, name)
+    VALUES (${userId}, ${hashToken(token)}, ${name})
+    RETURNING id;
+  `;
+  return { id: rows[0].id, token };
+}
+
+export async function revokeApiToken(userId: number, id: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`DELETE FROM api_tokens WHERE id = ${id} AND user_id = ${userId};`;
+  return (rowCount ?? 0) > 0;
+}
+
+// Unlike password reset tokens this doesn't consume/expire the token —
+// it's meant to sit in a Shortcuts automation and authenticate repeatedly.
+export async function verifyApiToken(rawToken: string): Promise<number | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ user_id: number }>`
+    UPDATE api_tokens SET last_used_at = now()
+    WHERE token_hash = ${hashToken(rawToken)}
+    RETURNING user_id;
+  `;
+  return rows[0]?.user_id ?? null;
+}
+
+// Sanity/cost guard for unattended imports (each one calls the paid Gemini
+// API) — counts expenses tagged "auto-import" created in the trailing
+// window, regardless of which intake path created them.
+export async function countRecentAutoImports(userId: number, hours: number): Promise<number> {
+  await ensureSchema();
+  const { rows } = await sql<{ n: number }>`
+    SELECT COUNT(*)::int AS n FROM expenses
+    WHERE user_id = ${userId} AND 'auto-import' = ANY(tags) AND created_at > now() - make_interval(hours => ${hours});
+  `;
+  return rows[0]?.n ?? 0;
 }
 
 // expenses/categories/app_settings all reference users(id) ON DELETE CASCADE
