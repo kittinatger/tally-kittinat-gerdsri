@@ -10,8 +10,10 @@ export async function proxy(req: NextRequest) {
     // "Sign out of all devices" bumps session_version in the DB — any
     // token minted before that (this one included) stops matching and is
     // treated as signed out, without needing a per-token revocation list.
+    // null means the check itself failed (see getSessionVersion) — fail
+    // open and trust the token's signature rather than lock everyone out.
     const currentVersion = await getSessionVersion(parsed.userId);
-    if (currentVersion === parsed.sessionVersion) {
+    if (currentVersion === null || currentVersion === parsed.sessionVersion) {
       const requestHeaders = new Headers(req.headers);
       requestHeaders.set("x-user-id", String(parsed.userId));
       return NextResponse.next({ request: { headers: requestHeaders } });
