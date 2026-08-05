@@ -104,7 +104,11 @@ export default function CategoryManager({ categories }: { categories: CategoryOp
             }`}
           >
             <div className="flex min-w-0 items-center gap-2.5">
-              <span className={`h-3 w-3 shrink-0 rounded-full ${dotClasses(c.color)}`} />
+              {c.icon ? (
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center text-base leading-none">{c.icon}</span>
+              ) : (
+                <span className={`h-3 w-3 shrink-0 rounded-full ${dotClasses(c.color)}`} />
+              )}
               <span className="truncate font-medium text-foreground">{c.name}</span>
             </div>
             <div className="flex shrink-0 items-center gap-1">

@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
   try {
-    const category = await createCategory(userId, parsed.data.type, parsed.data.name, parsed.data.color);
+    const category = await createCategory(userId, parsed.data.type, parsed.data.name, parsed.data.color, parsed.data.icon);
     return NextResponse.json({ category }, { status: 201 });
   } catch (err) {
     if (isUniqueViolation(err)) {

@@ -5,4 +5,5 @@ export type CategoryOption = {
   type: TransactionType;
   name: string;
   color: string;
+  icon: string | null;
 };

@@ -204,13 +204,17 @@ export const csvImportInputSchema = z.object({
   csv: z.string().min(1).max(2_000_000),
 });
 
+const categoryIconSchema = z.string().trim().min(1).max(8).nullable();
+
 export const categoryInputSchema = z.object({
   type: z.enum(TRANSACTION_TYPES),
   name: z.string().trim().min(1).max(40),
   color: z.string().trim().min(1).max(30),
+  icon: categoryIconSchema.optional(),
 });
 
 export const categoryUpdateSchema = z.object({
   name: z.string().trim().min(1).max(40).optional(),
   color: z.string().trim().min(1).max(30).optional(),
+  icon: categoryIconSchema.optional(),
 });

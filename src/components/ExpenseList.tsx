@@ -15,9 +15,13 @@ type TypeFilter = "all" | TransactionType;
 export default function ExpenseList({
   expenses,
   onSelect,
+  onBulkDeleted,
+  onBulkUpdated,
 }: {
   expenses: Expense[];
   onSelect: (expense: Expense) => void;
+  onBulkDeleted: (ids: number[]) => void;
+  onBulkUpdated: (expenses: Expense[]) => void;
 }) {
   const allCategories = useAllCategories();
   const currency = useCurrency();
@@ -29,6 +33,107 @@ export default function ExpenseList({
   const [dateTo, setDateTo] = useState("");
   const filterBarRef = useRef<HTMLDivElement>(null);
   const exportButtonRef = useRef<HTMLButtonElement>(null);
+
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+  const [bulkTagInput, setBulkTagInput] = useState("");
+
+  function toggleSelectMode() {
+    setSelectMode((v) => !v);
+    setSelectedIds(new Set());
+    setConfirmBulkDelete(false);
+    setBulkError(null);
+  }
+
+  function toggleSelected(id: number) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function handleBulkDelete() {
+    if (!confirmBulkDelete) {
+      setConfirmBulkDelete(true);
+      return;
+    }
+    setBulkBusy(true);
+    setBulkError(null);
+    const ids = Array.from(selectedIds);
+    const deleted: number[] = [];
+    for (const id of ids) {
+      try {
+        const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+        if (res.ok) deleted.push(id);
+      } catch {
+        // best-effort — surfaced via the error message below if anything's left over
+      }
+    }
+    if (deleted.length > 0) onBulkDeleted(deleted);
+    if (deleted.length < ids.length) {
+      setBulkError(`Deleted ${deleted.length} of ${ids.length} — some transactions couldn't be deleted.`);
+    } else {
+      setSelectedIds(new Set());
+      setSelectMode(false);
+    }
+    setConfirmBulkDelete(false);
+    setBulkBusy(false);
+  }
+
+  async function handleBulkAddTag() {
+    const tag = bulkTagInput.trim();
+    if (!tag) return;
+    setBulkBusy(true);
+    setBulkError(null);
+    const targets = expenses.filter((e) => selectedIds.has(e.id));
+    const updated: Expense[] = [];
+    let failed = 0;
+    for (const e of targets) {
+      const newTags = e.tags.includes(tag) ? e.tags : [...e.tags, tag];
+      try {
+        const res = await fetch(`/api/expenses/${e.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: e.type,
+            direction: e.type === "transfer" ? (e.direction ?? "out") : undefined,
+            date: e.date,
+            amount: e.amount,
+            merchant: e.merchant,
+            category: e.category,
+            notes: e.notes || undefined,
+            tags: newTags,
+            walletId: e.walletId,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          updated.push({
+            ...e,
+            tags: data.expense.tags ?? newTags,
+          });
+        } else {
+          failed++;
+        }
+      } catch {
+        failed++;
+      }
+    }
+    if (updated.length > 0) onBulkUpdated(updated);
+    if (failed > 0) {
+      setBulkError(`Tagged ${updated.length} of ${targets.length} — ${failed} couldn't be updated.`);
+    } else {
+      setBulkTagInput("");
+      setSelectedIds(new Set());
+      setSelectMode(false);
+    }
+    setBulkBusy(false);
+  }
 
   const categoryOptions = useMemo(() => {
     const names = new Set(
@@ -206,8 +311,54 @@ export default function ExpenseList({
           >
             Export CSV
           </button>
+          <button
+            onClick={toggleSelectMode}
+            disabled={filtered.length === 0}
+            className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition disabled:opacity-40 ${
+              selectMode ? "border-surface-accent bg-surface-accent/10 text-surface-accent" : "border-line text-foreground hover:bg-bg-soft"
+            }`}
+          >
+            {selectMode ? "Cancel" : "Select"}
+          </button>
         </div>
       </div>
+
+      {selectMode && (
+        <div className="mb-4 flex flex-col gap-2.5 rounded-card border border-surface-line bg-surface p-3 sm:flex-row sm:items-center">
+          <span className="text-sm font-semibold text-surface-foreground-soft">
+            {selectedIds.size} selected
+          </span>
+          <div className="flex flex-1 flex-wrap items-center gap-2">
+            <input
+              type="text"
+              value={bulkTagInput}
+              onChange={(e) => setBulkTagInput(e.target.value)}
+              placeholder="Add tag to selected..."
+              disabled={selectedIds.size === 0}
+              className="min-w-0 flex-1 rounded-full border border-surface-line bg-surface-soft px-3 py-1.5 text-sm text-surface-foreground outline-none transition focus:border-surface-accent focus:ring-2 focus:ring-surface-accent/20 disabled:opacity-50"
+            />
+            <button
+              onClick={handleBulkAddTag}
+              disabled={bulkBusy || selectedIds.size === 0 || !bulkTagInput.trim()}
+              className="shrink-0 rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-bg-soft disabled:opacity-40"
+            >
+              Add tag
+            </button>
+            <button
+              onClick={handleBulkDelete}
+              disabled={bulkBusy || selectedIds.size === 0}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition disabled:opacity-40 ${
+                confirmBulkDelete
+                  ? "bg-red-600 text-white hover:bg-red-700"
+                  : "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+              }`}
+            >
+              {bulkBusy ? "Working..." : confirmBulkDelete ? "Confirm delete" : "Delete"}
+            </button>
+          </div>
+          {bulkError && <p className="w-full text-xs text-red-600 dark:text-red-400">{bulkError}</p>}
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <div className="mt-10 flex flex-col items-center gap-2 text-center">
@@ -241,6 +392,9 @@ export default function ExpenseList({
                       expense={expense}
                       onClick={() => onSelect(expense)}
                       isLast={i === items.length - 1}
+                      selectMode={selectMode}
+                      selected={selectedIds.has(expense.id)}
+                      onToggleSelect={() => toggleSelected(expense.id)}
                     />
                   ))}
                 </div>

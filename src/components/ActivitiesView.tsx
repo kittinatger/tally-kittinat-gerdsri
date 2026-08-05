@@ -47,6 +47,16 @@ export default function ActivitiesView({
     setEditing(null);
   }
 
+  function handleBulkDeleted(ids: number[]) {
+    const idSet = new Set(ids);
+    setExpenses((prev) => prev.filter((e) => !idSet.has(e.id)));
+  }
+
+  function handleBulkUpdated(updated: Expense[]) {
+    const byId = new Map(updated.map((e) => [e.id, e]));
+    setExpenses((prev) => prev.map((e) => byId.get(e.id) ?? e));
+  }
+
   return (
     <CategoriesProvider categories={categories}>
       <WalletsProvider wallets={wallets}>
@@ -56,7 +66,12 @@ export default function ActivitiesView({
             <AppHeader onAddClick={() => setAddOpen(true)} />
 
             <main className="flex-1 px-1 py-6 sm:px-2">
-              <ExpenseList expenses={expenses} onSelect={setEditing} />
+              <ExpenseList
+                expenses={expenses}
+                onSelect={setEditing}
+                onBulkDeleted={handleBulkDeleted}
+                onBulkUpdated={handleBulkUpdated}
+              />
             </main>
           </PullToRefresh>
 

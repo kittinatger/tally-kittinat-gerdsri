@@ -4,6 +4,7 @@ import { useState } from "react";
 import Modal from "./Modal";
 import { CATEGORY_PALETTE, type TransactionType } from "@/lib/categories";
 import { dotClasses } from "@/lib/category-styles";
+import { CATEGORY_ICONS } from "@/lib/category-icons";
 import type { CategoryOption } from "@/types/category";
 
 export default function CategoryModal({
@@ -21,6 +22,7 @@ export default function CategoryModal({
   const nameLocked = isEdit && category?.name === "Other";
   const [name, setName] = useState(category?.name ?? "");
   const [color, setColor] = useState<string>(category?.color ?? CATEGORY_PALETTE[0]);
+  const [icon, setIcon] = useState<string | null>(category?.icon ?? null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,12 +35,12 @@ export default function CategoryModal({
         ? await fetch(`/api/categories/${category!.id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, color }),
+            body: JSON.stringify({ name, color, icon }),
           })
         : await fetch("/api/categories", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ type, name, color }),
+            body: JSON.stringify({ type, name, color, icon }),
           });
       const data = await res.json();
       if (!res.ok) {
@@ -90,6 +92,34 @@ export default function CategoryModal({
                   color === c ? "ring-2 ring-navy ring-offset-2 ring-offset-surface" : ""
                 }`}
               />
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">Icon (optional)</label>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              onClick={() => setIcon(null)}
+              className={`flex h-9 w-9 items-center justify-center rounded-full border text-xs font-semibold transition ${
+                icon === null ? "border-navy bg-navy/10 text-navy dark:text-blue-300" : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+              }`}
+            >
+              None
+            </button>
+            {CATEGORY_ICONS.map((e) => (
+              <button
+                key={e}
+                type="button"
+                onClick={() => setIcon(e)}
+                aria-label={e}
+                className={`flex h-9 w-9 items-center justify-center rounded-full border text-base transition ${
+                  icon === e ? "border-navy bg-navy/10" : "border-line hover:bg-[var(--nav-hover-bg)]"
+                }`}
+              >
+                {e}
+              </button>
             ))}
           </div>
         </div>

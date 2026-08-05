@@ -37,6 +37,7 @@ export default async function ActivitiesPage() {
     type: isTransactionType(c.type) ? c.type : "expense",
     name: c.name,
     color: c.color,
+    icon: c.icon,
   }));
   const wallets: WalletOption[] = walletRows.map((w) => ({
     id: w.id,

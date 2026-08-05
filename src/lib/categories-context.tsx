@@ -29,3 +29,8 @@ export function useCategoryColor(type: TransactionType, name: string): string | 
   const all = useContext(CategoriesContext);
   return all.find((c) => c.type === type && c.name === name)?.color;
 }
+
+export function useCategoryIcon(type: TransactionType, name: string): string | null | undefined {
+  const all = useContext(CategoriesContext);
+  return all.find((c) => c.type === type && c.name === name)?.icon;
+}

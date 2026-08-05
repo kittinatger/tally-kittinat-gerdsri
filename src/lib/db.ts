@@ -262,6 +262,10 @@ function ensureSchema(): Promise<void> {
           CONSTRAINT categories_type_name_unique UNIQUE (type, name)
         );
       `;
+      // Optional emoji shown instead of/alongside the color dot wherever a
+      // category is displayed. NULL means "just use the color", same as
+      // every category had before this column existed.
+      await sql`ALTER TABLE categories ADD COLUMN IF NOT EXISTS icon TEXT;`;
 
       // Accounts. Each user's expenses/categories/settings are fully
       // isolated from every other user's via the user_id columns below.
@@ -455,13 +459,14 @@ export type CategoryRow = {
   type: string;
   name: string;
   color: string;
+  icon: string | null;
   sort_order: number;
 };
 
 export async function listCategories(userId: number): Promise<CategoryRow[]> {
   await ensureSchema();
   const { rows } = await sql<CategoryRow>`
-    SELECT id, type, name, color, sort_order
+    SELECT id, type, name, color, icon, sort_order
     FROM categories
     WHERE user_id = ${userId}
     ORDER BY type, sort_order, id;
@@ -469,16 +474,22 @@ export async function listCategories(userId: number): Promise<CategoryRow[]> {
   return rows;
 }
 
-export async function createCategory(userId: number, type: string, name: string, color: string): Promise<CategoryRow> {
+export async function createCategory(
+  userId: number,
+  type: string,
+  name: string,
+  color: string,
+  icon?: string | null,
+): Promise<CategoryRow> {
   await ensureSchema();
   const { rows: maxRows } = await sql<{ max: number | null }>`
     SELECT MAX(sort_order) AS max FROM categories WHERE user_id = ${userId} AND type = ${type};
   `;
   const nextSort = (maxRows[0]?.max ?? -1) + 1;
   const { rows } = await sql<CategoryRow>`
-    INSERT INTO categories (user_id, type, name, color, sort_order)
-    VALUES (${userId}, ${type}, ${name}, ${color}, ${nextSort})
-    RETURNING id, type, name, color, sort_order;
+    INSERT INTO categories (user_id, type, name, color, icon, sort_order)
+    VALUES (${userId}, ${type}, ${name}, ${color}, ${icon ?? null}, ${nextSort})
+    RETURNING id, type, name, color, icon, sort_order;
   `;
   return rows[0];
 }
@@ -486,11 +497,11 @@ export async function createCategory(userId: number, type: string, name: string,
 export async function updateCategory(
   userId: number,
   id: number,
-  input: { name?: string; color?: string },
+  input: { name?: string; color?: string; icon?: string | null },
 ): Promise<CategoryRow | null> {
   await ensureSchema();
   const { rows: existingRows } = await sql<CategoryRow>`
-    SELECT id, type, name, color, sort_order FROM categories WHERE id = ${id} AND user_id = ${userId};
+    SELECT id, type, name, color, icon, sort_order FROM categories WHERE id = ${id} AND user_id = ${userId};
   `;
   const existing = existingRows[0];
   if (!existing) return null;
@@ -502,12 +513,13 @@ export async function updateCategory(
 
   const newName = trimmedName ?? existing.name;
   const newColor = input.color ?? existing.color;
+  const newIcon = input.icon !== undefined ? input.icon : existing.icon;
 
   const { rows } = await sql<CategoryRow>`
     UPDATE categories
-    SET name = ${newName}, color = ${newColor}
+    SET name = ${newName}, color = ${newColor}, icon = ${newIcon}
     WHERE id = ${id} AND user_id = ${userId}
-    RETURNING id, type, name, color, sort_order;
+    RETURNING id, type, name, color, icon, sort_order;
   `;
 
   if (trimmedName !== undefined && trimmedName !== existing.name) {
