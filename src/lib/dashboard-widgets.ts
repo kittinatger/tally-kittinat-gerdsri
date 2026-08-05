@@ -415,8 +415,8 @@ function makeId(type: DashboardWidgetType): string {
 export function DEFAULT_DASHBOARD_WIDGETS(): DashboardWidgetInstance[] {
   return [
     { id: makeId("summary"), type: "summary", width: "large", cards: [...SUMMARY_CARDS] },
-    { id: makeId("categoryOverview"), type: "categoryOverview", width: "large" },
-    { id: makeId("wallets"), type: "wallets", width: "medium" },
+    { id: makeId("wallets"), type: "wallets", width: "large" },
+    { id: makeId("walletTicker"), type: "walletTicker", width: "medium" },
     { id: makeId("recentTransactions"), type: "recentTransactions", width: "medium" },
   ];
 }

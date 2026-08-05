@@ -181,7 +181,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 4;
+const CURRENT_SCHEMA_VERSION = 5;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -270,6 +270,24 @@ function ensureSchema(): Promise<void> {
       await sql`
         ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS dashboard_widgets TEXT NOT NULL DEFAULT
           '[{"id":"summary-default","type":"summary","width":"full"},{"id":"categoryOverview-default","type":"categoryOverview","width":"full"},{"id":"wallets-default","type":"wallets","width":"half"},{"id":"recentTransactions-default","type":"recentTransactions","width":"half"}]';
+      `;
+      // The default layout changed (dropped categoryOverview, added
+      // walletTicker, widened wallets to full) — update the column DEFAULT
+      // so brand-new users get the new layout, and backfill any existing
+      // row that's still exactly the untouched OLD default literal (i.e.
+      // never opened Customize Dashboard) to the new one. Rows that don't
+      // match that exact string — including a customized layout that
+      // happens to reuse some of the same widgets — are left alone.
+      const OLD_DEFAULT_DASHBOARD_WIDGETS =
+        '[{"id":"summary-default","type":"summary","width":"full"},{"id":"categoryOverview-default","type":"categoryOverview","width":"full"},{"id":"wallets-default","type":"wallets","width":"half"},{"id":"recentTransactions-default","type":"recentTransactions","width":"half"}]';
+      await sql`
+        ALTER TABLE app_settings ALTER COLUMN dashboard_widgets SET DEFAULT
+          '[{"id":"summary-default","type":"summary","width":"large"},{"id":"wallets-default","type":"wallets","width":"large"},{"id":"walletTicker-default","type":"walletTicker","width":"medium"},{"id":"recentTransactions-default","type":"recentTransactions","width":"medium"}]';
+      `;
+      await sql`
+        UPDATE app_settings SET dashboard_widgets =
+          '[{"id":"summary-default","type":"summary","width":"large"},{"id":"wallets-default","type":"wallets","width":"large"},{"id":"walletTicker-default","type":"walletTicker","width":"medium"},{"id":"recentTransactions-default","type":"recentTransactions","width":"medium"}]'
+        WHERE dashboard_widgets = ${OLD_DEFAULT_DASHBOARD_WIDGETS};
       `;
       // Once the multi-user migration has hardened this table (see
       // hardenMultiUserConstraints), `id` no longer has any constraint for
