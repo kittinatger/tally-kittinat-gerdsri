@@ -30,7 +30,7 @@ export default function Dashboard({
   currency,
   wallets,
   widgets,
-  budgets,
+  budgets: initialBudgets,
   savingsGoals,
 }: {
   initialExpenses: Expense[];
@@ -44,6 +44,11 @@ export default function Dashboard({
 }) {
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [remaining, setRemaining] = useState(initialRemaining);
+  const [budgets, setBudgets] = useState<Budget[]>(initialBudgets);
+
+  function handleBudgetDismissed(updated: Budget) {
+    setBudgets((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+  }
   const [editingBalance, setEditingBalance] = useState(false);
   const [addingType, setAddingType] = useState<TransactionType | null>(null);
 
@@ -67,7 +72,7 @@ export default function Dashboard({
             <AppHeader onAddClick={() => setAddingType("expense")} />
 
             <main className="flex-1 px-1 py-6 sm:px-2">
-              <BudgetAlerts expenses={expenses} budgets={budgets} />
+              <BudgetAlerts expenses={expenses} budgets={budgets} onDismissed={handleBudgetDismissed} />
               <div className="grid grid-cols-4 gap-4">
                 {widgets.map((w) => (
                   <div key={w.id} className={WIDGET_WIDTH_COLSPAN[w.width]}>

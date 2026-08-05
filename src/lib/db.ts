@@ -357,6 +357,7 @@ function ensureSchema(): Promise<void> {
         );
       `;
       await sql`CREATE INDEX IF NOT EXISTS recurring_rules_user_idx ON recurring_rules (user_id);`;
+      await sql`ALTER TABLE recurring_rules ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0;`;
 
       // Per-category monthly spending limits. One row per category the user
       // has budgeted; categories with no row here are simply untracked.
@@ -370,6 +371,10 @@ function ensureSchema(): Promise<void> {
           CONSTRAINT budgets_user_category_unique UNIQUE (user_id, category)
         );
       `;
+      // Which month a near/over-limit alert for this budget was last
+      // dismissed for — a dismissal only silences the alert for that one
+      // month; it reappears once a new month starts.
+      await sql`ALTER TABLE budgets ADD COLUMN IF NOT EXISTS dismissed_alert_month TEXT;`;
 
       // Manually-tracked savings goals — current_amount is nudged by the
       // user via contributeToSavingsGoal rather than derived from real
@@ -386,6 +391,7 @@ function ensureSchema(): Promise<void> {
           created_at TIMESTAMPTZ NOT NULL DEFAULT now()
         );
       `;
+      await sql`ALTER TABLE savings_goals ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0;`;
 
       await bootstrapAdminIfNeeded();
       await hardenMultiUserConstraints();
@@ -1296,7 +1302,7 @@ export async function listRecurringRules(userId: number): Promise<RecurringRuleR
            wallet_id, frequency, to_char(next_run_date, 'YYYY-MM-DD') AS next_run_date, active
     FROM recurring_rules
     WHERE user_id = ${userId}
-    ORDER BY active DESC, next_run_date, id;
+    ORDER BY sort_order, id;
   `;
   return rows;
 }
@@ -1317,12 +1323,44 @@ export async function createRecurringRule(
 ): Promise<RecurringRuleRow> {
   await ensureSchema();
   const walletId = await resolveWalletId(userId, input.walletId);
+  const { rows: maxRows } = await sql<{ max: number | null }>`
+    SELECT MAX(sort_order) AS max FROM recurring_rules WHERE user_id = ${userId};
+  `;
+  const nextSort = (maxRows[0]?.max ?? -1) + 1;
   const { rows } = await sql<RecurringRuleRow>`
-    INSERT INTO recurring_rules (user_id, type, direction, amount, merchant, category, notes, wallet_id, frequency, next_run_date)
-    VALUES (${userId}, ${input.type}, ${input.direction ?? null}, ${input.amount}, ${input.merchant}, ${input.category}, ${input.notes ?? null}, ${walletId}, ${input.frequency}, ${input.startDate})
+    INSERT INTO recurring_rules (user_id, type, direction, amount, merchant, category, notes, wallet_id, frequency, next_run_date, sort_order)
+    VALUES (${userId}, ${input.type}, ${input.direction ?? null}, ${input.amount}, ${input.merchant}, ${input.category}, ${input.notes ?? null}, ${walletId}, ${input.frequency}, ${input.startDate}, ${nextSort})
     RETURNING id, type, direction, amount::text AS amount, merchant, category, notes, wallet_id, frequency, to_char(next_run_date, 'YYYY-MM-DD') AS next_run_date, active;
   `;
   return rows[0];
+}
+
+// Swaps this rule's sort_order with its neighbor in the current ordering —
+// simple adjacent-swap reordering rather than drag-and-drop, since the list
+// is short and this avoids the pointer-event complexity that's caused
+// problems elsewhere in the dashboard widget editor.
+export async function moveRecurringRule(userId: number, id: number, direction: "up" | "down"): Promise<void> {
+  await ensureSchema();
+  const { rows } = await sql<{ id: number; sort_order: number }>`
+    SELECT id, sort_order FROM recurring_rules WHERE user_id = ${userId} ORDER BY sort_order, id;
+  `;
+  const idx = rows.findIndex((r) => r.id === id);
+  const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+  if (idx === -1 || swapIdx < 0 || swapIdx >= rows.length) return;
+  const a = rows[idx];
+  const b = rows[swapIdx];
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    await client.sql`UPDATE recurring_rules SET sort_order = ${b.sort_order} WHERE id = ${a.id} AND user_id = ${userId};`;
+    await client.sql`UPDATE recurring_rules SET sort_order = ${a.sort_order} WHERE id = ${b.id} AND user_id = ${userId};`;
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 export async function updateRecurringRule(
@@ -1414,12 +1452,13 @@ export type BudgetRow = {
   id: number;
   category: string;
   monthly_limit: string;
+  dismissed_alert_month: string | null;
 };
 
 export async function listBudgets(userId: number): Promise<BudgetRow[]> {
   await ensureSchema();
   const { rows } = await sql<BudgetRow>`
-    SELECT id, category, monthly_limit::text AS monthly_limit
+    SELECT id, category, monthly_limit::text AS monthly_limit, dismissed_alert_month
     FROM budgets WHERE user_id = ${userId} ORDER BY category;
   `;
   return rows;
@@ -1431,7 +1470,7 @@ export async function upsertBudget(userId: number, category: string, monthlyLimi
     INSERT INTO budgets (user_id, category, monthly_limit)
     VALUES (${userId}, ${category}, ${monthlyLimit})
     ON CONFLICT (user_id, category) DO UPDATE SET monthly_limit = ${monthlyLimit}
-    RETURNING id, category, monthly_limit::text AS monthly_limit;
+    RETURNING id, category, monthly_limit::text AS monthly_limit, dismissed_alert_month;
   `;
   return rows[0];
 }
@@ -1440,6 +1479,16 @@ export async function deleteBudget(userId: number, id: number): Promise<boolean>
   await ensureSchema();
   const { rowCount } = await sql`DELETE FROM budgets WHERE id = ${id} AND user_id = ${userId};`;
   return (rowCount ?? 0) > 0;
+}
+
+export async function dismissBudgetAlert(userId: number, id: number, month: string): Promise<BudgetRow | null> {
+  await ensureSchema();
+  const { rows } = await sql<BudgetRow>`
+    UPDATE budgets SET dismissed_alert_month = ${month}
+    WHERE id = ${id} AND user_id = ${userId}
+    RETURNING id, category, monthly_limit::text AS monthly_limit, dismissed_alert_month;
+  `;
+  return rows[0] ?? null;
 }
 
 // ---- Savings goals ----
@@ -1456,7 +1505,7 @@ export async function listSavingsGoals(userId: number): Promise<SavingsGoalRow[]
   await ensureSchema();
   const { rows } = await sql<SavingsGoalRow>`
     SELECT id, name, color, target_amount::text AS target_amount, current_amount::text AS current_amount
-    FROM savings_goals WHERE user_id = ${userId} ORDER BY created_at, id;
+    FROM savings_goals WHERE user_id = ${userId} ORDER BY sort_order, id;
   `;
   return rows;
 }
@@ -1466,12 +1515,41 @@ export async function createSavingsGoal(
   input: { name: string; color: string; targetAmount: number },
 ): Promise<SavingsGoalRow> {
   await ensureSchema();
+  const { rows: maxRows } = await sql<{ max: number | null }>`
+    SELECT MAX(sort_order) AS max FROM savings_goals WHERE user_id = ${userId};
+  `;
+  const nextSort = (maxRows[0]?.max ?? -1) + 1;
   const { rows } = await sql<SavingsGoalRow>`
-    INSERT INTO savings_goals (user_id, name, color, target_amount)
-    VALUES (${userId}, ${input.name}, ${input.color}, ${input.targetAmount})
+    INSERT INTO savings_goals (user_id, name, color, target_amount, sort_order)
+    VALUES (${userId}, ${input.name}, ${input.color}, ${input.targetAmount}, ${nextSort})
     RETURNING id, name, color, target_amount::text AS target_amount, current_amount::text AS current_amount;
   `;
   return rows[0];
+}
+
+// Same adjacent-swap approach as moveRecurringRule.
+export async function moveSavingsGoal(userId: number, id: number, direction: "up" | "down"): Promise<void> {
+  await ensureSchema();
+  const { rows } = await sql<{ id: number; sort_order: number }>`
+    SELECT id, sort_order FROM savings_goals WHERE user_id = ${userId} ORDER BY sort_order, id;
+  `;
+  const idx = rows.findIndex((r) => r.id === id);
+  const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+  if (idx === -1 || swapIdx < 0 || swapIdx >= rows.length) return;
+  const a = rows[idx];
+  const b = rows[swapIdx];
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    await client.sql`UPDATE savings_goals SET sort_order = ${b.sort_order} WHERE id = ${a.id} AND user_id = ${userId};`;
+    await client.sql`UPDATE savings_goals SET sort_order = ${a.sort_order} WHERE id = ${b.id} AND user_id = ${userId};`;
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 export async function updateSavingsGoal(

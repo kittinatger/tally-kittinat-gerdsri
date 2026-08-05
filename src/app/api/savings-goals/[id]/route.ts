@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { updateSavingsGoal, deleteSavingsGoal } from "@/lib/db";
-import { savingsGoalUpdateSchema } from "@/lib/validation";
+import { updateSavingsGoal, deleteSavingsGoal, moveSavingsGoal, listSavingsGoals } from "@/lib/db";
+import { savingsGoalUpdateSchema, reorderMoveSchema } from "@/lib/validation";
 import { getUserId } from "@/lib/auth";
 
 function parseId(id: string): number | null {
@@ -17,6 +17,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const body = await req.json().catch(() => null);
+
+  const moveParsed = reorderMoveSchema.safeParse(body);
+  if (moveParsed.success) {
+    await moveSavingsGoal(userId, goalId, moveParsed.data.move);
+    const goals = await listSavingsGoals(userId);
+    return NextResponse.json({ goals });
+  }
+
   const parsed = savingsGoalUpdateSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });

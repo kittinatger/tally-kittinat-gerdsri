@@ -34,7 +34,12 @@ export default async function HomePage() {
     listBudgets(userId),
     listSavingsGoals(userId),
   ]);
-  const budgets = budgetRows.map((b) => ({ id: b.id, category: b.category, monthlyLimit: Number(b.monthly_limit) }));
+  const budgets = budgetRows.map((b) => ({
+    id: b.id,
+    category: b.category,
+    monthlyLimit: Number(b.monthly_limit),
+    dismissedAlertMonth: b.dismissed_alert_month,
+  }));
   const savingsGoals = savingsGoalRows.map((g) => ({
     id: g.id,
     name: g.name,

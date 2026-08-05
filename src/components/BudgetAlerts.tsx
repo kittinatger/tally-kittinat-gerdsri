@@ -6,12 +6,20 @@ import type { Budget } from "@/types/budget";
 import { monthKey, todayInputValue, formatCurrency } from "@/lib/format";
 import { useCurrency } from "@/lib/currency-context";
 
-export default function BudgetAlerts({ expenses, budgets }: { expenses: Expense[]; budgets: Budget[] }) {
+export default function BudgetAlerts({
+  expenses,
+  budgets,
+  onDismissed,
+}: {
+  expenses: Expense[];
+  budgets: Budget[];
+  onDismissed: (budget: Budget) => void;
+}) {
   const currency = useCurrency();
-  const [dismissed, setDismissed] = useState<Set<number>>(new Set());
+  const [dismissing, setDismissing] = useState<number | null>(null);
+  const currentMonthKey = monthKey(todayInputValue());
 
   const alerts = useMemo(() => {
-    const currentMonthKey = monthKey(todayInputValue());
     return budgets
       .map((b) => {
         const spent = expenses
@@ -20,9 +28,24 @@ export default function BudgetAlerts({ expenses, budgets }: { expenses: Expense[
         const percent = b.monthlyLimit > 0 ? (spent / b.monthlyLimit) * 100 : 0;
         return { budget: b, spent, percent };
       })
-      .filter((a) => a.percent >= 90 && !dismissed.has(a.budget.id))
+      .filter((a) => a.percent >= 90 && a.budget.dismissedAlertMonth !== currentMonthKey)
       .sort((a, b) => b.percent - a.percent);
-  }, [expenses, budgets, dismissed]);
+  }, [expenses, budgets, currentMonthKey]);
+
+  async function handleDismiss(budgetId: number) {
+    setDismissing(budgetId);
+    try {
+      const res = await fetch(`/api/budgets/${budgetId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dismissAlertForMonth: currentMonthKey }),
+      });
+      const data = await res.json();
+      if (res.ok) onDismissed(data.budget);
+    } finally {
+      setDismissing(null);
+    }
+  }
 
   if (alerts.length === 0) return null;
 
@@ -45,9 +68,10 @@ export default function BudgetAlerts({ expenses, budgets }: { expenses: Expense[
               {formatCurrency(budget.monthlyLimit, currency)} ({percent.toFixed(0)}%)
             </p>
             <button
-              onClick={() => setDismissed((prev) => new Set(prev).add(budget.id))}
+              onClick={() => handleDismiss(budget.id)}
+              disabled={dismissing === budget.id}
               aria-label="Dismiss"
-              className={`shrink-0 rounded-full p-1 transition hover:bg-black/5 dark:hover:bg-white/10 ${
+              className={`shrink-0 rounded-full p-1 transition hover:bg-black/5 disabled:opacity-50 dark:hover:bg-white/10 ${
                 over ? "text-red-600 dark:text-red-300" : "text-amber-600 dark:text-amber-300"
               }`}
             >

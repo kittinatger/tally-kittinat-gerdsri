@@ -175,6 +175,14 @@ export const budgetInputSchema = z.object({
   monthlyLimit: z.number().positive().finite(),
 });
 
+export const budgetDismissAlertSchema = z.object({
+  dismissAlertForMonth: z.string().regex(/^\d{4}-\d{2}$/, "Month must be YYYY-MM"),
+});
+
+export const reorderMoveSchema = z.object({
+  move: z.enum(["up", "down"]),
+});
+
 export const savingsGoalInputSchema = z.object({
   name: z.string().trim().min(1).max(60),
   color: z.string().trim().min(1).max(30).default("emerald"),

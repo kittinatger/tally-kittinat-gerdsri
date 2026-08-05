@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type PermissionStatus = "granted" | "denied" | "prompt" | "unsupported";
 
 export default function PermissionsSettings() {
   const [micStatus, setMicStatus] = useState<PermissionStatus>("unsupported");
   const [cameraStatus, setCameraStatus] = useState<PermissionStatus>("unsupported");
+  const [photosStatus, setPhotosStatus] = useState<PermissionStatus>("prompt");
   const [micError, setMicError] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const photosInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (typeof navigator === "undefined" || !navigator.permissions?.query) return;
@@ -58,6 +60,15 @@ export default function PermissionsSettings() {
     }
   }
 
+  function requestPhotosAccess() {
+    // Browsers don't expose a queryable "photo library" permission the way
+    // they do camera/microphone — picking a file is how consent happens, and
+    // some mobile browsers show their own native photo-access prompt at this
+    // point. A cancelled dialog isn't distinguishable from a denied one, so
+    // this only ever moves forward to "granted", never to "denied".
+    photosInputRef.current?.click();
+  }
+
   return (
     <div className="rounded-card border border-line bg-surface p-5">
       <h3 className="mb-3.5 font-display text-xl text-foreground">Permissions</h3>
@@ -76,6 +87,22 @@ export default function PermissionsSettings() {
         onRequest={requestCameraAccess}
       />
       {cameraError && <p className="text-xs text-red-600 dark:text-red-400">{cameraError}</p>}
+      <PermissionRow
+        label="Photos"
+        description="Needed to attach a receipt image from your gallery."
+        status={photosStatus}
+        onRequest={requestPhotosAccess}
+      />
+      <input
+        ref={photosInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) setPhotosStatus("granted");
+          e.target.value = "";
+        }}
+      />
       </div>
     </div>
   );

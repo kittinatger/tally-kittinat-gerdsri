@@ -153,6 +153,21 @@ export default function RecurringManager() {
     }
   }
 
+  async function handleMove(id: number, move: "up" | "down") {
+    setBusyId(id);
+    try {
+      const res = await fetch(`/api/recurring/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ move }),
+      });
+      const data = await res.json();
+      if (res.ok) setRules(data.rules);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function handleDelete(id: number) {
     setBusyId(id);
     try {
@@ -341,6 +356,28 @@ export default function RecurringManager() {
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-1">
+                <div className="flex flex-col">
+                  <button
+                    onClick={() => handleMove(r.id, "up")}
+                    disabled={busyId === r.id || i === 0}
+                    aria-label="Move up"
+                    className="rounded p-0.5 text-ink-soft transition hover:text-foreground disabled:opacity-30"
+                  >
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+                      <path d="M5 12l5-5 5 5" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleMove(r.id, "down")}
+                    disabled={busyId === r.id || i === rules.length - 1}
+                    aria-label="Move down"
+                    className="rounded p-0.5 text-ink-soft transition hover:text-foreground disabled:opacity-30"
+                  >
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+                      <path d="M5 8l5 5 5-5" />
+                    </svg>
+                  </button>
+                </div>
                 <button
                   onClick={() => startEdit(r)}
                   className="rounded-full px-2.5 py-1.5 text-[11px] font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"

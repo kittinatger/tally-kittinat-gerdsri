@@ -50,6 +50,29 @@ function parseCsv(text: string): string[][] {
   return rows.filter((r) => r.some((f) => f.trim().length > 0));
 }
 
+// Accepts a handful of common synonyms per field (in addition to our own
+// export's exact headers) so CSVs from other budgeting apps or bank exports
+// have a decent chance of importing without the user hand-editing headers.
+const HEADER_ALIASES: Record<string, string[]> = {
+  date: ["date", "transaction date", "posted date", "trans date"],
+  type: ["type", "transaction type"],
+  direction: ["direction"],
+  amount: ["amount", "value", "transaction amount", "debit/credit"],
+  merchant: ["merchant", "description", "payee", "name", "vendor"],
+  category: ["category", "category name"],
+  notes: ["notes", "memo", "note"],
+  tags: ["tags", "labels", "tag"],
+  wallet: ["wallet", "account", "account name"],
+};
+
+function findCol(header: string[], field: keyof typeof HEADER_ALIASES): number {
+  for (const name of HEADER_ALIASES[field]) {
+    const idx = header.indexOf(name);
+    if (idx !== -1) return idx;
+  }
+  return -1;
+}
+
 export async function POST(req: NextRequest) {
   const userId = await getUserId();
   const body = await req.json().catch(() => null);
@@ -64,20 +87,19 @@ export async function POST(req: NextRequest) {
   }
 
   const header = rows[0].map((h) => h.trim().toLowerCase());
-  const col = (name: string) => header.indexOf(name);
-  const dateCol = col("date");
-  const typeCol = col("type");
-  const directionCol = col("direction");
-  const amountCol = col("amount");
-  const merchantCol = col("merchant");
-  const categoryCol = col("category");
-  const notesCol = col("notes");
-  const tagsCol = col("tags");
-  const walletCol = col("wallet");
+  const dateCol = findCol(header, "date");
+  const typeCol = findCol(header, "type");
+  const directionCol = findCol(header, "direction");
+  const amountCol = findCol(header, "amount");
+  const merchantCol = findCol(header, "merchant");
+  const categoryCol = findCol(header, "category");
+  const notesCol = findCol(header, "notes");
+  const tagsCol = findCol(header, "tags");
+  const walletCol = findCol(header, "wallet");
 
-  if (dateCol === -1 || typeCol === -1 || amountCol === -1 || merchantCol === -1 || categoryCol === -1) {
+  if (dateCol === -1 || amountCol === -1 || merchantCol === -1) {
     return NextResponse.json(
-      { error: "CSV must have at least date, type, amount, merchant, and category columns." },
+      { error: "Couldn't find date, amount, and merchant/description columns in that file's header row." },
       { status: 400 },
     );
   }
@@ -90,17 +112,25 @@ export async function POST(req: NextRequest) {
 
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
-    const rawType = (r[typeCol] ?? "").trim().toLowerCase();
+    const rawAmount = Number((r[amountCol] ?? "").trim());
+    // No "type" column (common for plain bank exports) — infer expense vs.
+    // income from the amount's sign, and always store a positive amount.
+    const inferredType = rawAmount < 0 ? "expense" : "income";
+    const rawType = typeCol !== -1 ? (r[typeCol] ?? "").trim().toLowerCase() : inferredType;
     const walletName = walletCol !== -1 ? (r[walletCol] ?? "").trim().toLowerCase() : "";
+    const tagsRaw = tagsCol !== -1 ? (r[tagsCol] ?? "") : "";
     const candidate = {
       type: rawType,
       direction: directionCol !== -1 ? (r[directionCol] ?? "").trim() || undefined : undefined,
       date: (r[dateCol] ?? "").trim(),
-      amount: Number((r[amountCol] ?? "").trim()),
+      amount: Math.abs(rawAmount),
       merchant: (r[merchantCol] ?? "").trim(),
-      category: (r[categoryCol] ?? "").trim(),
+      category: categoryCol !== -1 ? (r[categoryCol] ?? "").trim() || "Other" : "Other",
       notes: notesCol !== -1 ? (r[notesCol] ?? "").trim() || undefined : undefined,
-      tags: tagsCol !== -1 ? (r[tagsCol] ?? "").split("|").map((t) => t.trim()).filter(Boolean) : [],
+      tags: tagsRaw
+        .split(/[|;]/)
+        .map((t) => t.trim())
+        .filter(Boolean),
       walletId: walletName ? (walletByName.get(walletName) ?? undefined) : undefined,
     };
 

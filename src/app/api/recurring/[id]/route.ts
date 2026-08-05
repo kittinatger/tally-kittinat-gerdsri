@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { updateRecurringRule, deleteRecurringRule } from "@/lib/db";
-import { recurringRuleUpdateSchema } from "@/lib/validation";
+import { updateRecurringRule, deleteRecurringRule, moveRecurringRule, listRecurringRules } from "@/lib/db";
+import { recurringRuleUpdateSchema, reorderMoveSchema } from "@/lib/validation";
 import { getUserId } from "@/lib/auth";
 
 function parseId(id: string): number | null {
@@ -17,6 +17,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const body = await req.json().catch(() => null);
+
+  const moveParsed = reorderMoveSchema.safeParse(body);
+  if (moveParsed.success) {
+    await moveRecurringRule(userId, ruleId, moveParsed.data.move);
+    const rules = await listRecurringRules(userId);
+    return NextResponse.json({ rules });
+  }
+
   const parsed = recurringRuleUpdateSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });

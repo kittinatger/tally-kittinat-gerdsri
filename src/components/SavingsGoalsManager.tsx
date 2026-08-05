@@ -95,6 +95,21 @@ export default function SavingsGoalsManager() {
     }
   }
 
+  async function handleMove(id: number, move: "up" | "down") {
+    setBusyId(id);
+    try {
+      const res = await fetch(`/api/savings-goals/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ move }),
+      });
+      const data = await res.json();
+      if (res.ok) setGoals(data.goals);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -174,7 +189,7 @@ export default function SavingsGoalsManager() {
         <p className="mt-4 text-sm text-ink-soft">No savings goals yet.</p>
       ) : (
         <div className="mt-4 space-y-3">
-          {goals.map((g) => {
+          {goals.map((g, i) => {
             const current = Number(g.current_amount);
             const goalTarget = Number(g.target_amount);
             const percent = goalTarget > 0 ? Math.min(100, (current / goalTarget) * 100) : 0;
@@ -185,13 +200,37 @@ export default function SavingsGoalsManager() {
                     <span className={`h-3 w-3 shrink-0 rounded-full ${dotClasses(g.color)}`} />
                     <p className="truncate font-medium text-foreground">{g.name}</p>
                   </div>
-                  <button
-                    onClick={() => handleDelete(g.id)}
-                    disabled={busyId === g.id}
-                    className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60 dark:text-red-400 dark:hover:bg-red-900/20"
-                  >
-                    Delete
-                  </button>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <div className="flex flex-col">
+                      <button
+                        onClick={() => handleMove(g.id, "up")}
+                        disabled={busyId === g.id || i === 0}
+                        aria-label="Move up"
+                        className="rounded p-0.5 text-ink-soft transition hover:text-foreground disabled:opacity-30"
+                      >
+                        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+                          <path d="M5 12l5-5 5 5" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleMove(g.id, "down")}
+                        disabled={busyId === g.id || i === goals.length - 1}
+                        aria-label="Move down"
+                        className="rounded p-0.5 text-ink-soft transition hover:text-foreground disabled:opacity-30"
+                      >
+                        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+                          <path d="M5 8l5 5 5-5" />
+                        </svg>
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => handleDelete(g.id)}
+                      disabled={busyId === g.id}
+                      className="rounded-full px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60 dark:text-red-400 dark:hover:bg-red-900/20"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
                 <p className="mt-1 text-xs text-ink-soft">
                   {formatCurrency(current, currency)} / {formatCurrency(goalTarget, currency)} ({percent.toFixed(0)}%)
