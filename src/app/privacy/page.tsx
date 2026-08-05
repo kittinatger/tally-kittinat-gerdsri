@@ -14,8 +14,11 @@ export default function PrivacyPage() {
             <h3 className="mb-1.5 font-semibold text-foreground">What&apos;s stored</h3>
             <p>
               Tally stores the expenses and income you log (date, amount, merchant, category, notes, tags), any
-              receipt images you attach, your category customizations, your currency and balance preferences, and
-              your account credentials (your password is stored as a salted hash, never in plain text).
+              receipt images you attach, your wallets, recurring rules, budgets, and savings goals, your category
+              customizations, your currency and display preferences, and your account credentials (your password is
+              stored as a salted hash, never in plain text). If you add an email for password reset or notifications,
+              it&apos;s stored alongside your account. If you create a personal access token for automatic receipt
+              import, only its hash is stored — the raw token is shown to you once and can&apos;t be recovered.
             </p>
           </section>
 
@@ -49,7 +52,17 @@ export default function PrivacyPage() {
               >
                 Frankfurter
               </a>
-              , a free ECB-rate API. No other third parties receive your data.
+              , a free ECB-rate API. If you set an email on your account, password reset links and any opted-in
+              recurring/budget notification emails are sent via{" "}
+              <a
+                href="https://resend.com"
+                target="_blank"
+                rel="noreferrer"
+                className="text-navy underline hover:no-underline dark:text-blue-300"
+              >
+                Resend
+              </a>
+              . No other third parties receive your data.
             </p>
           </section>
 

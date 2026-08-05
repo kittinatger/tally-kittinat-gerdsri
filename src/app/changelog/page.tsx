@@ -3,6 +3,44 @@ import AppHeader from "@/components/AppHeader";
 
 const RELEASES: { version: string; date: string; sections: { heading: string; items: string[] }[] }[] = [
   {
+    version: "0.12.0",
+    date: "2026-08-05",
+    sections: [
+      {
+        heading: "Added",
+        items: [
+          "Automatic receipt import from Photos — create a personal access token in Settings > Automatic import, then set up an iOS Shortcut (fully automatic on \"Photo Added to Album\", or a one-tap Share Sheet variant) or the Android share sheet to log receipts without opening the app; imports are tagged auto-import and keep the source photo attached so you can spot-check them",
+          "Installable PWA with offline support — install Tally to your home screen; opening it with no connection shows a graceful offline page instead of an error",
+          "Budget rollover — unused budget carries into the next month for categories with rollover enabled",
+          "Recurring rule \"skip next occurrence\" — skip a single upcoming occurrence without pausing or deleting the rule",
+          "Real currency conversion for the Dashboard's Remaining total, using the same auto-convert setting as receipt/voice scanning",
+          "CSV export/import now covers budgets, recurring rules, and savings goals, not just transactions",
+          "Email notifications — opt in to an email when a recurring rule auto-logs a transaction or a category goes over budget",
+          "Sign out of all devices, in Settings > Account — revokes every other active session immediately",
+          "Swipe gestures in Activities on mobile — swipe a transaction left or right for quick delete/share",
+        ],
+      },
+      {
+        heading: "Changed",
+        items: [
+          "Email notification toggles moved out of their own Budgeting entry into Settings > Permissions, alongside the app's other opt-in access settings, and now explain what's needed to enable them",
+          "Default dashboard widgets updated to full-width Summary, full-width Wallets, Wallet ticker, then Recent transactions (dashboards you've already customized are left as-is)",
+          "Rate limiting added to the login endpoint, and a daily cap added to Gemini-powered receipt/voice scans, to bound abuse and cost exposure",
+        ],
+      },
+      {
+        heading: "Fixed",
+        items: [
+          "Fixed an internal server error that could occur right after a deploy while the session-version column was still being created",
+          "Fixed slow navigation and cold starts caused by re-running the full schema migration on every serverless cold start",
+          "Fixed a bug where drag-to-reorder on Customize Dashboard could drop a widget in the wrong position",
+          "Fixed split transactions not being saved atomically — a failure partway through could leave a partial split group behind",
+          "Fixed a bug where interrupting a recurring rule's catch-up run partway through could cause it to double-log transactions on the next run",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.11.0",
     date: "2026-08-05",
     sections: [

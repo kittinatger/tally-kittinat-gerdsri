@@ -10,21 +10,21 @@ You don't need to deploy anything — go to **[tally-kittinat.vercel.app](https:
 
 ## Features
 
-- **Manual entry & receipt scanning** — enter expenses/income manually (date, amount, merchant, category, notes) or snap a photo; [Google Gemini](https://ai.google.dev/) extracts the fields and pre-fills the form for you to review.
-- **Voice-to-expense** — tap the mic and say something like "spent 12 dollars on coffee at Starbucks today"; Gemini transcribes and extracts the fields for you to review before saving.
-- **Bulk scanning** — drop multiple receipt photos at once; they queue up for review and batch-save.
-- **Receipt storage** — original scanned images are saved and viewable from the transaction detail.
-- **Search & filter** — search by merchant/notes/tags; filter by type (income/expense), category, tags, or date range.
-- **Free-form tags** — label transactions with custom tags for cross-cutting groupings.
-- **Income tracking** — separate income and expense transaction types with distinct category lists.
-- **Customizable categories** — rename and recolor expense/income categories to match your workflow.
-- **Spending trends** — see a 6-month trend chart and category breakdown right on the Dashboard.
-- **CSV export** — download filtered transactions in CSV format.
-- **Remaining balance** — live-updating balance that auto-calculates from a starting point and all logged transactions.
-- **Currency selection** — pick your default currency in Settings; formatting updates everywhere immediately.
-- **Automatic currency conversion** — optional toggle in settings; when scanning receipts or recording voice memos in a different currency, the detected amount is converted to your default currency (via [Frankfurter](https://frankfurter.app), a free ECB-rate API) before you review it.
-- **Multi-user accounts** — anyone can sign up with their own username and password; each account's expenses, categories, and balance are fully private and isolated from every other account on the same deployment, via signed, httpOnly session cookies.
-- **Account management** — change your username or password any time from Settings (both require re-entering your current password to confirm).
+- **Manual entry, receipt scanning & voice entry** — enter expenses/income manually (date, amount, merchant, category, notes), snap a photo of a receipt, or tap the mic and describe it out loud; [Google Gemini](https://ai.google.dev/) extracts the fields and pre-fills the form for you to review. Drop multiple receipt photos at once to batch-scan them.
+- **Automatic receipt import from Photos** — create a personal access token in Settings > Automatic import, then set up an iOS Shortcut (fully automatic, or a one-tap Share Sheet variant) or the Android share sheet to log receipts without ever opening the app; auto-imported transactions are tagged `auto-import` and keep the source photo attached so you can spot-check them.
+- **Wallets** — track balances across multiple cash/bank/e-wallet pools, transfer between them, set a default, archive old ones, and label each with its own currency.
+- **Recurring transactions** — rent, subscriptions, salary logged automatically on a weekly/monthly/yearly schedule; editable, pausable, reorderable, and skippable for a single upcoming occurrence.
+- **Budgets** — a monthly spending limit per category, a Dashboard progress widget, optional rollover of unused budget into the next month, and a dismissible alert banner when a category nears or goes over its limit.
+- **Savings goals** — track progress toward something you're saving for, with manual contribute/withdraw and a Dashboard progress widget.
+- **Split transactions** — log one receipt as multiple category lines; shown as a single grouped card in Activities.
+- **Search, filter & bulk actions** — search by merchant/notes/tags; filter by type, category, tags, wallet, or date range; bulk-select transactions in Activities to delete or tag them at once; swipe a transaction left/right on mobile for quick delete/share.
+- **Free-form tags & customizable categories** — label transactions with custom tags, and rename/recolor/add an icon to expense and income categories to match your workflow.
+- **Fully customizable dashboard** — an iOS-style live editor with 50+ widgets (progress rings, gauges, sparklines, donut charts, heatmaps, leaderboards, and more) to build your own layout.
+- **CSV export & import** — for transactions, budgets, recurring rules, and savings goals; import accepts common column-name synonyms and infers expense vs. income from the amount's sign.
+- **Currency selection & automatic conversion** — pick your default currency in Settings; optionally auto-convert amounts detected in a different currency (via [Frankfurter](https://frankfurter.app), a free ECB-rate API) when scanning, speaking, or viewing the Dashboard's Remaining total.
+- **Installable, offline-capable PWA** — install Tally to your home screen; it opens instantly and shows a graceful offline page instead of an error with no connection.
+- **Email notifications** — opt in (Settings > Permissions) to an email when a recurring rule auto-logs a transaction or a category goes over budget.
+- **Multi-user accounts, fully isolated** — anyone can sign up with their own username and password; each account's data is fully private via signed, httpOnly session cookies. Self-service password reset by email, account deletion, and "sign out of all devices" are all available from Settings.
 - **Liquid-glass UI** — clean, modern design built for quick entry on a phone and full desktop use.
 - **Postgres storage** — works out of the box with [Vercel's Neon database](https://vercel.com/docs/storage/vercel-postgres) (free tier available).
 
@@ -49,9 +49,10 @@ You don't need to deploy anything — go to **[tally-kittinat.vercel.app](https:
 
 ## Known limitations
 
-- **No account deletion or password reset (forgot-password) flow yet**: you can change your username/password from Settings while logged in, but there's no way to delete an account or recover access if you forget your password.
 - **Requires Gemini API key**: Receipt scanning and voice transcription require a free API key from [Google AI Studio](https://aistudio.google.com/apikey). Manual entry and CSV export work without it.
 - **Requires Postgres database**: The app stores all data in Postgres (not SQLite). Free tier available via Vercel (uses Neon), or [Railway](https://railway.app).
+- **Requires a Resend API key for email**: Password reset emails and the optional recurring/budget notification emails need a free [Resend](https://resend.com) API key. Everything else works without it.
+- **No true background photo-monitoring on iOS/Android**: automatic receipt import relies on OS-level automation (iOS Shortcuts, Android's share sheet) rather than the app silently watching your photo library — see the in-app setup guide in Settings > Automatic import.
 
 ## Security notes
 
@@ -94,8 +95,10 @@ Then fill in `.env.local`:
 | Variable | Required | Notes |
 | --- | --- | --- |
 | `POSTGRES_URL` | Yes | Connection string for your Postgres database. If you're using Vercel Postgres, run `vercel env pull .env.local` after creating the database (see below) instead of setting it by hand. |
-| `GEMINI_API_KEY` | Yes | Free key from [Google AI Studio](https://aistudio.google.com/apikey). Used only for receipt scanning; manual entry works without it. |
+| `GEMINI_API_KEY` | Yes | Free key from [Google AI Studio](https://aistudio.google.com/apikey). Used for receipt scanning, voice entry, and automatic receipt import; manual entry works without it. |
 | `SESSION_SECRET` | Yes | A random secret that keeps your login session secure. Think of it like a security key that scrambles your session cookie so no one can forge a fake login. Generate one by copying and pasting this into your terminal: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` — it will print out a long random string (like `e7b4d9fccc1ade2ae...`). Paste that string as the value for `SESSION_SECRET`. **Important**: Use a different random string for production (on Vercel) than for local development. |
+| `RESEND_API_KEY` | No | Free key from [Resend](https://resend.com/api-keys). Needed for password reset emails and the optional recurring/budget notification emails; everything else works without it. |
+| `EMAIL_FROM` | No | The "from" address for emails Tally sends. Falls back to Resend's shared testing address if unset — use a verified domain for real deployments. |
 | `ADMIN_USERNAME` / `ADMIN_BOOTSTRAP_PASSWORD` | No | Only needed once, on the very first deploy of an instance that already has data from before multi-user accounts existed — creates an admin account and assigns that existing data to it. Leave unset on a brand-new install; everyone just signs up at `/register` instead. Remove both after confirming the admin account works. |
 
 ### 3. Get a Postgres database

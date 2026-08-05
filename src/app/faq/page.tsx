@@ -36,8 +36,16 @@ const FAQS: { q: string; a: React.ReactNode }[] = [
     a: "You can set a default currency in Settings, and optionally enable automatic conversion so scanned or spoken amounts in a different currency get converted to your default before you review them.",
   },
   {
-    q: "Can I delete my account?",
-    a: "Not yet — there's currently no self-service account deletion or password-reset flow. You can change your username or password any time from Settings while logged in.",
+    q: "Can I delete my account, or reset my password if I forget it?",
+    a: "Yes to both. Account deletion is in Settings > Account. If you forget your password, set an email on your account first (Settings > Account), then use \"Forgot password?\" on the login screen to get a reset link.",
+  },
+  {
+    q: "What else can I track besides individual transactions?",
+    a: "Multiple wallets (cash, bank, e-wallet) with transfers between them, recurring transactions on a schedule, per-category monthly budgets with rollover, and savings goals — all under Settings > Budgeting/Wallets.",
+  },
+  {
+    q: "Can Tally add receipts automatically without me opening the app?",
+    a: "Yes — create a personal access token in Settings > Automatic import, then set up an iOS Shortcut or the Android share sheet to send photos straight to Tally. Auto-imported transactions are tagged auto-import and keep the source photo attached, so you can double-check anything the automation misread.",
   },
   {
     q: "Is Tally free and open source?",

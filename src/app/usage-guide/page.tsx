@@ -36,30 +36,84 @@ export default function UsageGuidePage() {
           </section>
 
           <section>
+            <h3 className="mb-1.5 font-semibold text-foreground">Automatic receipt import</h3>
+            <p>
+              For receipts you&apos;d rather not scan by hand one at a time: create a personal access token in{" "}
+              <span className="font-semibold text-foreground">Settings &gt; Automatic import</span>, then set up an
+              iOS Shortcut (fully automatic when a photo lands in a chosen album, or a one-tap Share Sheet variant)
+              or the Android share sheet, following the setup steps shown there. Imported transactions are tagged{" "}
+              <span className="font-semibold text-foreground">auto-import</span> and keep the original photo
+              attached, so you can filter by that tag in Activities to spot-check anything misread.
+            </p>
+          </section>
+
+          <section>
+            <h3 className="mb-1.5 font-semibold text-foreground">Wallets</h3>
+            <p>
+              Track balances across multiple cash/bank/e-wallet pools from{" "}
+              <span className="font-semibold text-foreground">Settings &gt; Wallets</span>. Transfer money between
+              your own wallets (doesn&apos;t count as income or spending), set a default wallet for new transactions,
+              archive ones you no longer use without losing their history, and label each with its own currency.
+            </p>
+          </section>
+
+          <section>
+            <h3 className="mb-1.5 font-semibold text-foreground">Recurring transactions, budgets & savings goals</h3>
+            <p>
+              All under <span className="font-semibold text-foreground">Settings &gt; Budgeting</span>. Recurring
+              rules auto-log rent, subscriptions, or salary on a weekly/monthly/yearly schedule — pause, edit, skip a
+              single upcoming occurrence, or reorder them. Budgets set a monthly spending limit per category, with an
+              optional rollover of unused budget into the next month and a Dashboard alert when you&apos;re near or
+              over. Savings goals track progress toward something you&apos;re saving for, with manual
+              contribute/withdraw.
+            </p>
+          </section>
+
+          <section>
+            <h3 className="mb-1.5 font-semibold text-foreground">Split transactions</h3>
+            <p>
+              From <span className="font-semibold text-foreground">Add &gt; Manual entry</span>, split one receipt
+              across multiple categories in a single entry — it shows up as one grouped card in Activities, with
+              each line still individually editable or deletable.
+            </p>
+          </section>
+
+          <section>
             <h3 className="mb-1.5 font-semibold text-foreground">Dashboard</h3>
             <p>
-              Shows this month&apos;s income and expenses, your live Remaining balance, and a Categories breakdown
-              with a spending trend chart. Tap the pencil icon on Remaining to set a new starting balance. The trend
-              chart supports several chart types (Bar, Line, Area, Pie, Radar, Stacked Bar) and a range picker (Today
-              through All time) via the dropdowns above it.
+              Fully customizable — tap the paintbrush icon to enter the live editor, then add, remove, resize, or
+              reorder any of 50+ widgets (stat cards, trend charts, progress rings, donut charts, heatmaps,
+              leaderboards, and more) to build your own layout. Widgets you haven&apos;t customized are updated with
+              new sensible defaults over time; once you&apos;ve arranged your own, it&apos;s yours to keep.
             </p>
           </section>
 
           <section>
             <h3 className="mb-1.5 font-semibold text-foreground">Activities</h3>
             <p>
-              Your full transaction log. Search by merchant, notes, or tags; filter by type, category, tags, or date
-              range; and export the currently filtered list as a CSV. Tap any transaction to view its detail,
-              attached receipt image, or to edit/delete it.
+              Your full transaction log. Search by merchant, notes, or tags; filter by type, category, tags, wallet,
+              or date range; and export the currently filtered list as a CSV. Tap any transaction to view its
+              detail, attached receipt image, or to edit/delete it. Select multiple transactions to bulk-delete or
+              bulk-tag them at once, or on mobile, swipe a transaction left or right for quick delete/share.
             </p>
           </section>
 
           <section>
             <h3 className="mb-1.5 font-semibold text-foreground">Settings</h3>
             <p>
-              Manage your account (username/password), grant microphone/camera permissions, customize your expense
-              and income categories, switch light/dark theme, and set your default currency (with optional automatic
-              conversion for scanned or spoken amounts in a different currency).
+              Manage your account (username, password, email, account deletion, sign out of all devices), grant
+              microphone/camera/photos permissions and manage email notifications, customize your expense and income
+              categories and tags, switch light/dark theme, import/export CSV data, and set your default currency
+              (with optional automatic conversion for scanned, spoken, or Dashboard amounts in a different currency).
+            </p>
+          </section>
+
+          <section>
+            <h3 className="mb-1.5 font-semibold text-foreground">Install & use offline</h3>
+            <p>
+              Tally is an installable app — add it to your home screen from your browser&apos;s share/install menu.
+              Once installed, it opens instantly, and if you open it with no connection you&apos;ll see a graceful
+              offline page instead of an error (viewing existing data offline isn&apos;t supported yet).
             </p>
           </section>
         </div>
