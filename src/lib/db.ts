@@ -292,6 +292,11 @@ function ensureSchema(): Promise<void> {
           CONSTRAINT users_username_unique UNIQUE (username)
         );
       `;
+      // Bumped by "sign out of all devices" — see lib/session.ts and
+      // lib/session-version.ts. Every session token embeds the version it
+      // was minted with, so incrementing this invalidates every token
+      // issued before the bump, all at once, with no revocation list.
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS session_version INTEGER NOT NULL DEFAULT 0;`;
       await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;`;
       await sql`ALTER TABLE categories ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;`;
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;`;
@@ -1367,6 +1372,23 @@ export async function updatePasswordHash(userId: number, passwordHash: string): 
   await sql`UPDATE users SET password_hash = ${passwordHash} WHERE id = ${userId};`;
 }
 
+export async function getSessionVersionForUser(userId: number): Promise<number> {
+  await ensureSchema();
+  const { rows } = await sql<{ session_version: number }>`SELECT session_version FROM users WHERE id = ${userId};`;
+  return rows[0]?.session_version ?? 0;
+}
+
+// Invalidates every session token issued before this call — see
+// lib/session.ts and lib/session-version.ts.
+export async function bumpSessionVersion(userId: number): Promise<number> {
+  await ensureSchema();
+  const { rows } = await sql<{ session_version: number }>`
+    UPDATE users SET session_version = session_version + 1 WHERE id = ${userId}
+    RETURNING session_version;
+  `;
+  return rows[0]?.session_version ?? 0;
+}
+
 // ---- Password reset tokens ----
 
 function hashResetToken(rawToken: string): string {
@@ -1376,6 +1398,19 @@ function hashResetToken(rawToken: string): string {
 // Invalidates any still-usable tokens for this user first, so only the most
 // recently requested reset link works — otherwise an old, forwarded, or
 // leaked email would stay valid indefinitely alongside newer ones.
+// Counts tokens requested for this user within the trailing window,
+// including already-used/expired ones — used to rate-limit forgot-password
+// requests. DB-backed (rather than in-memory) so the limit holds even
+// across multiple serverless instances.
+export async function countRecentPasswordResetTokens(userId: number, minutes: number): Promise<number> {
+  await ensureSchema();
+  const { rows } = await sql<{ n: number }>`
+    SELECT COUNT(*)::int AS n FROM password_reset_tokens
+    WHERE user_id = ${userId} AND created_at > now() - make_interval(mins => ${minutes});
+  `;
+  return rows[0]?.n ?? 0;
+}
+
 export async function createPasswordResetToken(userId: number): Promise<string> {
   await ensureSchema();
   await sql`UPDATE password_reset_tokens SET used_at = now() WHERE user_id = ${userId} AND used_at IS NULL;`;

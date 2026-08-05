@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
   await seedDefaultCategoriesForUser(user.id);
   await seedDefaultWalletForUser(user.id);
 
-  const token = await createSessionToken(user.id);
+  const token = await createSessionToken(user.id, 0);
   const res = NextResponse.json({ ok: true }, { status: 201 });
   res.cookies.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,

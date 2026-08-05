@@ -8,9 +8,10 @@ import {
   updatePasswordHash,
   updateUsername,
   updateUserEmail,
+  bumpSessionVersion,
 } from "@/lib/db";
 import { hashPassword, verifyPasswordHash } from "@/lib/password";
-import { SESSION_COOKIE_NAME } from "@/lib/session";
+import { createSessionToken, SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "@/lib/session";
 
 const USERNAME_PATTERN = /^[a-zA-Z0-9_.-]{3,32}$/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -75,12 +76,16 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
+  let newSessionVersion: number | null = null;
   if (newPassword !== undefined) {
     if (newPassword.length < 8) {
       return NextResponse.json({ error: "New password must be at least 8 characters." }, { status: 400 });
     }
     const passwordHash = await hashPassword(newPassword);
     await updatePasswordHash(userId, passwordHash);
+    // Signs out every other device but keeps this one — see the cookie
+    // reissue below, which carries the bumped version forward.
+    newSessionVersion = await bumpSessionVersion(userId);
   }
 
   let email = user.email;
@@ -105,7 +110,18 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ username, email });
+  const res = NextResponse.json({ username, email });
+  if (newSessionVersion !== null) {
+    const token = await createSessionToken(userId, newSessionVersion);
+    res.cookies.set(SESSION_COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: SESSION_MAX_AGE_SECONDS,
+      path: "/",
+    });
+  }
+  return res;
 }
 
 export async function DELETE(req: NextRequest) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Expense } from "@/types/expense";
 import type { CategoryOption } from "@/types/category";
 import {
@@ -101,6 +101,7 @@ export default function DashboardWidgetsSettings({
   const [widgets, setWidgets] = useState<DashboardWidgetInstance[]>(() => DEFAULT_DASHBOARD_WIDGETS());
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  const tileRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -149,13 +150,22 @@ export default function DashboardWidgetsSettings({
     setOverIndex(index);
   }
 
+  // Deliberately not using document.elementFromPoint here: once a pointer is
+  // captured (see handlePointerDown), several browsers — iOS Safari in
+  // particular — make elementFromPoint always resolve to the capturing
+  // element regardless of where the pointer actually is, which silently
+  // broke reordering (overIndex never left dragIndex, so the drop condition
+  // in handlePointerUp never fired). Checking each tile's own bounding rect
+  // sidesteps that hit-testing quirk entirely.
   function handlePointerMove(e: React.PointerEvent) {
     if (dragIndex === null) return;
-    const el = document.elementFromPoint(e.clientX, e.clientY);
-    const tile = el?.closest("[data-widget-index]");
-    if (!tile) return;
-    const idx = Number(tile.getAttribute("data-widget-index"));
-    if (!Number.isNaN(idx)) setOverIndex(idx);
+    for (const [idx, el] of tileRefs.current) {
+      const rect = el.getBoundingClientRect();
+      if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+        setOverIndex(idx);
+        return;
+      }
+    }
   }
 
   function handlePointerUp() {
@@ -244,6 +254,10 @@ export default function DashboardWidgetsSettings({
               <div
                 key={w.id}
                 data-widget-index={i}
+                ref={(el) => {
+                  if (el) tileRefs.current.set(i, el);
+                  else tileRefs.current.delete(i);
+                }}
                 onPointerDown={(e) => handlePointerDown(e, i)}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}

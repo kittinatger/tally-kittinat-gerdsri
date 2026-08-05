@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserByEmail, createPasswordResetToken } from "@/lib/db";
+import { getUserByEmail, createPasswordResetToken, countRecentPasswordResetTokens } from "@/lib/db";
 import { forgotPasswordInputSchema } from "@/lib/validation";
 import { sendEmail, passwordResetEmailHtml } from "@/lib/email";
 
@@ -7,6 +7,13 @@ import { sendEmail, passwordResetEmailHtml } from "@/lib/email";
 // matches an account, so this endpoint can't be used to enumerate which
 // addresses have a Tally account.
 const GENERIC_RESPONSE = { message: "If that email has a Tally account, a reset link is on its way." };
+
+// At most 3 reset requests per account per 15 minutes — stops a single
+// account's inbox (and Resend quota) from being hammered, while staying
+// enumeration-safe: silently rate-limited requests get the exact same
+// response as a successful one.
+const RATE_LIMIT_MAX = 3;
+const RATE_LIMIT_WINDOW_MINUTES = 15;
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -17,6 +24,11 @@ export async function POST(req: NextRequest) {
 
   const user = await getUserByEmail(parsed.data.email);
   if (!user) {
+    return NextResponse.json(GENERIC_RESPONSE);
+  }
+
+  const recentCount = await countRecentPasswordResetTokens(user.id, RATE_LIMIT_WINDOW_MINUTES);
+  if (recentCount >= RATE_LIMIT_MAX) {
     return NextResponse.json(GENERIC_RESPONSE);
   }
 

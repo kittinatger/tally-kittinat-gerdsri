@@ -109,6 +109,15 @@ export default function ExpenseList({
     setBulkBusy(false);
   }
 
+  async function handleSwipeDelete(id: number) {
+    try {
+      const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+      if (res.ok) onBulkDeleted([id]);
+    } catch {
+      // Best-effort — the row simply stays put if this fails.
+    }
+  }
+
   async function handleBulkAddTag() {
     const tag = bulkTagInput.trim();
     if (!tag) return;
@@ -445,6 +454,7 @@ export default function ExpenseList({
                             key={row.expense.id}
                             expense={row.expense}
                             onClick={() => onSelect(row.expense)}
+                            onDelete={handleSwipeDelete}
                             isLast={i === arr.length - 1}
                           />
                         ),

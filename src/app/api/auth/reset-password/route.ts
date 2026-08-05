@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { consumePasswordResetToken, updatePasswordHash } from "@/lib/db";
+import { consumePasswordResetToken, updatePasswordHash, bumpSessionVersion } from "@/lib/db";
 import { resetPasswordInputSchema } from "@/lib/validation";
 import { hashPassword } from "@/lib/password";
 import { createSessionToken, SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "@/lib/session";
@@ -18,8 +18,11 @@ export async function POST(req: NextRequest) {
 
   const passwordHash = await hashPassword(parsed.data.password);
   await updatePasswordHash(userId, passwordHash);
+  // A password reset is often prompted by a compromised account — sign out
+  // every other existing session, keeping only the one this request mints.
+  const sessionVersion = await bumpSessionVersion(userId);
 
-  const token = await createSessionToken(userId);
+  const token = await createSessionToken(userId, sessionVersion);
   const res = NextResponse.json({ ok: true });
   res.cookies.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,

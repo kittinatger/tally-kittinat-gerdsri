@@ -43,6 +43,11 @@ export default function AccountPanel({
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
+  const [signOutEverywhereOpen, setSignOutEverywhereOpen] = useState(false);
+  const [signOutEverywherePassword, setSignOutEverywherePassword] = useState("");
+  const [signingOutEverywhere, setSigningOutEverywhere] = useState(false);
+  const [signOutEverywhereError, setSignOutEverywhereError] = useState<string | null>(null);
+
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteAcknowledged, setDeleteAcknowledged] = useState(false);
   const [deletePhrase, setDeletePhrase] = useState("");
@@ -199,6 +204,30 @@ export default function AccountPanel({
   function confirmLogout() {
     setConfirmingLogout(false);
     handleLogout();
+  }
+
+  async function handleSignOutEverywhere(e: React.FormEvent) {
+    e.preventDefault();
+    setSigningOutEverywhere(true);
+    setSignOutEverywhereError(null);
+    try {
+      const res = await fetch("/api/account/sign-out-everywhere", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: signOutEverywherePassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSignOutEverywhereError(data.error ?? "Could not sign out of all devices.");
+        return;
+      }
+      router.replace("/login");
+      router.refresh();
+    } catch {
+      setSignOutEverywhereError("Network error while signing out.");
+    } finally {
+      setSigningOutEverywhere(false);
+    }
   }
 
   function closeDeleteModal() {
@@ -380,6 +409,13 @@ export default function AccountPanel({
           </svg>
           Sign out
         </button>
+        <button
+          type="button"
+          onClick={() => setSignOutEverywhereOpen(true)}
+          className="ml-2 flex items-center gap-1.5 rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
+        >
+          Sign out of all devices
+        </button>
       </div>
 
       <div className="mt-6 border-t border-red-200 pt-4 dark:border-red-900/40">
@@ -418,6 +454,58 @@ export default function AccountPanel({
               {loggingOut ? "Signing out..." : "Sign out"}
             </button>
           </div>
+        </Modal>
+      )}
+
+      {signOutEverywhereOpen && (
+        <Modal
+          onClose={() => {
+            setSignOutEverywhereOpen(false);
+            setSignOutEverywherePassword("");
+            setSignOutEverywhereError(null);
+          }}
+          title="Sign out of all devices?"
+        >
+          <form onSubmit={handleSignOutEverywhere} className="space-y-4">
+            <p className="text-sm text-surface-foreground-soft">
+              This signs out every device where you&apos;re currently logged in, including this one. You&apos;ll
+              need to sign in again everywhere.
+            </p>
+            <div>
+              <label htmlFor="signOutEverywherePassword" className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">
+                Current password
+              </label>
+              <input
+                id="signOutEverywherePassword"
+                type="password"
+                autoFocus
+                value={signOutEverywherePassword}
+                onChange={(e) => setSignOutEverywherePassword(e.target.value)}
+                className="w-full rounded-card border border-surface-line bg-surface-soft px-3.5 py-2.5 text-sm text-surface-foreground outline-none transition focus:border-surface-accent focus:ring-2 focus:ring-surface-accent/20"
+              />
+            </div>
+            {signOutEverywhereError && <p className="text-sm text-red-600 dark:text-red-400">{signOutEverywhereError}</p>}
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setSignOutEverywhereOpen(false);
+                  setSignOutEverywherePassword("");
+                  setSignOutEverywhereError(null);
+                }}
+                className="rounded-full border border-surface-line px-4 py-2 text-sm font-semibold text-surface-foreground transition hover:bg-[var(--surface-nav-hover)]"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={signingOutEverywhere || !signOutEverywherePassword}
+                className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-red-700 disabled:opacity-60"
+              >
+                {signingOutEverywhere ? "Signing out..." : "Sign out everywhere"}
+              </button>
+            </div>
+          </form>
         </Modal>
       )}
 

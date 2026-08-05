@@ -36,31 +36,42 @@ function fromHex(hex: string): Uint8Array | null {
   return bytes;
 }
 
-export async function createSessionToken(userId: number): Promise<string> {
+// sessionVersion is embedded so "sign out of all devices" (bumping a user's
+// session_version in the DB) invalidates every previously-issued token
+// without needing a per-token revocation list — see lib/session-version.ts
+// for the edge-safe check that compares this embedded value against the
+// current one on every request.
+export async function createSessionToken(userId: number, sessionVersion: number): Promise<string> {
   const expires = Date.now() + SESSION_MAX_AGE_SECONDS * 1000;
-  const payload = `${userId}.${expires}`;
+  const payload = `${userId}.${expires}.${sessionVersion}`;
   const key = await getKey();
   const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
   return `${payload}.${toHex(signature)}`;
 }
 
-export async function verifySessionToken(token: string | undefined | null): Promise<number | null> {
+export type SessionTokenPayload = { userId: number; sessionVersion: number };
+
+export async function verifySessionToken(token: string | undefined | null): Promise<SessionTokenPayload | null> {
   if (!token) return null;
   const lastDot = token.lastIndexOf(".");
   if (lastDot === -1) return null;
   const payload = token.slice(0, lastDot);
   const signatureHex = token.slice(lastDot + 1);
 
-  const [userIdStr, expiresStr] = payload.split(".");
+  const [userIdStr, expiresStr, versionStr] = payload.split(".");
   const userId = Number(userIdStr);
   const expires = Number(expiresStr);
+  // Older tokens minted before session_version existed have no third
+  // segment — treat them as version 0, matching every user's DB default.
+  const sessionVersion = versionStr === undefined ? 0 : Number(versionStr);
   if (!Number.isInteger(userId) || userId <= 0) return null;
   if (!Number.isFinite(expires) || Date.now() > expires) return null;
+  if (!Number.isInteger(sessionVersion) || sessionVersion < 0) return null;
 
   const signatureBytes = fromHex(signatureHex);
   if (!signatureBytes) return null;
 
   const key = await getKey();
   const ok = await crypto.subtle.verify("HMAC", key, signatureBytes as BufferSource, new TextEncoder().encode(payload));
-  return ok ? userId : null;
+  return ok ? { userId, sessionVersion } : null;
 }

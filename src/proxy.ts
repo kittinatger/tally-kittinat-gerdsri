@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/session";
+import { getSessionVersion } from "@/lib/session-version";
 
 export async function proxy(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
-  const userId = await verifySessionToken(token);
+  const parsed = await verifySessionToken(token);
 
-  if (userId !== null) {
-    const requestHeaders = new Headers(req.headers);
-    requestHeaders.set("x-user-id", String(userId));
-    return NextResponse.next({ request: { headers: requestHeaders } });
+  if (parsed !== null) {
+    // "Sign out of all devices" bumps session_version in the DB — any
+    // token minted before that (this one included) stops matching and is
+    // treated as signed out, without needing a per-token revocation list.
+    const currentVersion = await getSessionVersion(parsed.userId);
+    if (currentVersion === parsed.sessionVersion) {
+      const requestHeaders = new Headers(req.headers);
+      requestHeaders.set("x-user-id", String(parsed.userId));
+      return NextResponse.next({ request: { headers: requestHeaders } });
+    }
   }
 
   if (req.nextUrl.pathname.startsWith("/api/")) {

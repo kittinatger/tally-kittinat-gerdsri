@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSessionToken, SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "@/lib/session";
 import { verifyPasswordHash } from "@/lib/password";
-import { getUserByUsername } from "@/lib/db";
+import { getUserByUsername, getSessionVersionForUser } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
   let username = "";
@@ -28,7 +28,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Incorrect username or password." }, { status: 401 });
   }
 
-  const token = await createSessionToken(user.id);
+  const sessionVersion = await getSessionVersionForUser(user.id);
+  const token = await createSessionToken(user.id, sessionVersion);
   const res = NextResponse.json({ ok: true });
   res.cookies.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
