@@ -11,6 +11,7 @@
 - [`@vercel/postgres`](https://vercel.com/docs/storage/vercel-postgres) for storage
 - [`@google/genai`](https://www.npmjs.com/package/@google/genai) for receipt vision extraction (Gemini)
 - [Frankfurter](https://frankfurter.app) for free, ECB-rate currency conversion
+- [Resend](https://resend.com) for sending password reset and notification emails
 
 ## Icons
 
