@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ApiError } from "@google/genai";
 import { extractTransactionsFromAudio } from "@/lib/gemini";
+import { describeGeminiError } from "@/lib/gemini-error";
 import {
   getAutoConvertCurrency,
   getCurrency,
@@ -74,19 +74,8 @@ export async function POST(req: NextRequest) {
     );
     return NextResponse.json({ extractions: results });
   } catch (err) {
-    if (err instanceof ApiError && (err.status === 429 || err.status === 503)) {
-      return NextResponse.json(
-        { error: "Gemini is busy right now. Please try again in a moment." },
-        { status: 502 },
-      );
-    }
-    // See the matching comment in extract-receipt/route.ts — never surface
-    // raw Gemini SDK error text to the client.
-    console.error("extract-voice: Gemini request failed:", err);
-    const message =
-      err instanceof Error && /non-retryable/i.test(err.message)
-        ? "Gemini couldn't process that recording. Try recording again, or use manual entry instead."
-        : "Failed to understand that recording. Please try again.";
+    const { message, log } = describeGeminiError(err, "audio");
+    if (log) console.error("extract-voice: Gemini request failed:", err);
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

@@ -15,26 +15,44 @@ export default function ReceiptDropzone({ onFilesSelected }: { onFilesSelected: 
   function handleFiles(fileList: FileList | null) {
     if (!fileList || fileList.length === 0) return;
 
-    const files = Array.from(fileList).slice(0, MAX_FILES);
+    const files = Array.from(fileList);
+    const overflow = Math.max(0, files.length - MAX_FILES);
+    const limited = files.slice(0, MAX_FILES);
     const valid: File[] = [];
-    let skipped = 0;
+    let wrongType = 0;
+    let tooLarge = 0;
 
-    for (const file of files) {
-      if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_BYTES) {
-        skipped++;
+    for (const file of limited) {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        wrongType++;
+        continue;
+      }
+      if (file.size > MAX_BYTES) {
+        tooLarge++;
         continue;
       }
       valid.push(file);
     }
 
     if (valid.length === 0) {
-      setError("None of those files could be used. Use JPEG, PNG, WEBP, or HEIC images under 8MB.");
+      setError(
+        wrongType > 0 && tooLarge > 0
+          ? "None of those files could be used — unsupported type and too large. Use JPEG, PNG, WEBP, or HEIC images under 8MB."
+          : wrongType > 0
+            ? "None of those files could be used — unsupported type. Use JPEG, PNG, WEBP, or HEIC images."
+            : "None of those files could be used — all over the 8MB limit."
+      );
       return;
     }
 
-    setError(
-      skipped > 0 ? `${skipped} file${skipped === 1 ? "" : "s"} skipped (unsupported type or too large).` : null,
-    );
+    // Reports each skip reason separately (rather than one combined count)
+    // so it's clear which fix applies — re-export as JPEG vs. pick fewer/
+    // smaller files.
+    const notes: string[] = [];
+    if (wrongType > 0) notes.push(`${wrongType} unsupported type`);
+    if (tooLarge > 0) notes.push(`${tooLarge} over 8MB`);
+    if (overflow > 0) notes.push(`${overflow} over the ${MAX_FILES}-file limit`);
+    setError(notes.length > 0 ? `Skipped: ${notes.join(", ")}.` : null);
     onFilesSelected(valid);
   }
 

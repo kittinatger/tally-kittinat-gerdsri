@@ -1,4 +1,5 @@
 import { extractTransaction } from "@/lib/gemini";
+import { describeGeminiError } from "@/lib/gemini-error";
 import { maybeAutoConvert } from "@/lib/exchange-rate";
 import {
   listCategories,
@@ -66,6 +67,8 @@ export async function importReceiptImage(
     await attachReceiptImage(userId, expense.id, buffer, mimeType);
     return { ok: true, expense };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Failed to read the document." };
+    const { message, log } = describeGeminiError(err, "image");
+    if (log) console.error("importReceiptImage: Gemini request failed:", err);
+    return { ok: false, error: message };
   }
 }

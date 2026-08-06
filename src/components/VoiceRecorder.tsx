@@ -18,6 +18,34 @@ function formatElapsed(seconds: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+// getUserMedia rejects with a DOMException whose `name` distinguishes why —
+// collapsing all of these into one "denied or unavailable" message hides
+// which of several very different fixes actually applies (grant a
+// permission vs. close another app vs. use a different browser).
+function describeMicError(err: unknown): string {
+  const name = err instanceof DOMException ? err.name : "";
+  switch (name) {
+    case "NotAllowedError":
+    case "PermissionDeniedError":
+      return "Microphone access is blocked. Enable it for this site in your browser or device settings, then try again.";
+    case "NotFoundError":
+    case "DevicesNotFoundError":
+      return "No microphone was found on this device.";
+    case "NotReadableError":
+    case "TrackStartError":
+      return "Your microphone is already in use by another app. Close it and try again.";
+    case "OverconstrainedError":
+    case "ConstraintNotSatisfiedError":
+      return "Couldn't access the microphone with this device's settings.";
+    case "SecurityError":
+      return "Microphone access requires a secure (HTTPS) connection.";
+    case "AbortError":
+      return "Microphone access was interrupted. Please try again.";
+    default:
+      return "Couldn't access the microphone. Please try again.";
+  }
+}
+
 export default function VoiceRecorder({
   onRecorded,
   disabled,
@@ -66,8 +94,8 @@ export default function VoiceRecorder({
       setRecording(true);
       setSeconds(0);
       timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
-    } catch {
-      setError("Microphone access was denied or unavailable.");
+    } catch (err) {
+      setError(describeMicError(err));
     }
   }
 

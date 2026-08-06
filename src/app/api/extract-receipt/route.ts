@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ApiError } from "@google/genai";
 import { extractTransaction } from "@/lib/gemini";
+import { describeGeminiError } from "@/lib/gemini-error";
 import {
   getAutoConvertCurrency,
   getCurrency,
@@ -62,25 +62,8 @@ export async function POST(req: NextRequest) {
     const result = await maybeAutoConvert(extraction, defaultCurrency, autoConvertEnabled);
     return NextResponse.json({ extraction: result });
   } catch (err) {
-    if (err instanceof ApiError && (err.status === 429 || err.status === 503)) {
-      return NextResponse.json(
-        { error: "Gemini is busy right now. Please try again in a moment." },
-        { status: 502 },
-      );
-    }
-    // Gemini's SDK throws a plain Error for non-retryable (e.g. 4xx) API
-    // responses with a message like "Non-retryable exception Bad Request
-    // sending request" — an internal detail, not something a user can act
-    // on. Log the real error for us, but never surface raw SDK text to the
-    // client; a Bad Request from Gemini here almost always means it
-    // rejected the image itself (unreadable/unsupported despite passing our
-    // own type check), so point the user at the two things actually worth
-    // trying.
-    console.error("extract-receipt: Gemini request failed:", err);
-    const message =
-      err instanceof Error && /non-retryable/i.test(err.message)
-        ? "Gemini couldn't process that image. Try a different photo, or use manual entry instead."
-        : "Failed to read the document. Please try again.";
+    const { message, log } = describeGeminiError(err, "image");
+    if (log) console.error("extract-receipt: Gemini request failed:", err);
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

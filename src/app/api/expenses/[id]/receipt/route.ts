@@ -31,11 +31,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const ok = await attachReceiptImage(userId, expenseId, buffer, file.type);
-  if (!ok) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  try {
+    const ok = await attachReceiptImage(userId, expenseId, buffer, file.type);
+    if (!ok) {
+      return NextResponse.json({ error: "That transaction could not be found." }, { status: 404 });
+    }
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error("attach receipt: failed to save image:", err);
+    return NextResponse.json({ error: "Could not save that image. Please try again." }, { status: 502 });
   }
-  return NextResponse.json({ ok: true });
 }
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
