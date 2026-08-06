@@ -1,5 +1,6 @@
 "use client";
 
+import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
 import Modal from "./Modal";
 import { CATEGORY_PALETTE, type TransactionType } from "@/lib/categories";
@@ -48,8 +49,8 @@ export default function CategoryModal({
         return;
       }
       onSaved();
-    } catch {
-      setError("Network error while saving.");
+    } catch (err) {
+      setError(describeFetchError(err));
     } finally {
       setSubmitting(false);
     }

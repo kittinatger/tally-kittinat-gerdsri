@@ -1,5 +1,6 @@
 "use client";
 
+import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
 import { normalizeExpenseType, normalizeDirection, signedAmount } from "@/types/expense";
 import { todayInputValue } from "@/lib/format";
@@ -70,8 +71,8 @@ export default function ExportDataButton() {
       a.download = `tally-export-${todayInputValue()}.csv`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch {
-      setError("Network error while exporting.");
+    } catch (err) {
+      setError(describeFetchError(err));
     } finally {
       setExporting(false);
     }

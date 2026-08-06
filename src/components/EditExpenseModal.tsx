@@ -1,5 +1,6 @@
 "use client";
 
+import { describeFetchError } from "@/lib/fetch-error";
 import { useRef, useState } from "react";
 import Modal from "./Modal";
 import ExpenseForm, { type ExpenseFormValues } from "./ExpenseForm";
@@ -80,8 +81,8 @@ export default function EditExpenseModal({
         walletName: data.expense.wallet_name ?? null,
         splitGroupId: data.expense.split_group_id ?? null,
       });
-    } catch {
-      setError("Network error while saving.");
+    } catch (err) {
+      setError(describeFetchError(err));
     } finally {
       setSubmitting(false);
     }
@@ -102,8 +103,8 @@ export default function EditExpenseModal({
       }
       setError("Could not delete this expense.");
       setConfirmingDelete(false);
-    } catch {
-      setError("Network error while deleting.");
+    } catch (err) {
+      setError(describeFetchError(err));
       setConfirmingDelete(false);
     } finally {
       setDeleting(false);
@@ -123,8 +124,8 @@ export default function EditExpenseModal({
         return;
       }
       onUpdated({ ...expense, hasReceipt: true });
-    } catch {
-      setAttachError("Network error while uploading.");
+    } catch (err) {
+      setAttachError(describeFetchError(err));
     } finally {
       setAttaching(false);
       if (receiptInputRef.current) receiptInputRef.current.value = "";
@@ -171,8 +172,8 @@ export default function EditExpenseModal({
         splitGroupId: data.expense.split_group_id ?? null,
       });
       onClose();
-    } catch {
-      setError("Network error while duplicating.");
+    } catch (err) {
+      setError(describeFetchError(err));
     } finally {
       setDuplicating(false);
     }

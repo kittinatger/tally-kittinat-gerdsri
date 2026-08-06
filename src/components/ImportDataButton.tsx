@@ -1,5 +1,6 @@
 "use client";
 
+import { describeFetchError } from "@/lib/fetch-error";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -28,8 +29,8 @@ export default function ImportDataButton() {
       }
       setResult(data);
       if (data.imported > 0) router.refresh();
-    } catch {
-      setError("Network error while importing.");
+    } catch (err) {
+      setError(describeFetchError(err));
     } finally {
       setImporting(false);
       if (inputRef.current) inputRef.current.value = "";

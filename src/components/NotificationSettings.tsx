@@ -1,5 +1,6 @@
 "use client";
 
+import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useState } from "react";
 
 export default function NotificationSettings({ hasEmail }: { hasEmail: boolean }) {
@@ -42,9 +43,9 @@ export default function NotificationSettings({ hasEmail }: { hasEmail: boolean }
         setValue(!next);
         setError("Could not save.");
       }
-    } catch {
+    } catch (err) {
       setValue(!next);
-      setError("Network error while saving.");
+      setError(describeFetchError(err));
     } finally {
       setSaving(false);
     }

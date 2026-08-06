@@ -1,5 +1,6 @@
 "use client";
 
+import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
 import Modal from "./Modal";
 import SelectDropdown from "./SelectDropdown";
@@ -69,8 +70,8 @@ export default function WalletTransferModal({
         return;
       }
       onSaved();
-    } catch {
-      setError("Network error while transferring.");
+    } catch (err) {
+      setError(describeFetchError(err));
     } finally {
       setSubmitting(false);
     }

@@ -1,5 +1,6 @@
 "use client";
 
+import { describeFetchError } from "@/lib/fetch-error";
 import { useCallback, useEffect, useState } from "react";
 import { useAllCategories } from "@/lib/categories-context";
 import { useWallets } from "@/lib/wallets-context";
@@ -126,8 +127,8 @@ export default function RecurringManager() {
         isEdit ? (prev ?? []).map((r) => (r.id === saved.id ? saved : r)) : [...(prev ?? []), saved],
       );
       resetForm();
-    } catch {
-      setError("Network error while saving.");
+    } catch (err) {
+      setError(describeFetchError(err));
     } finally {
       setSubmitting(false);
     }

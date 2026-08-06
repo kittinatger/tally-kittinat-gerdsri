@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import NotificationSettings from "./NotificationSettings";
+import { describeMediaError } from "@/lib/media-error";
 
 type PermissionStatus = "granted" | "denied" | "prompt" | "unsupported";
 
@@ -43,9 +44,9 @@ export default function PermissionsSettings({ hasEmail }: { hasEmail: boolean })
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach((t) => t.stop());
       setMicStatus("granted");
-    } catch {
+    } catch (err) {
       setMicStatus("denied");
-      setMicError("Microphone access was denied. Enable it for this site in your browser settings.");
+      setMicError(describeMediaError(err, "microphone"));
     }
   }
 
@@ -55,9 +56,9 @@ export default function PermissionsSettings({ hasEmail }: { hasEmail: boolean })
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       stream.getTracks().forEach((t) => t.stop());
       setCameraStatus("granted");
-    } catch {
+    } catch (err) {
       setCameraStatus("denied");
-      setCameraError("Camera access was denied. Enable it for this site in your browser settings.");
+      setCameraError(describeMediaError(err, "camera"));
     }
   }
 

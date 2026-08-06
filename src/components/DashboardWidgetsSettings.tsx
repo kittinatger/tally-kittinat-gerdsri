@@ -1,5 +1,6 @@
 "use client";
 
+import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useRef, useState } from "react";
 import type { Expense } from "@/types/expense";
 import type { CategoryOption } from "@/types/category";
@@ -149,9 +150,9 @@ export default function DashboardWidgetsSettings({
         setWidgets(previous);
         setError("Could not save.");
       }
-    } catch {
+    } catch (err) {
       setWidgets(previous);
-      setError("Network error while saving.");
+      setError(describeFetchError(err));
     }
   }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { describeFetchError } from "@/lib/fetch-error";
 
 type ApiToken = { id: number; name: string; created_at: string; last_used_at: string | null };
 
@@ -45,8 +46,8 @@ export default function ApiTokensManager() {
       setAdding(false);
       setName("");
       refetch();
-    } catch {
-      setError("Network error while saving.");
+    } catch (err) {
+      setError(describeFetchError(err));
     } finally {
       setSubmitting(false);
     }

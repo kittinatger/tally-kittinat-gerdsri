@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Modal from "./Modal";
+import { describeFetchError } from "@/lib/fetch-error";
 
 const DELETE_CONFIRM_PHRASE = "I wish to delete this account";
 
@@ -130,8 +131,8 @@ export default function AccountPanel({
       setNewUsername(data.username);
       setUsernamePassword("");
       setUsernameSuccess(true);
-    } catch {
-      setUsernameError("Network error while saving.");
+    } catch (err) {
+      setUsernameError(describeFetchError(err));
     } finally {
       setSavingUsername(false);
     }
@@ -168,8 +169,8 @@ export default function AccountPanel({
       setNewEmail(data.email ?? "");
       setEmailPassword("");
       setEmailSuccess(true);
-    } catch {
-      setEmailError("Network error while saving.");
+    } catch (err) {
+      setEmailError(describeFetchError(err));
     } finally {
       setSavingEmail(false);
     }
@@ -205,8 +206,8 @@ export default function AccountPanel({
       setNewPassword("");
       setConfirmPassword("");
       setPasswordSuccess(true);
-    } catch {
-      setPasswordError("Network error while saving.");
+    } catch (err) {
+      setPasswordError(describeFetchError(err));
     } finally {
       setSavingPassword(false);
     }
@@ -228,8 +229,8 @@ export default function AccountPanel({
         return;
       }
       setResetSent(true);
-    } catch {
-      setResetError("Network error while sending.");
+    } catch (err) {
+      setResetError(describeFetchError(err));
     } finally {
       setSendingReset(false);
     }
@@ -268,8 +269,8 @@ export default function AccountPanel({
       }
       router.replace("/login");
       router.refresh();
-    } catch {
-      setSignOutEverywhereError("Network error while signing out.");
+    } catch (err) {
+      setSignOutEverywhereError(describeFetchError(err));
     } finally {
       setSigningOutEverywhere(false);
     }
@@ -304,8 +305,8 @@ export default function AccountPanel({
       }
       router.replace("/login");
       router.refresh();
-    } catch {
-      setDeleteError("Network error while deleting.");
+    } catch (err) {
+      setDeleteError(describeFetchError(err));
     } finally {
       setDeleting(false);
     }

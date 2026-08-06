@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCurrency } from "@/lib/currency-context";
 import CurrencyDropdown from "./CurrencyDropdown";
+import { describeFetchError } from "@/lib/fetch-error";
+import { describeMediaError } from "@/lib/media-error";
 
 type Theme = "light" | "dark";
 type PermissionStatus = "granted" | "denied" | "prompt" | "unsupported";
@@ -58,9 +60,9 @@ export default function SettingsPanel() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach((t) => t.stop());
       setMicStatus("granted");
-    } catch {
+    } catch (err) {
       setMicStatus("denied");
-      setMicError("Microphone access was denied. Enable it for this site in your browser settings.");
+      setMicError(describeMediaError(err, "microphone"));
     }
   }
 
@@ -70,9 +72,9 @@ export default function SettingsPanel() {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       stream.getTracks().forEach((t) => t.stop());
       setCameraStatus("granted");
-    } catch {
+    } catch (err) {
       setCameraStatus("denied");
-      setCameraError("Camera access was denied. Enable it for this site in your browser settings.");
+      setCameraError(describeMediaError(err, "camera"));
     }
   }
 
@@ -107,8 +109,8 @@ export default function SettingsPanel() {
         return;
       }
       router.refresh();
-    } catch {
-      setCurrencyError("Network error while saving.");
+    } catch (err) {
+      setCurrencyError(describeFetchError(err));
     } finally {
       setSavingCurrency(false);
     }
@@ -129,9 +131,9 @@ export default function SettingsPanel() {
         setAutoConvert(!next);
         setAutoConvertError("Could not save.");
       }
-    } catch {
+    } catch (err) {
       setAutoConvert(!next);
-      setAutoConvertError("Network error while saving.");
+      setAutoConvertError(describeFetchError(err));
     } finally {
       setSavingAutoConvert(false);
     }

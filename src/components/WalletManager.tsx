@@ -1,5 +1,6 @@
 "use client";
 
+import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { dotClasses } from "@/lib/category-styles";
@@ -56,8 +57,8 @@ export default function WalletManager({ wallets }: { wallets: WalletOption[] }) 
         return;
       }
       router.refresh();
-    } catch {
-      setActionError("Network error while updating.");
+    } catch (err) {
+      setActionError(describeFetchError(err));
     } finally {
       setBusyId(null);
     }
@@ -78,8 +79,8 @@ export default function WalletManager({ wallets }: { wallets: WalletOption[] }) 
         return;
       }
       router.refresh();
-    } catch {
-      setActionError("Network error while reordering.");
+    } catch (err) {
+      setActionError(describeFetchError(err));
     } finally {
       setBusyId(null);
     }
@@ -102,8 +103,8 @@ export default function WalletManager({ wallets }: { wallets: WalletOption[] }) 
         return;
       }
       router.refresh();
-    } catch {
-      setActionError("Network error while deleting.");
+    } catch (err) {
+      setActionError(describeFetchError(err));
       setConfirmDeleteId(null);
     } finally {
       setDeleting(false);

@@ -1,5 +1,6 @@
 "use client";
 
+import { describeFetchError } from "@/lib/fetch-error";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { dotClasses } from "@/lib/category-styles";
@@ -42,8 +43,8 @@ export default function CategoryManager({ categories }: { categories: CategoryOp
         return;
       }
       router.refresh();
-    } catch {
-      setDeleteError("Network error while deleting.");
+    } catch (err) {
+      setDeleteError(describeFetchError(err));
       setConfirmDeleteId(null);
     } finally {
       setDeleting(false);

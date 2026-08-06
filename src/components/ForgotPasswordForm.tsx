@@ -1,5 +1,6 @@
 "use client";
 
+import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
 import Link from "next/link";
 
@@ -25,8 +26,8 @@ export default function ForgotPasswordForm() {
         return;
       }
       setSent(true);
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (err) {
+      setError(describeFetchError(err));
     } finally {
       setLoading(false);
     }

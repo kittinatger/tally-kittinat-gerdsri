@@ -1,5 +1,6 @@
 "use client";
 
+import { describeFetchError } from "@/lib/fetch-error";
 import { useRef, useState } from "react";
 
 export default function CsvManagerButtons({
@@ -34,8 +35,8 @@ export default function CsvManagerButtons({
       }
       setResult(data);
       if (data.imported > 0) onImported();
-    } catch {
-      setError("Network error while importing.");
+    } catch (err) {
+      setError(describeFetchError(err));
     } finally {
       setImporting(false);
       if (inputRef.current) inputRef.current.value = "";

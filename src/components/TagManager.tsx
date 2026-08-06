@@ -1,5 +1,6 @@
 "use client";
 
+import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useState } from "react";
 
 type TagCount = { name: string; count: number };
@@ -67,8 +68,8 @@ export default function TagManager() {
           .sort((a, b) => a.name.localeCompare(b.name));
       });
       setEditing(null);
-    } catch {
-      setActionError("Network error while renaming.");
+    } catch (err) {
+      setActionError(describeFetchError(err));
     } finally {
       setBusy(false);
     }
@@ -95,8 +96,8 @@ export default function TagManager() {
         return;
       }
       setTags((prev) => (prev ? prev.filter((t) => t.name !== name) : prev));
-    } catch {
-      setActionError("Network error while deleting.");
+    } catch (err) {
+      setActionError(describeFetchError(err));
       setConfirmDelete(null);
     } finally {
       setBusy(false);

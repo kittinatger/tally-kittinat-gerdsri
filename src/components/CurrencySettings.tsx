@@ -1,5 +1,6 @@
 "use client";
 
+import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCurrency } from "@/lib/currency-context";
@@ -50,8 +51,8 @@ export default function CurrencySettings() {
         return;
       }
       router.refresh();
-    } catch {
-      setCurrencyError("Network error while saving.");
+    } catch (err) {
+      setCurrencyError(describeFetchError(err));
     } finally {
       setSavingCurrency(false);
     }
@@ -72,9 +73,9 @@ export default function CurrencySettings() {
         setAutoConvert(!next);
         setAutoConvertError("Could not save.");
       }
-    } catch {
+    } catch (err) {
       setAutoConvert(!next);
-      setAutoConvertError("Network error while saving.");
+      setAutoConvertError(describeFetchError(err));
     } finally {
       setSavingAutoConvert(false);
     }
@@ -97,9 +98,9 @@ export default function CurrencySettings() {
         return;
       }
       router.refresh();
-    } catch {
+    } catch (err) {
       setConvertBalances(!next);
-      setConvertBalancesError("Network error while saving.");
+      setConvertBalancesError(describeFetchError(err));
     } finally {
       setSavingConvertBalances(false);
     }

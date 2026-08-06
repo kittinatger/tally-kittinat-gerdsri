@@ -1,5 +1,6 @@
 "use client";
 
+import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
 import Modal from "./Modal";
 
@@ -37,8 +38,8 @@ export default function EditBalanceModal({
         return;
       }
       onSaved(Number(data.remaining));
-    } catch {
-      setError("Network error while saving.");
+    } catch (err) {
+      setError(describeFetchError(err));
     } finally {
       setSubmitting(false);
     }

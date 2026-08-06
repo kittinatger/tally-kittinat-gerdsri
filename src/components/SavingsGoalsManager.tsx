@@ -1,5 +1,6 @@
 "use client";
 
+import { describeFetchError } from "@/lib/fetch-error";
 import { useCallback, useEffect, useState } from "react";
 import { dotClasses } from "@/lib/category-styles";
 import { useCurrency } from "@/lib/currency-context";
@@ -88,8 +89,8 @@ export default function SavingsGoalsManager() {
       setAdding(false);
       setName("");
       setTarget("");
-    } catch {
-      setError("Network error while saving.");
+    } catch (err) {
+      setError(describeFetchError(err));
     } finally {
       setSubmitting(false);
     }

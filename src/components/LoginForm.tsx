@@ -1,5 +1,6 @@
 "use client";
 
+import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -28,8 +29,8 @@ export default function LoginForm({ next }: { next: string }) {
       }
       router.replace(next || "/");
       router.refresh();
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (err) {
+      setError(describeFetchError(err));
     } finally {
       setLoading(false);
     }

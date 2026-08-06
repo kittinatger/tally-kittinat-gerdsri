@@ -12,6 +12,7 @@ import { useWallets } from "@/lib/wallets-context";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency } from "@/lib/format";
 import { downscaleImage } from "@/lib/image-downscale";
+import { describeFetchError } from "@/lib/fetch-error";
 
 type Tab = "manual" | "scan" | "voice";
 type ScanStatus = "idle" | "analyzing" | "review" | "error";
@@ -98,8 +99,8 @@ export default function AddExpenseModal({
           : null,
       );
       setScanStatus("review");
-    } catch {
-      setScanError("Network error while reading the document.");
+    } catch (err) {
+      setScanError(describeFetchError(err));
       setScanStatus("error");
     }
   }
@@ -166,8 +167,8 @@ export default function AddExpenseModal({
       );
       setVoiceQueueIndex(0);
       setVoiceStatus("review");
-    } catch {
-      setVoiceError("Network error while reading the recording.");
+    } catch (err) {
+      setVoiceError(describeFetchError(err));
       setVoiceStatus("error");
     }
   }

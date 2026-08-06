@@ -1,5 +1,6 @@
 "use client";
 
+import { describeFetchError } from "@/lib/fetch-error";
 import { useCallback, useEffect, useState } from "react";
 import { useAllCategories } from "@/lib/categories-context";
 import { useCurrency } from "@/lib/currency-context";
@@ -55,8 +56,8 @@ export default function BudgetManager() {
       setAdding(false);
       setLimit("");
       setRollover(false);
-    } catch {
-      setError("Network error while saving.");
+    } catch (err) {
+      setError(describeFetchError(err));
     } finally {
       setSubmitting(false);
     }

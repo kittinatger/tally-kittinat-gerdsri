@@ -1,5 +1,6 @@
 "use client";
 
+import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useState } from "react";
 import type { CalendarSettings as CalendarSettingsData } from "@/lib/db";
 import SelectDropdown from "./SelectDropdown";
@@ -121,9 +122,9 @@ export default function CalendarSettings() {
         setSettings(previous);
         setError("Could not save.");
       }
-    } catch {
+    } catch (err) {
       setSettings(previous);
-      setError("Network error while saving.");
+      setError(describeFetchError(err));
     } finally {
       setSaving(false);
     }
