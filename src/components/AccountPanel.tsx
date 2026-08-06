@@ -1,10 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Modal from "./Modal";
 
 const DELETE_CONFIRM_PHRASE = "I wish to delete this account";
+
+type SecurityEvent = { event: string; created_at: string };
+
+function describeSecurityEvent(event: string): string {
+  if (event.startsWith("api_token_created:")) {
+    return `Access token created ("${event.slice("api_token_created:".length).trim()}")`;
+  }
+  switch (event) {
+    case "username_changed":
+      return "Username changed";
+    case "password_changed":
+      return "Password changed";
+    case "password_reset_via_email":
+      return "Password reset via email link";
+    case "email_changed":
+      return "Email changed";
+    case "email_removed":
+      return "Email removed";
+    case "signed_out_everywhere":
+      return "Signed out of all devices";
+    case "api_token_revoked":
+      return "Access token revoked";
+    default:
+      return event;
+  }
+}
 
 export default function AccountPanel({
   initialUsername,
@@ -47,6 +73,23 @@ export default function AccountPanel({
   const [signOutEverywherePassword, setSignOutEverywherePassword] = useState("");
   const [signingOutEverywhere, setSigningOutEverywhere] = useState(false);
   const [signOutEverywhereError, setSignOutEverywhereError] = useState<string | null>(null);
+
+  const [securityEvents, setSecurityEvents] = useState<SecurityEvent[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/account/security-events")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled) setSecurityEvents(data.events ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setSecurityEvents([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteAcknowledged, setDeleteAcknowledged] = useState(false);
@@ -416,6 +459,24 @@ export default function AccountPanel({
         >
           Sign out of all devices
         </button>
+      </div>
+
+      <div className="mt-6 border-t border-line pt-4">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">Recent security activity</p>
+        {securityEvents === null ? (
+          <p className="text-sm text-ink-soft">Loading…</p>
+        ) : securityEvents.length === 0 ? (
+          <p className="text-sm text-ink-soft">No security-sensitive changes yet.</p>
+        ) : (
+          <ul className="space-y-1.5 text-sm text-surface-foreground-soft">
+            {securityEvents.map((e, i) => (
+              <li key={i} className="flex items-baseline justify-between gap-3">
+                <span className="text-foreground">{describeSecurityEvent(e.event)}</span>
+                <span className="shrink-0 text-xs text-ink-soft">{new Date(e.created_at).toLocaleString()}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="mt-6 border-t border-red-200 pt-4 dark:border-red-900/40">

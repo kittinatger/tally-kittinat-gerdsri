@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listApiTokens, createApiToken } from "@/lib/db";
+import { listApiTokens, createApiToken, logSecurityEvent } from "@/lib/db";
 import { apiTokenInputSchema } from "@/lib/validation";
 import { getUserId } from "@/lib/auth";
 
@@ -17,5 +17,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
   const { id, token } = await createApiToken(userId, parsed.data.name);
+  await logSecurityEvent(userId, `api_token_created: ${parsed.data.name}`);
   return NextResponse.json({ id, token }, { status: 201 });
 }

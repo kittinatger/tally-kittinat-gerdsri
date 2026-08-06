@@ -8,6 +8,7 @@ import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
 import CsvManagerButtons from "./CsvManagerButtons";
 
 type SavingsGoal = { id: number; name: string; color: string; target_amount: string; current_amount: string };
+type Contribution = { delta: string; created_at: string };
 
 export default function SavingsGoalsManager() {
   const currency = useCurrency();
@@ -19,6 +20,22 @@ export default function SavingsGoalsManager() {
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [contributeAmount, setContributeAmount] = useState<Record<number, string>>({});
+  const [historyOpenId, setHistoryOpenId] = useState<number | null>(null);
+  const [historyByGoal, setHistoryByGoal] = useState<Record<number, Contribution[] | undefined>>({});
+
+  function toggleHistory(goalId: number) {
+    if (historyOpenId === goalId) {
+      setHistoryOpenId(null);
+      return;
+    }
+    setHistoryOpenId(goalId);
+    if (!historyByGoal[goalId]) {
+      fetch(`/api/savings-goals/${goalId}/contributions`)
+        .then((res) => res.json())
+        .then((data) => setHistoryByGoal((prev) => ({ ...prev, [goalId]: data.contributions ?? [] })))
+        .catch(() => setHistoryByGoal((prev) => ({ ...prev, [goalId]: [] })));
+    }
+  }
 
   const [name, setName] = useState("");
   const [target, setTarget] = useState("");
@@ -74,6 +91,9 @@ export default function SavingsGoalsManager() {
       if (res.ok) {
         setGoals((prev) => (prev ?? []).map((g) => (g.id === goal.id ? data.goal : g)));
         setContributeAmount((prev) => ({ ...prev, [goal.id]: "" }));
+        // Invalidate the cached history so reopening it fetches the entry
+        // that contribution just added.
+        setHistoryByGoal((prev) => ({ ...prev, [goal.id]: undefined }));
       }
     } finally {
       setBusyId(null);
@@ -263,7 +283,37 @@ export default function SavingsGoalsManager() {
                   >
                     Withdraw
                   </button>
+                  <button
+                    onClick={() => toggleHistory(g.id)}
+                    className="ml-auto text-xs font-semibold text-ink-soft transition hover:text-foreground"
+                  >
+                    {historyOpenId === g.id ? "Hide history" : "History"}
+                  </button>
                 </div>
+                {historyOpenId === g.id && (
+                  <div className="mt-3 border-t border-line pt-3">
+                    {historyByGoal[g.id] === undefined ? (
+                      <p className="text-xs text-ink-soft">Loading…</p>
+                    ) : historyByGoal[g.id]!.length === 0 ? (
+                      <p className="text-xs text-ink-soft">No contributions yet.</p>
+                    ) : (
+                      <ul className="space-y-1">
+                        {historyByGoal[g.id]!.map((c, ci) => {
+                          const delta = Number(c.delta);
+                          return (
+                            <li key={ci} className="flex items-baseline justify-between gap-3 text-xs">
+                              <span className={delta >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>
+                                {delta >= 0 ? "+" : ""}
+                                {formatCurrency(delta, currency)}
+                              </span>
+                              <span className="text-ink-soft">{new Date(c.created_at).toLocaleString()}</span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/session";
 import { getSessionVersion } from "@/lib/session-version";
+import { checkMutationRateLimit } from "@/lib/mutation-rate-limit";
+
+const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 export async function proxy(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
@@ -14,6 +17,13 @@ export async function proxy(req: NextRequest) {
     // open and trust the token's signature rather than lock everyone out.
     const currentVersion = await getSessionVersion(parsed.userId);
     if (currentVersion === null || currentVersion === parsed.sessionVersion) {
+      if (
+        req.nextUrl.pathname.startsWith("/api/") &&
+        MUTATING_METHODS.has(req.method) &&
+        !checkMutationRateLimit(parsed.userId)
+      ) {
+        return NextResponse.json({ error: "Too many requests. Slow down and try again shortly." }, { status: 429 });
+      }
       const requestHeaders = new Headers(req.headers);
       requestHeaders.set("x-user-id", String(parsed.userId));
       return NextResponse.next({ request: { headers: requestHeaders } });

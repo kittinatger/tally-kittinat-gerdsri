@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserId } from "@/lib/auth";
-import { getUserById, bumpSessionVersion } from "@/lib/db";
+import { getUserById, bumpSessionVersion, logSecurityEvent } from "@/lib/db";
 import { verifyPasswordHash } from "@/lib/password";
 import { SESSION_COOKIE_NAME } from "@/lib/session";
 
@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
   }
 
   await bumpSessionVersion(userId);
+  await logSecurityEvent(userId, "signed_out_everywhere");
 
   const res = NextResponse.json({ ok: true });
   res.cookies.set(SESSION_COOKIE_NAME, "", { path: "/", maxAge: 0 });

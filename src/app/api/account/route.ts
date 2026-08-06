@@ -9,6 +9,7 @@ import {
   updateUsername,
   updateUserEmail,
   bumpSessionVersion,
+  logSecurityEvent,
 } from "@/lib/db";
 import { hashPassword, verifyPasswordHash } from "@/lib/password";
 import { createSessionToken, SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "@/lib/session";
@@ -68,6 +69,7 @@ export async function PATCH(req: NextRequest) {
     }
     try {
       username = await updateUsername(userId, newUsername);
+      await logSecurityEvent(userId, "username_changed");
     } catch (err) {
       if (isUniqueViolation(err)) {
         return NextResponse.json({ error: "That username is already taken." }, { status: 409 });
@@ -83,6 +85,7 @@ export async function PATCH(req: NextRequest) {
     }
     const passwordHash = await hashPassword(newPassword);
     await updatePasswordHash(userId, passwordHash);
+    await logSecurityEvent(userId, "password_changed");
     // Signs out every other device but keeps this one — see the cookie
     // reissue below, which carries the bumped version forward.
     newSessionVersion = await bumpSessionVersion(userId);
@@ -102,6 +105,7 @@ export async function PATCH(req: NextRequest) {
     }
     try {
       email = await updateUserEmail(userId, newEmail);
+      await logSecurityEvent(userId, newEmail === null ? "email_removed" : "email_changed");
     } catch (err) {
       if (isUniqueViolation(err)) {
         return NextResponse.json({ error: "That email is already in use." }, { status: 409 });

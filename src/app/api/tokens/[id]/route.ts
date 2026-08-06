@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revokeApiToken } from "@/lib/db";
+import { revokeApiToken, logSecurityEvent } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 
 function parseId(id: string): number | null {
@@ -19,5 +19,6 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!ok) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+  await logSecurityEvent(userId, "api_token_revoked");
   return NextResponse.json({ ok: true });
 }

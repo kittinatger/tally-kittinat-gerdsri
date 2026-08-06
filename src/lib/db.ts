@@ -181,7 +181,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 5;
+const CURRENT_SCHEMA_VERSION = 6;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -403,6 +403,37 @@ function ensureSchema(): Promise<void> {
         );
       `;
       await sql`CREATE INDEX IF NOT EXISTS gemini_usage_user_idx ON gemini_usage (user_id, created_at);`;
+
+      // A read-only log of security-sensitive account actions (password
+      // changed, email changed, API token created/revoked, signed out of
+      // all devices) — see logSecurityEvent/listSecurityEvents and the
+      // "Recent security activity" list in Settings > Account. Deliberately
+      // not logging account deletion itself: the row would just vanish with
+      // the rest of the account (ON DELETE CASCADE), so there'd be no one
+      // left to show it to.
+      await sql`
+        CREATE TABLE IF NOT EXISTS security_events (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          event TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `;
+      await sql`CREATE INDEX IF NOT EXISTS security_events_user_idx ON security_events (user_id, created_at DESC);`;
+
+      // One row per savings-goal contribute/withdraw, so progress has an
+      // actual history instead of just the running current_amount total —
+      // see updateSavingsGoal/listSavingsGoalContributions.
+      await sql`
+        CREATE TABLE IF NOT EXISTS savings_goal_contributions (
+          id SERIAL PRIMARY KEY,
+          goal_id INTEGER NOT NULL REFERENCES savings_goals(id) ON DELETE CASCADE,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          delta NUMERIC(12, 2) NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `;
+      await sql`CREATE INDEX IF NOT EXISTS savings_goal_contributions_goal_idx ON savings_goal_contributions (goal_id, created_at DESC);`;
 
       // Supports listExpenses' WHERE user_id = ... ORDER BY date DESC, id DESC
       // so it stays fast as transaction history grows.
@@ -1153,6 +1184,15 @@ export async function setCalendarSettings(
   return getCalendarSettings(userId);
 }
 
+// Safety net, not real pagination: every current caller (Dashboard, Activities,
+// Settings, CSV export) still expects "all of it" and does its own client-side
+// filtering/aggregation over the full array, so this only guards against a
+// single pathological account's history growing large enough to blow up query/
+// memory cost — it's far above what any real usage hits today. True pagination
+// would mean moving Activities' search/filter server-side, which is a bigger,
+// separate redesign.
+const MAX_LISTED_EXPENSES = 10_000;
+
 export async function listExpenses(userId: number): Promise<Expense[]> {
   await ensureSchema();
   const { rows } = await sql<Expense>`
@@ -1173,7 +1213,8 @@ export async function listExpenses(userId: number): Promise<Expense[]> {
     FROM expenses e
     LEFT JOIN wallets w ON w.id = e.wallet_id
     WHERE e.user_id = ${userId}
-    ORDER BY e.date DESC, e.id DESC;
+    ORDER BY e.date DESC, e.id DESC
+    LIMIT ${MAX_LISTED_EXPENSES};
   `;
   return rows;
 }
@@ -1601,6 +1642,24 @@ export async function recordGeminiUsage(userId: number): Promise<void> {
   await sql`INSERT INTO gemini_usage (user_id) VALUES (${userId});`;
 }
 
+// ---- Security event log ----
+
+export type SecurityEvent = { event: string; created_at: string };
+
+export async function logSecurityEvent(userId: number, event: string): Promise<void> {
+  await ensureSchema();
+  await sql`INSERT INTO security_events (user_id, event) VALUES (${userId}, ${event});`;
+}
+
+export async function listSecurityEvents(userId: number, limit = 20): Promise<SecurityEvent[]> {
+  await ensureSchema();
+  const { rows } = await sql<SecurityEvent>`
+    SELECT event, created_at::text AS created_at FROM security_events
+    WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT ${limit};
+  `;
+  return rows;
+}
+
 // expenses/categories/app_settings all reference users(id) ON DELETE CASCADE
 // (see ensureSchema), so deleting the user row removes everything else too.
 export async function deleteUser(userId: number): Promise<void> {
@@ -1970,6 +2029,10 @@ export async function updateSavingsGoal(
   const newColor = input.color ?? existing.color;
   const newTarget = input.targetAmount ?? Number(existing.target_amount);
   const newCurrent = Math.max(0, Number(existing.current_amount) + (input.contributeDelta ?? 0));
+  // The delta actually applied, after the floor-at-0 clamp above — logging
+  // this (not the raw requested contributeDelta) keeps the history in sync
+  // with what current_amount actually changed by.
+  const appliedDelta = newCurrent - Number(existing.current_amount);
 
   const { rows } = await sql<SavingsGoalRow>`
     UPDATE savings_goals
@@ -1977,7 +2040,21 @@ export async function updateSavingsGoal(
     WHERE id = ${id} AND user_id = ${userId}
     RETURNING id, name, color, target_amount::text AS target_amount, current_amount::text AS current_amount;
   `;
+  if (input.contributeDelta !== undefined && appliedDelta !== 0) {
+    await sql`INSERT INTO savings_goal_contributions (goal_id, user_id, delta) VALUES (${id}, ${userId}, ${appliedDelta});`;
+  }
   return rows[0] ?? null;
+}
+
+export type SavingsGoalContribution = { delta: string; created_at: string };
+
+export async function listSavingsGoalContributions(userId: number, goalId: number): Promise<SavingsGoalContribution[]> {
+  await ensureSchema();
+  const { rows } = await sql<SavingsGoalContribution>`
+    SELECT delta::text AS delta, created_at::text AS created_at FROM savings_goal_contributions
+    WHERE goal_id = ${goalId} AND user_id = ${userId} ORDER BY created_at DESC LIMIT 50;
+  `;
+  return rows;
 }
 
 export async function deleteSavingsGoal(userId: number, id: number): Promise<boolean> {
