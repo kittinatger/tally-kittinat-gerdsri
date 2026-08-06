@@ -50,6 +50,19 @@ function MinusIcon() {
   );
 }
 
+function GripIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="h-3 w-3">
+      <circle cx="8" cy="6" r="1.6" />
+      <circle cx="16" cy="6" r="1.6" />
+      <circle cx="8" cy="12" r="1.6" />
+      <circle cx="16" cy="12" r="1.6" />
+      <circle cx="8" cy="18" r="1.6" />
+      <circle cx="16" cy="18" r="1.6" />
+    </svg>
+  );
+}
+
 function GearIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-2.5 w-2.5">
@@ -258,12 +271,7 @@ export default function DashboardWidgetsSettings({
                   if (el) tileRefs.current.set(i, el);
                   else tileRefs.current.delete(i);
                 }}
-                onPointerDown={(e) => handlePointerDown(e, i)}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerCancel={handlePointerUp}
-                style={{ touchAction: "none" }}
-                className={`relative cursor-grab active:cursor-grabbing ${WIDGET_WIDTH_COLSPAN[w.width]}`}
+                className={`relative ${WIDGET_WIDTH_COLSPAN[w.width]}`}
               >
                 <div
                   className={`pointer-events-none select-none rounded-card transition ${
@@ -272,6 +280,23 @@ export default function DashboardWidgetsSettings({
                 >
                   <DashboardWidgetContent widget={w} expenses={expenses} categories={categories} remaining={remaining} />
                 </div>
+
+                {/* Dedicated drag handle rather than the whole tile — touchAction:
+                    "none" here is what makes reordering work with a touch drag,
+                    but applying it to the entire card would also swallow a plain
+                    vertical scroll gesture that happens to start on a widget. */}
+                <button
+                  type="button"
+                  onPointerDown={(e) => handlePointerDown(e, i)}
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp}
+                  onPointerCancel={handlePointerUp}
+                  style={{ touchAction: "none" }}
+                  aria-label={`Reorder ${DASHBOARD_WIDGET_INFO[w.type].title}`}
+                  className="absolute -bottom-1.5 left-1/2 z-10 flex h-5 w-7 -translate-x-1/2 cursor-grab items-center justify-center rounded-full bg-bg-soft text-ink-soft shadow ring-2 ring-surface transition hover:text-foreground active:cursor-grabbing"
+                >
+                  <GripIcon />
+                </button>
 
                 <button
                   type="button"
