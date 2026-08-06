@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export default function Modal({
   onClose,
@@ -11,6 +11,8 @@ export default function Modal({
   title: string;
   children: React.ReactNode;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -24,13 +26,46 @@ export default function Modal({
     };
   }, [onClose]);
 
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    // On mobile, the on-screen keyboard can cover the bottom of a long form
+    // (this modal is a bottom sheet, and forms like Add/Edit transaction
+    // have 15+ fields) — including the field you just tapped, or the submit
+    // button below it, with no obvious cue to scroll. Scrolling the focused
+    // field into view once the keyboard has finished animating in fixes the
+    // field itself; a resize listener re-centers it if the keyboard's final
+    // height only becomes known after that (iOS reports it late).
+    function scrollFocusedIntoView() {
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && panel?.contains(active)) {
+        active.scrollIntoView({ block: "center", behavior: "smooth" });
+      }
+    }
+
+    function onFocusIn(e: FocusEvent) {
+      if (!(e.target instanceof HTMLElement)) return;
+      if (!["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
+      setTimeout(scrollFocusedIntoView, 300);
+    }
+
+    panel.addEventListener("focusin", onFocusIn);
+    window.visualViewport?.addEventListener("resize", scrollFocusedIntoView);
+    return () => {
+      panel.removeEventListener("focusin", onFocusIn);
+      window.visualViewport?.removeEventListener("resize", scrollFocusedIntoView);
+    };
+  }, []);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 backdrop-blur-md sm:items-center sm:p-4"
       onClick={onClose}
     >
       <div
-        className="max-h-[92vh] w-full overflow-y-auto rounded-t-[28px] border border-[var(--modal-glass-border)] bg-[image:var(--modal-glass-bg)] p-5 shadow-[var(--modal-panel-shadow)] backdrop-blur-xl sm:max-w-md sm:rounded-[28px] sm:p-6"
+        ref={panelRef}
+        className="max-h-[92dvh] w-full overflow-y-auto rounded-t-[28px] border border-[var(--modal-glass-border)] bg-[image:var(--modal-glass-bg)] p-5 shadow-[var(--modal-panel-shadow)] backdrop-blur-xl sm:max-w-md sm:rounded-[28px] sm:p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">

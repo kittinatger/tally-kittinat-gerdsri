@@ -328,7 +328,13 @@ export default function ExpenseForm({
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-      <div className="flex items-center justify-between gap-2 pt-1">
+      {/* Sticky rather than flowing at the end of the form: this form runs
+          15+ fields long, and on mobile (where the modal is a bottom sheet
+          capped at the visible viewport height) the on-screen keyboard can
+          push a non-sticky submit button below the fold with no cue that
+          it's still there. Negative margins extend it edge-to-edge past the
+          modal's own padding, then re-add that padding just for this bar. */}
+      <div className="sticky -bottom-5 -mx-5 -mb-5 flex items-center justify-between gap-2 border-t border-surface-line bg-surface/95 px-5 py-3 backdrop-blur-xl sm:-bottom-6 sm:-mx-6 sm:-mb-6 sm:px-6">
         <div>{footerLeft}</div>
         <div className="flex items-center gap-2">
           {onCancel && (
