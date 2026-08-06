@@ -27,6 +27,7 @@ import BudgetManager from "./BudgetManager";
 import SavingsGoalsManager from "./SavingsGoalsManager";
 import ApiTokensManager from "./ApiTokensManager";
 import AutoImportInstructions from "./AutoImportInstructions";
+import ErrorReportsPanel from "./ErrorReportsPanel";
 import SettingsSection from "./SettingsSection";
 import SettingsListItem from "./SettingsListItem";
 
@@ -43,7 +44,8 @@ type Panel =
   | "recurring"
   | "budgets"
   | "savingsGoals"
-  | "autoImport";
+  | "autoImport"
+  | "errorReports";
 
 const PANEL_TITLES: Record<Panel, string> = {
   account: "Account",
@@ -59,6 +61,7 @@ const PANEL_TITLES: Record<Panel, string> = {
   budgets: "Budgets",
   savingsGoals: "Savings goals",
   autoImport: "Automatic import",
+  errorReports: "Error reports",
 };
 
 function AccountIcon() {
@@ -188,6 +191,24 @@ function ClockIcon() {
   );
 }
 
+function WarningIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+      <path d="M12 9v4" />
+      <path d="M12 17h.01" />
+    </svg>
+  );
+}
+
+function WrenchIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L2 19l3 3 7.3-7.3a4 4 0 0 0 5.4-5.4l-2.65 2.65a1.5 1.5 0 0 1-2.1-2.1Z" />
+    </svg>
+  );
+}
+
 function RecurringIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
@@ -297,6 +318,7 @@ export default function SettingsView({
                     <AutoImportInstructions />
                   </div>
                 )}
+                {panel === "errorReports" && <ErrorReportsPanel />}
                 {panel === "dashboardWidgets" && (
                   <DashboardWidgetsSettings
                     expenses={expenses}
@@ -345,6 +367,8 @@ export default function SettingsView({
                 <SettingsSection title="Support">
                   <SettingsListItem icon={<BookIcon />} label="Usage guide" href="/usage-guide" />
                   <SettingsListItem icon={<QuestionIcon />} label="FAQs" href="/faq" />
+                  <SettingsListItem icon={<WrenchIcon />} label="Troubleshooting" href="/troubleshooting" />
+                  <SettingsListItem icon={<WarningIcon />} label="Error reports" onClick={() => setPanel("errorReports")} />
                   <SettingsListItem icon={<MailIcon />} label="Contact" href="/contact" />
                   <SettingsListItem icon={<FlagIcon />} label="Report an issue" href="/report-issue" />
                   <SettingsListItem icon={<ClockIcon />} label="Changelog" href="/changelog" />

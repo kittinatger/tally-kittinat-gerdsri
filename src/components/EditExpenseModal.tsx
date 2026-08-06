@@ -1,6 +1,7 @@
 "use client";
 
 import { describeFetchError } from "@/lib/fetch-error";
+import { logAppError } from "@/lib/error-log";
 import { useRef, useState } from "react";
 import Modal from "./Modal";
 import ExpenseForm, { type ExpenseFormValues } from "./ExpenseForm";
@@ -82,7 +83,7 @@ export default function EditExpenseModal({
         splitGroupId: data.expense.split_group_id ?? null,
       });
     } catch (err) {
-      setError(describeFetchError(err));
+      setError(describeFetchError(err, "Edit transaction"));
     } finally {
       setSubmitting(false);
     }
@@ -104,7 +105,7 @@ export default function EditExpenseModal({
       setError("Could not delete this expense.");
       setConfirmingDelete(false);
     } catch (err) {
-      setError(describeFetchError(err));
+      setError(describeFetchError(err, "Delete transaction"));
       setConfirmingDelete(false);
     } finally {
       setDeleting(false);
@@ -120,12 +121,14 @@ export default function EditExpenseModal({
       const res = await fetch(`/api/expenses/${expense.id}/receipt`, { method: "POST", body: formData });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        setAttachError(typeof data?.error === "string" ? data.error : "Could not attach that image.");
+        const message = typeof data?.error === "string" ? data.error : "Could not attach that image.";
+        setAttachError(message);
+        logAppError("Attach receipt", message);
         return;
       }
       onUpdated({ ...expense, hasReceipt: true });
     } catch (err) {
-      setAttachError(describeFetchError(err));
+      setAttachError(describeFetchError(err, "Attach receipt"));
     } finally {
       setAttaching(false);
       if (receiptInputRef.current) receiptInputRef.current.value = "";
@@ -173,7 +176,7 @@ export default function EditExpenseModal({
       });
       onClose();
     } catch (err) {
-      setError(describeFetchError(err));
+      setError(describeFetchError(err, "Duplicate transaction"));
     } finally {
       setDuplicating(false);
     }

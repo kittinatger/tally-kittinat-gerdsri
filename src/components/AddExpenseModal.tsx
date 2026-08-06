@@ -13,6 +13,7 @@ import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency } from "@/lib/format";
 import { downscaleImage } from "@/lib/image-downscale";
 import { describeFetchError } from "@/lib/fetch-error";
+import { logAppError } from "@/lib/error-log";
 
 type Tab = "manual" | "scan" | "voice";
 type ScanStatus = "idle" | "analyzing" | "review" | "error";
@@ -63,8 +64,10 @@ export default function AddExpenseModal({
       const res = await fetch("/api/extract-receipt", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) {
-        setScanError(typeof data.error === "string" ? data.error : "Could not read that document.");
+        const message = typeof data.error === "string" ? data.error : "Could not read that document.";
+        setScanError(message);
         setScanStatus("error");
+        logAppError("Scan document", message);
         return;
       }
       const extraction = data.extraction as {
@@ -100,7 +103,7 @@ export default function AddExpenseModal({
       );
       setScanStatus("review");
     } catch (err) {
-      setScanError(describeFetchError(err));
+      setScanError(describeFetchError(err, "Scan document"));
       setScanStatus("error");
     }
   }
@@ -123,8 +126,10 @@ export default function AddExpenseModal({
       const res = await fetch("/api/extract-voice", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) {
-        setVoiceError(typeof data.error === "string" ? data.error : "Could not understand that recording.");
+        const message = typeof data.error === "string" ? data.error : "Could not understand that recording.";
+        setVoiceError(message);
         setVoiceStatus("error");
+        logAppError("Voice entry", message);
         return;
       }
       const extractions = data.extractions as {
@@ -168,7 +173,7 @@ export default function AddExpenseModal({
       setVoiceQueueIndex(0);
       setVoiceStatus("review");
     } catch (err) {
-      setVoiceError(describeFetchError(err));
+      setVoiceError(describeFetchError(err, "Voice entry"));
       setVoiceStatus("error");
     }
   }
