@@ -109,6 +109,22 @@ h1, h2, h3 {
   font-weight: 400;
 }
 
+/* iOS Safari can start its native text-selection/callout gesture (the
+   magnifier loupe + "Copy" menu) from a press-and-hold on an interactive
+   control — buttons, drag handles, swipeable rows — which fights any custom
+   pointer/touch handling on that element and looks broken mid-gesture (see
+   the Customize Dashboard drag handle). Disabling it here, app-wide, covers
+   every button-based control (drag handles, swipe-to-delete rows, etc.)
+   without touching real text content like transaction notes, which stay
+   normally selectable. */
+button,
+[role="button"],
+summary {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 /* Browsers shade autofilled inputs with their own blue by default; force our theme colors instead. */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
