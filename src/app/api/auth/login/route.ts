@@ -6,6 +6,7 @@ import {
   getSessionVersionForUser,
   countRecentLoginAttempts,
   recordFailedLoginAttempt,
+  logSecurityEvent,
 } from "@/lib/db";
 
 // At most 10 failed attempts per username per 15 minutes — keyed by the
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
 
   const sessionVersion = await getSessionVersionForUser(user.id);
   const token = await createSessionToken(user.id, sessionVersion);
+  await logSecurityEvent(user.id, "login_succeeded");
   const res = NextResponse.json({ ok: true });
   res.cookies.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,

@@ -63,6 +63,28 @@ export default function WalletManager({ wallets }: { wallets: WalletOption[] }) 
     }
   }
 
+  async function handleMove(id: number, direction: "up" | "down") {
+    setBusyId(id);
+    setActionError(null);
+    try {
+      const res = await fetch(`/api/wallets/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ move: direction }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setActionError(typeof data?.error === "string" ? data.error : "Could not reorder that wallet.");
+        return;
+      }
+      router.refresh();
+    } catch {
+      setActionError("Network error while reordering.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function handleDelete(id: number) {
     if (confirmDeleteId !== id) {
       setConfirmDeleteId(id);
@@ -88,7 +110,8 @@ export default function WalletManager({ wallets }: { wallets: WalletOption[] }) 
     }
   }
 
-  function renderWallet(w: WalletOption, isLast: boolean) {
+  function renderWallet(w: WalletOption, indexInGroup: number, groupLength: number) {
+    const isLast = indexInGroup === groupLength - 1;
     return (
       <div
         key={w.id}
@@ -97,6 +120,28 @@ export default function WalletManager({ wallets }: { wallets: WalletOption[] }) 
         }`}
       >
         <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex shrink-0 flex-col">
+            <button
+              onClick={() => handleMove(w.id, "up")}
+              disabled={busyId === w.id || indexInGroup === 0}
+              aria-label={`Move ${w.name} up`}
+              className="rounded p-0.5 text-ink-soft transition hover:text-foreground disabled:opacity-30"
+            >
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+                <path d="M5 12l5-5 5 5" />
+              </svg>
+            </button>
+            <button
+              onClick={() => handleMove(w.id, "down")}
+              disabled={busyId === w.id || indexInGroup === groupLength - 1}
+              aria-label={`Move ${w.name} down`}
+              className="rounded p-0.5 text-ink-soft transition hover:text-foreground disabled:opacity-30"
+            >
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+                <path d="M5 8l5 5 5-5" />
+              </svg>
+            </button>
+          </div>
           <span className={`h-3 w-3 shrink-0 rounded-full ${dotClasses(w.color)}`} />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
@@ -194,14 +239,14 @@ export default function WalletManager({ wallets }: { wallets: WalletOption[] }) 
       {actionError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{actionError}</p>}
 
       <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
-        {activeWallets.map((w, i) => renderWallet(w, i === activeWallets.length - 1))}
+        {activeWallets.map((w, i) => renderWallet(w, i, activeWallets.length))}
       </div>
 
       {archivedWallets.length > 0 && (
         <div className="mt-4">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">Archived</p>
           <div className="overflow-hidden rounded-card border border-line bg-surface">
-            {archivedWallets.map((w, i) => renderWallet(w, i === archivedWallets.length - 1))}
+            {archivedWallets.map((w, i) => renderWallet(w, i, archivedWallets.length))}
           </div>
         </div>
       )}

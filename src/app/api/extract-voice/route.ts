@@ -80,7 +80,13 @@ export async function POST(req: NextRequest) {
         { status: 502 },
       );
     }
-    const message = err instanceof Error ? err.message : "Failed to understand that recording.";
+    // See the matching comment in extract-receipt/route.ts — never surface
+    // raw Gemini SDK error text to the client.
+    console.error("extract-voice: Gemini request failed:", err);
+    const message =
+      err instanceof Error && /non-retryable/i.test(err.message)
+        ? "Gemini couldn't process that recording. Try recording again, or use manual entry instead."
+        : "Failed to understand that recording. Please try again.";
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

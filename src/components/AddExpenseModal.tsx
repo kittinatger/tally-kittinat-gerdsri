@@ -11,6 +11,7 @@ import { useAllCategories } from "@/lib/categories-context";
 import { useWallets } from "@/lib/wallets-context";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency } from "@/lib/format";
+import { downscaleImage } from "@/lib/image-downscale";
 
 type Tab = "manual" | "scan" | "voice";
 type ScanStatus = "idle" | "analyzing" | "review" | "error";
@@ -49,8 +50,13 @@ export default function AddExpenseModal({
     setScanStatus("analyzing");
     setScanError(null);
 
+    // Downscales/re-encodes to JPEG client-side before it ever leaves the
+    // browser — shrinks typical camera photos considerably (less to upload,
+    // less stored per receipt) and, as a side effect, normalizes formats
+    // like HEIC that some environments reject when sent on to Gemini.
+    const uploadFile = await downscaleImage(file);
     const formData = new FormData();
-    formData.append("image", file);
+    formData.append("image", uploadFile);
 
     try {
       const res = await fetch("/api/extract-receipt", { method: "POST", body: formData });
@@ -232,7 +238,7 @@ export default function AddExpenseModal({
       if (file) {
         try {
           const receiptData = new FormData();
-          receiptData.append("image", file);
+          receiptData.append("image", await downscaleImage(file));
           const receiptRes = await fetch(`/api/expenses/${expense.id}/receipt`, {
             method: "POST",
             body: receiptData,

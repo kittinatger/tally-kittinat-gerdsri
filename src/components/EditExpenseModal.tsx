@@ -5,6 +5,7 @@ import Modal from "./Modal";
 import ExpenseForm, { type ExpenseFormValues } from "./ExpenseForm";
 import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
 import { todayInputValue } from "@/lib/format";
+import { downscaleImage } from "@/lib/image-downscale";
 
 export default function EditExpenseModal({
   expense,
@@ -114,7 +115,7 @@ export default function EditExpenseModal({
     setAttachError(null);
     try {
       const formData = new FormData();
-      formData.append("image", file);
+      formData.append("image", await downscaleImage(file));
       const res = await fetch(`/api/expenses/${expense.id}/receipt`, { method: "POST", body: formData });
       if (!res.ok) {
         const data = await res.json().catch(() => null);

@@ -68,7 +68,19 @@ export async function POST(req: NextRequest) {
         { status: 502 },
       );
     }
-    const message = err instanceof Error ? err.message : "Failed to read the document.";
+    // Gemini's SDK throws a plain Error for non-retryable (e.g. 4xx) API
+    // responses with a message like "Non-retryable exception Bad Request
+    // sending request" — an internal detail, not something a user can act
+    // on. Log the real error for us, but never surface raw SDK text to the
+    // client; a Bad Request from Gemini here almost always means it
+    // rejected the image itself (unreadable/unsupported despite passing our
+    // own type check), so point the user at the two things actually worth
+    // trying.
+    console.error("extract-receipt: Gemini request failed:", err);
+    const message =
+      err instanceof Error && /non-retryable/i.test(err.message)
+        ? "Gemini couldn't process that image. Try a different photo, or use manual entry instead."
+        : "Failed to read the document. Please try again.";
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

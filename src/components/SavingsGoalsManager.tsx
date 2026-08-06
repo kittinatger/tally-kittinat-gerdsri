@@ -8,7 +8,7 @@ import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
 import CsvManagerButtons from "./CsvManagerButtons";
 
 type SavingsGoal = { id: number; name: string; color: string; target_amount: string; current_amount: string };
-type Contribution = { delta: string; created_at: string };
+type Contribution = { id: number; delta: string; created_at: string };
 
 export default function SavingsGoalsManager() {
   const currency = useCurrency();
@@ -34,6 +34,23 @@ export default function SavingsGoalsManager() {
         .then((res) => res.json())
         .then((data) => setHistoryByGoal((prev) => ({ ...prev, [goalId]: data.contributions ?? [] })))
         .catch(() => setHistoryByGoal((prev) => ({ ...prev, [goalId]: [] })));
+    }
+  }
+
+  async function handleDeleteContribution(goalId: number, contributionId: number) {
+    setBusyId(goalId);
+    try {
+      const res = await fetch(`/api/savings-goals/${goalId}/contributions/${contributionId}`, { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok) {
+        setGoals((prev) => (prev ?? []).map((g) => (g.id === goalId ? data.goal : g)));
+        setHistoryByGoal((prev) => ({
+          ...prev,
+          [goalId]: (prev[goalId] ?? []).filter((c) => c.id !== contributionId),
+        }));
+      }
+    } finally {
+      setBusyId(null);
     }
   }
 
@@ -298,15 +315,25 @@ export default function SavingsGoalsManager() {
                       <p className="text-xs text-ink-soft">No contributions yet.</p>
                     ) : (
                       <ul className="space-y-1">
-                        {historyByGoal[g.id]!.map((c, ci) => {
+                        {historyByGoal[g.id]!.map((c) => {
                           const delta = Number(c.delta);
                           return (
-                            <li key={ci} className="flex items-baseline justify-between gap-3 text-xs">
+                            <li key={c.id} className="flex items-center justify-between gap-3 text-xs">
                               <span className={delta >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>
                                 {delta >= 0 ? "+" : ""}
                                 {formatCurrency(delta, currency)}
                               </span>
                               <span className="text-ink-soft">{new Date(c.created_at).toLocaleString()}</span>
+                              <button
+                                onClick={() => handleDeleteContribution(g.id, c.id)}
+                                disabled={busyId === g.id}
+                                aria-label="Delete this contribution"
+                                className="shrink-0 text-ink-soft transition hover:text-red-600 disabled:opacity-60 dark:hover:text-red-400"
+                              >
+                                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-3 w-3">
+                                  <path d="M5 5l10 10M15 5L5 15" />
+                                </svg>
+                              </button>
                             </li>
                           );
                         })}

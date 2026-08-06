@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { updateWallet, deleteWallet } from "@/lib/db";
-import { walletUpdateSchema } from "@/lib/validation";
+import { updateWallet, deleteWallet, moveWallet, listWallets } from "@/lib/db";
+import { walletUpdateSchema, reorderMoveSchema } from "@/lib/validation";
 import { getUserId } from "@/lib/auth";
 
 function parseId(id: string): number | null {
@@ -17,6 +17,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const body = await req.json().catch(() => null);
+
+  const moveParsed = reorderMoveSchema.safeParse(body);
+  if (moveParsed.success) {
+    await moveWallet(userId, walletId, moveParsed.data.move);
+    const wallets = await listWallets(userId, { includeArchived: true });
+    return NextResponse.json({ wallets });
+  }
+
   const parsed = walletUpdateSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });

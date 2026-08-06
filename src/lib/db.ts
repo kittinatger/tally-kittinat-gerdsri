@@ -942,6 +942,41 @@ export async function deleteWallet(
   return { ok: true };
 }
 
+// Same adjacent-swap approach as moveRecurringRule/moveSavingsGoal. Scoped
+// to wallets sharing the same archived status as the one being moved — the
+// Settings UI renders active and archived wallets as two separate lists
+// (see WalletManager.tsx), so "up"/"down" needs to swap within whichever
+// list is actually showing on screen, not the raw combined sort order.
+export async function moveWallet(userId: number, id: number, direction: "up" | "down"): Promise<void> {
+  await ensureSchema();
+  const { rows: targetRows } = await sql<{ archived: boolean }>`
+    SELECT archived FROM wallets WHERE id = ${id} AND user_id = ${userId};
+  `;
+  if (!targetRows[0]) return;
+  const { rows } = await sql<{ id: number; sort_order: number }>`
+    SELECT id, sort_order FROM wallets
+    WHERE user_id = ${userId} AND archived = ${targetRows[0].archived}
+    ORDER BY sort_order, id;
+  `;
+  const idx = rows.findIndex((r) => r.id === id);
+  const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+  if (idx === -1 || swapIdx < 0 || swapIdx >= rows.length) return;
+  const a = rows[idx];
+  const b = rows[swapIdx];
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    await client.sql`UPDATE wallets SET sort_order = ${b.sort_order} WHERE id = ${a.id} AND user_id = ${userId};`;
+    await client.sql`UPDATE wallets SET sort_order = ${a.sort_order} WHERE id = ${b.id} AND user_id = ${userId};`;
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 export async function seedDefaultWalletForUser(userId: number): Promise<void> {
   await ensureSchema();
   await sql`
@@ -2046,15 +2081,50 @@ export async function updateSavingsGoal(
   return rows[0] ?? null;
 }
 
-export type SavingsGoalContribution = { delta: string; created_at: string };
+export type SavingsGoalContribution = { id: number; delta: string; created_at: string };
 
 export async function listSavingsGoalContributions(userId: number, goalId: number): Promise<SavingsGoalContribution[]> {
   await ensureSchema();
   const { rows } = await sql<SavingsGoalContribution>`
-    SELECT delta::text AS delta, created_at::text AS created_at FROM savings_goal_contributions
+    SELECT id, delta::text AS delta, created_at::text AS created_at FROM savings_goal_contributions
     WHERE goal_id = ${goalId} AND user_id = ${userId} ORDER BY created_at DESC LIMIT 50;
   `;
   return rows;
+}
+
+// Deletes a mis-entered contribution and reverses its effect on the goal's
+// current_amount (clamped at 0, same floor as updateSavingsGoal) — both in
+// one transaction so the log and the total can't drift apart if one half
+// fails.
+export async function deleteSavingsGoalContribution(userId: number, contributionId: number): Promise<SavingsGoalRow | null> {
+  await ensureSchema();
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    const { rows: contribRows } = await client.sql<{ goal_id: number; delta: string }>`
+      SELECT goal_id, delta::text AS delta FROM savings_goal_contributions
+      WHERE id = ${contributionId} AND user_id = ${userId};
+    `;
+    const contribution = contribRows[0];
+    if (!contribution) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+    await client.sql`DELETE FROM savings_goal_contributions WHERE id = ${contributionId} AND user_id = ${userId};`;
+    const { rows } = await client.sql<SavingsGoalRow>`
+      UPDATE savings_goals
+      SET current_amount = GREATEST(0, current_amount - ${Number(contribution.delta)})
+      WHERE id = ${contribution.goal_id} AND user_id = ${userId}
+      RETURNING id, name, color, target_amount::text AS target_amount, current_amount::text AS current_amount;
+    `;
+    await client.query("COMMIT");
+    return rows[0] ?? null;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 export async function deleteSavingsGoal(userId: number, id: number): Promise<boolean> {

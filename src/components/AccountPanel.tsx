@@ -27,6 +27,8 @@ function describeSecurityEvent(event: string): string {
       return "Signed out of all devices";
     case "api_token_revoked":
       return "Access token revoked";
+    case "login_succeeded":
+      return "Signed in";
     default:
       return event;
   }
