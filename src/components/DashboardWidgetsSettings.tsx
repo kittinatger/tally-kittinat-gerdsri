@@ -284,16 +284,26 @@ export default function DashboardWidgetsSettings({
                 {/* Dedicated drag handle rather than the whole tile — touchAction:
                     "none" here is what makes reordering work with a touch drag,
                     but applying it to the entire card would also swallow a plain
-                    vertical scroll gesture that happens to start on a widget. */}
+                    vertical scroll gesture that happens to start on a widget.
+                    userSelect/webkitTouchCallout: "none" stop iOS Safari from
+                    treating a press-and-hold on the handle as the start of a
+                    text-selection gesture (its loupe/selection UI), which is
+                    confusing mid-drag and fights the pointer capture below. */}
                 <button
                   type="button"
                   onPointerDown={(e) => handlePointerDown(e, i)}
                   onPointerMove={handlePointerMove}
                   onPointerUp={handlePointerUp}
                   onPointerCancel={handlePointerUp}
-                  style={{ touchAction: "none" }}
+                  onContextMenu={(e) => e.preventDefault()}
+                  style={{
+                    touchAction: "none",
+                    userSelect: "none",
+                    WebkitUserSelect: "none",
+                    WebkitTouchCallout: "none",
+                  }}
                   aria-label={`Reorder ${DASHBOARD_WIDGET_INFO[w.type].title}`}
-                  className="absolute -bottom-1.5 left-1/2 z-10 flex h-5 w-7 -translate-x-1/2 cursor-grab items-center justify-center rounded-full bg-bg-soft text-ink-soft shadow ring-2 ring-surface transition hover:text-foreground active:cursor-grabbing"
+                  className="absolute -bottom-2 left-1/2 z-10 flex h-7 w-11 -translate-x-1/2 cursor-grab items-center justify-center rounded-full bg-bg-soft text-ink-soft shadow ring-2 ring-surface transition hover:text-foreground active:cursor-grabbing"
                 >
                   <GripIcon />
                 </button>
