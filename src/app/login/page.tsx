@@ -13,10 +13,10 @@ export default async function LoginPage({
       <div className="absolute right-4 top-4">
         <SettingsMenu />
       </div>
-      <div className="mb-8 flex flex-col items-center gap-3">
-        <img src="/favicon-light.svg" alt="Tally" className="h-14 w-14 dark:hidden" />
-        <img src="/favicon-dark.svg" alt="Tally" className="hidden h-14 w-14 dark:block" />
-        <h1 className="font-display text-2xl text-foreground">Tally</h1>
+      <div className="mb-7 flex flex-col items-center gap-2.5">
+        <img src="/favicon-light.svg" alt="Tally" className="h-12 w-12 dark:hidden" />
+        <img src="/favicon-dark.svg" alt="Tally" className="hidden h-12 w-12 dark:block" />
+        <h1 className="font-display text-2xl text-foreground">Welcome back</h1>
         <p className="text-sm text-ink-soft">Sign in to view your expenses</p>
       </div>
       <LoginForm next={next ?? "/"} oauthError={error} />
