@@ -30,6 +30,8 @@ function describeSecurityEvent(event: string): string {
       return "Access token revoked";
     case "login_succeeded":
       return "Signed in";
+    case "github_account_created":
+      return "Account created via GitHub";
     default:
       return event;
   }
@@ -45,6 +47,26 @@ export default function AccountPanel({
   const router = useRouter();
   const [username, setUsername] = useState(initialUsername);
   const [email, setEmail] = useState(initialEmail);
+  // Accounts created via GitHub (or another OAuth provider, once added)
+  // have no password — assume true (the common case) until the real value
+  // loads, so the password fields don't flash in and back out.
+  const [hasPassword, setHasPassword] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/account")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled && typeof data.hasPassword === "boolean") setHasPassword(data.hasPassword);
+      })
+      .catch(() => {
+        // Leave the default (assume a password exists) — worst case an
+        // OAuth-only user sees an unnecessary "current password" field.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const [newUsername, setNewUsername] = useState(initialUsername);
   const [usernamePassword, setUsernamePassword] = useState("");
@@ -110,7 +132,7 @@ export default function AccountPanel({
       setUsernameError("That's already your username.");
       return;
     }
-    if (!usernamePassword) {
+    if (hasPassword && !usernamePassword) {
       setUsernameError("Enter your current password to confirm this change.");
       return;
     }
@@ -148,7 +170,7 @@ export default function AccountPanel({
       setEmailError("That's already the email on file.");
       return;
     }
-    if (!emailPassword) {
+    if (hasPassword && !emailPassword) {
       setEmailError("Enter your current password to confirm this change.");
       return;
     }
@@ -284,7 +306,8 @@ export default function AccountPanel({
     setDeleteError(null);
   }
 
-  const deleteReady = deleteAcknowledged && deletePhrase === DELETE_CONFIRM_PHRASE && deletePassword.length > 0;
+  const deleteReady =
+    deleteAcknowledged && deletePhrase === DELETE_CONFIRM_PHRASE && (!hasPassword || deletePassword.length > 0);
 
   async function handleDeleteAccount(e: React.FormEvent) {
     e.preventDefault();
@@ -321,7 +344,7 @@ export default function AccountPanel({
 
       <form onSubmit={handleUsernameSubmit} className="border-t border-line pt-4">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">Change username</p>
-        <div className="grid gap-2.5 sm:grid-cols-2">
+        <div className={`grid gap-2.5 ${hasPassword ? "sm:grid-cols-2" : ""}`}>
           <input
             type="text"
             value={newUsername}
@@ -329,15 +352,19 @@ export default function AccountPanel({
             placeholder="New username"
             className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
-          <input
-            type="password"
-            value={usernamePassword}
-            onChange={(e) => setUsernamePassword(e.target.value)}
-            placeholder="Current password"
-            className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-          />
+          {hasPassword && (
+            <input
+              type="password"
+              value={usernamePassword}
+              onChange={(e) => setUsernamePassword(e.target.value)}
+              placeholder="Current password"
+              className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+            />
+          )}
         </div>
-        <p className="mt-1.5 text-xs text-ink-soft">Enter your current password to confirm this change.</p>
+        {hasPassword && (
+          <p className="mt-1.5 text-xs text-ink-soft">Enter your current password to confirm this change.</p>
+        )}
         {usernameError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{usernameError}</p>}
         {usernameSuccess && <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">Username updated.</p>}
         <button
@@ -354,7 +381,7 @@ export default function AccountPanel({
         <p className="mb-2.5 text-xs text-ink-soft">
           {email ? "Used to send password reset links." : "Add an email so you can reset your password if you forget it."}
         </p>
-        <div className="grid gap-2.5 sm:grid-cols-2">
+        <div className={`grid gap-2.5 ${hasPassword ? "sm:grid-cols-2" : ""}`}>
           <input
             type="email"
             value={newEmail}
@@ -362,13 +389,15 @@ export default function AccountPanel({
             placeholder="you@example.com"
             className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
-          <input
-            type="password"
-            value={emailPassword}
-            onChange={(e) => setEmailPassword(e.target.value)}
-            placeholder="Current password"
-            className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-          />
+          {hasPassword && (
+            <input
+              type="password"
+              value={emailPassword}
+              onChange={(e) => setEmailPassword(e.target.value)}
+              placeholder="Current password"
+              className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+            />
+          )}
         </div>
         {emailError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{emailError}</p>}
         {emailSuccess && <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">Email updated.</p>}
@@ -382,15 +411,25 @@ export default function AccountPanel({
       </form>
 
       <form onSubmit={handlePasswordSubmit} className="mt-6 border-t border-line pt-4">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">Change password</p>
-        <div className="grid gap-2.5 sm:grid-cols-3">
-          <input
-            type="password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            placeholder="Current password"
-            className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-          />
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+          {hasPassword ? "Change password" : "Set a password"}
+        </p>
+        {!hasPassword && (
+          <p className="mb-2.5 text-xs text-ink-soft">
+            You signed in with GitHub, so there&apos;s no password on this account yet. Set one to also be able to
+            sign in with a username and password.
+          </p>
+        )}
+        <div className={`grid gap-2.5 ${hasPassword ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+          {hasPassword && (
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Current password"
+              className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+            />
+          )}
           <input
             type="password"
             value={newPassword}
@@ -415,7 +454,7 @@ export default function AccountPanel({
           disabled={savingPassword}
           className="mt-3 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
         >
-          {savingPassword ? "Saving..." : "Save password"}
+          {savingPassword ? "Saving..." : hasPassword ? "Save password" : "Set password"}
         </button>
 
         {email && (
@@ -535,19 +574,21 @@ export default function AccountPanel({
               This signs out every device where you&apos;re currently logged in, including this one. You&apos;ll
               need to sign in again everywhere.
             </p>
-            <div>
-              <label htmlFor="signOutEverywherePassword" className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">
-                Current password
-              </label>
-              <input
-                id="signOutEverywherePassword"
-                type="password"
-                autoFocus
-                value={signOutEverywherePassword}
-                onChange={(e) => setSignOutEverywherePassword(e.target.value)}
-                className="w-full rounded-card border border-surface-line bg-surface-soft px-3.5 py-2.5 text-sm text-surface-foreground outline-none transition focus:border-surface-accent focus:ring-2 focus:ring-surface-accent/20"
-              />
-            </div>
+            {hasPassword && (
+              <div>
+                <label htmlFor="signOutEverywherePassword" className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">
+                  Current password
+                </label>
+                <input
+                  id="signOutEverywherePassword"
+                  type="password"
+                  autoFocus
+                  value={signOutEverywherePassword}
+                  onChange={(e) => setSignOutEverywherePassword(e.target.value)}
+                  className="w-full rounded-card border border-surface-line bg-surface-soft px-3.5 py-2.5 text-sm text-surface-foreground outline-none transition focus:border-surface-accent focus:ring-2 focus:ring-surface-accent/20"
+                />
+              </div>
+            )}
             {signOutEverywhereError && <p className="text-sm text-red-600 dark:text-red-400">{signOutEverywhereError}</p>}
             <div className="flex justify-end gap-2">
               <button
@@ -563,7 +604,7 @@ export default function AccountPanel({
               </button>
               <button
                 type="submit"
-                disabled={signingOutEverywhere || !signOutEverywherePassword}
+                disabled={signingOutEverywhere || (hasPassword && !signOutEverywherePassword)}
                 className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-red-700 disabled:opacity-60"
               >
                 {signingOutEverywhere ? "Signing out..." : "Sign out everywhere"}
@@ -605,18 +646,20 @@ export default function AccountPanel({
               />
             </div>
 
-            <div>
-              <label htmlFor="deletePassword" className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">
-                Current password
-              </label>
-              <input
-                id="deletePassword"
-                type="password"
-                value={deletePassword}
-                onChange={(e) => setDeletePassword(e.target.value)}
-                className="w-full rounded-card border border-surface-line bg-surface-soft px-3.5 py-2.5 text-sm text-surface-foreground outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
-              />
-            </div>
+            {hasPassword && (
+              <div>
+                <label htmlFor="deletePassword" className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">
+                  Current password
+                </label>
+                <input
+                  id="deletePassword"
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  className="w-full rounded-card border border-surface-line bg-surface-soft px-3.5 py-2.5 text-sm text-surface-foreground outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+                />
+              </div>
+            )}
 
             {deleteError && <p className="text-sm text-red-600 dark:text-red-400">{deleteError}</p>}
 

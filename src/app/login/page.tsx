@@ -4,9 +4,9 @@ import SettingsMenu from "@/components/SettingsMenu";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; error?: string }>;
 }) {
-  const { next } = await searchParams;
+  const { next, error } = await searchParams;
 
   return (
     <main className="relative flex min-h-screen flex-1 flex-col items-center justify-center bg-background px-4">
@@ -19,7 +19,7 @@ export default async function LoginPage({
         <h1 className="font-display text-2xl text-foreground">Tally</h1>
         <p className="text-sm text-ink-soft">Sign in to view your expenses</p>
       </div>
-      <LoginForm next={next ?? "/"} />
+      <LoginForm next={next ?? "/"} oauthError={error} />
     </main>
   );
 }

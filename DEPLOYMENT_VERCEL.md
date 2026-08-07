@@ -199,6 +199,27 @@ delivers to the email on your own Resend account — fine for trying it out.
 For real use, verify a domain in Resend and add one more variable,
 `EMAIL_FROM`, set to an address on that domain (e.g. `Tally <noreply@yourdomain.com>`).
 
+---
+
+### Optional: `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` (for "Continue with GitHub")
+
+Skip this if you're fine with username/password sign-in only — it's the
+default and always works either way.
+
+1. **Create a GitHub OAuth App**: [github.com/settings/developers](https://github.com/settings/developers) → "New OAuth App"
+2. **Homepage URL**: your app's URL (e.g. `https://tally-xyz123.vercel.app`)
+3. **Authorization callback URL**: your app's URL plus `/api/auth/github/callback` (e.g. `https://tally-xyz123.vercel.app/api/auth/github/callback`)
+4. **Click "Register application"**, then **"Generate a new client secret"**
+5. **In Vercel's Environment Variables screen**, add two variables:
+   ```
+   GITHUB_CLIENT_ID
+   ```
+   (the Client ID shown on the OAuth App's page), and
+   ```
+   GITHUB_CLIENT_SECRET
+   ```
+   (the client secret you just generated — GitHub only shows it once, so copy it immediately)
+
 ## Step 5: Redeploy (2 minutes)
 
 1. Go to **Deployments** (left sidebar)

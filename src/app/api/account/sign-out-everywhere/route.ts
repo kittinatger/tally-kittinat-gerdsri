@@ -18,9 +18,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Account not found." }, { status: 404 });
   }
 
-  const currentOk = await verifyPasswordHash(currentPassword, user.password_hash);
-  if (!currentOk) {
-    return NextResponse.json({ error: "Current password is incorrect." }, { status: 401 });
+  if (user.password_hash) {
+    const currentOk = await verifyPasswordHash(currentPassword, user.password_hash);
+    if (!currentOk) {
+      return NextResponse.json({ error: "Current password is incorrect." }, { status: 401 });
+    }
   }
 
   await bumpSessionVersion(userId);

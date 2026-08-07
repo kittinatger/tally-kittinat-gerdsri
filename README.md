@@ -24,7 +24,7 @@ You don't need to deploy anything — go to **[tally-kittinat.vercel.app](https:
 - **Currency selection & automatic conversion** — pick your default currency in Settings; optionally auto-convert amounts detected in a different currency (via [Frankfurter](https://frankfurter.app), a free ECB-rate API) when scanning, speaking, or viewing the Dashboard's Remaining total.
 - **Installable, offline-capable PWA** — install Tally to your home screen; it opens instantly and shows a graceful offline page instead of an error with no connection.
 - **Email notifications** — opt in (Settings > Permissions) to an email when a recurring rule auto-logs a transaction or a category goes over budget.
-- **Multi-user accounts, fully isolated** — anyone can sign up with their own username and password; each account's data is fully private via signed, httpOnly session cookies. Self-service password reset by email, account deletion, and "sign out of all devices" are all available from Settings.
+- **Multi-user accounts, fully isolated** — anyone can sign up with their own username and password, or sign in with GitHub; each account's data is fully private via signed, httpOnly session cookies. Self-service password reset by email, account deletion, and "sign out of all devices" are all available from Settings.
 - **Liquid-glass UI** — clean, modern design built for quick entry on a phone and full desktop use.
 - **Postgres storage** — works out of the box with [Vercel's Neon database](https://vercel.com/docs/storage/vercel-postgres) (free tier available).
 
@@ -99,6 +99,7 @@ Then fill in `.env.local`:
 | `SESSION_SECRET` | Yes | A random secret that keeps your login session secure. Think of it like a security key that scrambles your session cookie so no one can forge a fake login. Generate one by copying and pasting this into your terminal: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` — it will print out a long random string (like `e7b4d9fccc1ade2ae...`). Paste that string as the value for `SESSION_SECRET`. **Important**: Use a different random string for production (on Vercel) than for local development. |
 | `RESEND_API_KEY` | No | Free key from [Resend](https://resend.com/api-keys). Needed for password reset emails and the optional recurring/budget notification emails; everything else works without it. |
 | `EMAIL_FROM` | No | The "from" address for emails Tally sends. Falls back to Resend's shared testing address if unset — use a verified domain for real deployments. |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | No | Enables the "Continue with GitHub" button on login/register. Create an OAuth App at [github.com/settings/developers](https://github.com/settings/developers) with its callback URL set to `<your-domain>/api/auth/github/callback`. Leave unset to hide the button; username/password sign-in always works. |
 | `ADMIN_USERNAME` / `ADMIN_BOOTSTRAP_PASSWORD` | No | Only needed once, on the very first deploy of an instance that already has data from before multi-user accounts existed — creates an admin account and assigns that existing data to it. Leave unset on a brand-new install; everyone just signs up at `/register` instead. Remove both after confirming the admin account works. |
 
 ### 3. Get a Postgres database

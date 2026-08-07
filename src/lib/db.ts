@@ -181,7 +181,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 6;
+const CURRENT_SCHEMA_VERSION = 7;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -340,6 +340,19 @@ function ensureSchema(): Promise<void> {
       // email at all, which is the pre-existing state for every account).
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;`;
       await sql`CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique_idx ON users (lower(email)) WHERE email IS NOT NULL;`;
+
+      // GitHub OAuth sign-in — see /api/auth/github. An account created this
+      // way has no password (password_hash relaxed to nullable below), so
+      // every "confirm with your current password" flow (change username/
+      // email, delete account, sign out everywhere — see api/account and
+      // api/account/sign-out-everywhere) skips that check when it's null,
+      // trusting the session instead. Google/Apple sign-in are scoped but
+      // not built yet; this column is GitHub-specific rather than a generic
+      // "oauth_provider/oauth_id" pair so each provider's ID stays in its
+      // own unambiguous column once added.
+      await sql`ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;`;
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS github_id TEXT;`;
+      await sql`CREATE UNIQUE INDEX IF NOT EXISTS users_github_id_unique_idx ON users (github_id) WHERE github_id IS NOT NULL;`;
 
       // Short-lived, single-use tokens for the forgot-password flow. Only
       // token_hash is stored (sha256 of the raw token emailed to the user) so
@@ -1463,7 +1476,7 @@ export async function getReceiptImage(userId: number, id: number): Promise<{ byt
 export type UserRow = {
   id: number;
   username: string;
-  password_hash: string;
+  password_hash: string | null;
   email: string | null;
 };
 
@@ -1487,6 +1500,14 @@ export async function getUserByEmail(email: string): Promise<UserRow | null> {
   await ensureSchema();
   const { rows } = await sql<UserRow>`
     SELECT id, username, password_hash, email FROM users WHERE lower(email) = lower(${email});
+  `;
+  return rows[0] ?? null;
+}
+
+export async function getUserByGithubId(githubId: string): Promise<UserRow | null> {
+  await ensureSchema();
+  const { rows } = await sql<UserRow>`
+    SELECT id, username, password_hash, email FROM users WHERE github_id = ${githubId};
   `;
   return rows[0] ?? null;
 }
@@ -1713,6 +1734,25 @@ export async function createUser(username: string, passwordHash: string): Promis
   // Explicit negative `id` avoids colliding with the legacy singleton row
   // (id=1, still PRIMARY KEY until the schema is hardened post-migration —
   // see hardenMultiUserConstraints) or with any other new user's own row.
+  await sql`INSERT INTO app_settings (id, user_id, starting_balance) VALUES (${-user.id}, ${user.id}, 0);`;
+  return user;
+}
+
+// Used by GitHub sign-in (see /api/auth/github/callback) for a brand-new
+// account — no password, since there's nothing to hash. `desiredUsername`
+// is the GitHub login, already sanitized/deduped by the caller against
+// getUserByUsername before this is called, so this just inserts it as-is.
+export async function createUserFromGithub(
+  username: string,
+  githubId: string,
+): Promise<{ id: number; username: string }> {
+  await ensureSchema();
+  const { rows } = await sql<{ id: number; username: string }>`
+    INSERT INTO users (username, password_hash, github_id)
+    VALUES (${username}, NULL, ${githubId})
+    RETURNING id, username;
+  `;
+  const user = rows[0];
   await sql`INSERT INTO app_settings (id, user_id, starting_balance) VALUES (${-user.id}, ${user.id}, 0);`;
   return user;
 }

@@ -27,7 +27,7 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ error: "Account not found." }, { status: 404 });
   }
-  return NextResponse.json({ username: user.username, email: user.email });
+  return NextResponse.json({ username: user.username, email: user.email, hasPassword: user.password_hash !== null });
 }
 
 export async function PATCH(req: NextRequest) {
@@ -49,9 +49,13 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Account not found." }, { status: 404 });
   }
 
-  const currentOk = await verifyPasswordHash(currentPassword, user.password_hash);
-  if (!currentOk) {
-    return NextResponse.json({ error: "Current password is incorrect." }, { status: 401 });
+  // Accounts created via OAuth (GitHub, etc.) have no password to check —
+  // trust the session instead. Everyone else must confirm with it.
+  if (user.password_hash) {
+    const currentOk = await verifyPasswordHash(currentPassword, user.password_hash);
+    if (!currentOk) {
+      return NextResponse.json({ error: "Current password is incorrect." }, { status: 401 });
+    }
   }
 
   let username = user.username;
@@ -138,9 +142,11 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Account not found." }, { status: 404 });
   }
 
-  const currentOk = await verifyPasswordHash(currentPassword, user.password_hash);
-  if (!currentOk) {
-    return NextResponse.json({ error: "Current password is incorrect." }, { status: 401 });
+  if (user.password_hash) {
+    const currentOk = await verifyPasswordHash(currentPassword, user.password_hash);
+    if (!currentOk) {
+      return NextResponse.json({ error: "Current password is incorrect." }, { status: 401 });
+    }
   }
 
   await deleteUser(userId);
