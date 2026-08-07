@@ -123,6 +123,15 @@ export default function AccountPanel({
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
+  // Each row below is view-only until you tap Edit — collapsing the three
+  // always-open forms this panel used to show at once (username, email,
+  // password) into one line each by default, matching how the rest of
+  // Settings works elsewhere in the app.
+  const [editingUsername, setEditingUsername] = useState(false);
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [editingPassword, setEditingPassword] = useState(false);
+  const [activityOpen, setActivityOpen] = useState(false);
+
   async function handleUsernameSubmit(e: React.FormEvent) {
     e.preventDefault();
     setUsernameError(null);
@@ -153,6 +162,7 @@ export default function AccountPanel({
       setNewUsername(data.username);
       setUsernamePassword("");
       setUsernameSuccess(true);
+      setEditingUsername(false);
     } catch (err) {
       setUsernameError(describeFetchError(err));
     } finally {
@@ -191,6 +201,7 @@ export default function AccountPanel({
       setNewEmail(data.email ?? "");
       setEmailPassword("");
       setEmailSuccess(true);
+      setEditingEmail(false);
     } catch (err) {
       setEmailError(describeFetchError(err));
     } finally {
@@ -228,6 +239,7 @@ export default function AccountPanel({
       setNewPassword("");
       setConfirmPassword("");
       setPasswordSuccess(true);
+      setEditingPassword(false);
     } catch (err) {
       setPasswordError(describeFetchError(err));
     } finally {
@@ -298,6 +310,28 @@ export default function AccountPanel({
     }
   }
 
+  function cancelUsernameEdit() {
+    setEditingUsername(false);
+    setNewUsername(username);
+    setUsernamePassword("");
+    setUsernameError(null);
+  }
+
+  function cancelEmailEdit() {
+    setEditingEmail(false);
+    setNewEmail(email ?? "");
+    setEmailPassword("");
+    setEmailError(null);
+  }
+
+  function cancelPasswordEdit() {
+    setEditingPassword(false);
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setPasswordError(null);
+  }
+
   function closeDeleteModal() {
     setDeleteModalOpen(false);
     setDeleteAcknowledged(false);
@@ -336,195 +370,306 @@ export default function AccountPanel({
   }
 
   return (
-    <div className="rounded-card border border-line bg-surface p-5">
-      <h3 className="mb-1 font-display text-xl text-foreground">Your account</h3>
-      <p className="mb-4 text-sm text-ink-soft">
-        Signed in as <span className="font-semibold text-foreground">{username}</span>
-      </p>
+    <div className="space-y-4">
+      {/* Profile: username + email, each a compact view-only row until you
+          tap Edit — was two always-open forms taking up most of the panel
+          before you'd touched anything. */}
+      <div className="rounded-card border border-line bg-surface p-5">
+        <h3 className="mb-4 font-display text-xl text-foreground">Profile</h3>
 
-      <form onSubmit={handleUsernameSubmit} className="border-t border-line pt-4">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">Change username</p>
-        <div className={`grid gap-2.5 ${hasPassword ? "sm:grid-cols-2" : ""}`}>
-          <input
-            type="text"
-            value={newUsername}
-            onChange={(e) => setNewUsername(e.target.value)}
-            placeholder="New username"
-            className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-          />
-          {hasPassword && (
-            <input
-              type="password"
-              value={usernamePassword}
-              onChange={(e) => setUsernamePassword(e.target.value)}
-              placeholder="Current password"
-              className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-            />
+        <div className={editingUsername ? "" : "flex items-center justify-between gap-3"}>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Username</p>
+            {!editingUsername && <p className="mt-0.5 truncate text-sm text-foreground">{username}</p>}
+          </div>
+          {!editingUsername && (
+            <button
+              type="button"
+              onClick={() => setEditingUsername(true)}
+              className="shrink-0 rounded-full border border-line px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
+            >
+              Edit
+            </button>
           )}
         </div>
-        {hasPassword && (
-          <p className="mt-1.5 text-xs text-ink-soft">Enter your current password to confirm this change.</p>
-        )}
-        {usernameError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{usernameError}</p>}
-        {usernameSuccess && <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">Username updated.</p>}
-        <button
-          type="submit"
-          disabled={savingUsername}
-          className="mt-3 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
-        >
-          {savingUsername ? "Saving..." : "Save username"}
-        </button>
-      </form>
-
-      <form onSubmit={handleEmailSubmit} className="mt-6 border-t border-line pt-4">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">Email</p>
-        <p className="mb-2.5 text-xs text-ink-soft">
-          {email ? "Used to send password reset links." : "Add an email so you can reset your password if you forget it."}
-        </p>
-        <div className={`grid gap-2.5 ${hasPassword ? "sm:grid-cols-2" : ""}`}>
-          <input
-            type="email"
-            value={newEmail}
-            onChange={(e) => setNewEmail(e.target.value)}
-            placeholder="you@example.com"
-            className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-          />
-          {hasPassword && (
-            <input
-              type="password"
-              value={emailPassword}
-              onChange={(e) => setEmailPassword(e.target.value)}
-              placeholder="Current password"
-              className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-            />
-          )}
-        </div>
-        {emailError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{emailError}</p>}
-        {emailSuccess && <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">Email updated.</p>}
-        <button
-          type="submit"
-          disabled={savingEmail}
-          className="mt-3 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
-        >
-          {savingEmail ? "Saving..." : "Save email"}
-        </button>
-      </form>
-
-      <form onSubmit={handlePasswordSubmit} className="mt-6 border-t border-line pt-4">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-          {hasPassword ? "Change password" : "Set a password"}
-        </p>
-        {!hasPassword && (
-          <p className="mb-2.5 text-xs text-ink-soft">
-            You signed in with GitHub, so there&apos;s no password on this account yet. Set one to also be able to
-            sign in with a username and password.
-          </p>
-        )}
-        <div className={`grid gap-2.5 ${hasPassword ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
-          {hasPassword && (
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="Current password"
-              className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-            />
-          )}
-          <input
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="New password"
-            minLength={8}
-            className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-          />
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirm new password"
-            minLength={8}
-            className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-          />
-        </div>
-        {passwordError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{passwordError}</p>}
-        {passwordSuccess && <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">Password updated.</p>}
-        <button
-          type="submit"
-          disabled={savingPassword}
-          className="mt-3 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
-        >
-          {savingPassword ? "Saving..." : hasPassword ? "Save password" : "Set password"}
-        </button>
-
-        {email && (
-          <div className="mt-4 border-t border-line pt-4">
-            <p className="mb-2 text-xs text-ink-soft">
-              Forgot your current password instead? Email yourself a reset link.
-            </p>
-            {resetError && <p className="mb-2 text-sm text-red-600 dark:text-red-400">{resetError}</p>}
-            {resetSent ? (
-              <p className="text-sm text-emerald-600 dark:text-emerald-400">
-                Reset link sent to {email} — check your inbox.
-              </p>
-            ) : (
+        {editingUsername && (
+          <form onSubmit={handleUsernameSubmit} className="mt-2">
+            <div className={`grid gap-2.5 ${hasPassword ? "sm:grid-cols-2" : ""}`}>
+              <input
+                autoFocus
+                type="text"
+                value={newUsername}
+                onChange={(e) => setNewUsername(e.target.value)}
+                placeholder="New username"
+                className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+              />
+              {hasPassword && (
+                <input
+                  type="password"
+                  value={usernamePassword}
+                  onChange={(e) => setUsernamePassword(e.target.value)}
+                  placeholder="Current password"
+                  className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+                />
+              )}
+            </div>
+            {hasPassword && (
+              <p className="mt-1.5 text-xs text-ink-soft">Enter your current password to confirm this change.</p>
+            )}
+            {usernameError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{usernameError}</p>}
+            <div className="mt-3 flex gap-2">
+              <button
+                type="submit"
+                disabled={savingUsername}
+                className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+              >
+                {savingUsername ? "Saving..." : "Save username"}
+              </button>
               <button
                 type="button"
-                onClick={handleSendResetLink}
-                disabled={sendingReset}
-                className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-60"
+                onClick={cancelUsernameEdit}
+                className="rounded-full px-4 py-2 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
               >
-                {sendingReset ? "Sending..." : "Send reset link to my email"}
+                Cancel
               </button>
+            </div>
+          </form>
+        )}
+        {usernameSuccess && !editingUsername && (
+          <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400">Username updated.</p>
+        )}
+
+        <div className={`mt-4 border-t border-line pt-4 ${editingEmail ? "" : "flex items-center justify-between gap-3"}`}>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Email</p>
+            {!editingEmail && (
+              <p className="mt-0.5 truncate text-sm text-foreground">{email ?? "Not set"}</p>
+            )}
+          </div>
+          {!editingEmail && (
+            <button
+              type="button"
+              onClick={() => setEditingEmail(true)}
+              className="shrink-0 rounded-full border border-line px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
+            >
+              {email ? "Edit" : "Add"}
+            </button>
+          )}
+        </div>
+        {!editingEmail && !email && (
+          <p className="mt-1 text-xs text-ink-soft">Add an email so you can reset your password if you forget it.</p>
+        )}
+        {editingEmail && (
+          <form onSubmit={handleEmailSubmit} className="mt-2">
+            <div className={`grid gap-2.5 ${hasPassword ? "sm:grid-cols-2" : ""}`}>
+              <input
+                autoFocus
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+              />
+              {hasPassword && (
+                <input
+                  type="password"
+                  value={emailPassword}
+                  onChange={(e) => setEmailPassword(e.target.value)}
+                  placeholder="Current password"
+                  className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+                />
+              )}
+            </div>
+            {emailError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{emailError}</p>}
+            <div className="mt-3 flex gap-2">
+              <button
+                type="submit"
+                disabled={savingEmail}
+                className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+              >
+                {savingEmail ? "Saving..." : "Save email"}
+              </button>
+              <button
+                type="button"
+                onClick={cancelEmailEdit}
+                className="rounded-full px-4 py-2 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
+        {emailSuccess && !editingEmail && (
+          <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400">Email updated.</p>
+        )}
+      </div>
+
+      {/* Password: same view-row/Edit pattern. For OAuth-only accounts this
+          becomes "Set a password" instead of "Change password". */}
+      <div className="rounded-card border border-line bg-surface p-5">
+        <div className={editingPassword ? "" : "flex items-center justify-between gap-3"}>
+          <div className="min-w-0">
+            <h3 className="font-display text-xl text-foreground">Password</h3>
+            {!editingPassword && (
+              <p className="mt-0.5 text-sm text-ink-soft">
+                {hasPassword ? "••••••••" : "No password set — signed in with GitHub"}
+              </p>
+            )}
+          </div>
+          {!editingPassword && (
+            <button
+              type="button"
+              onClick={() => setEditingPassword(true)}
+              className="shrink-0 rounded-full border border-line px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
+            >
+              {hasPassword ? "Change" : "Set password"}
+            </button>
+          )}
+        </div>
+
+        {editingPassword && (
+          <form onSubmit={handlePasswordSubmit} className="mt-3">
+            {!hasPassword && (
+              <p className="mb-2.5 text-xs text-ink-soft">
+                Set a password so you can also sign in with a username and password, not just GitHub.
+              </p>
+            )}
+            <div className={`grid gap-2.5 ${hasPassword ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+              {hasPassword && (
+                <input
+                  autoFocus
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Current password"
+                  className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+                />
+              )}
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="New password"
+                minLength={8}
+                className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+              />
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm new password"
+                minLength={8}
+                className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+              />
+            </div>
+            {passwordError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{passwordError}</p>}
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="submit"
+                disabled={savingPassword}
+                className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+              >
+                {savingPassword ? "Saving..." : hasPassword ? "Save password" : "Set password"}
+              </button>
+              <button
+                type="button"
+                onClick={cancelPasswordEdit}
+                className="rounded-full px-4 py-2 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
+              >
+                Cancel
+              </button>
+              {hasPassword && email && (
+                <span className="text-xs text-ink-soft">
+                  Forgot it instead?{" "}
+                  {resetSent ? (
+                    <span className="text-emerald-600 dark:text-emerald-400">Reset link sent — check your inbox.</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleSendResetLink}
+                      disabled={sendingReset}
+                      className="font-semibold text-navy underline hover:no-underline disabled:opacity-60 dark:text-blue-300"
+                    >
+                      {sendingReset ? "Sending..." : "Email me a reset link"}
+                    </button>
+                  )}
+                </span>
+              )}
+            </div>
+            {resetError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{resetError}</p>}
+          </form>
+        )}
+        {passwordSuccess && !editingPassword && (
+          <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400">Password updated.</p>
+        )}
+      </div>
+
+      {/* Sessions */}
+      <div className="rounded-card border border-line bg-surface p-5">
+        <h3 className="mb-3 font-display text-xl text-foreground">Sessions</h3>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setConfirmingLogout(true)}
+            className="flex items-center gap-1.5 rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
+          >
+            <svg viewBox="0 0 32.5293 26.9238" fill="currentColor" className="h-[16px] w-[16px]">
+              <path d="M22.6172 5.21484L22.6172 10.4004L20.8887 10.4004L20.8887 5.20508C20.8887 2.98828 19.6387 1.73828 17.4219 1.73828L6.85547 1.73828C4.62891 1.73828 3.38867 2.98828 3.38867 5.20508L3.38867 21.7188C3.38867 23.9453 4.62891 25.1953 6.85547 25.1953L17.4219 25.1953C19.6387 25.1953 20.8887 23.9453 20.8887 21.7188L20.8887 16.5137L22.6172 16.5137L22.6172 21.7188C22.6172 25.0684 20.7617 26.9238 17.4219 26.9238L6.86523 26.9238C3.51562 26.9238 1.65039 25.0684 1.65039 21.7188L1.65039 5.21484C1.65039 1.86523 3.51562 0.00976562 6.86523 0.00976562L17.4219 0.00976562C20.7617 0.00976562 22.6172 1.86523 22.6172 5.21484Z" />
+              <path d="M12.334 13.457C12.334 13.916 12.7148 14.3066 13.1641 14.3066L26.2793 14.3066L29.3945 14.1797C29.7949 14.1602 30.127 13.8477 30.127 13.457C30.127 13.0566 29.7949 12.7441 29.3945 12.7246L26.2793 12.5977L13.1641 12.5977C12.7148 12.5977 12.334 12.9883 12.334 13.457ZM24.834 9.16992C24.834 9.375 24.9219 9.60938 25.0977 9.76562L27.3242 11.8848L28.9746 13.457L27.3242 15.0098L25.0977 17.1387C24.9219 17.2949 24.834 17.5195 24.834 17.7246C24.834 18.1641 25.1562 18.5059 25.5957 18.5059C25.8203 18.5059 25.9961 18.418 26.1621 18.252L30.2246 14.0723C30.4395 13.8574 30.5078 13.6719 30.5078 13.457C30.5078 13.2324 30.4395 13.0469 30.2246 12.832L26.1621 8.65234C25.9961 8.48633 25.8203 8.38867 25.5957 8.38867C25.1562 8.38867 24.834 8.7207 24.834 9.16992Z" />
+            </svg>
+            Sign out
+          </button>
+          <button
+            type="button"
+            onClick={() => setSignOutEverywhereOpen(true)}
+            className="flex items-center gap-1.5 rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
+          >
+            Sign out of all devices
+          </button>
+        </div>
+      </div>
+
+      {/* Recent security activity — collapsed by default, since it's a
+          record to check on rather than something to see every visit. */}
+      <div className="rounded-card border border-line bg-surface p-5">
+        <button
+          type="button"
+          onClick={() => setActivityOpen((o) => !o)}
+          aria-expanded={activityOpen}
+          className="flex w-full items-center justify-between gap-2 text-left"
+        >
+          <h3 className="font-display text-xl text-foreground">Recent security activity</h3>
+          <svg
+            viewBox="0 0 21.6895 12.959"
+            fill="currentColor"
+            className={`h-3.5 w-3.5 shrink-0 text-ink-soft transition-transform ${activityOpen ? "rotate-180" : ""}`}
+          >
+            <path d="M10.6641 12.959C10.9473 12.959 11.2109 12.832 11.4062 12.6172L21.0352 2.58789C21.2207 2.40234 21.3281 2.16797 21.3281 1.89453C21.3281 1.34766 20.9082 0.927734 20.3516 0.927734C20.0977 0.927734 19.8438 1.02539 19.6582 1.20117L10.0684 11.1816L11.2695 11.1816L1.66016 1.20117C1.48438 1.02539 1.24023 0.927734 0.976562 0.927734C0.419922 0.927734 0 1.34766 0 1.89453C0 2.16797 0.117188 2.40234 0.292969 2.59766L9.92188 12.627C10.1367 12.832 10.3809 12.959 10.6641 12.959Z" />
+          </svg>
+        </button>
+        {activityOpen && (
+          <div className="mt-3 border-t border-line pt-3">
+            {securityEvents === null ? (
+              <p className="text-sm text-ink-soft">Loading…</p>
+            ) : securityEvents.length === 0 ? (
+              <p className="text-sm text-ink-soft">No security-sensitive changes yet.</p>
+            ) : (
+              <ul className="space-y-1.5 text-sm text-surface-foreground-soft">
+                {securityEvents.map((e, i) => (
+                  <li key={i} className="flex items-baseline justify-between gap-3">
+                    <span className="text-foreground">{describeSecurityEvent(e.event)}</span>
+                    <span className="shrink-0 text-xs text-ink-soft">{new Date(e.created_at).toLocaleString()}</span>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         )}
-      </form>
-
-      <div className="mt-6 border-t border-line pt-4">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">Session</p>
-        <button
-          type="button"
-          onClick={() => setConfirmingLogout(true)}
-          className="flex items-center gap-1.5 rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
-        >
-          <svg viewBox="0 0 32.5293 26.9238" fill="currentColor" className="h-[16px] w-[16px]">
-            <path d="M22.6172 5.21484L22.6172 10.4004L20.8887 10.4004L20.8887 5.20508C20.8887 2.98828 19.6387 1.73828 17.4219 1.73828L6.85547 1.73828C4.62891 1.73828 3.38867 2.98828 3.38867 5.20508L3.38867 21.7188C3.38867 23.9453 4.62891 25.1953 6.85547 25.1953L17.4219 25.1953C19.6387 25.1953 20.8887 23.9453 20.8887 21.7188L20.8887 16.5137L22.6172 16.5137L22.6172 21.7188C22.6172 25.0684 20.7617 26.9238 17.4219 26.9238L6.86523 26.9238C3.51562 26.9238 1.65039 25.0684 1.65039 21.7188L1.65039 5.21484C1.65039 1.86523 3.51562 0.00976562 6.86523 0.00976562L17.4219 0.00976562C20.7617 0.00976562 22.6172 1.86523 22.6172 5.21484Z" />
-            <path d="M12.334 13.457C12.334 13.916 12.7148 14.3066 13.1641 14.3066L26.2793 14.3066L29.3945 14.1797C29.7949 14.1602 30.127 13.8477 30.127 13.457C30.127 13.0566 29.7949 12.7441 29.3945 12.7246L26.2793 12.5977L13.1641 12.5977C12.7148 12.5977 12.334 12.9883 12.334 13.457ZM24.834 9.16992C24.834 9.375 24.9219 9.60938 25.0977 9.76562L27.3242 11.8848L28.9746 13.457L27.3242 15.0098L25.0977 17.1387C24.9219 17.2949 24.834 17.5195 24.834 17.7246C24.834 18.1641 25.1562 18.5059 25.5957 18.5059C25.8203 18.5059 25.9961 18.418 26.1621 18.252L30.2246 14.0723C30.4395 13.8574 30.5078 13.6719 30.5078 13.457C30.5078 13.2324 30.4395 13.0469 30.2246 12.832L26.1621 8.65234C25.9961 8.48633 25.8203 8.38867 25.5957 8.38867C25.1562 8.38867 24.834 8.7207 24.834 9.16992Z" />
-          </svg>
-          Sign out
-        </button>
-        <button
-          type="button"
-          onClick={() => setSignOutEverywhereOpen(true)}
-          className="ml-2 flex items-center gap-1.5 rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
-        >
-          Sign out of all devices
-        </button>
       </div>
 
-      <div className="mt-6 border-t border-line pt-4">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">Recent security activity</p>
-        {securityEvents === null ? (
-          <p className="text-sm text-ink-soft">Loading…</p>
-        ) : securityEvents.length === 0 ? (
-          <p className="text-sm text-ink-soft">No security-sensitive changes yet.</p>
-        ) : (
-          <ul className="space-y-1.5 text-sm text-surface-foreground-soft">
-            {securityEvents.map((e, i) => (
-              <li key={i} className="flex items-baseline justify-between gap-3">
-                <span className="text-foreground">{describeSecurityEvent(e.event)}</span>
-                <span className="shrink-0 text-xs text-ink-soft">{new Date(e.created_at).toLocaleString()}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <div className="mt-6 border-t border-red-200 pt-4 dark:border-red-900/40">
-        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-red-600 dark:text-red-400">
-          Danger zone
-        </p>
+      {/* Danger zone */}
+      <div className="rounded-card border border-red-200 bg-surface p-5 dark:border-red-900/40">
+        <h3 className="mb-1 font-display text-xl text-red-600 dark:text-red-400">Danger zone</h3>
         <p className="mb-3 text-xs text-ink-soft">
           Permanently delete your account and all of its data. This can&apos;t be undone.
         </p>
