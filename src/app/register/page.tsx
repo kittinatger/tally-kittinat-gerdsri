@@ -9,13 +9,51 @@ const STEPS = [
 
 export default function RegisterPage() {
   return (
-    <main className="relative flex min-h-screen flex-1 items-center justify-center bg-background px-4 py-10">
-      <div className="absolute right-4 top-4 z-10">
+    <main className="relative min-h-screen bg-background px-4 pb-10 pt-14 lg:flex lg:items-center lg:justify-center lg:py-10">
+      <div className="absolute right-4 top-4 z-20">
         <SettingsMenu />
       </div>
 
-      <div className="w-full max-w-sm overflow-hidden rounded-card border border-line bg-surface shadow-soft lg:flex lg:max-w-3xl">
-        <div className="hidden lg:flex lg:w-1/2 lg:flex-col lg:justify-between lg:bg-gradient-to-br lg:from-navy lg:via-navy-dark lg:to-navy-darker lg:p-10">
+      {/* Mobile: gradient hero with step pills and an overlapping form card */}
+      <div className="mx-auto max-w-sm lg:hidden">
+        <div className="relative overflow-hidden rounded-card bg-gradient-to-br from-navy via-navy-dark to-navy-darker px-6 pb-16 pt-8 text-white">
+          <div className="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
+          <div className="pointer-events-none absolute -bottom-12 -left-10 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
+          <img src="/favicon-dark.svg" alt="" className="relative h-10 w-10" />
+          <h1 className="relative mt-4 font-display text-3xl leading-tight">Get started</h1>
+          <p className="relative mt-1.5 text-sm text-white/80">Start tracking your money in minutes</p>
+
+          <div className="relative mt-5 flex gap-2">
+            {STEPS.map((step, i) => (
+              <div
+                key={step.label}
+                className={`flex flex-1 items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-semibold ${
+                  step.active ? "bg-white text-navy-darker" : "bg-white/10 text-white/70"
+                }`}
+              >
+                <span
+                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                    step.active ? "bg-navy text-white" : "bg-white/15 text-white"
+                  }`}
+                >
+                  {i + 1}
+                </span>
+                <span className="truncate">{step.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="-mt-9 px-1">
+          <div className="rounded-card border border-line bg-surface p-6 shadow-soft">
+            <RegisterForm />
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop: branded split panel */}
+      <div className="hidden overflow-hidden rounded-card border border-line bg-surface shadow-soft lg:flex lg:w-full lg:max-w-3xl">
+        <div className="lg:flex lg:w-1/2 lg:flex-col lg:justify-between lg:bg-gradient-to-br lg:from-navy lg:via-navy-dark lg:to-navy-darker lg:p-10">
           <div className="flex flex-col gap-4">
             <img src="/favicon-dark.svg" alt="" className="h-10 w-10" />
             <h2 className="font-display text-3xl leading-tight text-white">Get started with Tally</h2>
@@ -42,14 +80,8 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <div className="p-6 sm:p-8 lg:flex lg:w-1/2 lg:flex-col lg:justify-center">
-          <div className="mb-6 flex flex-col items-center gap-2.5 lg:hidden">
-            <img src="/favicon-light.svg" alt="Tally" className="h-12 w-12 dark:hidden" />
-            <img src="/favicon-dark.svg" alt="Tally" className="hidden h-12 w-12 dark:block" />
-            <h1 className="font-display text-2xl text-foreground">Create your account</h1>
-            <p className="text-sm text-ink-soft">Start tracking your money in minutes</p>
-          </div>
-          <h1 className="mb-6 hidden font-display text-2xl text-foreground lg:block">Sign up</h1>
+        <div className="lg:flex lg:w-1/2 lg:flex-col lg:justify-center lg:p-10">
+          <h1 className="mb-6 font-display text-2xl text-foreground">Sign up</h1>
           <RegisterForm />
         </div>
       </div>
