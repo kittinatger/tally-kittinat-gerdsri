@@ -125,6 +125,21 @@ summary {
   user-select: none;
 }
 
+/* Every number input in the app (amount fields, budgets, target amounts,
+   etc.) uses inputMode="decimal" for the mobile numeric keyboard, so the
+   browser's up/down spinner arrows are pure clutter — narrower tap target,
+   no keyboard equivalent worth having, and inconsistent styling across
+   browsers. Hidden app-wide rather than per-input. */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 /* Browsers shade autofilled inputs with their own blue by default; force our theme colors instead. */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
