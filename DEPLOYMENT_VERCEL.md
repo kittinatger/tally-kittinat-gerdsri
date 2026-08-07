@@ -219,6 +219,17 @@ default and always works either way.
    GITHUB_CLIENT_SECRET
    ```
    (the client secret you just generated — GitHub only shows it once, so copy it immediately)
+6. **Add one more variable** so this doesn't break the next time you deploy:
+   ```
+   APP_URL
+   ```
+   set to the exact same URL you used for the callback above, minus the
+   `/api/auth/github/callback` part (e.g. `https://tally-xyz123.vercel.app`).
+   Every Vercel deployment also gets its own unique alias URL in addition to
+   your real one — without this, visiting the app through one of those
+   aliases sends GitHub a callback URL that doesn't match what you
+   registered, and you'll see "The redirect_uri is not associated with this
+   application."
 
 ## Step 5: Redeploy (2 minutes)
 
@@ -263,6 +274,11 @@ Anyone else who wants to use this same deployment (family, friends) can go to th
 ### "Forgot password email never arrives" / notification emails don't send
 - Make sure `RESEND_API_KEY` is set in Environment Variables, then **Redeploy** — this is optional, so the app runs fine without it, but email features silently do nothing until it's set
 - If you haven't set `EMAIL_FROM`, emails only deliver to the address on your own Resend account (Resend's shared testing sender) — verify a domain in Resend and set `EMAIL_FROM` for real delivery
+
+### GitHub sign-in: "The redirect_uri is not associated with this application"
+- You (or a visitor) loaded the app through a Vercel deployment alias instead of your real domain — check the browser's address bar against exactly what you entered as the OAuth App's "Authorization callback URL"
+- Set `APP_URL` in Environment Variables to your real domain (see the GitHub setup step above), then **Redeploy** — this pins the callback URL regardless of which alias was actually visited
+- Double check the callback URL on the GitHub OAuth App page matches `APP_URL` + `/api/auth/github/callback` exactly (no trailing slash, `https://` not `http://`)
 
 ## You're Done!
 

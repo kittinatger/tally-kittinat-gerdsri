@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSessionToken, SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "@/lib/session";
+import { getAppOrigin } from "@/lib/app-url";
 import {
   getUserByGithubId,
   getUserByUsername,
@@ -82,7 +83,7 @@ export async function GET(req: NextRequest) {
         client_id: clientId,
         client_secret: clientSecret,
         code,
-        redirect_uri: `${req.nextUrl.origin}/api/auth/github/callback`,
+        redirect_uri: `${getAppOrigin(req)}/api/auth/github/callback`,
       }),
     });
     const tokenData = await tokenRes.json();

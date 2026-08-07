@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserByEmail, createPasswordResetToken, countRecentPasswordResetTokens } from "@/lib/db";
 import { forgotPasswordInputSchema } from "@/lib/validation";
 import { sendEmail, passwordResetEmailHtml } from "@/lib/email";
+import { getAppOrigin } from "@/lib/app-url";
 
 // Always returns the same generic response regardless of whether the email
 // matches an account, so this endpoint can't be used to enumerate which
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
   }
 
   const token = await createPasswordResetToken(user.id);
-  const resetUrl = `${req.nextUrl.origin}/reset-password?token=${token}`;
+  const resetUrl = `${getAppOrigin(req)}/reset-password?token=${token}`;
   const result = await sendEmail(user.email!, "Reset your Tally password", passwordResetEmailHtml(resetUrl));
 
   // Deliberately returns the same generic response either way — surfacing a

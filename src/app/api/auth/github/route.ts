@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
+import { getAppOrigin } from "@/lib/app-url";
 
 // Step 1 of the OAuth flow: redirect to GitHub's own consent screen with a
 // random `state` value, stashed in a short-lived cookie so the callback can
@@ -12,7 +13,7 @@ export async function GET(req: NextRequest) {
   }
 
   const state = randomBytes(16).toString("hex");
-  const redirectUri = `${req.nextUrl.origin}/api/auth/github/callback`;
+  const redirectUri = `${getAppOrigin(req)}/api/auth/github/callback`;
 
   const authorizeUrl = new URL("https://github.com/login/oauth/authorize");
   authorizeUrl.searchParams.set("client_id", clientId);
