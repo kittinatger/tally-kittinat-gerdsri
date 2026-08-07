@@ -3,6 +3,29 @@ import AppHeader from "@/components/AppHeader";
 
 const RELEASES: { version: string; date: string; sections: { heading: string; items: string[] }[] }[] = [
   {
+    version: "0.13.0",
+    date: "2026-08-07",
+    sections: [
+      {
+        heading: "Added",
+        items: [
+          "\"Continue with GitHub\" sign-in and sign-up, alongside username/password",
+          "Link (or unlink) a GitHub account from an existing username/password account, in Settings > Account's new \"Connected accounts\" card; unlinking is blocked if the account has no password set, to avoid a lockout",
+          "Sign-in and sign-up pages redesigned with distinct desktop and mobile layouts — desktop splits into a branded panel plus the form (with a 3-step checklist on sign-up), mobile stays a single card with GitHub sign-in surfaced above the fields",
+          "Manual transaction form redesigned with a hero amount input, category color dots, and a collapsible \"More details\" section for wallet/tags/notes, plus a dedicated two-column layout on desktop instead of a scaled-down mobile one",
+          "Settings > Account redesigned into distinct cards (Profile, Connected accounts, Password, Sessions, Recent security activity, Danger zone) with click-to-edit rows instead of always-open forms",
+        ],
+      },
+      {
+        heading: "Fixed",
+        items: [
+          "Fixed GitHub sign-in failing with \"redirect_uri is not associated with this application\" when the app was reached via a Vercel deployment alias instead of the canonical domain",
+          "Hid the spinner arrows on number inputs app-wide",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.12.0",
     date: "2026-08-05",
     sections: [

@@ -24,7 +24,7 @@ You don't need to deploy anything — go to **[tally-kittinat.vercel.app](https:
 - **Currency selection & automatic conversion** — pick your default currency in Settings; optionally auto-convert amounts detected in a different currency (via [Frankfurter](https://frankfurter.app), a free ECB-rate API) when scanning, speaking, or viewing the Dashboard's Remaining total.
 - **Installable, offline-capable PWA** — install Tally to your home screen; it opens instantly and shows a graceful offline page instead of an error with no connection.
 - **Email notifications** — opt in (Settings > Permissions) to an email when a recurring rule auto-logs a transaction or a category goes over budget.
-- **Multi-user accounts, fully isolated** — anyone can sign up with their own username and password, or sign in with GitHub; each account's data is fully private via signed, httpOnly session cookies. Self-service password reset by email, account deletion, and "sign out of all devices" are all available from Settings.
+- **Multi-user accounts, fully isolated** — anyone can sign up with their own username and password, or sign in with GitHub (and link/unlink GitHub from an existing account in Settings > Account); each account's data is fully private via signed, httpOnly session cookies. Self-service password reset by email, account deletion, and "sign out of all devices" are all available from Settings.
 - **Liquid-glass UI** — clean, modern design built for quick entry on a phone and full desktop use.
 - **Postgres storage** — works out of the box with [Vercel's Neon database](https://vercel.com/docs/storage/vercel-postgres) (free tier available).
 
