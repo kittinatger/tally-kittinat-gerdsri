@@ -3,10 +3,16 @@
 import { describeFetchError } from "@/lib/fetch-error";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { dotClasses } from "@/lib/category-styles";
+import { badgeClasses, dotClasses } from "@/lib/category-styles";
 import type { TransactionType } from "@/lib/categories";
 import type { CategoryOption } from "@/types/category";
 import CategoryModal from "./CategoryModal";
+
+const TYPE_TABS: { value: TransactionType; label: string }[] = [
+  { value: "expense", label: "Expense" },
+  { value: "income", label: "Income" },
+  { value: "transfer", label: "Transfer" },
+];
 
 export default function CategoryManager({ categories }: { categories: CategoryOption[] }) {
   const router = useRouter();
@@ -51,93 +57,114 @@ export default function CategoryManager({ categories }: { categories: CategoryOp
     }
   }
 
+  function cancelDelete() {
+    setConfirmDeleteId(null);
+    setDeleteError(null);
+  }
+
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
           <h3 className="font-display text-xl text-foreground">Manage categories</h3>
-          <div className="flex gap-1 rounded-full bg-bg-soft p-1">
-            <button
-              onClick={() => setType("expense")}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-                type === "expense" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
-              }`}
-            >
-              Expense
-            </button>
-            <button
-              onClick={() => setType("income")}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-                type === "income" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
-              }`}
-            >
-              Income
-            </button>
-            <button
-              onClick={() => setType("transfer")}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-                type === "transfer" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
-              }`}
-            >
-              Transfer
-            </button>
-          </div>
+          <p className="mt-0.5 text-sm text-ink-soft">Colors and icons used across the app.</p>
         </div>
         <button
           onClick={() => setModal({ mode: "add" })}
-          className="flex items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark"
+          aria-label="Add category"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark"
         >
-          <svg viewBox="0 0 20.918 20.5762" fill="currentColor" className="h-3 w-3 shrink-0">
+          <svg viewBox="0 0 20.918 20.5762" fill="currentColor" className="h-3.5 w-3.5 shrink-0">
             <path d="M11.2305 19.5996L11.2305 0.957031C11.2305 0.439453 10.8008 0 10.2734 0C9.75586 0 9.32617 0.439453 9.32617 0.957031L9.32617 19.5996C9.32617 20.1172 9.75586 20.5566 10.2734 20.5566C10.8008 20.5566 11.2305 20.1172 11.2305 19.5996ZM0.957031 11.2305L19.5996 11.2305C20.1172 11.2305 20.5566 10.8008 20.5566 10.2832C20.5566 9.75586 20.1172 9.32617 19.5996 9.32617L0.957031 9.32617C0.439453 9.32617 0 9.75586 0 10.2832C0 10.8008 0.439453 11.2305 0.957031 11.2305Z" />
           </svg>
-          Add category
         </button>
+      </div>
+
+      <div className="mt-4 flex gap-1 rounded-full bg-bg-soft p-1">
+        {TYPE_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => {
+              setType(tab.value);
+              cancelDelete();
+            }}
+            className={`flex-1 rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+              type === tab.value ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {deleteError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{deleteError}</p>}
 
       <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
-        {categoriesForType.map((c, i) => (
-          <div
-            key={c.id}
-            className={`flex items-center justify-between gap-3 px-4 py-3 ${
-              i === categoriesForType.length - 1 ? "" : "border-b border-line"
-            }`}
-          >
-            <div className="flex min-w-0 items-center gap-2.5">
-              {c.icon ? (
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center text-base leading-none">{c.icon}</span>
-              ) : (
-                <span className={`h-3 w-3 shrink-0 rounded-full ${dotClasses(c.color)}`} />
-              )}
-              <span className="truncate font-medium text-foreground">{c.name}</span>
-            </div>
-            <div className="flex shrink-0 items-center gap-1">
-              <button
-                onClick={() => setModal({ mode: "edit", category: c })}
-                aria-label={`Edit ${c.name}`}
-                className="rounded-full p-2 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
+        {categoriesForType.length === 0 ? (
+          <p className="px-4 py-6 text-center text-sm text-ink-soft">No {type} categories yet.</p>
+        ) : (
+          categoriesForType.map((c, i) => (
+            <div
+              key={c.id}
+              className={`flex items-center gap-3 px-4 py-3 ${
+                i === categoriesForType.length - 1 ? "" : "border-b border-line"
+              }`}
+            >
+              <span
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base ${badgeClasses(c.color)}`}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-                  <path d="M13.586 3.586a2 2 0 1 1 2.828 2.828l-8.5 8.5a2 2 0 0 1-.848.503l-3.03.86a.5.5 0 0 1-.618-.618l.86-3.03a2 2 0 0 1 .503-.848l8.5-8.5Z" />
-                </svg>
-              </button>
-              {c.name !== "Other" && (
-                <button
-                  onClick={() => handleDelete(c.id)}
-                  disabled={deleting}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition disabled:opacity-60 ${
-                    confirmDeleteId === c.id
-                      ? "bg-red-600 text-white hover:bg-red-700"
-                      : "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                  }`}
-                >
-                  {confirmDeleteId === c.id ? "Confirm" : "Delete"}
-                </button>
+                {c.icon ?? <span className={`h-2.5 w-2.5 rounded-full ${dotClasses(c.color)}`} />}
+              </span>
+              <span className="min-w-0 flex-1 truncate font-medium text-foreground">{c.name}</span>
+
+              {confirmDeleteId === c.id ? (
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <button
+                    onClick={cancelDelete}
+                    disabled={deleting}
+                    className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleDelete(c.id)}
+                    disabled={deleting}
+                    className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                  >
+                    {deleting ? "Deleting..." : "Confirm delete"}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    onClick={() => setModal({ mode: "edit", category: c })}
+                    aria-label={`Edit ${c.name}`}
+                    className="rounded-full p-2 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                      <path d="M13.586 3.586a2 2 0 1 1 2.828 2.828l-8.5 8.5a2 2 0 0 1-.848.503l-3.03.86a.5.5 0 0 1-.618-.618l.86-3.03a2 2 0 0 1 .503-.848l8.5-8.5Z" />
+                    </svg>
+                  </button>
+                  {c.name !== "Other" && (
+                    <button
+                      onClick={() => handleDelete(c.id)}
+                      aria-label={`Delete ${c.name}`}
+                      className="rounded-full p-2 text-ink-soft transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                        <path
+                          fillRule="evenodd"
+                          d="M8.75 1a.75.75 0 0 0-.75.75V3H4.5a.75.75 0 0 0 0 1.5h.322l.7 10.5A2.25 2.25 0 0 0 7.766 17h4.468a2.25 2.25 0 0 0 2.244-2.05l.7-10.45h.322a.75.75 0 0 0 0-1.5H12v-1.25a.75.75 0 0 0-.75-.75h-2.5ZM10 5a.75.75 0 0 1 .75.75v7.5a.75.75 0 0 1-1.5 0v-7.5A.75.75 0 0 1 10 5Zm-2.25.75a.75.75 0 0 0-1.5.06l.25 7.5a.75.75 0 1 0 1.5-.06l-.25-7.5Zm5 .06a.75.75 0 1 0-1.5-.06l-.25 7.5a.75.75 0 1 0 1.5.06l.25-7.5Z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </div>
               )}
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {modal && (
