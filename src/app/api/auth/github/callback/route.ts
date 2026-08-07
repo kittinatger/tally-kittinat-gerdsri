@@ -4,7 +4,9 @@ import { getAppOrigin } from "@/lib/app-url";
 import {
   getUserByGithubId,
   getUserByUsername,
+  getUserById,
   createUserFromGithub,
+  linkGithubId,
   seedDefaultCategoriesForUser,
   seedDefaultWalletForUser,
   getSessionVersionForUser,
@@ -44,35 +46,42 @@ async function uniqueUsernameFrom(login: string): Promise<string> {
   return `github-${Date.now().toString(36)}`;
 }
 
-// Step 2: GitHub redirects back here with a one-time `code`. Exchange it for
-// an access token, fetch the profile, and find-or-create the matching Tally
-// account. Deliberately matches only by github_id (not by any email GitHub
-// might return) — linking a GitHub sign-in to an existing username/password
-// account is a separate, not-yet-built flow (see Settings > Account), so a
-// GitHub sign-in always lands on its own account today, never merges with
-// one you already have.
+// Shared by both flows GitHub can redirect back to here for: a fresh sign-in
+// (initiated by /api/auth/github, no session yet) and linking GitHub to an
+// account you're already signed into (initiated by /api/auth/github/link,
+// which stashes which account in the github_oauth_link_user_id cookie
+// checked below). Same callback URL either way — GitHub doesn't need to
+// know the difference, only this handler does.
 export async function GET(req: NextRequest) {
   const clientId = process.env.GITHUB_CLIENT_ID;
   const clientSecret = process.env.GITHUB_CLIENT_SECRET;
-  const loginUrl = new URL("/login", req.url);
+  const linkUserIdCookie = req.cookies.get("github_oauth_link_user_id")?.value;
+  const linkUserId = linkUserIdCookie ? Number(linkUserIdCookie) : null;
+  const isLinking = Number.isInteger(linkUserId) && (linkUserId as number) > 0;
+  const failureUrl = new URL(isLinking ? "/settings" : "/login", req.url);
+  // /login already has its own "error" query param convention (see
+  // LoginForm.tsx); "githubError" for the /settings target avoids colliding
+  // with anything else that might land there in the future.
+  const errorParam = isLinking ? "githubError" : "error";
+
+  const clearCookies = (res: NextResponse) => {
+    res.cookies.set("github_oauth_state", "", { path: "/", maxAge: 0 });
+    res.cookies.set("github_oauth_link_user_id", "", { path: "/", maxAge: 0 });
+    return res;
+  };
 
   if (!clientId || !clientSecret) {
-    loginUrl.searchParams.set("error", "github_not_configured");
-    return NextResponse.redirect(loginUrl);
+    failureUrl.searchParams.set(errorParam, "github_not_configured");
+    return clearCookies(NextResponse.redirect(failureUrl));
   }
 
   const code = req.nextUrl.searchParams.get("code");
   const state = req.nextUrl.searchParams.get("state");
   const cookieState = req.cookies.get("github_oauth_state")?.value;
 
-  const clearStateCookie = (res: NextResponse) => {
-    res.cookies.set("github_oauth_state", "", { path: "/", maxAge: 0 });
-    return res;
-  };
-
   if (!code || !state || !cookieState || state !== cookieState) {
-    loginUrl.searchParams.set("error", "github_failed");
-    return clearStateCookie(NextResponse.redirect(loginUrl));
+    failureUrl.searchParams.set(errorParam, "github_failed");
+    return clearCookies(NextResponse.redirect(failureUrl));
   }
 
   try {
@@ -89,24 +98,47 @@ export async function GET(req: NextRequest) {
     const tokenData = await tokenRes.json();
     const accessToken = typeof tokenData?.access_token === "string" ? tokenData.access_token : null;
     if (!accessToken) {
-      loginUrl.searchParams.set("error", "github_failed");
-      return clearStateCookie(NextResponse.redirect(loginUrl));
+      failureUrl.searchParams.set(errorParam, "github_failed");
+      return clearCookies(NextResponse.redirect(failureUrl));
     }
 
     const profileRes = await fetch("https://api.github.com/user", {
       headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/vnd.github+json" },
     });
     if (!profileRes.ok) {
-      loginUrl.searchParams.set("error", "github_failed");
-      return clearStateCookie(NextResponse.redirect(loginUrl));
+      failureUrl.searchParams.set(errorParam, "github_failed");
+      return clearCookies(NextResponse.redirect(failureUrl));
     }
     const profile = await profileRes.json();
     const githubId = profile?.id !== undefined ? String(profile.id) : null;
     if (!githubId) {
-      loginUrl.searchParams.set("error", "github_failed");
-      return clearStateCookie(NextResponse.redirect(loginUrl));
+      failureUrl.searchParams.set(errorParam, "github_failed");
+      return clearCookies(NextResponse.redirect(failureUrl));
     }
     const githubLogin = typeof profile.login === "string" && profile.login ? profile.login : `github${githubId}`;
+
+    if (isLinking) {
+      const targetUserId = linkUserId as number;
+      const target = await getUserById(targetUserId);
+      if (!target) {
+        failureUrl.searchParams.set(errorParam, "github_failed");
+        return clearCookies(NextResponse.redirect(failureUrl));
+      }
+      const claimedBy = await getUserByGithubId(githubId);
+      if (claimedBy && claimedBy.id !== targetUserId) {
+        failureUrl.searchParams.set(errorParam, "github_link_conflict");
+        return clearCookies(NextResponse.redirect(failureUrl));
+      }
+      if (!claimedBy) {
+        await linkGithubId(targetUserId, githubId);
+        await logSecurityEvent(targetUserId, "github_account_linked");
+      }
+      // else: this GitHub account is already linked to this same Tally
+      // account (re-linking, or a duplicate callback) — nothing to do.
+      const successUrl = new URL("/settings", req.url);
+      successUrl.searchParams.set("githubLinked", "1");
+      return clearCookies(NextResponse.redirect(successUrl));
+    }
 
     const existing = await getUserByGithubId(githubId);
     let userId: number;
@@ -143,10 +175,10 @@ export async function GET(req: NextRequest) {
       maxAge: SESSION_MAX_AGE_SECONDS,
       path: "/",
     });
-    return clearStateCookie(res);
+    return clearCookies(res);
   } catch (err) {
     console.error("GitHub OAuth callback failed:", err);
-    loginUrl.searchParams.set("error", "github_failed");
-    return clearStateCookie(NextResponse.redirect(loginUrl));
+    failureUrl.searchParams.set(errorParam, "github_failed");
+    return clearCookies(NextResponse.redirect(failureUrl));
   }
 }

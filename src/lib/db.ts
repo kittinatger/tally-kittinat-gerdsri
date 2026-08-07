@@ -1478,12 +1478,13 @@ export type UserRow = {
   username: string;
   password_hash: string | null;
   email: string | null;
+  github_id: string | null;
 };
 
 export async function getUserByUsername(username: string): Promise<UserRow | null> {
   await ensureSchema();
   const { rows } = await sql<UserRow>`
-    SELECT id, username, password_hash, email FROM users WHERE username = ${username};
+    SELECT id, username, password_hash, email, github_id FROM users WHERE username = ${username};
   `;
   return rows[0] ?? null;
 }
@@ -1491,7 +1492,7 @@ export async function getUserByUsername(username: string): Promise<UserRow | nul
 export async function getUserById(id: number): Promise<UserRow | null> {
   await ensureSchema();
   const { rows } = await sql<UserRow>`
-    SELECT id, username, password_hash, email FROM users WHERE id = ${id};
+    SELECT id, username, password_hash, email, github_id FROM users WHERE id = ${id};
   `;
   return rows[0] ?? null;
 }
@@ -1499,7 +1500,7 @@ export async function getUserById(id: number): Promise<UserRow | null> {
 export async function getUserByEmail(email: string): Promise<UserRow | null> {
   await ensureSchema();
   const { rows } = await sql<UserRow>`
-    SELECT id, username, password_hash, email FROM users WHERE lower(email) = lower(${email});
+    SELECT id, username, password_hash, email, github_id FROM users WHERE lower(email) = lower(${email});
   `;
   return rows[0] ?? null;
 }
@@ -1507,9 +1508,25 @@ export async function getUserByEmail(email: string): Promise<UserRow | null> {
 export async function getUserByGithubId(githubId: string): Promise<UserRow | null> {
   await ensureSchema();
   const { rows } = await sql<UserRow>`
-    SELECT id, username, password_hash, email FROM users WHERE github_id = ${githubId};
+    SELECT id, username, password_hash, email, github_id FROM users WHERE github_id = ${githubId};
   `;
   return rows[0] ?? null;
+}
+
+// Links an existing (already-authenticated) account to a GitHub identity —
+// see /api/auth/github/link. Distinct from createUserFromGithub, which is
+// for a brand-new sign-in with no existing Tally account. The unique index
+// on github_id (see ensureSchema) is the actual guard against two accounts
+// claiming the same GitHub identity; the route checks it explicitly first
+// too, so it can show a clear error instead of a raw constraint violation.
+export async function linkGithubId(userId: number, githubId: string): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE users SET github_id = ${githubId} WHERE id = ${userId};`;
+}
+
+export async function unlinkGithubId(userId: number): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE users SET github_id = NULL WHERE id = ${userId};`;
 }
 
 export async function updateUsername(userId: number, newUsername: string): Promise<string> {

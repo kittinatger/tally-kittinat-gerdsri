@@ -32,17 +32,33 @@ function describeSecurityEvent(event: string): string {
       return "Signed in";
     case "github_account_created":
       return "Account created via GitHub";
+    case "github_account_linked":
+      return "GitHub account linked";
+    case "github_account_unlinked":
+      return "GitHub account unlinked";
     default:
       return event;
   }
 }
 
+const GITHUB_LINK_ERROR_MESSAGES: Record<string, string> = {
+  github_failed: "Linking GitHub didn't complete. Please try again.",
+  github_not_configured: "GitHub sign-in isn't set up on this deployment.",
+  github_link_conflict: "That GitHub account is already linked to a different Tally account.",
+};
+
 export default function AccountPanel({
   initialUsername,
   initialEmail,
+  githubLinked,
+  githubError,
 }: {
   initialUsername: string;
   initialEmail: string | null;
+  /** True right after a redirect back from a successful GitHub link. */
+  githubLinked?: boolean;
+  /** Error code from a failed GitHub-link redirect, if any. */
+  githubError?: string;
 }) {
   const router = useRouter();
   const [username, setUsername] = useState(initialUsername);
@@ -51,22 +67,51 @@ export default function AccountPanel({
   // have no password — assume true (the common case) until the real value
   // loads, so the password fields don't flash in and back out.
   const [hasPassword, setHasPassword] = useState(true);
+  const [githubId, setGithubId] = useState<boolean | null>(githubLinked ? true : null);
+  const [unlinkingGithub, setUnlinkingGithub] = useState(false);
+  const [githubActionError, setGithubActionError] = useState<string | null>(
+    githubError ? (GITHUB_LINK_ERROR_MESSAGES[githubError] ?? "Something went wrong linking GitHub.") : null,
+  );
+  const [confirmUnlinkOpen, setConfirmUnlinkOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     fetch("/api/account")
       .then((res) => res.json())
       .then((data) => {
-        if (!cancelled && typeof data.hasPassword === "boolean") setHasPassword(data.hasPassword);
+        if (cancelled) return;
+        if (typeof data.hasPassword === "boolean") setHasPassword(data.hasPassword);
+        if (typeof data.githubLinked === "boolean") setGithubId(data.githubLinked);
       })
       .catch(() => {
-        // Leave the default (assume a password exists) — worst case an
-        // OAuth-only user sees an unnecessary "current password" field.
+        // Leave the defaults (assume a password exists, GitHub link status
+        // unknown) — worst case an OAuth-only user sees an unnecessary
+        // "current password" field, or the connected-accounts row keeps
+        // showing "Loading…".
       });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  async function handleUnlinkGithub() {
+    setUnlinkingGithub(true);
+    setGithubActionError(null);
+    try {
+      const res = await fetch("/api/account/github", { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) {
+        setGithubActionError(data.error ?? "Could not unlink GitHub.");
+        return;
+      }
+      setGithubId(false);
+      setConfirmUnlinkOpen(false);
+    } catch (err) {
+      setGithubActionError(describeFetchError(err));
+    } finally {
+      setUnlinkingGithub(false);
+    }
+  }
 
   const [newUsername, setNewUsername] = useState(initialUsername);
   const [usernamePassword, setUsernamePassword] = useState("");
@@ -504,6 +549,50 @@ export default function AccountPanel({
         )}
       </div>
 
+      {/* Connected accounts */}
+      <div className="rounded-card border border-line bg-surface p-5">
+        <h3 className="mb-3 font-display text-xl text-foreground">Connected accounts</h3>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 shrink-0 text-foreground" aria-hidden="true">
+              <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.09 3.29 9.4 7.86 10.93.57.1.79-.25.79-.55 0-.27-.01-1.16-.02-2.11-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.16.08 1.76 1.19 1.76 1.19 1.03 1.76 2.7 1.25 3.35.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.06 11.06 0 0 1 5.79 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.39-5.25 5.67.41.36.78 1.06.78 2.14 0 1.55-.01 2.79-.01 3.17 0 .3.21.66.8.55A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z" />
+            </svg>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground">GitHub</p>
+              <p className="text-xs text-ink-soft">
+                {githubId === null ? "Loading…" : githubId ? "Connected" : "Not connected"}
+              </p>
+            </div>
+          </div>
+          {githubId !== null &&
+            (githubId ? (
+              <button
+                type="button"
+                onClick={() => setConfirmUnlinkOpen(true)}
+                disabled={!hasPassword}
+                title={hasPassword ? undefined : "Set a password first — otherwise unlinking would lock you out."}
+                className="shrink-0 rounded-full border border-line px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Unlink
+              </button>
+            ) : (
+              <a
+                href="/api/auth/github/link"
+                className="shrink-0 rounded-full border border-line px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
+              >
+                Link
+              </a>
+            ))}
+        </div>
+        {githubId === true && !hasPassword && (
+          <p className="mt-2 text-xs text-ink-soft">Set a password before unlinking, so you can still sign in afterward.</p>
+        )}
+        {githubActionError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{githubActionError}</p>}
+        {githubLinked && !githubActionError && (
+          <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">GitHub account linked.</p>
+        )}
+      </div>
+
       {/* Password: same view-row/Edit pattern. For OAuth-only accounts this
           becomes "Set a password" instead of "Change password". */}
       <div className="rounded-card border border-line bg-surface p-5">
@@ -681,6 +770,30 @@ export default function AccountPanel({
           Delete account
         </button>
       </div>
+
+      {confirmUnlinkOpen && (
+        <Modal onClose={() => setConfirmUnlinkOpen(false)} title="Unlink GitHub?">
+          <p className="mb-5 text-sm text-surface-foreground-soft">
+            You&apos;ll need your username and password to sign in afterward instead.
+          </p>
+          {githubActionError && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{githubActionError}</p>}
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setConfirmUnlinkOpen(false)}
+              className="rounded-full border border-surface-line px-4 py-2 text-sm font-semibold text-surface-foreground transition hover:bg-[var(--surface-nav-hover)]"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUnlinkGithub}
+              disabled={unlinkingGithub}
+              className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-red-700 disabled:opacity-60"
+            >
+              {unlinkingGithub ? "Unlinking..." : "Unlink"}
+            </button>
+          </div>
+        </Modal>
+      )}
 
       {confirmingLogout && (
         <Modal onClose={() => setConfirmingLogout(false)} title="Sign out?">

@@ -27,7 +27,12 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ error: "Account not found." }, { status: 404 });
   }
-  return NextResponse.json({ username: user.username, email: user.email, hasPassword: user.password_hash !== null });
+  return NextResponse.json({
+    username: user.username,
+    email: user.email,
+    hasPassword: user.password_hash !== null,
+    githubLinked: user.github_id !== null,
+  });
 }
 
 export async function PATCH(req: NextRequest) {

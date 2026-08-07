@@ -10,7 +10,12 @@ import type { WalletOption } from "@/types/wallet";
 // Always render fresh, same reasoning as the dashboard page.
 export const dynamic = "force-dynamic";
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ githubLinked?: string; githubError?: string }>;
+}) {
+  const { githubLinked, githubError } = await searchParams;
   const userId = await getUserId();
   const [categoryRows, currency, user, walletRows, expenseRows, remaining] = await Promise.all([
     listCategories(userId),
@@ -62,6 +67,8 @@ export default async function SettingsPage() {
       wallets={wallets}
       expenses={expenses}
       remaining={remaining}
+      githubLinked={githubLinked === "1"}
+      githubError={githubError}
     />
   );
 }

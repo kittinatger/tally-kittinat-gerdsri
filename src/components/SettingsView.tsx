@@ -264,6 +264,8 @@ export default function SettingsView({
   wallets,
   expenses,
   remaining,
+  githubLinked,
+  githubError,
 }: {
   categories: CategoryOption[];
   currency: string;
@@ -272,8 +274,15 @@ export default function SettingsView({
   wallets: WalletOption[];
   expenses: Expense[];
   remaining: number;
+  /** True right after a redirect back from /api/auth/github/link succeeded. */
+  githubLinked?: boolean;
+  /** Error code from a failed /api/auth/github/link redirect, if any. */
+  githubError?: string;
 }) {
-  const [panel, setPanel] = useState<Panel | null>(null);
+  // Land straight in Account (rather than the Settings list) when arriving
+  // fresh from a GitHub-link redirect, so the result is immediately visible
+  // instead of requiring another tap to find it.
+  const [panel, setPanel] = useState<Panel | null>(githubLinked || githubError ? "account" : null);
   const activeWallets = wallets.filter((w) => !w.archived);
 
   return (
@@ -301,7 +310,14 @@ export default function SettingsView({
                   <h2 className="mb-5 font-display text-2xl text-foreground">{PANEL_TITLES[panel]}</h2>
                 )}
 
-                {panel === "account" && <AccountPanel initialUsername={username} initialEmail={email} />}
+                {panel === "account" && (
+                  <AccountPanel
+                    initialUsername={username}
+                    initialEmail={email}
+                    githubLinked={githubLinked}
+                    githubError={githubError}
+                  />
+                )}
                 {panel === "permissions" && <PermissionsSettings hasEmail={Boolean(email)} />}
                 {panel === "categories" && <CategoryManager categories={categories} />}
                 {panel === "tags" && <TagManager />}
