@@ -7,11 +7,15 @@ export default function SelectDropdown({
   value,
   options,
   onChange,
+  renderIndicator,
 }: {
   id?: string;
   value: string;
   options: string[];
   onChange: (value: string) => void;
+  /** Optional small indicator (e.g. a category color dot) rendered before
+   * each option's label, both in the closed trigger and the open list. */
+  renderIndicator?: (option: string) => React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -46,7 +50,10 @@ export default function SelectDropdown({
         aria-haspopup="listbox"
         className="flex w-full items-center justify-between gap-1.5 rounded-card border border-surface-line bg-surface-soft px-3.5 py-2.5 text-left text-base text-surface-foreground outline-none transition focus:border-surface-accent focus:ring-2 focus:ring-surface-accent/20"
       >
-        <span className="truncate">{value}</span>
+        <span className="flex min-w-0 items-center gap-2">
+          {renderIndicator?.(value)}
+          <span className="truncate">{value}</span>
+        </span>
         <svg
           viewBox="0 0 21.6895 12.959"
           fill="currentColor"
@@ -68,13 +75,14 @@ export default function SelectDropdown({
               role="option"
               aria-selected={value === opt}
               onClick={() => select(opt)}
-              className={`w-full truncate rounded-xl px-3 py-2 text-left text-sm font-medium transition ${
+              className={`flex w-full items-center gap-2 truncate rounded-xl px-3 py-2 text-left text-sm font-medium transition ${
                 value === opt
                   ? "bg-[var(--surface-nav-hover)] text-surface-foreground"
                   : "text-surface-foreground-soft hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
               }`}
             >
-              {opt}
+              {renderIndicator?.(opt)}
+              <span className="truncate">{opt}</span>
             </button>
           ))}
         </div>

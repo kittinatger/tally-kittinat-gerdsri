@@ -5,6 +5,7 @@ import type { TransactionType, TransferDirection } from "@/lib/categories";
 import { useAllCategories } from "@/lib/categories-context";
 import { useWallets } from "@/lib/wallets-context";
 import { todayInputValue } from "@/lib/format";
+import { dotClasses } from "@/lib/category-styles";
 import TagInput from "./TagInput";
 import DatePicker from "./DatePicker";
 import SelectDropdown from "./SelectDropdown";
@@ -74,6 +75,22 @@ export default function ExpenseForm({
   const selectedWalletId = values.walletId ?? defaultWallet?.id ?? null;
   const selectedWalletName = wallets.find((w) => w.id === selectedWalletId)?.name ?? "";
   const sourceLabel = values.type === "income" ? "Source" : values.type === "transfer" ? "Description" : "Merchant";
+  // Collapsed by default to keep the common case short — expanded upfront if
+  // there's already something in one of these fields (e.g. editing an
+  // existing entry) so nothing looks silently hidden.
+  const [moreOpen, setMoreOpen] = useState(
+    () => Boolean(initialValues.walletId) || initialValues.tags.length > 0 || initialValues.notes.trim().length > 0,
+  );
+  const amountColorClass =
+    values.type === "income"
+      ? "text-emerald-600 dark:text-emerald-400"
+      : values.type === "expense"
+        ? "text-red-600 dark:text-red-400"
+        : "text-surface-foreground";
+  function categoryDot(name: string) {
+    const c = categories.find((cat) => cat.name === name);
+    return <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dotClasses(c?.color)}`} aria-hidden="true" />;
+  }
 
   function update<K extends keyof ExpenseFormValues>(key: K, value: ExpenseFormValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -174,34 +191,30 @@ export default function ExpenseForm({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={labelClass} htmlFor="date">
-            Date
-          </label>
-          <DatePicker id="date" value={values.date} onChange={(date) => update("date", date)} required />
-        </div>
-        <div>
-          <label className={labelClass} htmlFor="amount">
-            Amount
-          </label>
-          {splitMode ? (
-            <div className={`${inputClass} flex items-center text-surface-foreground-soft`}>{splitTotal.toFixed(2)}</div>
-          ) : (
-            <input
-              id="amount"
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min="0"
-              required
-              value={values.amount}
-              onChange={(e) => update("amount", e.target.value)}
-              placeholder="0.00"
-              className={inputClass}
-            />
-          )}
-        </div>
+      {/* Amount leads — it's the one field every entry has and the one
+          you're most likely typing right after opening this form, so it
+          gets a hero-sized, type-colored input instead of sitting level
+          with everything else. */}
+      <div className="text-center">
+        <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft" htmlFor="amount">
+          Amount
+        </label>
+        {splitMode ? (
+          <div className={`py-1 text-4xl font-bold tabular-nums ${amountColorClass}`}>{splitTotal.toFixed(2)}</div>
+        ) : (
+          <input
+            id="amount"
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            min="0"
+            required
+            value={values.amount}
+            onChange={(e) => update("amount", e.target.value)}
+            placeholder="0.00"
+            className={`w-full bg-transparent text-center text-4xl font-bold tabular-nums outline-none placeholder:text-surface-foreground-soft/40 ${amountColorClass}`}
+          />
+        )}
       </div>
 
       <div>
@@ -219,6 +232,13 @@ export default function ExpenseForm({
           }
           className={inputClass}
         />
+      </div>
+
+      <div>
+        <label className={labelClass} htmlFor="date">
+          Date
+        </label>
+        <DatePicker id="date" value={values.date} onChange={(date) => update("date", date)} required />
       </div>
 
       {allowSplit && values.type !== "transfer" && (
@@ -243,6 +263,7 @@ export default function ExpenseForm({
                   value={line.category}
                   options={categories.map((c) => c.name)}
                   onChange={(name) => updateSplitLine(i, { category: name })}
+                  renderIndicator={categoryDot}
                 />
               </div>
               <input
@@ -286,44 +307,72 @@ export default function ExpenseForm({
             value={values.category}
             options={categories.map((c) => c.name)}
             onChange={(name) => update("category", name)}
+            renderIndicator={categoryDot}
           />
         </div>
       )}
 
-      {wallets.length > 0 && (
-        <div>
-          <label className={labelClass} htmlFor="wallet">
-            Wallet
-          </label>
-          <SelectDropdown
-            id="wallet"
-            value={selectedWalletName}
-            options={wallets.map((w) => w.name)}
-            onChange={(name) => {
-              const wallet = wallets.find((w) => w.name === name);
-              if (wallet) update("walletId", wallet.id);
-            }}
-          />
-        </div>
-      )}
+      {/* Wallet/tags/notes are all optional and, for most entries, left at
+          their defaults — tucked behind a disclosure so the common fast-entry
+          case (amount, merchant, category, date, done) doesn't need to scroll
+          past three more fields first. Starts open if any already has a
+          value (see moreOpen's initializer), so editing an existing entry
+          never hides data that's actually there. */}
+      <div className="rounded-card border border-surface-line">
+        <button
+          type="button"
+          onClick={() => setMoreOpen((o) => !o)}
+          aria-expanded={moreOpen}
+          className="flex w-full items-center justify-between gap-2 px-3.5 py-2.5 text-left text-sm font-semibold text-surface-foreground-soft"
+        >
+          More details
+          <svg
+            viewBox="0 0 21.6895 12.959"
+            fill="currentColor"
+            className={`h-3 w-3 shrink-0 transition-transform ${moreOpen ? "rotate-180" : ""}`}
+          >
+            <path d="M10.6641 12.959C10.9473 12.959 11.2109 12.832 11.4062 12.6172L21.0352 2.58789C21.2207 2.40234 21.3281 2.16797 21.3281 1.89453C21.3281 1.34766 20.9082 0.927734 20.3516 0.927734C20.0977 0.927734 19.8438 1.02539 19.6582 1.20117L10.0684 11.1816L11.2695 11.1816L1.66016 1.20117C1.48438 1.02539 1.24023 0.927734 0.976562 0.927734C0.419922 0.927734 0 1.34766 0 1.89453C0 2.16797 0.117188 2.40234 0.292969 2.59766L9.92188 12.627C10.1367 12.832 10.3809 12.959 10.6641 12.959Z" />
+          </svg>
+        </button>
+        {moreOpen && (
+          <div className="space-y-4 border-t border-surface-line p-3.5">
+            {wallets.length > 0 && (
+              <div>
+                <label className={labelClass} htmlFor="wallet">
+                  Wallet
+                </label>
+                <SelectDropdown
+                  id="wallet"
+                  value={selectedWalletName}
+                  options={wallets.map((w) => w.name)}
+                  onChange={(name) => {
+                    const wallet = wallets.find((w) => w.name === name);
+                    if (wallet) update("walletId", wallet.id);
+                  }}
+                />
+              </div>
+            )}
 
-      <div>
-        <label className={labelClass}>Tags (optional)</label>
-        <TagInput tags={values.tags} onChange={(tags) => update("tags", tags)} />
-      </div>
+            <div>
+              <label className={labelClass}>Tags</label>
+              <TagInput tags={values.tags} onChange={(tags) => update("tags", tags)} />
+            </div>
 
-      <div>
-        <label className={labelClass} htmlFor="notes">
-          Notes (optional)
-        </label>
-        <textarea
-          id="notes"
-          rows={2}
-          value={values.notes}
-          onChange={(e) => update("notes", e.target.value)}
-          placeholder="Add a note..."
-          className={`${inputClass} resize-none`}
-        />
+            <div>
+              <label className={labelClass} htmlFor="notes">
+                Notes
+              </label>
+              <textarea
+                id="notes"
+                rows={2}
+                value={values.notes}
+                onChange={(e) => update("notes", e.target.value)}
+                placeholder="Add a note..."
+                className={`${inputClass} resize-none`}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
