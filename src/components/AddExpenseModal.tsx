@@ -278,7 +278,7 @@ export default function AddExpenseModal({
   }
 
   return (
-    <Modal onClose={onClose} title="Add transaction">
+    <Modal onClose={onClose} title="Add transaction" wide={tab === "manual"}>
       <div className="mb-4 flex gap-1 rounded-full bg-bg-soft p-1">
         <button
           onClick={() => setTab("manual")}

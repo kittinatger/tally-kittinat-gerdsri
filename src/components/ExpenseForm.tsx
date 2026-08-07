@@ -127,8 +127,18 @@ export default function ExpenseForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex gap-1 rounded-full bg-bg-soft p-1">
+    // Below sm: a single mobile-optimized column in DOM order (hero amount,
+    // then merchant, category, date, collapsed "more details"). At sm+: a
+    // real two-column desktop layout — same fields, but amount/date share a
+    // row, wallet/tags/notes are always visible instead of behind a
+    // disclosure (no scroll-fatigue reason to hide them with a mouse and
+    // more vertical room), and every sm:order-N below controls the desktop
+    // sequence independent of DOM order, which stays mobile-first.
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 sm:grid sm:grid-cols-2 sm:items-start sm:gap-x-5 sm:gap-y-4 sm:space-y-0"
+    >
+      <div className="flex gap-1 rounded-full bg-bg-soft p-1 sm:order-1 sm:col-span-2">
         <button
           type="button"
           onClick={() => updateType("expense")}
@@ -159,7 +169,7 @@ export default function ExpenseForm({
       </div>
 
       {values.type === "transfer" && (
-        <div>
+        <div className="sm:order-2 sm:col-span-2">
           <label className={labelClass}>Direction</label>
           <div className="flex gap-1 rounded-full bg-bg-soft p-1">
             <button
@@ -195,12 +205,12 @@ export default function ExpenseForm({
           you're most likely typing right after opening this form, so it
           gets a hero-sized, type-colored input instead of sitting level
           with everything else. */}
-      <div className="text-center">
+      <div className="text-center sm:order-3 sm:text-left">
         <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft" htmlFor="amount">
           Amount
         </label>
         {splitMode ? (
-          <div className={`py-1 text-4xl font-bold tabular-nums ${amountColorClass}`}>{splitTotal.toFixed(2)}</div>
+          <div className={`py-1 text-4xl font-bold tabular-nums sm:text-3xl ${amountColorClass}`}>{splitTotal.toFixed(2)}</div>
         ) : (
           <input
             id="amount"
@@ -212,12 +222,19 @@ export default function ExpenseForm({
             value={values.amount}
             onChange={(e) => update("amount", e.target.value)}
             placeholder="0.00"
-            className={`w-full bg-transparent text-center text-4xl font-bold tabular-nums outline-none placeholder:text-surface-foreground-soft/40 ${amountColorClass}`}
+            className={`w-full bg-transparent text-center text-4xl font-bold tabular-nums outline-none placeholder:text-surface-foreground-soft/40 sm:text-left sm:text-3xl ${amountColorClass}`}
           />
         )}
       </div>
 
-      <div>
+      <div className="sm:order-4">
+        <label className={labelClass} htmlFor="date">
+          Date
+        </label>
+        <DatePicker id="date" value={values.date} onChange={(date) => update("date", date)} required />
+      </div>
+
+      <div className="sm:order-5 sm:col-span-2">
         <label className={labelClass} htmlFor="merchant">
           {sourceLabel}
         </label>
@@ -234,15 +251,8 @@ export default function ExpenseForm({
         />
       </div>
 
-      <div>
-        <label className={labelClass} htmlFor="date">
-          Date
-        </label>
-        <DatePicker id="date" value={values.date} onChange={(date) => update("date", date)} required />
-      </div>
-
       {allowSplit && values.type !== "transfer" && (
-        <label className="flex items-center gap-2 text-sm font-medium text-surface-foreground-soft">
+        <label className="flex items-center gap-2 text-sm font-medium text-surface-foreground-soft sm:order-6 sm:col-span-2">
           <input
             type="checkbox"
             checked={splitMode}
@@ -254,7 +264,7 @@ export default function ExpenseForm({
       )}
 
       {splitMode ? (
-        <div className="space-y-2.5">
+        <div className="space-y-2.5 sm:order-7 sm:col-span-2">
           <label className={labelClass}>Categories &amp; amounts</label>
           {splitLines.map((line, i) => (
             <div key={i} className="flex items-center gap-2">
@@ -298,7 +308,7 @@ export default function ExpenseForm({
           </button>
         </div>
       ) : (
-        <div>
+        <div className="sm:order-7 sm:col-span-2">
           <label className={labelClass} htmlFor="category">
             Category
           </label>
@@ -313,17 +323,20 @@ export default function ExpenseForm({
       )}
 
       {/* Wallet/tags/notes are all optional and, for most entries, left at
-          their defaults — tucked behind a disclosure so the common fast-entry
-          case (amount, merchant, category, date, done) doesn't need to scroll
-          past three more fields first. Starts open if any already has a
-          value (see moreOpen's initializer), so editing an existing entry
-          never hides data that's actually there. */}
-      <div className="rounded-card border border-surface-line">
+          their defaults. On mobile they're tucked behind a disclosure so the
+          common fast-entry case doesn't scroll past three more fields; at
+          sm+ the toggle is hidden and the panel forced open via CSS (see
+          sm:!block below) since there's no scroll-fatigue reason to hide
+          them with a mouse and more vertical room to work with. Still
+          starts open on mobile if any already has a value (see moreOpen's
+          initializer), so editing an existing entry never hides data that's
+          actually there. */}
+      <div className="rounded-card border border-surface-line sm:order-8 sm:col-span-2 sm:border-0 sm:p-0">
         <button
           type="button"
           onClick={() => setMoreOpen((o) => !o)}
           aria-expanded={moreOpen}
-          className="flex w-full items-center justify-between gap-2 px-3.5 py-2.5 text-left text-sm font-semibold text-surface-foreground-soft"
+          className="flex w-full items-center justify-between gap-2 px-3.5 py-2.5 text-left text-sm font-semibold text-surface-foreground-soft sm:hidden"
         >
           More details
           <svg
@@ -334,48 +347,48 @@ export default function ExpenseForm({
             <path d="M10.6641 12.959C10.9473 12.959 11.2109 12.832 11.4062 12.6172L21.0352 2.58789C21.2207 2.40234 21.3281 2.16797 21.3281 1.89453C21.3281 1.34766 20.9082 0.927734 20.3516 0.927734C20.0977 0.927734 19.8438 1.02539 19.6582 1.20117L10.0684 11.1816L11.2695 11.1816L1.66016 1.20117C1.48438 1.02539 1.24023 0.927734 0.976562 0.927734C0.419922 0.927734 0 1.34766 0 1.89453C0 2.16797 0.117188 2.40234 0.292969 2.59766L9.92188 12.627C10.1367 12.832 10.3809 12.959 10.6641 12.959Z" />
           </svg>
         </button>
-        {moreOpen && (
-          <div className="space-y-4 border-t border-surface-line p-3.5">
-            {wallets.length > 0 && (
-              <div>
-                <label className={labelClass} htmlFor="wallet">
-                  Wallet
-                </label>
-                <SelectDropdown
-                  id="wallet"
-                  value={selectedWalletName}
-                  options={wallets.map((w) => w.name)}
-                  onChange={(name) => {
-                    const wallet = wallets.find((w) => w.name === name);
-                    if (wallet) update("walletId", wallet.id);
-                  }}
-                />
-              </div>
-            )}
-
+        <div
+          className={`${moreOpen ? "block" : "hidden"} space-y-4 border-t border-surface-line p-3.5 sm:grid sm:grid-cols-2 sm:gap-x-5 sm:gap-y-4 sm:space-y-0 sm:border-0 sm:p-0`}
+        >
+          {wallets.length > 0 && (
             <div>
-              <label className={labelClass}>Tags</label>
-              <TagInput tags={values.tags} onChange={(tags) => update("tags", tags)} />
-            </div>
-
-            <div>
-              <label className={labelClass} htmlFor="notes">
-                Notes
+              <label className={labelClass} htmlFor="wallet">
+                Wallet
               </label>
-              <textarea
-                id="notes"
-                rows={2}
-                value={values.notes}
-                onChange={(e) => update("notes", e.target.value)}
-                placeholder="Add a note..."
-                className={`${inputClass} resize-none`}
+              <SelectDropdown
+                id="wallet"
+                value={selectedWalletName}
+                options={wallets.map((w) => w.name)}
+                onChange={(name) => {
+                  const wallet = wallets.find((w) => w.name === name);
+                  if (wallet) update("walletId", wallet.id);
+                }}
               />
             </div>
+          )}
+
+          <div>
+            <label className={labelClass}>Tags</label>
+            <TagInput tags={values.tags} onChange={(tags) => update("tags", tags)} />
           </div>
-        )}
+
+          <div className="sm:col-span-2">
+            <label className={labelClass} htmlFor="notes">
+              Notes
+            </label>
+            <textarea
+              id="notes"
+              rows={2}
+              value={values.notes}
+              onChange={(e) => update("notes", e.target.value)}
+              placeholder="Add a note..."
+              className={`${inputClass} resize-none`}
+            />
+          </div>
+        </div>
       </div>
 
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400 sm:order-9 sm:col-span-2">{error}</p>}
 
       {/* Sticky rather than flowing at the end of the form: this form runs
           15+ fields long, and on mobile (where the modal is a bottom sheet
@@ -383,7 +396,7 @@ export default function ExpenseForm({
           push a non-sticky submit button below the fold with no cue that
           it's still there. Negative margins extend it edge-to-edge past the
           modal's own padding, then re-add that padding just for this bar. */}
-      <div className="sticky -bottom-5 -mx-5 -mb-5 flex items-center justify-between gap-2 border-t border-surface-line bg-surface/95 px-5 py-3 backdrop-blur-xl sm:-bottom-6 sm:-mx-6 sm:-mb-6 sm:px-6">
+      <div className="sticky -bottom-5 -mx-5 -mb-5 flex items-center justify-between gap-2 border-t border-surface-line bg-surface/95 px-5 py-3 backdrop-blur-xl sm:-bottom-6 sm:-mx-6 sm:-mb-6 sm:order-10 sm:col-span-2 sm:px-6">
         <div>{footerLeft}</div>
         <div className="flex items-center gap-2">
           {onCancel && (

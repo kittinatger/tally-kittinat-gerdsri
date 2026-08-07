@@ -183,7 +183,7 @@ export default function EditExpenseModal({
   }
 
   return (
-    <Modal onClose={onClose} title="Edit transaction">
+    <Modal onClose={onClose} title="Edit transaction" wide>
       {expense.hasReceipt && (
         <a
           href={`/api/expenses/${expense.id}/receipt`}

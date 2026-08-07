@@ -6,10 +6,16 @@ export default function Modal({
   onClose,
   title,
   children,
+  wide = false,
 }: {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  /** Wider desktop cap (sm:max-w-2xl instead of sm:max-w-md) for content
+   * that has its own dedicated two-column desktop layout — e.g. the
+   * transaction form. No effect below the sm breakpoint, where every modal
+   * is a full-width bottom sheet regardless. */
+  wide?: boolean;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -65,7 +71,9 @@ export default function Modal({
     >
       <div
         ref={panelRef}
-        className="max-h-[92dvh] w-full overflow-y-auto rounded-t-[28px] border border-[var(--modal-glass-border)] bg-[image:var(--modal-glass-bg)] p-5 shadow-[var(--modal-panel-shadow)] backdrop-blur-xl sm:max-w-md sm:rounded-[28px] sm:p-6"
+        className={`max-h-[92dvh] w-full overflow-y-auto rounded-t-[28px] border border-[var(--modal-glass-border)] bg-[image:var(--modal-glass-bg)] p-5 shadow-[var(--modal-panel-shadow)] backdrop-blur-xl sm:rounded-[28px] sm:p-6 ${
+          wide ? "sm:max-w-2xl" : "sm:max-w-md"
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
