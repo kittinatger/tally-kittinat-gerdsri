@@ -11,13 +11,21 @@ export default async function WelcomePage({
 
   return (
     <main className="relative flex min-h-screen flex-col overflow-hidden bg-background px-6 pb-10 pt-16">
-      {/* Green hero with a wavy (rather than straight) bottom edge, drawn as
-          an SVG shape instead of a plain linear-gradient stop. */}
+      {/* Green hero with a wavy (rather than straight) bottom edge — the
+          fill is itself a top-to-bottom gradient, fading to transparent
+          near the curve, rather than a flat color with a hard cutoff. */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[56vh] min-h-[380px]">
         <svg viewBox="0 0 1000 560" preserveAspectRatio="none" className="h-full w-full">
+          <defs>
+            <linearGradient id="waveFade" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--navy)" />
+              <stop offset="55%" stopColor="var(--navy)" />
+              <stop offset="100%" stopColor="var(--navy)" stopOpacity="0" />
+            </linearGradient>
+          </defs>
           <path
             d="M0,0 H1000 V260 C900,340 840,300 760,330 C660,368 620,460 520,470 C420,480 380,400 300,360 C210,316 160,360 60,320 L0,290 Z"
-            fill="var(--navy)"
+            fill="url(#waveFade)"
           />
         </svg>
       </div>
