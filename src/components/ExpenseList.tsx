@@ -41,16 +41,22 @@ export default function ExpenseList({
   onBulkUpdated,
   typeFilter,
   onTypeFilterChange,
+  walletFilter,
+  onWalletFilterChange,
 }: {
   expenses: Expense[];
   onSelect: (expense: Expense) => void;
   onBulkDeleted: (ids: number[]) => void;
   onBulkUpdated: (expenses: Expense[]) => void;
-  /** Controlled from ActivitiesView so the balance card's Deposit/Withdraw/
+  /** Controlled from ActivitiesView so the balance card's Expense/Income/
    * Transfer buttons can drive the same type filter as the segmented
    * control below. */
   typeFilter: TypeFilter;
   onTypeFilterChange: (type: TypeFilter) => void;
+  /** Controlled from ActivitiesView so the balance card's wallet-scope
+   * selector drives the same wallet filter as the dropdown below. */
+  walletFilter: string;
+  onWalletFilterChange: (wallet: string) => void;
 }) {
   const allCategories = useAllCategories();
   const wallets = useWallets();
@@ -58,7 +64,6 @@ export default function ExpenseList({
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState("all");
-  const [walletFilter, setWalletFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const filterBarRef = useRef<HTMLDivElement>(null);
@@ -323,7 +328,7 @@ export default function ExpenseList({
             value={walletFilter}
             allLabel="All wallets"
             options={wallets.map((w) => w.name)}
-            onChange={setWalletFilter}
+            onChange={onWalletFilterChange}
           />
         )}
 

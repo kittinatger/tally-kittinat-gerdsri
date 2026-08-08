@@ -36,8 +36,9 @@ export default function ActivitiesView({
   const [viewing, setViewing] = useState<Expense | null>(null);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [walletFilter, setWalletFilter] = useState("all");
 
-  const totalBalance = wallets.filter((w) => !w.archived).reduce((sum, w) => sum + w.balance, 0);
+  const activeWallets = wallets.filter((w) => !w.archived);
 
   function handleCreated(expense: Expense) {
     setExpenses((prev) => [expense, ...prev].sort(sortByDateDesc));
@@ -78,11 +79,12 @@ export default function ActivitiesView({
 
             <main className="flex-1 px-1 py-6 sm:px-2">
               <ActivitiesBalanceCard
-                balance={totalBalance}
+                wallets={activeWallets}
                 currency={currency}
-                wallets={wallets.filter((w) => !w.archived)}
                 typeFilter={typeFilter}
                 onTypeFilterChange={setTypeFilter}
+                walletFilter={walletFilter}
+                onWalletFilterChange={setWalletFilter}
               />
               <ExpenseList
                 expenses={expenses}
@@ -91,6 +93,8 @@ export default function ActivitiesView({
                 onBulkUpdated={handleBulkUpdated}
                 typeFilter={typeFilter}
                 onTypeFilterChange={setTypeFilter}
+                walletFilter={walletFilter}
+                onWalletFilterChange={setWalletFilter}
               />
             </main>
           </PullToRefresh>
