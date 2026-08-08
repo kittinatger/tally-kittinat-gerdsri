@@ -77,7 +77,9 @@ export default function DatePicker({
       return;
     }
     const rect = containerRef.current.getBoundingClientRect();
-    setPanelPos({ top: rect.bottom + 6, left: rect.left, width: Math.max(rect.width, 288) });
+    const width = Math.max(rect.width, 288);
+    const left = Math.min(rect.left, window.innerWidth - width - 8);
+    setPanelPos({ top: rect.bottom + 6, left, width });
     function close() {
       setOpen(false);
     }

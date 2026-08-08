@@ -50,7 +50,11 @@ export default function SelectDropdown({
     }
     const rect = containerRef.current.getBoundingClientRect();
     setPanelPos({ top: rect.bottom + 6, left: rect.left, width: rect.width });
-    function close() {
+    // Scrolling inside the option list itself (it's independently
+    // scrollable when it overflows max-h-64) must not close the dropdown —
+    // only scrolling the page/an ancestor behind it should.
+    function close(e: Event) {
+      if (e.target instanceof Node && panelRef.current?.contains(e.target)) return;
       setOpen(false);
     }
     window.addEventListener("scroll", close, true);

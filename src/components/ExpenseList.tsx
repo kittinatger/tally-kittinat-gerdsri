@@ -194,25 +194,28 @@ export default function ExpenseList({
     return Array.from(names).sort((a, b) => a.localeCompare(b));
   }, [expenses]);
 
-  function handleTypeFilter(nextType: TypeFilter) {
-    onTypeFilterChange(nextType);
-    if (categoryFilter === "all") return;
-    const stillValid = allCategories.some(
-      (c) => c.name === categoryFilter && (nextType === "all" || c.type === nextType),
-    );
-    if (!stillValid) setCategoryFilter("all");
-  }
+  // A stored category selection can go stale when the type filter changes
+  // out from under it — including from outside this component, e.g. via
+  // ActivitiesBalanceCard's Expense/Income/Transfer buttons — since a
+  // category belongs to exactly one type. Deriving the effective value here
+  // (rather than syncing categoryFilter back to "all" in an effect) means
+  // stale state is never actually read: the dropdown, the filter count, and
+  // the filtering below all agree the instant typeFilter changes.
+  const categoryFilterValid =
+    categoryFilter === "all" ||
+    allCategories.some((c) => c.name === categoryFilter && (typeFilter === "all" || c.type === typeFilter));
+  const effectiveCategoryFilter = categoryFilterValid ? categoryFilter : "all";
 
   const activeFilterCount = [
     typeFilter !== "all",
-    categoryFilter !== "all",
+    effectiveCategoryFilter !== "all",
     tagFilter !== "all",
     walletFilter !== "all",
     Boolean(dateFrom || dateTo),
   ].filter(Boolean).length;
 
   function clearAllFilters() {
-    handleTypeFilter("all");
+    onTypeFilterChange("all");
     setCategoryFilter("all");
     setTagFilter("all");
     onWalletFilterChange("all");
@@ -224,7 +227,7 @@ export default function ExpenseList({
     const q = search.trim().toLowerCase();
     return expenses.filter((e) => {
       if (typeFilter !== "all" && e.type !== typeFilter) return false;
-      if (categoryFilter !== "all" && e.category !== categoryFilter) return false;
+      if (effectiveCategoryFilter !== "all" && e.category !== effectiveCategoryFilter) return false;
       if (tagFilter !== "all" && !e.tags.includes(tagFilter)) return false;
       if (walletFilter !== "all" && e.walletName !== walletFilter) return false;
       if (dateFrom && e.date < dateFrom) return false;
@@ -235,7 +238,7 @@ export default function ExpenseList({
       }
       return true;
     });
-  }, [expenses, search, typeFilter, categoryFilter, tagFilter, walletFilter, dateFrom, dateTo]);
+  }, [expenses, search, typeFilter, effectiveCategoryFilter, tagFilter, walletFilter, dateFrom, dateTo]);
 
   function exportCsv() {
     const header = ["Date", "Type", "Merchant", "Category", "Tags", "Amount", "Notes"];
@@ -339,7 +342,7 @@ export default function ExpenseList({
             <div>
               <p className="mb-1.5 text-sm font-semibold text-surface-foreground-soft">Category</p>
               <FilterDropdown
-                value={categoryFilter}
+                value={effectiveCategoryFilter}
                 allLabel="All categories"
                 options={categoryOptions}
                 onChange={setCategoryFilter}
