@@ -67,20 +67,6 @@ export default function RegisterForm() {
 
   return (
     <div className="w-full">
-      <a
-        href="/api/auth/github"
-        className="flex w-full items-center justify-center gap-2 rounded-full border border-line bg-bg-soft px-4 py-2.5 font-semibold text-foreground shadow-soft transition hover:bg-[var(--nav-hover-bg)]"
-      >
-        <GithubIcon />
-        Continue with GitHub
-      </a>
-
-      <div className="my-5 flex items-center gap-3">
-        <div className="h-px flex-1 bg-line" />
-        <span className="text-xs font-semibold uppercase tracking-wide text-ink-soft">or</span>
-        <div className="h-px flex-1 bg-line" />
-      </div>
-
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="username" className="mb-1.5 block text-sm font-semibold text-ink-soft">
@@ -138,6 +124,20 @@ export default function RegisterForm() {
           {loading ? "Creating account..." : "Create account"}
         </button>
       </form>
+
+      <div className="my-5 flex items-center gap-3">
+        <div className="h-px flex-1 bg-line" />
+        <span className="text-xs font-semibold uppercase tracking-wide text-ink-soft">or</span>
+        <div className="h-px flex-1 bg-line" />
+      </div>
+
+      <a
+        href="/api/auth/github"
+        className="flex w-full items-center justify-center gap-2 rounded-full border border-line bg-bg-soft px-4 py-2.5 font-semibold text-foreground shadow-soft transition hover:bg-[var(--nav-hover-bg)]"
+      >
+        <GithubIcon />
+        Continue with GitHub
+      </a>
 
       <p className="mt-6 text-center text-sm text-ink-soft">
         Already have an account?{" "}
