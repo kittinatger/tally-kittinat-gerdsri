@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { signedAmount, type Expense } from "@/types/expense";
 import type { TransactionType } from "@/lib/categories";
 import { monthKey, monthLabel, formatCurrency, todayInputValue } from "@/lib/format";
@@ -11,6 +11,7 @@ import ExpenseRow from "./ExpenseRow";
 import SplitExpenseGroup from "./SplitExpenseGroup";
 import FilterDropdown from "./FilterDropdown";
 import DateRangeFilter from "./DateRangeFilter";
+import Modal from "./Modal";
 
 export type TypeFilter = "all" | TransactionType;
 
@@ -66,8 +67,7 @@ export default function ExpenseList({
   const [tagFilter, setTagFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const filterBarRef = useRef<HTMLDivElement>(null);
-  const exportButtonRef = useRef<HTMLButtonElement>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -203,6 +203,23 @@ export default function ExpenseList({
     if (!stillValid) setCategoryFilter("all");
   }
 
+  const activeFilterCount = [
+    typeFilter !== "all",
+    categoryFilter !== "all",
+    tagFilter !== "all",
+    walletFilter !== "all",
+    Boolean(dateFrom || dateTo),
+  ].filter(Boolean).length;
+
+  function clearAllFilters() {
+    handleTypeFilter("all");
+    setCategoryFilter("all");
+    setTagFilter("all");
+    onWalletFilterChange("all");
+    setDateFrom("");
+    setDateTo("");
+  }
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return expenses.filter((e) => {
@@ -272,10 +289,7 @@ export default function ExpenseList({
 
   return (
     <div>
-      <div
-        ref={filterBarRef}
-        className="mb-3 flex flex-col gap-2.5 rounded-card border border-line bg-surface p-3 sm:flex-row sm:items-center"
-      >
+      <div className="mb-3 flex items-center gap-2">
         <div className="relative flex-1">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -294,55 +308,104 @@ export default function ExpenseList({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search merchant, notes, or tags..."
-            className="w-full rounded-full border border-line bg-bg-soft py-2 pl-9 pr-3 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+            className="w-full rounded-full border border-line bg-surface py-2.5 pl-9 pr-3 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
         </div>
 
-        <div className="flex gap-1 rounded-full bg-bg-soft p-1">
-          {(["all", "expense", "income", "transfer"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => handleTypeFilter(t)}
-              className={`flex-1 rounded-full px-3 py-1.5 text-xs font-semibold capitalize transition sm:flex-none sm:text-sm ${
-                typeFilter === t ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-
-        <FilterDropdown
-          value={categoryFilter}
-          allLabel="All categories"
-          options={categoryOptions}
-          onChange={setCategoryFilter}
-        />
-
-        {tagOptions.length > 0 && (
-          <FilterDropdown value={tagFilter} allLabel="All tags" options={tagOptions} onChange={setTagFilter} />
-        )}
-
-        {wallets.length > 1 && (
-          <FilterDropdown
-            value={walletFilter}
-            allLabel="All wallets"
-            options={wallets.map((w) => w.name)}
-            onChange={onWalletFilterChange}
-          />
-        )}
-
-        <DateRangeFilter
-          from={dateFrom}
-          to={dateTo}
-          onChange={(nextFrom, nextTo) => {
-            setDateFrom(nextFrom);
-            setDateTo(nextTo);
-          }}
-          alignTopRef={exportButtonRef}
-          alignRightRef={filterBarRef}
-        />
+        <button
+          type="button"
+          onClick={() => setFilterOpen(true)}
+          aria-label="Filters"
+          className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition ${
+            activeFilterCount > 0
+              ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+              : "border-line bg-surface text-ink-soft hover:border-navy hover:text-foreground"
+          }`}
+        >
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
+            <path d="M3 5h14M6 10h8M8.5 15h3" />
+          </svg>
+          {activeFilterCount > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-navy text-[10px] font-bold text-white">
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
       </div>
+
+      {filterOpen && (
+        <Modal onClose={() => setFilterOpen(false)} title="Filters">
+          <div className="space-y-4">
+            <div>
+              <p className="mb-1.5 text-sm font-semibold text-surface-foreground-soft">Type</p>
+              <div className="flex gap-1 rounded-full bg-surface-soft p-1">
+                {(["all", "expense", "income", "transfer"] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => handleTypeFilter(t)}
+                    className={`flex-1 rounded-full px-3 py-1.5 text-xs font-semibold capitalize transition sm:text-sm ${
+                      typeFilter === t ? "bg-surface text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-1.5 text-sm font-semibold text-surface-foreground-soft">Category</p>
+              <FilterDropdown
+                value={categoryFilter}
+                allLabel="All categories"
+                options={categoryOptions}
+                onChange={setCategoryFilter}
+              />
+            </div>
+
+            {tagOptions.length > 0 && (
+              <div>
+                <p className="mb-1.5 text-sm font-semibold text-surface-foreground-soft">Tag</p>
+                <FilterDropdown value={tagFilter} allLabel="All tags" options={tagOptions} onChange={setTagFilter} />
+              </div>
+            )}
+
+            {wallets.length > 1 && (
+              <div>
+                <p className="mb-1.5 text-sm font-semibold text-surface-foreground-soft">Wallet</p>
+                <FilterDropdown
+                  value={walletFilter}
+                  allLabel="All wallets"
+                  options={wallets.map((w) => w.name)}
+                  onChange={onWalletFilterChange}
+                />
+              </div>
+            )}
+
+            <div>
+              <p className="mb-1.5 text-sm font-semibold text-surface-foreground-soft">Date range</p>
+              <DateRangeFilter
+                from={dateFrom}
+                to={dateTo}
+                onChange={(nextFrom, nextTo) => {
+                  setDateFrom(nextFrom);
+                  setDateTo(nextTo);
+                }}
+              />
+            </div>
+
+            {activeFilterCount > 0 && (
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                className="w-full rounded-full px-4 py-2.5 text-sm font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
+        </Modal>
+      )}
 
       <div className="mb-4 flex items-center justify-between gap-3 px-1 text-sm">
         <span className="text-ink-soft">
@@ -358,7 +421,6 @@ export default function ExpenseList({
             {formatCurrency(Math.abs(filteredNet), currency)}
           </span>
           <button
-            ref={exportButtonRef}
             onClick={exportCsv}
             disabled={filtered.length === 0}
             className="rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-bg-soft disabled:opacity-40"
