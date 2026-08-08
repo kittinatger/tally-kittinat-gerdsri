@@ -1,10 +1,13 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { formatDateShort, todayInputValue } from "@/lib/format";
 import { useCalendarSettings } from "@/lib/use-calendar-settings";
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const PANEL_WIDTH = 288;
+const VIEWPORT_MARGIN = 8;
 
 function toKey(y: number, m: number, d: number): string {
   return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
@@ -28,16 +31,10 @@ export default function DateRangeFilter({
   from,
   to,
   onChange,
-  alignTopRef,
-  alignRightRef,
 }: {
   from: string;
   to: string;
   onChange: (from: string, to: string) => void;
-  /** Element whose top edge the popover's top should line up with. */
-  alignTopRef?: React.RefObject<HTMLElement | null>;
-  /** Element whose right edge the popover's right should line up with. */
-  alignRightRef?: React.RefObject<HTMLElement | null>;
 }) {
   const [open, setOpen] = useState(false);
   const [draftFrom, setDraftFrom] = useState(from);
@@ -45,8 +42,9 @@ export default function DateRangeFilter({
   const [pickingSecond, setPickingSecond] = useState(false);
   const [viewYear, setViewYear] = useState(() => parseKey(todayInputValue()).y);
   const [viewMonth, setViewMonth] = useState(() => parseKey(todayInputValue()).m);
-  const [popoverPos, setPopoverPos] = useState<{ top: number; right: number } | null>(null);
+  const [panelPos, setPanelPos] = useState<{ top: number; left: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const { weekStartDay, showWeekNumbers } = useCalendarSettings();
   const weekdayLabels = useMemo(
     () => WEEKDAYS.slice(weekStartDay).concat(WEEKDAYS.slice(0, weekStartDay)),
@@ -55,7 +53,9 @@ export default function DateRangeFilter({
 
   useEffect(() => {
     function onPointerDown(e: MouseEvent) {
-      if (!containerRef.current?.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (containerRef.current?.contains(target) || panelRef.current?.contains(target)) return;
+      setOpen(false);
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
@@ -68,32 +68,49 @@ export default function DateRangeFilter({
     };
   }, []);
 
+  // Portaled to document.body (see DatePicker.tsx for why: nested inside a
+  // modal, a plain absolute popover both blurs the wrong layer and can be
+  // clipped by the modal's own scroll container) and, since this panel is
+  // tall enough to sometimes not fit below the trigger, re-measured after
+  // its first paint so it flips above/clamps on-screen instead of running
+  // off the bottom of the viewport.
   useEffect(() => {
-    if (!open) return;
-    function reposition() {
-      const topEl = alignTopRef?.current;
-      const rightEl = alignRightRef?.current;
-      if (!topEl || !rightEl) {
-        setPopoverPos(null);
-        return;
-      }
-      const topRect = topEl.getBoundingClientRect();
-      const rightRect = rightEl.getBoundingClientRect();
-      setPopoverPos({ top: topRect.top, right: Math.max(0, window.innerWidth - rightRect.right - 6) });
+    if (!open || !containerRef.current) {
+      setPanelPos(null);
+      return;
     }
-    reposition();
-    window.addEventListener("resize", reposition);
-    return () => window.removeEventListener("resize", reposition);
-  }, [open, alignTopRef, alignRightRef]);
-
-  useEffect(() => {
-    if (!open || !popoverPos) return;
-    function onScroll() {
+    const rect = containerRef.current.getBoundingClientRect();
+    const left = Math.min(
+      Math.max(VIEWPORT_MARGIN, rect.right - PANEL_WIDTH),
+      window.innerWidth - PANEL_WIDTH - VIEWPORT_MARGIN,
+    );
+    setPanelPos({ top: rect.bottom + 6, left });
+    function close() {
       setOpen(false);
     }
-    window.addEventListener("scroll", onScroll, true);
-    return () => window.removeEventListener("scroll", onScroll, true);
-  }, [open, popoverPos]);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [open]);
+
+  useLayoutEffect(() => {
+    if (!open || !panelPos || !panelRef.current || !containerRef.current) return;
+    const panelRect = panelRef.current.getBoundingClientRect();
+    const overflowBottom = panelRect.bottom - (window.innerHeight - VIEWPORT_MARGIN);
+    if (overflowBottom > 0) {
+      const triggerRect = containerRef.current.getBoundingClientRect();
+      const flippedTop = triggerRect.top - 6 - panelRect.height;
+      setPanelPos((prev) =>
+        prev ? { ...prev, top: Math.max(VIEWPORT_MARGIN, flippedTop) } : prev,
+      );
+    }
+    // Only re-run when the panel first opens (or its position basis changes) —
+    // re-measuring after the flip itself would just toggle back and forth.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, panelPos?.top === undefined]);
 
   const active = Boolean(from || to);
   const summary = !active
@@ -221,116 +238,118 @@ export default function DateRangeFilter({
         </svg>
       </button>
 
-      {open && (
-        <div
-          role="dialog"
-          aria-label="Filter by date range"
-          className={`z-30 w-72 rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-3.5 shadow-[var(--panel-shadow)] backdrop-blur-xl ${
-            popoverPos ? "fixed" : "absolute right-0 top-[calc(100%+14px)]"
-          }`}
-          style={popoverPos ? { top: popoverPos.top, right: popoverPos.right } : undefined}
-        >
-          <div className="mb-2 flex items-center justify-between gap-2 rounded-xl bg-bg-soft px-2.5 py-1.5 text-xs font-medium text-ink-soft">
-            <span>{draftFrom ? formatDateShort(draftFrom) : "Start date"}</span>
-            <span>–</span>
-            <span>{draftTo ? formatDateShort(draftTo) : "End date"}</span>
-          </div>
+      {open &&
+        panelPos &&
+        createPortal(
+          <div
+            ref={panelRef}
+            role="dialog"
+            aria-label="Filter by date range"
+            style={{ top: panelPos.top, left: panelPos.left, width: PANEL_WIDTH }}
+            className="fixed z-[60] rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-3.5 shadow-[var(--panel-shadow)] backdrop-blur-xl"
+          >
+            <div className="mb-2 flex items-center justify-between gap-2 rounded-xl bg-bg-soft px-2.5 py-1.5 text-xs font-medium text-ink-soft">
+              <span>{draftFrom ? formatDateShort(draftFrom) : "Start date"}</span>
+              <span>–</span>
+              <span>{draftTo ? formatDateShort(draftTo) : "End date"}</span>
+            </div>
 
-          <div className="mb-2 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => changeMonth(-1)}
-              aria-label="Previous month"
-              className="rounded-full p-1.5 text-ink-soft transition hover:bg-bg-soft hover:text-foreground"
-            >
-              <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-                <path
-                  fillRule="evenodd"
-                  d="M12.79 5.23a.75.75 0 0 1 .02 1.06L9.832 10l2.978 3.71a.75.75 0 1 1-1.06 1.08l-4.5-4.25a.75.75 0 0 1 0-1.08l4.5-4.25a.75.75 0 0 1 1.06.02Z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
-            <span className="text-sm font-semibold text-foreground">{monthLabel}</span>
-            <button
-              type="button"
-              onClick={() => changeMonth(1)}
-              aria-label="Next month"
-              className="rounded-full p-1.5 text-ink-soft transition hover:bg-bg-soft hover:text-foreground"
-            >
-              <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-                <path
-                  fillRule="evenodd"
-                  d="M7.21 14.77a.75.75 0 0 1-.02-1.06L10.168 10 7.19 6.29a.75.75 0 1 1 1.06-1.08l4.5 4.25a.75.75 0 0 1 0 1.08l-4.5 4.25a.75.75 0 0 1-1.06-.02Z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
-          </div>
+            <div className="mb-2 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => changeMonth(-1)}
+                aria-label="Previous month"
+                className="rounded-full p-1.5 text-ink-soft transition hover:bg-bg-soft hover:text-foreground"
+              >
+                <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                  <path
+                    fillRule="evenodd"
+                    d="M12.79 5.23a.75.75 0 0 1 .02 1.06L9.832 10l2.978 3.71a.75.75 0 1 1-1.06 1.08l-4.5-4.25a.75.75 0 0 1 0-1.08l4.5-4.25a.75.75 0 0 1 1.06.02Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+              <span className="text-sm font-semibold text-foreground">{monthLabel}</span>
+              <button
+                type="button"
+                onClick={() => changeMonth(1)}
+                aria-label="Next month"
+                className="rounded-full p-1.5 text-ink-soft transition hover:bg-bg-soft hover:text-foreground"
+              >
+                <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                  <path
+                    fillRule="evenodd"
+                    d="M7.21 14.77a.75.75 0 0 1-.02-1.06L10.168 10 7.19 6.29a.75.75 0 1 1 1.06-1.08l4.5 4.25a.75.75 0 0 1 0 1.08l-4.5 4.25a.75.75 0 0 1-1.06-.02Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            </div>
 
-          <div className={`grid gap-y-0.5 text-center ${showWeekNumbers ? "grid-cols-8" : "grid-cols-7"}`}>
-            {showWeekNumbers && <span className="py-1 text-[11px] font-semibold text-ink-soft/60">Wk</span>}
-            {weekdayLabels.map((w) => (
-              <span key={w} className="py-1 text-[11px] font-semibold text-ink-soft">
-                {w}
-              </span>
-            ))}
-            {weeks.map((week) => (
-              <Fragment key={week[0].key}>
-                {showWeekNumbers && (
-                  <span className="flex h-8 w-full items-center justify-center text-[11px] text-ink-soft/60">
-                    {weekNumber(week[0].y, week[0].m, week[0].d)}
-                  </span>
-                )}
-                {week.map((cell) => {
-                  const isFrom = cell.key === draftFrom;
-                  const isTo = cell.key === draftTo;
-                  const inRange = draftFrom && draftTo && cell.key > draftFrom && cell.key < draftTo;
-                  const isToday = cell.key === todayInputValue();
-                  return (
-                    <button
-                      key={cell.key}
-                      type="button"
-                      onClick={() => pickDay(cell.key)}
-                      className={`relative h-8 w-full text-sm transition ${
-                        cell.inMonth ? "text-foreground" : "text-ink-soft/40"
-                      } ${isFrom || isTo ? "font-semibold text-white" : "hover:bg-bg-soft"} ${
-                        isFrom ? "rounded-l-full" : ""
-                      } ${isTo ? "rounded-r-full" : ""} ${isFrom && isTo ? "rounded-full" : ""}`}
-                      style={{
-                        backgroundColor: isFrom || isTo ? "var(--navy)" : inRange ? "var(--navy-soft, rgba(24,64,58,0.12))" : undefined,
-                      }}
-                    >
-                      {isToday && !(isFrom || isTo) && (
-                        <span className="absolute inset-x-2 bottom-1 h-0.5 rounded-full bg-navy" />
-                      )}
-                      {cell.label}
-                    </button>
-                  );
-                })}
-              </Fragment>
-            ))}
-          </div>
+            <div className={`grid gap-y-0.5 text-center ${showWeekNumbers ? "grid-cols-8" : "grid-cols-7"}`}>
+              {showWeekNumbers && <span className="py-1 text-[11px] font-semibold text-ink-soft/60">Wk</span>}
+              {weekdayLabels.map((w) => (
+                <span key={w} className="py-1 text-[11px] font-semibold text-ink-soft">
+                  {w}
+                </span>
+              ))}
+              {weeks.map((week) => (
+                <Fragment key={week[0].key}>
+                  {showWeekNumbers && (
+                    <span className="flex h-8 w-full items-center justify-center text-[11px] text-ink-soft/60">
+                      {weekNumber(week[0].y, week[0].m, week[0].d)}
+                    </span>
+                  )}
+                  {week.map((cell) => {
+                    const isFrom = cell.key === draftFrom;
+                    const isTo = cell.key === draftTo;
+                    const inRange = draftFrom && draftTo && cell.key > draftFrom && cell.key < draftTo;
+                    const isToday = cell.key === todayInputValue();
+                    return (
+                      <button
+                        key={cell.key}
+                        type="button"
+                        onClick={() => pickDay(cell.key)}
+                        className={`relative h-8 w-full text-sm transition ${
+                          cell.inMonth ? "text-foreground" : "text-ink-soft/40"
+                        } ${isFrom || isTo ? "font-semibold text-white" : "hover:bg-bg-soft"} ${
+                          isFrom ? "rounded-l-full" : ""
+                        } ${isTo ? "rounded-r-full" : ""} ${isFrom && isTo ? "rounded-full" : ""}`}
+                        style={{
+                          backgroundColor: isFrom || isTo ? "var(--navy)" : inRange ? "var(--navy-soft, rgba(24,64,58,0.12))" : undefined,
+                        }}
+                      >
+                        {isToday && !(isFrom || isTo) && (
+                          <span className="absolute inset-x-2 bottom-1 h-0.5 rounded-full bg-navy" />
+                        )}
+                        {cell.label}
+                      </button>
+                    );
+                  })}
+                </Fragment>
+              ))}
+            </div>
 
-          <div className="mt-3.5 flex items-center justify-between gap-2">
-            <button
-              type="button"
-              onClick={clear}
-              className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-bg-soft hover:text-foreground"
-            >
-              Clear
-            </button>
-            <button
-              type="button"
-              onClick={apply}
-              disabled={!draftFrom}
-              className="rounded-full bg-navy px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-40"
-            >
-              Apply
-            </button>
-          </div>
-        </div>
-      )}
+            <div className="mt-3.5 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={clear}
+                className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-bg-soft hover:text-foreground"
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                onClick={apply}
+                disabled={!draftFrom}
+                className="rounded-full bg-navy px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-40"
+              >
+                Apply
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
