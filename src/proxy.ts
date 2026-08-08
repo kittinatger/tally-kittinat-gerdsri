@@ -34,9 +34,13 @@ export async function proxy(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const loginUrl = new URL("/login", req.url);
-  loginUrl.searchParams.set("next", req.nextUrl.pathname);
-  return NextResponse.redirect(loginUrl);
+  // Unauthenticated visits land on the splash screen (Sign in / Create
+  // account) rather than straight on the login form — but `next` is still
+  // carried through so the splash's "Sign in" button forwards to
+  // /login?next=... and the user ends up where they were headed.
+  const welcomeUrl = new URL("/welcome", req.url);
+  welcomeUrl.searchParams.set("next", req.nextUrl.pathname);
+  return NextResponse.redirect(welcomeUrl);
 }
 
 export const config = {
@@ -50,6 +54,6 @@ export const config = {
     // session yet when they run. api/auth/github/link is deliberately NOT
     // excluded: it links GitHub to an *already signed-in* account, so it
     // needs the normal auth gate (getUserId() inside it depends on this).
-    "/((?!login|register|forgot-password|reset-password|offline|manifest.json|sw.js|api/auth/login|api/auth/register|api/auth/forgot-password|api/auth/reset-password|api/auth/github/callback|api/auth/github$|api/intake|_next/static|_next/image|favicon.ico|favicon-light.svg|favicon-dark.svg).*)",
+    "/((?!welcome|login|register|forgot-password|reset-password|offline|manifest.json|sw.js|api/auth/login|api/auth/register|api/auth/forgot-password|api/auth/reset-password|api/auth/github/callback|api/auth/github$|api/intake|_next/static|_next/image|favicon.ico|favicon-light.svg|favicon-dark.svg).*)",
   ],
 };
