@@ -1,5 +1,6 @@
 import LoginForm from "@/components/LoginForm";
 import SettingsMenu from "@/components/SettingsMenu";
+import { APP_VERSION } from "@/lib/version";
 
 export default async function LoginPage({
   searchParams,
@@ -16,9 +17,12 @@ export default async function LoginPage({
 
       {/* Mobile: plain, icon-badge header */}
       <div className="mx-auto max-w-sm lg:hidden">
-        <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-full bg-navy/10">
-          <img src="/favicon-light.svg" alt="Tally" className="h-6 w-6 dark:hidden" />
-          <img src="/favicon-dark.svg" alt="Tally" className="hidden h-6 w-6 dark:block" />
+        <div className="mb-6 flex items-start justify-between">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-navy/10">
+            <img src="/favicon-light.svg" alt="Tally" className="h-8 w-8 dark:hidden" />
+            <img src="/favicon-dark.svg" alt="Tally" className="hidden h-8 w-8 dark:block" />
+          </div>
+          <span className="pt-1 text-xs text-ink-soft">v{APP_VERSION}</span>
         </div>
         <LoginForm next={next ?? "/"} oauthError={error} />
       </div>

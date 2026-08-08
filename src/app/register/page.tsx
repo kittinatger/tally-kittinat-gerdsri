@@ -1,3 +1,4 @@
+import Link from "next/link";
 import RegisterForm from "@/components/RegisterForm";
 import SettingsMenu from "@/components/SettingsMenu";
 
@@ -14,11 +15,23 @@ export default function RegisterPage() {
         <SettingsMenu />
       </div>
 
-      {/* Mobile: plain, icon-badge header */}
+      {/* Mobile: back-arrow header */}
       <div className="mx-auto max-w-sm lg:hidden">
-        <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-full bg-navy/10">
-          <img src="/favicon-light.svg" alt="Tally" className="h-6 w-6 dark:hidden" />
-          <img src="/favicon-dark.svg" alt="Tally" className="hidden h-6 w-6 dark:block" />
+        <div className="mb-6 flex items-center gap-2">
+          <Link
+            href="/login"
+            aria-label="Back to sign in"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-foreground transition hover:bg-[var(--nav-hover-bg)]"
+          >
+            <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
+              <path
+                fillRule="evenodd"
+                d="M12.79 5.23a.75.75 0 0 1 .02 1.06L9.832 10l2.978 3.71a.75.75 0 1 1-1.06 1.08l-4.5-4.25a.75.75 0 0 1 0-1.08l4.5-4.25a.75.75 0 0 1 1.06.02Z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </Link>
+          <h1 className="font-display text-2xl text-foreground">Create account</h1>
         </div>
         <RegisterForm />
       </div>

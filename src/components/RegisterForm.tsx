@@ -37,13 +37,19 @@ export default function RegisterForm() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (password !== confirmPassword) {
+      setError("Passwords don't match.");
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/auth/register", {
@@ -111,6 +117,41 @@ export default function RegisterForm() {
             </button>
           </div>
         </div>
+        <div>
+          <label htmlFor="confirmPassword" className="mb-1.5 block text-sm font-semibold text-ink-soft">
+            Confirm password
+          </label>
+          <input
+            id="confirmPassword"
+            type={showPassword ? "text" : "password"}
+            required
+            minLength={8}
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="w-full rounded-card border border-line bg-bg-soft px-4 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+            placeholder="Re-enter your password"
+          />
+        </div>
+        <label className="flex items-start gap-2.5 text-sm text-ink-soft">
+          <input
+            type="checkbox"
+            required
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-line text-navy focus:ring-navy/20"
+          />
+          <span>
+            I agree to the{" "}
+            <Link href="/terms" className="font-semibold text-navy hover:underline">
+              Terms &amp; Conditions
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" className="font-semibold text-navy hover:underline">
+              Privacy Policy
+            </Link>
+          </span>
+        </label>
         {error && (
           <p className="rounded-card border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-400">
             {error}
@@ -118,7 +159,7 @@ export default function RegisterForm() {
         )}
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !agreed}
           className="w-full rounded-full bg-navy px-4 py-2.5 font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
         >
           {loading ? "Creating account..." : "Create account"}

@@ -92,14 +92,9 @@ export default function LoginForm({ next, oauthError }: { next: string; oauthErr
           />
         </div>
         <div>
-          <div className="mb-1.5 flex items-center justify-between">
-            <label htmlFor="password" className="block text-sm font-semibold text-ink-soft">
-              Password
-            </label>
-            <Link href="/forgot-password" className="text-xs font-semibold text-navy hover:underline">
-              Forgot password?
-            </Link>
-          </div>
+          <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-ink-soft">
+            Password
+          </label>
           <div className="relative">
             <input
               id="password"
@@ -136,6 +131,12 @@ export default function LoginForm({ next, oauthError }: { next: string; oauthErr
         </button>
       </form>
 
+      <p className="mt-3 text-center text-sm">
+        <Link href="/forgot-password" className="font-semibold text-navy hover:underline">
+          Forgot password?
+        </Link>
+      </p>
+
       <div className="my-5 flex items-center gap-3">
         <div className="h-px flex-1 bg-line" />
         <span className="text-xs font-semibold uppercase tracking-wide text-ink-soft">or</span>
@@ -151,9 +152,9 @@ export default function LoginForm({ next, oauthError }: { next: string; oauthErr
       </a>
 
       <p className="mt-6 text-center text-sm text-ink-soft">
-        New here?{" "}
+        Don&apos;t have an account?{" "}
         <Link href="/register" className="font-semibold text-navy hover:underline">
-          Create an account
+          Sign up
         </Link>
       </p>
     </div>
