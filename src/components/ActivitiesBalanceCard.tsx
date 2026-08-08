@@ -95,10 +95,7 @@ export default function ActivitiesBalanceCard({
   }
 
   return (
-    <div className="relative mb-4 overflow-hidden rounded-card border border-neutral-800 bg-neutral-900 p-5 text-white">
-      <div className="pointer-events-none absolute -right-10 top-1/2 h-56 w-56 -translate-y-1/2 rounded-full border border-white/10" />
-      <div className="pointer-events-none absolute -right-2 top-1/2 h-36 w-36 -translate-y-1/2 rounded-full border border-white/10" />
-
+    <div className="relative mb-4 rounded-card border border-surface-line bg-surface p-5 text-surface-foreground">
       {wallets.length > 1 && (
         <div className="absolute right-3 top-3 z-10" ref={scopeRef}>
           <button
@@ -107,14 +104,14 @@ export default function ActivitiesBalanceCard({
             aria-label="Choose wallet"
             aria-expanded={scopeOpen}
             aria-haspopup="listbox"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
           >
             <GearIcon />
           </button>
           {scopeOpen && (
             <div
               role="listbox"
-              className="absolute right-0 top-[calc(100%+6px)] w-44 overflow-hidden rounded-2xl border border-white/10 bg-neutral-800 p-1.5 shadow-soft"
+              className="absolute right-0 top-[calc(100%+6px)] w-44 overflow-hidden rounded-2xl border border-surface-line bg-surface p-1.5 shadow-soft"
             >
               <button
                 type="button"
@@ -122,7 +119,9 @@ export default function ActivitiesBalanceCard({
                 aria-selected={walletFilter === "all"}
                 onClick={() => selectWallet("all")}
                 className={`w-full rounded-xl px-3 py-2 text-left text-sm font-medium transition ${
-                  walletFilter === "all" ? "bg-white/10 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"
+                  walletFilter === "all"
+                    ? "bg-[var(--surface-nav-hover)] text-surface-foreground"
+                    : "text-surface-foreground-soft hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
                 }`}
               >
                 All wallets
@@ -135,7 +134,9 @@ export default function ActivitiesBalanceCard({
                   aria-selected={walletFilter === w.name}
                   onClick={() => selectWallet(w.name)}
                   className={`flex w-full items-center gap-2 truncate rounded-xl px-3 py-2 text-left text-sm font-medium transition ${
-                    walletFilter === w.name ? "bg-white/10 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"
+                    walletFilter === w.name
+                      ? "bg-[var(--surface-nav-hover)] text-surface-foreground"
+                      : "text-surface-foreground-soft hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
                   }`}
                 >
                   <span className={`h-2 w-2 shrink-0 rounded-full ${dotClasses(w.color)}`} />
@@ -147,8 +148,8 @@ export default function ActivitiesBalanceCard({
         </div>
       )}
 
-      <div className="relative">
-        <p className="text-xs font-semibold uppercase tracking-wide text-white/60">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">
           {walletFilter === "all" ? "Your balance" : walletFilter}
         </p>
         <p className="mt-1.5 truncate font-display text-3xl">{formatCurrency(balance, currency)}</p>
@@ -160,7 +161,7 @@ export default function ActivitiesBalanceCard({
                 key={w.id}
                 title={w.name}
                 className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold text-white transition ${dotClasses(w.color)} ${
-                  walletFilter === w.name ? "ring-2 ring-emerald-400" : "ring-2 ring-neutral-900"
+                  walletFilter === w.name ? "ring-2 ring-surface-accent" : "ring-2 ring-surface"
                 }`}
               >
                 {w.name.slice(0, 1).toUpperCase()}
@@ -169,7 +170,7 @@ export default function ActivitiesBalanceCard({
           </div>
         )}
 
-        <div className="mt-4 flex items-center justify-between gap-2 rounded-2xl bg-white/5 p-2.5">
+        <div className="mt-4 flex items-center justify-between gap-2 rounded-2xl bg-surface-soft p-2.5">
           {FILTER_BUTTONS.map(({ type, label, icon: Icon }) => {
             const active = typeFilter === type;
             return (
@@ -182,12 +183,18 @@ export default function ActivitiesBalanceCard({
               >
                 <span
                   className={`flex h-11 w-11 items-center justify-center rounded-full transition ${
-                    active ? "bg-emerald-400 text-neutral-900" : "bg-white/10 text-white"
+                    active
+                      ? "bg-surface-accent text-white"
+                      : "bg-surface text-surface-foreground-soft"
                   }`}
                 >
                   <Icon />
                 </span>
-                <span className={`text-xs font-semibold ${active ? "text-white" : "text-white/80"}`}>{label}</span>
+                <span
+                  className={`text-xs font-semibold ${active ? "text-surface-foreground" : "text-surface-foreground-soft"}`}
+                >
+                  {label}
+                </span>
               </button>
             );
           })}
