@@ -325,8 +325,8 @@ export default function ExpenseList({
               : "border-line bg-surface text-ink-soft hover:border-navy hover:text-foreground"
           }`}
         >
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-            <path d="M3 5h14M6 10h8M8.5 15h3" />
+          <svg viewBox="0 0 20 20" fill="currentColor" className="h-4.5 w-4.5">
+            <path d="M2.5 3.5A1 1 0 0 1 3.5 2.5h13a1 1 0 0 1 .78 1.63l-5.28 6.47v5.15a1 1 0 0 1-.51.87l-2 1.11a1 1 0 0 1-1.49-.87v-6.26L2.72 4.13a1 1 0 0 1-.22-.63Z" />
           </svg>
           {activeFilterCount > 0 && (
             <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-navy text-[10px] font-bold text-white">

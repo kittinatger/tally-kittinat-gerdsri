@@ -7,27 +7,27 @@ import type { TypeFilter } from "./ExpenseList";
 
 function IncomeIcon() {
   return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <rect x="2.5" y="6" width="15" height="10.5" rx="2.5" />
-      <path d="M10 8v5m0 0 2-2m-2 2-2-2" />
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
+      <path d="M10 3.5v10.3M6.3 10.3 10 14l3.7-3.7" />
+      <path d="M4 16.5h12" />
     </svg>
   );
 }
 
 function ExpenseIcon() {
   return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <rect x="2.5" y="6" width="15" height="10.5" rx="2.5" />
-      <path d="M10 13V8m0 0-2 2m2-2 2 2" />
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
+      <path d="M10 16.5V6.2M13.7 9.7 10 6l-3.7 3.7" />
+      <path d="M4 3.5h12" />
     </svg>
   );
 }
 
 function TransferIcon() {
   return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <rect x="2.5" y="6" width="15" height="10.5" rx="2.5" />
-      <path d="M7 11.5h6m0 0-2.2-2.2M13 11.5l-2.2 2.2" />
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
+      <path d="M4 7h10.5M12 4.3 14.7 7 12 9.7" />
+      <path d="M16 13H5.5M8 10.3 5.3 13 8 15.7" />
     </svg>
   );
 }
