@@ -181,7 +181,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 7;
+const CURRENT_SCHEMA_VERSION = 8;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -495,6 +495,12 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS is_default BOOLEAN NOT NULL DEFAULT false;`;
       await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT false;`;
       await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS currency TEXT;`;
+
+      // Which wallet the Activities page's balance card is scoped to on
+      // load — separate from is_default (which wallet new transactions fall
+      // back to). NULL means "All wallets". Set null rather than cascading
+      // the row away if the chosen wallet is later deleted.
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS activities_default_wallet_id INTEGER REFERENCES wallets(id) ON DELETE SET NULL;`;
 
       // Links every line of a one-receipt-multiple-categories split to its
       // siblings for display grouping — each line is otherwise a normal,
@@ -1230,6 +1236,29 @@ export async function setCalendarSettings(
     await sql`UPDATE app_settings SET alternate_calendar = ${patch.alternateCalendar} WHERE user_id = ${userId};`;
   }
   return getCalendarSettings(userId);
+}
+
+// Which wallet Activities' balance card is scoped to by default — null
+// means "All wallets". Returning null both when unset and when the chosen
+// wallet no longer exists (ON DELETE SET NULL already handles the latter
+// at the DB level, this is just the read side).
+export async function getActivitiesDefaultWalletId(userId: number): Promise<number | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ activities_default_wallet_id: number | null }>`
+    SELECT activities_default_wallet_id FROM app_settings WHERE user_id = ${userId};
+  `;
+  return rows[0]?.activities_default_wallet_id ?? null;
+}
+
+export async function setActivitiesDefaultWalletId(userId: number, walletId: number | null): Promise<void> {
+  await ensureSchema();
+  if (walletId !== null) {
+    const { rows } = await sql`SELECT 1 FROM wallets WHERE id = ${walletId} AND user_id = ${userId};`;
+    if (rows.length === 0) {
+      throw new Error("That wallet doesn't exist.");
+    }
+  }
+  await sql`UPDATE app_settings SET activities_default_wallet_id = ${walletId} WHERE user_id = ${userId};`;
 }
 
 // Safety net, not real pagination: every current caller (Dashboard, Activities,

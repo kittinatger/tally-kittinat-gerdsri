@@ -1,4 +1,4 @@
-import { listExpenses, listCategories, getCurrency, listWallets } from "@/lib/db";
+import { listExpenses, listCategories, getCurrency, listWallets, getActivitiesDefaultWalletId } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import ActivitiesView from "@/components/ActivitiesView";
 import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
@@ -12,11 +12,12 @@ export const dynamic = "force-dynamic";
 
 export default async function ActivitiesPage() {
   const userId = await getUserId();
-  const [rows, categoryRows, currency, walletRows] = await Promise.all([
+  const [rows, categoryRows, currency, walletRows, activitiesDefaultWalletId] = await Promise.all([
     listExpenses(userId),
     listCategories(userId),
     getCurrency(userId),
     listWallets(userId),
+    getActivitiesDefaultWalletId(userId),
   ]);
   const expenses: Expense[] = rows.map((r) => ({
     id: r.id,
@@ -51,5 +52,15 @@ export default async function ActivitiesPage() {
     balance: Number(w.balance),
   }));
 
-  return <ActivitiesView initialExpenses={expenses} categories={categories} currency={currency} wallets={wallets} />;
+  const initialWalletFilter = wallets.find((w) => w.id === activitiesDefaultWalletId && !w.archived)?.name ?? "all";
+
+  return (
+    <ActivitiesView
+      initialExpenses={expenses}
+      categories={categories}
+      currency={currency}
+      wallets={wallets}
+      initialWalletFilter={initialWalletFilter}
+    />
+  );
 }

@@ -1,4 +1,12 @@
-import { listCategories, getCurrency, getUserById, listWallets, listExpenses, getRemaining } from "@/lib/db";
+import {
+  listCategories,
+  getCurrency,
+  getUserById,
+  listWallets,
+  listExpenses,
+  getRemaining,
+  getActivitiesDefaultWalletId,
+} from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import SettingsView from "@/components/SettingsView";
 import { isTransactionType } from "@/lib/categories";
@@ -17,14 +25,16 @@ export default async function SettingsPage({
 }) {
   const { githubLinked, githubError } = await searchParams;
   const userId = await getUserId();
-  const [categoryRows, currency, user, walletRows, expenseRows, remaining] = await Promise.all([
-    listCategories(userId),
-    getCurrency(userId),
-    getUserById(userId),
-    listWallets(userId, { includeArchived: true }),
-    listExpenses(userId),
-    getRemaining(userId),
-  ]);
+  const [categoryRows, currency, user, walletRows, expenseRows, remaining, activitiesDefaultWalletId] =
+    await Promise.all([
+      listCategories(userId),
+      getCurrency(userId),
+      getUserById(userId),
+      listWallets(userId, { includeArchived: true }),
+      listExpenses(userId),
+      getRemaining(userId),
+      getActivitiesDefaultWalletId(userId),
+    ]);
   const categories: CategoryOption[] = categoryRows.map((c) => ({
     id: c.id,
     type: isTransactionType(c.type) ? c.type : "expense",
@@ -67,6 +77,7 @@ export default async function SettingsPage({
       wallets={wallets}
       expenses={expenses}
       remaining={remaining}
+      activitiesDefaultWalletId={activitiesDefaultWalletId}
       githubLinked={githubLinked === "1"}
       githubError={githubError}
     />

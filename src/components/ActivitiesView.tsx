@@ -25,18 +25,23 @@ export default function ActivitiesView({
   categories,
   currency,
   wallets,
+  initialWalletFilter = "all",
 }: {
   initialExpenses: Expense[];
   categories: CategoryOption[];
   currency: string;
   wallets: WalletOption[];
+  /** Wallet name to scope the balance card/list to on load — from Settings
+   * > Wallets' "Default wallet for Activities" setting. "all" means every
+   * wallet. */
+  initialWalletFilter?: string;
 }) {
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [addOpen, setAddOpen] = useState(false);
   const [viewing, setViewing] = useState<Expense | null>(null);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
-  const [walletFilter, setWalletFilter] = useState("all");
+  const [walletFilter, setWalletFilter] = useState(initialWalletFilter);
 
   const activeWallets = wallets.filter((w) => !w.archived);
 

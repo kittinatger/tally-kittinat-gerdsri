@@ -264,6 +264,7 @@ export default function SettingsView({
   wallets,
   expenses,
   remaining,
+  activitiesDefaultWalletId,
   githubLinked,
   githubError,
 }: {
@@ -274,6 +275,8 @@ export default function SettingsView({
   wallets: WalletOption[];
   expenses: Expense[];
   remaining: number;
+  /** Which wallet Activities' balance card is scoped to by default; null means "All wallets". */
+  activitiesDefaultWalletId: number | null;
   /** True right after a redirect back from /api/auth/github/link succeeded. */
   githubLinked?: boolean;
   /** Error code from a failed /api/auth/github/link redirect, if any. */
@@ -321,7 +324,9 @@ export default function SettingsView({
                 {panel === "permissions" && <PermissionsSettings hasEmail={Boolean(email)} />}
                 {panel === "categories" && <CategoryManager categories={categories} />}
                 {panel === "tags" && <TagManager />}
-                {panel === "wallets" && <WalletManager wallets={wallets} />}
+                {panel === "wallets" && (
+                  <WalletManager wallets={wallets} initialActivitiesDefaultWalletId={activitiesDefaultWalletId} />
+                )}
                 {panel === "theme" && <ThemeSetting />}
                 {panel === "currency" && <CurrencySettings />}
                 {panel === "calendar" && <CalendarSettings />}

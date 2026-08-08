@@ -9,6 +9,7 @@ import { formatCurrency } from "@/lib/format";
 import type { WalletOption } from "@/types/wallet";
 import WalletModal from "./WalletModal";
 import WalletTransferModal from "./WalletTransferModal";
+import FilterDropdown from "./FilterDropdown";
 
 function ArchiveIcon() {
   return (
@@ -19,7 +20,13 @@ function ArchiveIcon() {
   );
 }
 
-export default function WalletManager({ wallets }: { wallets: WalletOption[] }) {
+export default function WalletManager({
+  wallets,
+  initialActivitiesDefaultWalletId,
+}: {
+  wallets: WalletOption[];
+  initialActivitiesDefaultWalletId: number | null;
+}) {
   const router = useRouter();
   const currency = useCurrency();
   const [modal, setModal] = useState<{ mode: "add" } | { mode: "edit"; wallet: WalletOption } | null>(null);
@@ -28,9 +35,38 @@ export default function WalletManager({ wallets }: { wallets: WalletOption[] }) 
   const [deleting, setDeleting] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [activitiesDefaultWalletId, setActivitiesDefaultWalletId] = useState(initialActivitiesDefaultWalletId);
+  const [savingActivitiesDefault, setSavingActivitiesDefault] = useState(false);
+  const [activitiesDefaultError, setActivitiesDefaultError] = useState<string | null>(null);
 
   const activeWallets = wallets.filter((w) => !w.archived);
   const archivedWallets = wallets.filter((w) => w.archived);
+
+  async function handleActivitiesDefaultChange(name: string) {
+    const walletId = name === "all" ? null : (activeWallets.find((w) => w.name === name)?.id ?? null);
+    const previous = activitiesDefaultWalletId;
+    setActivitiesDefaultWalletId(walletId);
+    setSavingActivitiesDefault(true);
+    setActivitiesDefaultError(null);
+    try {
+      const res = await fetch("/api/wallets/activities-default", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ walletId }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setActivitiesDefaultError(typeof data?.error === "string" ? data.error : "Could not save that setting.");
+        setActivitiesDefaultWalletId(previous);
+        return;
+      }
+    } catch (err) {
+      setActivitiesDefaultError(describeFetchError(err));
+      setActivitiesDefaultWalletId(previous);
+    } finally {
+      setSavingActivitiesDefault(false);
+    }
+  }
 
   function handleSaved() {
     setModal(null);
@@ -238,6 +274,25 @@ export default function WalletManager({ wallets }: { wallets: WalletOption[] }) 
       </p>
 
       {actionError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{actionError}</p>}
+
+      {activeWallets.length > 1 && (
+        <div className="mt-4 rounded-card border border-line bg-surface p-4">
+          <p className="text-sm font-semibold text-foreground">Default wallet for Activities</p>
+          <p className="mt-0.5 text-xs text-ink-soft">
+            Which wallet the Activities page&apos;s balance card is scoped to when it opens.
+          </p>
+          <div className="mt-2.5">
+            <FilterDropdown
+              value={activeWallets.find((w) => w.id === activitiesDefaultWalletId)?.name ?? "all"}
+              allLabel="All wallets"
+              options={activeWallets.map((w) => w.name)}
+              onChange={handleActivitiesDefaultChange}
+            />
+          </div>
+          {savingActivitiesDefault && <p className="mt-1.5 text-xs text-ink-soft">Saving...</p>}
+          {activitiesDefaultError && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{activitiesDefaultError}</p>}
+        </div>
+      )}
 
       <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
         {activeWallets.map((w, i) => renderWallet(w, i, activeWallets.length))}

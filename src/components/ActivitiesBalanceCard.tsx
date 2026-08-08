@@ -154,22 +154,6 @@ export default function ActivitiesBalanceCard({
         </p>
         <p className="mt-1.5 truncate font-display text-3xl">{formatCurrency(balance, currency)}</p>
 
-        {wallets.length > 0 && (
-          <div className="mt-3 flex -space-x-2">
-            {wallets.slice(0, 6).map((w) => (
-              <span
-                key={w.id}
-                title={w.name}
-                className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold text-white transition ${dotClasses(w.color)} ${
-                  walletFilter === w.name ? "ring-2 ring-surface-accent" : "ring-2 ring-surface"
-                }`}
-              >
-                {w.name.slice(0, 1).toUpperCase()}
-              </span>
-            ))}
-          </div>
-        )}
-
         <div className="mt-4 flex items-center justify-between gap-2 rounded-2xl bg-surface-soft p-2.5">
           {FILTER_BUTTONS.map(({ type, label, icon: Icon }) => {
             const active = typeFilter === type;

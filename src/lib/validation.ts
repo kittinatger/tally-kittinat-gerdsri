@@ -72,6 +72,10 @@ export const settingsInputSchema = z
     message: "Provide at least one setting to update",
   });
 
+export const activitiesDefaultWalletInputSchema = z.object({
+  walletId: z.number().int().positive().nullable(),
+});
+
 export const DEFAULT_VIEWS = ["today", "week", "month", "all"] as const;
 export const TIMEZONE_MODES = ["auto", "custom"] as const;
 
