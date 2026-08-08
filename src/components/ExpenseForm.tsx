@@ -396,7 +396,7 @@ export default function ExpenseForm({
           push a non-sticky submit button below the fold with no cue that
           it's still there. Negative margins extend it edge-to-edge past the
           modal's own padding, then re-add that padding just for this bar. */}
-      <div className="sticky -bottom-5 -mx-5 -mb-5 flex items-center justify-between gap-2 border-t border-surface-line bg-surface/95 px-5 py-3 backdrop-blur-xl sm:-bottom-6 sm:-mx-6 sm:-mb-6 sm:order-10 sm:col-span-2 sm:px-6">
+      <div className="sticky -bottom-5 -mx-5 -mb-5 flex items-center justify-between gap-2 border-t border-[var(--glass-border)] bg-[image:var(--glass-bg)] px-5 py-3 backdrop-blur-xl sm:-bottom-6 sm:-mx-6 sm:-mb-6 sm:order-10 sm:col-span-2 sm:px-6">
         <div>{footerLeft}</div>
         <div className="flex items-center gap-2">
           {onCancel && (
