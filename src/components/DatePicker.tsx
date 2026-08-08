@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { formatDateShort, todayInputValue } from "@/lib/format";
 import { useCalendarSettings } from "@/lib/use-calendar-settings";
 
@@ -40,6 +41,8 @@ export default function DatePicker({
   const [viewYear, setViewYear] = useState(() => parseKey(anchor).y);
   const [viewMonth, setViewMonth] = useState(() => parseKey(anchor).m);
   const containerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [panelPos, setPanelPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const { weekStartDay, showWeekNumbers } = useCalendarSettings();
   const weekdayLabels = useMemo(
     () => WEEKDAYS.slice(weekStartDay).concat(WEEKDAYS.slice(0, weekStartDay)),
@@ -48,7 +51,9 @@ export default function DatePicker({
 
   useEffect(() => {
     function onPointerDown(e: MouseEvent) {
-      if (!containerRef.current?.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (containerRef.current?.contains(target) || panelRef.current?.contains(target)) return;
+      setOpen(false);
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
@@ -60,6 +65,29 @@ export default function DatePicker({
       document.removeEventListener("keydown", onKey);
     };
   }, []);
+
+  // The calendar renders in a portal to document.body (rather than in normal
+  // flow inside this component) so its backdrop-blur samples whatever's
+  // really behind it on the page — inside a modal, staying in normal flow
+  // would mean blurring the modal's own already-frosted glass sheet instead,
+  // which looks flat rather than the crisp glass effect used everywhere else.
+  useEffect(() => {
+    if (!open || !containerRef.current) {
+      setPanelPos(null);
+      return;
+    }
+    const rect = containerRef.current.getBoundingClientRect();
+    setPanelPos({ top: rect.bottom + 6, left: rect.left, width: Math.max(rect.width, 288) });
+    function close() {
+      setOpen(false);
+    }
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [open]);
 
   const days = useMemo(() => {
     const firstOfMonth = new Date(viewYear, viewMonth, 1);
@@ -151,12 +179,16 @@ export default function DatePicker({
         </svg>
       </button>
 
-      {open && (
-        <div
-          role="dialog"
-          aria-label="Select date"
-          className="absolute left-0 top-[calc(100%+6px)] z-30 w-72 rounded-2xl border border-[var(--modal-glass-border)] bg-[image:var(--modal-glass-bg)] p-3.5 shadow-[var(--modal-panel-shadow)] backdrop-blur-xl"
-        >
+      {open &&
+        panelPos &&
+        createPortal(
+          <div
+            ref={panelRef}
+            role="dialog"
+            aria-label="Select date"
+            style={{ top: panelPos.top, left: panelPos.left, width: panelPos.width }}
+            className="fixed z-[60] rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-3.5 shadow-[var(--panel-shadow)] backdrop-blur-xl"
+          >
           <div className="mb-2 flex items-center justify-between">
             <button
               type="button"
@@ -238,7 +270,8 @@ export default function DatePicker({
               Today
             </button>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
