@@ -25,7 +25,7 @@ export default async function WelcomePage({
       </div>
 
       <div className="relative flex flex-[1.3] flex-col items-center justify-center gap-3 text-center">
-        <img src="/favicon-dark.svg" alt="" className="h-16 w-16" />
+        <img src="/favicon-dark.svg" alt="" className="h-28 w-28" />
         <h1 className="font-display text-3xl text-white">Tally</h1>
       </div>
 
