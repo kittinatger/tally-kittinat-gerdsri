@@ -49,7 +49,7 @@ export default function ErrorReportsPanel() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-display text-xl text-foreground">Error reports</h3>
+        <h3 className="font-display text-xl text-foreground">Error log</h3>
         {errors && errors.length > 0 && (
           <button
             onClick={handleClearAll}
@@ -65,7 +65,12 @@ export default function ErrorReportsPanel() {
         <a href="/troubleshooting" className="text-navy underline hover:no-underline dark:text-blue-300">
           Troubleshooting
         </a>{" "}
-        for common causes and fixes.
+        for common causes and fixes, or{" "}
+        <a href="/report-issue" className="text-navy underline hover:no-underline dark:text-blue-300">
+          Report an issue
+        </a>{" "}
+        if what you&apos;re reporting isn&apos;t a specific error shown here (a feature request, or something that
+        didn&apos;t surface an error message at all).
       </p>
 
       {errors === null ? (

@@ -61,7 +61,7 @@ const PANEL_TITLES: Record<Panel, string> = {
   budgets: "Budgets",
   savingsGoals: "Savings goals",
   autoImport: "Automatic import",
-  errorReports: "Error reports",
+  errorReports: "Error log",
 };
 
 function AccountIcon() {
@@ -385,7 +385,7 @@ export default function SettingsView({
                   <SettingsListItem icon={<BookIcon />} label="Usage guide" href="/usage-guide" />
                   <SettingsListItem icon={<QuestionIcon />} label="FAQs" href="/faq" />
                   <SettingsListItem icon={<WrenchIcon />} label="Troubleshooting" href="/troubleshooting" />
-                  <SettingsListItem icon={<WarningIcon />} label="Error reports" onClick={() => setPanel("errorReports")} />
+                  <SettingsListItem icon={<WarningIcon />} label="Error log" onClick={() => setPanel("errorReports")} />
                   <SettingsListItem icon={<MailIcon />} label="Contact" href="/contact" />
                   <SettingsListItem icon={<FlagIcon />} label="Report an issue" href="/report-issue" />
                   <SettingsListItem icon={<ClockIcon />} label="Changelog" href="/changelog" />

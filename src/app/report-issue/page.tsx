@@ -13,6 +13,18 @@ export default function ReportIssuePage() {
 
         <div className="space-y-6 rounded-card border border-line bg-surface p-5 text-sm leading-relaxed text-ink-soft">
           <section>
+            <h3 className="mb-1.5 font-semibold text-foreground">Reporting a specific error?</h3>
+            <p>
+              If Tally showed you an error message, check{" "}
+              <Link href="/settings" className="text-navy underline hover:no-underline dark:text-blue-300">
+                Settings
+              </Link>{" "}
+              &gt; Error log first — it keeps a local record of recent errors and can open a pre-filled GitHub issue
+              for the specific one you hit, with the details already in place.
+            </p>
+          </section>
+
+          <section>
             <h3 className="mb-1.5 font-semibold text-foreground">Bugs &amp; feature requests</h3>
             <p>
               Open a{" "}
