@@ -12,7 +12,7 @@ import SplitExpenseGroup from "./SplitExpenseGroup";
 import FilterDropdown from "./FilterDropdown";
 import DateRangeFilter from "./DateRangeFilter";
 
-type TypeFilter = "all" | TransactionType;
+export type TypeFilter = "all" | TransactionType;
 
 type DisplayRow = { kind: "single"; expense: Expense } | { kind: "split"; groupId: string; items: Expense[] };
 
@@ -39,17 +39,23 @@ export default function ExpenseList({
   onSelect,
   onBulkDeleted,
   onBulkUpdated,
+  typeFilter,
+  onTypeFilterChange,
 }: {
   expenses: Expense[];
   onSelect: (expense: Expense) => void;
   onBulkDeleted: (ids: number[]) => void;
   onBulkUpdated: (expenses: Expense[]) => void;
+  /** Controlled from ActivitiesView so the balance card's Deposit/Withdraw/
+   * Transfer buttons can drive the same type filter as the segmented
+   * control below. */
+  typeFilter: TypeFilter;
+  onTypeFilterChange: (type: TypeFilter) => void;
 }) {
   const allCategories = useAllCategories();
   const wallets = useWallets();
   const currency = useCurrency();
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState("all");
   const [walletFilter, setWalletFilter] = useState("all");
@@ -184,7 +190,7 @@ export default function ExpenseList({
   }, [expenses]);
 
   function handleTypeFilter(nextType: TypeFilter) {
-    setTypeFilter(nextType);
+    onTypeFilterChange(nextType);
     if (categoryFilter === "all") return;
     const stillValid = allCategories.some(
       (c) => c.name === categoryFilter && (nextType === "all" || c.type === nextType),

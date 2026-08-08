@@ -8,7 +8,8 @@ import { CategoriesProvider } from "@/lib/categories-context";
 import { CurrencyProvider } from "@/lib/currency-context";
 import { WalletsProvider } from "@/lib/wallets-context";
 import PullToRefresh from "./PullToRefresh";
-import ExpenseList from "./ExpenseList";
+import ExpenseList, { type TypeFilter } from "./ExpenseList";
+import ActivitiesBalanceCard from "./ActivitiesBalanceCard";
 import AddExpenseModal from "./AddExpenseModal";
 import EditExpenseModal from "./EditExpenseModal";
 import ExpenseDetailModal from "./ExpenseDetailModal";
@@ -34,6 +35,9 @@ export default function ActivitiesView({
   const [addOpen, setAddOpen] = useState(false);
   const [viewing, setViewing] = useState<Expense | null>(null);
   const [editing, setEditing] = useState<Expense | null>(null);
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+
+  const totalBalance = wallets.filter((w) => !w.archived).reduce((sum, w) => sum + w.balance, 0);
 
   function handleCreated(expense: Expense) {
     setExpenses((prev) => [expense, ...prev].sort(sortByDateDesc));
@@ -73,11 +77,20 @@ export default function ActivitiesView({
             <AppHeader onAddClick={() => setAddOpen(true)} />
 
             <main className="flex-1 px-1 py-6 sm:px-2">
+              <ActivitiesBalanceCard
+                balance={totalBalance}
+                currency={currency}
+                wallets={wallets.filter((w) => !w.archived)}
+                typeFilter={typeFilter}
+                onTypeFilterChange={setTypeFilter}
+              />
               <ExpenseList
                 expenses={expenses}
                 onSelect={setViewing}
                 onBulkDeleted={handleBulkDeleted}
                 onBulkUpdated={handleBulkUpdated}
+                typeFilter={typeFilter}
+                onTypeFilterChange={setTypeFilter}
               />
             </main>
           </PullToRefresh>
