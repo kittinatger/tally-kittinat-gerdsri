@@ -6,6 +6,81 @@ import { useRouter } from "next/navigation";
 import { useCurrency } from "@/lib/currency-context";
 import CurrencyDropdown from "./CurrencyDropdown";
 
+function ScanIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
+      <path d="M3 7V4.5A1.5 1.5 0 0 1 4.5 3H7M13 3h2.5A1.5 1.5 0 0 1 17 4.5V7M17 13v2.5a1.5 1.5 0 0 1-1.5 1.5H13M7 17H4.5A1.5 1.5 0 0 1 3 15.5V13" />
+      <path d="M6.5 10h7" />
+    </svg>
+  );
+}
+
+function WalletIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
+      <path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h9A1.5 1.5 0 0 1 15 6.5v8A1.5 1.5 0 0 1 13.5 16h-9A1.5 1.5 0 0 1 3 14.5Z" />
+      <path d="M3 8.5h13.5A1.5 1.5 0 0 1 18 10v4a1.5 1.5 0 0 1-1.5 1.5" />
+      <circle cx="13.5" cy="11.5" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function ToggleRow({
+  icon,
+  label,
+  description,
+  checked,
+  disabled,
+  onToggle,
+  error,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  description: string;
+  checked: boolean;
+  disabled: boolean;
+  onToggle: () => void;
+  error?: string | null;
+}) {
+  return (
+    <div className="py-3 first:pt-0 last:pb-0">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+              checked ? "bg-navy/10 text-navy dark:text-blue-300" : "bg-bg-soft text-ink-soft"
+            }`}
+          >
+            {icon}
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-foreground">{label}</p>
+            <p className="text-[11px] leading-snug text-ink-soft">{description}</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onToggle}
+          disabled={disabled}
+          role="switch"
+          aria-checked={checked}
+          aria-label={`Toggle ${label}`}
+          className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-60 ${
+            checked ? "bg-navy" : "bg-bg-soft"
+          }`}
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+              checked ? "translate-x-6" : "translate-x-1"
+            }`}
+          />
+        </button>
+      </div>
+      {error && <p className="mt-1.5 pl-12 text-xs text-red-600 dark:text-red-400">{error}</p>}
+    </div>
+  );
+}
+
 export default function CurrencySettings() {
   const router = useRouter();
   const currency = useCurrency();
@@ -107,69 +182,53 @@ export default function CurrencySettings() {
   }
 
   return (
-    <div className="rounded-card border border-line bg-surface p-5">
-      <div>
-        <p className="mb-1.5 text-sm font-medium text-foreground">Default currency</p>
-        <CurrencyDropdown value={currency} onChange={handleCurrencyChange} disabled={savingCurrency} />
+    <div className="space-y-4">
+      <div className="rounded-card border border-line bg-surface p-5">
+        <p className="text-sm font-semibold text-foreground">Default currency</p>
+        <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">
+          Used for new transactions and everywhere amounts are shown, unless a wallet has its own currency label.
+        </p>
+        <div className="mt-3">
+          <CurrencyDropdown value={currency} onChange={handleCurrencyChange} disabled={savingCurrency} />
+        </div>
         {currencyError && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{currencyError}</p>}
       </div>
 
-      <div className="mt-3.5 border-t border-[var(--glass-border)] pt-3.5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground">Auto-convert</p>
-            <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">
-              Convert detected foreign currencies to {currency} when scanning or recording.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={handleAutoConvertToggle}
-            disabled={savingAutoConvert}
-            role="switch"
-            aria-checked={autoConvert}
-            aria-label="Toggle automatic currency conversion"
-            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-60 ${
-              autoConvert ? "bg-navy" : "bg-bg-soft"
-            }`}
+      <div className="rounded-card border border-line bg-surface p-5">
+        <p className="text-sm font-semibold text-foreground">Conversion</p>
+        <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">
+          Uses live exchange rates from{" "}
+          <a
+            href="https://frankfurter.app"
+            target="_blank"
+            rel="noreferrer"
+            className="text-navy underline hover:no-underline dark:text-blue-300"
           >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                autoConvert ? "translate-x-6" : "translate-x-1"
-              }`}
-            />
-          </button>
-        </div>
-        {autoConvertError && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{autoConvertError}</p>}
-      </div>
+            Frankfurter
+          </a>
+          , a free ECB-rate API.
+        </p>
 
-      <div className="mt-3.5 border-t border-[var(--glass-border)] pt-3.5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground">Convert wallet balances</p>
-            <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">
-              Convert wallets in a different currency to {currency} for the Dashboard&apos;s Net worth total.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={handleConvertBalancesToggle}
+        <div className="mt-3 divide-y divide-line">
+          <ToggleRow
+            icon={<ScanIcon />}
+            label="Auto-convert"
+            description={`Convert detected foreign currencies to ${currency} when scanning or recording.`}
+            checked={autoConvert}
+            disabled={savingAutoConvert}
+            onToggle={handleAutoConvertToggle}
+            error={autoConvertError}
+          />
+          <ToggleRow
+            icon={<WalletIcon />}
+            label="Convert wallet balances"
+            description={`Convert wallets in a different currency to ${currency} for the Dashboard's Net worth total.`}
+            checked={convertBalances}
             disabled={savingConvertBalances}
-            role="switch"
-            aria-checked={convertBalances}
-            aria-label="Toggle wallet balance conversion"
-            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-60 ${
-              convertBalances ? "bg-navy" : "bg-bg-soft"
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                convertBalances ? "translate-x-6" : "translate-x-1"
-              }`}
-            />
-          </button>
+            onToggle={handleConvertBalancesToggle}
+            error={convertBalancesError}
+          />
         </div>
-        {convertBalancesError && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{convertBalancesError}</p>}
       </div>
     </div>
   );
