@@ -1,5 +1,6 @@
 import Link from "next/link";
 import AppHeader from "@/components/AppHeader";
+import BackToSettingsLink from "@/components/BackToSettingsLink";
 
 type Entry = { error: string; what: string; why: string; fix: string };
 type Group = { heading: string; entries: Entry[] };
@@ -170,6 +171,7 @@ export default function TroubleshootingPage() {
       <AppHeader />
 
       <main className="flex-1 px-1 py-6 sm:px-2">
+        <BackToSettingsLink />
         <h2 className="mb-1 font-display text-2xl text-foreground">Troubleshooting</h2>
         <p className="mb-5 text-sm text-ink-soft">
           Common error messages Tally can show, what they mean, and how to fix or work around them. See also{" "}

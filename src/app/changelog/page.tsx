@@ -1,5 +1,6 @@
 import Link from "next/link";
 import AppHeader from "@/components/AppHeader";
+import BackToSettingsLink from "@/components/BackToSettingsLink";
 
 const RELEASES: { version: string; date: string; sections: { heading: string; items: string[] }[] }[] = [
   {
@@ -356,6 +357,7 @@ export default function ChangelogPage() {
       <AppHeader />
 
       <main className="flex-1 px-1 py-6 sm:px-2">
+        <BackToSettingsLink />
         <h2 className="mb-2 font-display text-2xl text-foreground">Changelog</h2>
         <p className="mb-5 text-sm text-ink-soft">
           Full history on{" "}

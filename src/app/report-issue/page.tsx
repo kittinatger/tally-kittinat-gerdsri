@@ -1,5 +1,6 @@
 import Link from "next/link";
 import AppHeader from "@/components/AppHeader";
+import BackToSettingsLink from "@/components/BackToSettingsLink";
 
 export default function ReportIssuePage() {
   return (
@@ -7,6 +8,7 @@ export default function ReportIssuePage() {
       <AppHeader />
 
       <main className="flex-1 px-1 py-6 sm:px-2">
+        <BackToSettingsLink />
         <h2 className="mb-5 font-display text-2xl text-foreground">Report an Issue</h2>
 
         <div className="space-y-6 rounded-card border border-line bg-surface p-5 text-sm leading-relaxed text-ink-soft">
