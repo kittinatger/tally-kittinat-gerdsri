@@ -143,7 +143,6 @@ export default function DashboardWidgetContent({
   onEditBalance,
   onAddIncome,
   onAddExpense,
-  onAddTransfer,
 }: {
   widget: DashboardWidgetInstance;
   expenses: Expense[];
@@ -156,7 +155,6 @@ export default function DashboardWidgetContent({
   onEditBalance?: () => void;
   onAddIncome?: () => void;
   onAddExpense?: () => void;
-  onAddTransfer?: () => void;
 }) {
   const currency = useCurrency();
   const wallets = useWallets();
@@ -768,7 +766,6 @@ export default function DashboardWidgetContent({
           }
           onAddIncome={onAddIncome ?? noop}
           onAddExpense={onAddExpense ?? noop}
-          onAddTransfer={onAddTransfer}
         />
       );
     }
