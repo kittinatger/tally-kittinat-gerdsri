@@ -3,13 +3,23 @@
 import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { dotClasses } from "@/lib/category-styles";
+import { badgeClasses } from "@/lib/category-styles";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency } from "@/lib/format";
 import type { WalletOption } from "@/types/wallet";
 import WalletModal from "./WalletModal";
 import WalletTransferModal from "./WalletTransferModal";
 import FilterDropdown from "./FilterDropdown";
+
+function WalletGlyphIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
+      <path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h9A1.5 1.5 0 0 1 15 6.5v8A1.5 1.5 0 0 1 13.5 16h-9A1.5 1.5 0 0 1 3 14.5Z" />
+      <path d="M3 8.5h13.5A1.5 1.5 0 0 1 18 10v4a1.5 1.5 0 0 1-1.5 1.5" />
+      <circle cx="13.5" cy="11.5" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
 
 function ArchiveIcon() {
   return (
@@ -196,10 +206,8 @@ export default function WalletManager({
           </button>
         </div>
 
-        <span
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${dotClasses(w.color)}`}
-        >
-          {w.name.slice(0, 1).toUpperCase()}
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses(w.color)}`}>
+          <WalletGlyphIcon />
         </span>
 
         <div className="min-w-0 flex-1">
