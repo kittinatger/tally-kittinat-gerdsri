@@ -84,7 +84,7 @@ const GROUPS: Group[] = [
         error: "Could not save that image.",
         what: "Attaching a receipt photo to an existing transaction failed.",
         why: "A server-side error while saving — the transaction itself is unaffected.",
-        fix: "Try attaching again in a moment. If it keeps failing, report it — see Error reports in Settings.",
+        fix: "Try attaching again in a moment. If it keeps failing, report it — see Error log in Settings.",
       },
     ],
   },
@@ -124,7 +124,7 @@ const GROUPS: Group[] = [
         error: "Couldn't reach the server.",
         what: "An action failed without a specific server response.",
         why: "A connection-level failure (DNS, blocked request, etc.) that the browser doesn't detail further.",
-        fix: "Check your connection; if it persists on a stable connection, report it — see Error reports in Settings.",
+        fix: "Check your connection; if it persists on a stable connection, report it — see Error log in Settings.",
       },
       {
         error: "Too many requests. Slow down and try again shortly.",
@@ -176,7 +176,7 @@ export default function TroubleshootingPage() {
         <p className="mb-5 text-sm text-ink-soft">
           Common error messages Tally can show, what they mean, and how to fix or work around them. See also{" "}
           <Link href="/settings" className="text-navy underline hover:no-underline dark:text-blue-300">
-            Settings &gt; Error reports
+            Settings &gt; Error log
           </Link>{" "}
           for a record of what you&apos;ve actually run into.
         </p>
