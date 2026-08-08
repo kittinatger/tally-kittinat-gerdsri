@@ -400,7 +400,10 @@ export const DASHBOARD_WIDGET_INFO: Record<DashboardWidgetType, { title: string;
   todayPill: { title: "Today pill", description: "Today's spending, as a compact pill" },
   pacePill: { title: "Spending pace pill", description: "This month's spend pace vs. last month, with a progress ring" },
   noSpendDays: { title: "No-spend streak", description: "Which days this week you didn't spend anything" },
-  balanceHero: { title: "Balance hero", description: "A big balance card with your wallets and quick add buttons" },
+  balanceHero: {
+    title: "Balance hero",
+    description: "A big balance card with your wallets and Deposit/Withdraw/Transfer quick actions",
+  },
   payPeriodStepper: { title: "Month progress stepper", description: "Where you are in the current month, as a stepper" },
   spendingStreak: { title: "Under-budget streak", description: "Days this week you spent less than your daily average" },
 

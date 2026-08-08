@@ -90,6 +90,7 @@ export default function Dashboard({
                       onEditBalance={() => setEditingBalance(true)}
                       onAddIncome={() => setAddingType("income")}
                       onAddExpense={() => setAddingType("expense")}
+                      onAddTransfer={() => setAddingType("transfer")}
                     />
                   </div>
                 ))}
