@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.14.0] - 2026-08-08
+
+### Added
+- A splash/welcome screen for signed-out visits, with Sign in / Create account buttons, instead of dropping straight onto the login form
+- Tapping a transaction in Activities now opens a read-only detail view (amount, category, date, wallet, tags, notes, receipt) — editing requires tapping its "Edit transaction" button, so a stray tap can no longer put you in edit mode
+- A balance card at the top of Activities showing your wallet balance, with Expense/Income/Transfer buttons that filter the list below (and a wallet-scope picker to view one wallet instead of all of them)
+- "Default wallet for Activities," in Settings > Wallets — choose which wallet (or "All wallets") the Activities balance card and list are scoped to when the page opens
+- Activities' filter bar collapsed into a single filter icon next to the search box; tapping it opens a popup with Category, Tag, Wallet, and Date range (the Type filter moved to the balance card's buttons, to avoid two controls doing the same thing)
+
+### Changed
+- Settings > Manage categories redesigned: clearer header, full-width Expense/Income/Transfer tabs, category rows shown as color/icon badge chips, and an explicit Cancel/Confirm step for deleting instead of a single button that silently arms itself
+- Sign-in and sign-up redesigned on mobile: a small icon badge instead of a centered hero, fields before the GitHub button, sign-up gained a Confirm password field and a required Terms & Conditions/Privacy Policy checkbox
+
+### Fixed
+- Fixed several glass/blur panels (date picker, category picker, the transaction form's sticky footer) rendering flat instead of frosted when opened inside a modal, since they were blurring the modal's own glass instead of the page behind it
+- Fixed the Filters popup's date-range calendar being able to render below the visible screen with no way to reach it — it now stays on-screen, flipping above its button when there isn't room below
+
 ## [0.13.0] - 2026-08-07
 
 ### Added
