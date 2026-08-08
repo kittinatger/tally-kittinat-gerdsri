@@ -11,6 +11,7 @@ import PullToRefresh from "./PullToRefresh";
 import ExpenseList from "./ExpenseList";
 import AddExpenseModal from "./AddExpenseModal";
 import EditExpenseModal from "./EditExpenseModal";
+import ExpenseDetailModal from "./ExpenseDetailModal";
 import AppHeader from "./AppHeader";
 
 function sortByDateDesc(a: Expense, b: Expense): number {
@@ -31,6 +32,7 @@ export default function ActivitiesView({
 }) {
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [addOpen, setAddOpen] = useState(false);
+  const [viewing, setViewing] = useState<Expense | null>(null);
   const [editing, setEditing] = useState<Expense | null>(null);
 
   function handleCreated(expense: Expense) {
@@ -45,6 +47,11 @@ export default function ActivitiesView({
   function handleDeleted(id: number) {
     setExpenses((prev) => prev.filter((e) => e.id !== id));
     setEditing(null);
+  }
+
+  function handleEditFromDetail() {
+    setEditing(viewing);
+    setViewing(null);
   }
 
   function handleBulkDeleted(ids: number[]) {
@@ -68,7 +75,7 @@ export default function ActivitiesView({
             <main className="flex-1 px-1 py-6 sm:px-2">
               <ExpenseList
                 expenses={expenses}
-                onSelect={setEditing}
+                onSelect={setViewing}
                 onBulkDeleted={handleBulkDeleted}
                 onBulkUpdated={handleBulkUpdated}
               />
@@ -76,6 +83,9 @@ export default function ActivitiesView({
           </PullToRefresh>
 
           {addOpen && <AddExpenseModal onClose={() => setAddOpen(false)} onCreated={handleCreated} />}
+          {viewing && (
+            <ExpenseDetailModal expense={viewing} onClose={() => setViewing(null)} onEdit={handleEditFromDetail} />
+          )}
           {editing && (
             <EditExpenseModal
               expense={editing}
