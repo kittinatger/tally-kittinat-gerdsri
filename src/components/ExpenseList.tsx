@@ -337,23 +337,6 @@ export default function ExpenseList({
         <Modal onClose={() => setFilterOpen(false)} title="Filters">
           <div className="space-y-4">
             <div>
-              <p className="mb-1.5 text-sm font-semibold text-surface-foreground-soft">Type</p>
-              <div className="flex gap-1 rounded-full bg-surface-soft p-1">
-                {(["all", "expense", "income", "transfer"] as const).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => handleTypeFilter(t)}
-                    className={`flex-1 rounded-full px-3 py-1.5 text-xs font-semibold capitalize transition sm:text-sm ${
-                      typeFilter === t ? "bg-surface text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
               <p className="mb-1.5 text-sm font-semibold text-surface-foreground-soft">Category</p>
               <FilterDropdown
                 value={categoryFilter}
