@@ -168,16 +168,8 @@ export const LIMIT_OPTIONS = [3, 5, 10, 15, 20] as const;
 // meaningful semantic red/green coloring — trend arrows, income/expense
 // comparisons).
 export const ACCENT_CAPABLE_TYPES: readonly DashboardWidgetType[] = [
-  "todaySpending",
-  "yesterdaySpending",
-  "weekSpending",
-  "monthSpending",
-  "yearSpending",
   "netWorth",
   "totalBalance",
-  "avgDailySpending",
-  "avgTransactionAmount",
-  "biggestExpense",
   "transactionCount",
   "transfersTotal",
   "walletCount",
@@ -188,13 +180,8 @@ export const ACCENT_CAPABLE_TYPES: readonly DashboardWidgetType[] = [
   "yearProgress",
   "spendPace",
   "walletUsage",
-  "last14DaysSpark",
-  "last6MonthsSpark",
   "last30DaysHeatmap",
   "last90DaysHeatmap",
-  "topCategories",
-  "topMerchants",
-  "topTags",
   "walletDistribution",
   "expensesByWallet",
   "last7Days",
@@ -405,7 +392,7 @@ export const DASHBOARD_WIDGET_INFO: Record<DashboardWidgetType, { title: string;
 // options is browsable instead of one long scroll. Categorized by subject
 // where a widget clearly has one (income/expense/wallet); cross-subject
 // comparisons and budget/goal progress get their own buckets.
-export const WIDGET_CATEGORIES = ["overview", "income", "expense", "wallet", "chart", "goals"] as const;
+export const WIDGET_CATEGORIES = ["overview", "income", "expense", "wallet", "chart", "budget", "goals"] as const;
 export type WidgetCategory = (typeof WIDGET_CATEGORIES)[number];
 
 export const WIDGET_CATEGORY_LABELS: Record<WidgetCategory, string> = {
@@ -414,7 +401,8 @@ export const WIDGET_CATEGORY_LABELS: Record<WidgetCategory, string> = {
   expense: "Expense",
   wallet: "Wallet",
   chart: "Charts",
-  goals: "Budgets & goals",
+  budget: "Budget",
+  goals: "Goals",
 };
 
 export const WIDGET_CATEGORY_OF: Record<DashboardWidgetType, WidgetCategory> = {
@@ -487,8 +475,8 @@ export const WIDGET_CATEGORY_OF: Record<DashboardWidgetType, WidgetCategory> = {
   incomeVsExpenseBars: "chart",
   typeDonut: "chart",
 
-  savingsRate: "goals",
-  budgetOverview: "goals",
+  savingsRate: "budget",
+  budgetOverview: "budget",
   savingsGoals: "goals",
 };
 

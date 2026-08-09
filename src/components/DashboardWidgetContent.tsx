@@ -16,15 +16,12 @@ import CategoryOverview from "./CategoryOverview";
 import WalletsWidget from "./WalletsWidget";
 import RecentTransactionsWidget from "./RecentTransactionsWidget";
 import StatWidget from "./StatWidget";
-import TrendStatWidget from "./TrendStatWidget";
 import ProgressRingWidget from "./ProgressRingWidget";
 import GaugeWidget from "./GaugeWidget";
-import SparklineWidget from "./SparklineWidget";
 import DonutChartWidget from "./DonutChartWidget";
 import HeatmapWidget from "./HeatmapWidget";
 import ComparisonBarsWidget from "./ComparisonBarsWidget";
 import StackedBarWidget from "./StackedBarWidget";
-import LeaderboardWidget from "./LeaderboardWidget";
 import ListStatWidget from "./ListStatWidget";
 import MiniBarChartWidget from "./MiniBarChartWidget";
 import ActionStatWidget from "./ActionStatWidget";
@@ -40,17 +37,12 @@ import SavingsGoalsWidget from "./SavingsGoalsWidget";
 import IncomeStatCard from "./IncomeStatCard";
 import IncomeAreaSparkWidget from "./IncomeAreaSparkWidget";
 import IncomeSourcesRankedWidget from "./IncomeSourcesRankedWidget";
+import ExpenseStatCard from "./ExpenseStatCard";
+import ExpenseAreaSparkWidget from "./ExpenseAreaSparkWidget";
+import ExpenseRankedWidget from "./ExpenseRankedWidget";
+import ExpenseLeaderboardWidget from "./ExpenseLeaderboardWidget";
 
 function noop() {}
-
-function IncomeIcon() {
-  return (
-    <svg viewBox="0 0 30.0684 29.5277" fill="currentColor" className="h-full w-full">
-      <path d="M22.041 4.28789L20.4382 5.89177L9.0381 5.89177C6.82131 5.89177 5.57131 7.14177 5.57131 9.35856L5.57131 20.9894C5.57131 23.216 6.82131 24.466 9.0381 24.466L20.669 24.466C22.8858 24.466 24.1358 23.216 24.1358 20.9894L24.1358 9.66867L25.7512 8.05092C25.8276 8.4579 25.8643 8.89852 25.8643 9.36833L25.8643 20.9894C25.8643 24.3293 24.0088 26.1945 20.669 26.1945L9.0381 26.1945C5.69826 26.1945 3.84279 24.3293 3.84279 20.9894L3.84279 9.36833C3.84279 6.02848 5.69826 4.16325 9.0381 4.16325L20.669 4.16325C21.1602 4.16325 21.6193 4.2036 22.041 4.28789Z" />
-      <path d="M12.4463 17.9133L14.7119 16.9074L26.46 5.15934L24.9072 3.61638L13.169 15.3644L12.1045 17.5617C12.0069 17.7472 12.2412 18.0011 12.4463 17.9133ZM27.3487 4.2902L28.1983 3.4113C28.6084 2.99138 28.6182 2.45427 28.2178 2.05388L27.9737 1.80973C27.6026 1.43864 27.0459 1.48747 26.6553 1.87809L25.7959 2.7277Z" />
-    </svg>
-  );
-}
 
 function RemainingIcon() {
   return (
@@ -201,15 +193,7 @@ export default function DashboardWidgetContent({
     case "incomeCard":
       return <IncomeStatCard label="Income" value={formatCurrency(monthIncome, currency)} sublabel="This month — tap to add" onClick={onAddIncome ?? noop} />;
     case "expensesCard":
-      return (
-        <ActionStatWidget
-          label="Expenses"
-          value={formatCurrency(monthSpent, currency)}
-          icon={<IncomeIcon />}
-          onClick={onAddExpense ?? noop}
-          valueClassName="text-red-600 dark:text-red-400"
-        />
-      );
+      return <ExpenseStatCard label="Expenses" value={formatCurrency(monthSpent, currency)} sublabel="This month — tap to add" onClick={onAddExpense ?? noop} />;
     case "remainingCard":
       return (
         <ActionStatWidget
@@ -223,39 +207,20 @@ export default function DashboardWidgetContent({
 
     // ---- Big numbers ----
     case "todaySpending":
-      return (
-        <StatWidget
-          label="Today's spending"
-          value={formatCurrency(sum(expenses.filter((e) => e.type === "expense" && e.date === today)), currency)}
-          valueClassName={accentText}
-        />
-      );
+      return <ExpenseStatCard label="Today's spending" value={formatCurrency(sum(expenses.filter((e) => e.type === "expense" && e.date === today)), currency)} />;
     case "yesterdaySpending": {
       const y = daysAgoKey(1);
-      return (
-        <StatWidget
-          label="Yesterday's spending"
-          value={formatCurrency(sum(expenses.filter((e) => e.type === "expense" && e.date === y)), currency)}
-          valueClassName={accentText}
-        />
-      );
+      return <ExpenseStatCard label="Yesterday's spending" value={formatCurrency(sum(expenses.filter((e) => e.type === "expense" && e.date === y)), currency)} />;
     }
     case "weekSpending":
-      return (
-        <StatWidget
-          label="This week's spending"
-          value={formatCurrency(sum(expenses.filter((e) => e.type === "expense" && e.date >= weekStart)), currency)}
-          valueClassName={accentText}
-        />
-      );
+      return <ExpenseStatCard label="This week's spending" value={formatCurrency(sum(expenses.filter((e) => e.type === "expense" && e.date >= weekStart)), currency)} />;
     case "monthSpending":
-      return <StatWidget label="This month's spending" value={formatCurrency(monthSpent, currency)} valueClassName={accentText} />;
+      return <ExpenseStatCard label="This month's spending" value={formatCurrency(monthSpent, currency)} />;
     case "yearSpending":
       return (
-        <StatWidget
+        <ExpenseStatCard
           label="This year's spending"
           value={formatCurrency(sum(expenses.filter((e) => e.type === "expense" && e.date.startsWith(thisYear))), currency)}
-          valueClassName={accentText}
         />
       );
     case "todayIncome":
@@ -292,21 +257,19 @@ export default function DashboardWidgetContent({
     case "avgDailySpending": {
       const dayOfMonth = Number(today.slice(8, 10));
       return (
-        <StatWidget
+        <ExpenseStatCard
           label="Average daily spending"
           value={formatCurrency(monthSpent / Math.max(1, dayOfMonth), currency)}
           sublabel="This month"
-          valueClassName={accentText}
         />
       );
     }
     case "avgTransactionAmount":
       return (
-        <StatWidget
+        <ExpenseStatCard
           label="Average transaction"
           value={formatCurrency(monthExpenses.length > 0 ? monthSpent / monthExpenses.length : 0, currency)}
           sublabel="This month"
-          valueClassName={accentText}
         />
       );
     case "avgIncomeAmount":
@@ -320,11 +283,10 @@ export default function DashboardWidgetContent({
     case "biggestExpense": {
       const biggest = monthExpenses.reduce<Expense | null>((max, e) => (!max || e.amount > max.amount ? e : max), null);
       return (
-        <StatWidget
+        <ExpenseStatCard
           label="Biggest expense"
           value={biggest ? formatCurrency(biggest.amount, currency) : "—"}
           sublabel={biggest ? biggest.merchant : "No expenses this month"}
-          valueClassName={accentText}
         />
       );
     }
@@ -365,11 +327,11 @@ export default function DashboardWidgetContent({
       const lastMonthSpent = sum(expenses.filter((e) => e.type === "expense" && monthKey(e.date) === lastMonthKey));
       const pct = lastMonthSpent > 0 ? ((monthSpent - lastMonthSpent) / lastMonthSpent) * 100 : 0;
       return (
-        <TrendStatWidget
+        <ExpenseStatCard
           label="Month vs last month"
-          value={`${pct >= 0 ? "+" : ""}${pct.toFixed(0)}%`}
-          deltaLabel={`${formatCurrency(monthSpent, currency)} vs ${formatCurrency(lastMonthSpent, currency)}`}
-          direction={pct > 1 ? "up" : pct < -1 ? "down" : "flat"}
+          value={formatCurrency(monthSpent, currency)}
+          sublabel={`vs ${formatCurrency(lastMonthSpent, currency)} last month`}
+          trend={{ label: `${pct >= 0 ? "+" : ""}${pct.toFixed(0)}%`, positive: pct > 1 }}
         />
       );
     }
@@ -390,11 +352,11 @@ export default function DashboardWidgetContent({
       const lastWeekSpent = sum(expenses.filter((e) => e.type === "expense" && e.date >= lastWeekStart && e.date < lastWeekEnd));
       const pct = lastWeekSpent > 0 ? ((thisWeekSpent - lastWeekSpent) / lastWeekSpent) * 100 : 0;
       return (
-        <TrendStatWidget
+        <ExpenseStatCard
           label="Week vs last week"
-          value={`${pct >= 0 ? "+" : ""}${pct.toFixed(0)}%`}
-          deltaLabel={`${formatCurrency(thisWeekSpent, currency)} vs ${formatCurrency(lastWeekSpent, currency)}`}
-          direction={pct > 1 ? "up" : pct < -1 ? "down" : "flat"}
+          value={formatCurrency(thisWeekSpent, currency)}
+          sublabel={`vs ${formatCurrency(lastWeekSpent, currency)} last week`}
+          trend={{ label: `${pct >= 0 ? "+" : ""}${pct.toFixed(0)}%`, positive: pct > 1 }}
         />
       );
     }
@@ -403,11 +365,11 @@ export default function DashboardWidgetContent({
       const lastYearSpent = sum(expenses.filter((e) => e.type === "expense" && e.date.startsWith(lastYear)));
       const pct = lastYearSpent > 0 ? ((thisYearSpent - lastYearSpent) / lastYearSpent) * 100 : 0;
       return (
-        <TrendStatWidget
+        <ExpenseStatCard
           label="Year over year"
-          value={`${pct >= 0 ? "+" : ""}${pct.toFixed(0)}%`}
-          deltaLabel={`${formatCurrency(thisYearSpent, currency)} vs ${formatCurrency(lastYearSpent, currency)}`}
-          direction={pct > 1 ? "up" : pct < -1 ? "down" : "flat"}
+          value={formatCurrency(thisYearSpent, currency)}
+          sublabel={`vs ${formatCurrency(lastYearSpent, currency)} last year`}
+          trend={{ label: `${pct >= 0 ? "+" : ""}${pct.toFixed(0)}%`, positive: pct > 1 }}
         />
       );
     }
@@ -459,7 +421,7 @@ export default function DashboardWidgetContent({
           label="Spending pace"
           percent={pacePct}
           sublabel={pacePct > expectedPct + 5 ? "Ahead of last month's pace" : pacePct < expectedPct - 5 ? "Behind last month's pace" : "On pace"}
-          needleClassName={accentText}
+          needleClassName={widget.accent ? accentText : "text-rose-500 dark:text-rose-400"}
         />
       );
     }
@@ -481,7 +443,7 @@ export default function DashboardWidgetContent({
     // ---- Sparklines ----
     case "last14DaysSpark": {
       const points = Array.from({ length: 14 }, (_, i) => sum(expenses.filter((e) => e.type === "expense" && e.date === daysAgoKey(13 - i))));
-      return <SparklineWidget label="14-day spending trend" value={formatCurrency(points.reduce((a, b) => a + b, 0), currency)} points={points} lineClassName={accentText} />;
+      return <ExpenseAreaSparkWidget label="14-day spending trend" value={formatCurrency(points.reduce((a, b) => a + b, 0), currency)} points={points} />;
     }
     case "last14DaysIncomeSpark": {
       const points = Array.from({ length: 14 }, (_, i) => sum(expenses.filter((e) => e.type === "income" && e.date === daysAgoKey(13 - i))));
@@ -492,7 +454,7 @@ export default function DashboardWidgetContent({
         const mk = monthsAgoKey(5 - i);
         return sum(expenses.filter((e) => e.type === "expense" && monthKey(e.date) === mk));
       });
-      return <SparklineWidget label="6-month spending trend" value={formatCurrency(monthSpent, currency)} points={points} lineClassName={accentText} />;
+      return <ExpenseAreaSparkWidget label="6-month spending trend" value={formatCurrency(monthSpent, currency)} points={points} />;
     }
 
     // ---- Donuts ----
@@ -530,13 +492,13 @@ export default function DashboardWidgetContent({
       const values = Array.from({ length: 30 }, (_, i) => sum(expenses.filter((e) => e.type === "expense" && e.date === daysAgoKey(29 - i))));
       const max = Math.max(...values, 1);
       const cells = values.map((v, i) => ({ date: daysAgoKey(29 - i), intensity: v / max }));
-      return <HeatmapWidget title="30-day activity" cells={cells} colorClassName={accentBg} />;
+      return <HeatmapWidget title="30-day activity" cells={cells} colorClassName={widget.accent ? accentBg : "bg-rose-500"} />;
     }
     case "last90DaysHeatmap": {
       const values = Array.from({ length: 90 }, (_, i) => sum(expenses.filter((e) => e.type === "expense" && e.date === daysAgoKey(89 - i))));
       const max = Math.max(...values, 1);
       const cells = values.map((v, i) => ({ date: daysAgoKey(89 - i), intensity: v / max }));
-      return <HeatmapWidget title="90-day activity" cells={cells} colorClassName={accentBg} />;
+      return <HeatmapWidget title="90-day activity" cells={cells} colorClassName={widget.accent ? accentBg : "bg-rose-500"} />;
     }
 
     // ---- Stacked bars ----
@@ -587,15 +549,15 @@ export default function DashboardWidgetContent({
       const items = [...groupSum(monthExpenses, (e) => e.category).entries()]
         .sort((a, b) => b[1] - a[1])
         .slice(0, widget.limit ?? 5)
-        .map(([label, value]) => ({ label, value, displayValue: formatCurrency(value, currency) }));
-      return <ListStatWidget title="Top categories" items={items} barClassName={accentBg} />;
+        .map(([label, value], i) => ({ label, value, displayValue: formatCurrency(value, currency), colorClassName: accentBgClasses(colorFor(i)) }));
+      return <ExpenseRankedWidget title="Top categories" items={items} />;
     }
     case "topMerchants": {
       const items = [...groupSum(monthExpenses, (e) => e.merchant).entries()]
         .sort((a, b) => b[1] - a[1])
         .slice(0, widget.limit ?? 5)
-        .map(([label, value]) => ({ label, value, displayValue: formatCurrency(value, currency) }));
-      return <ListStatWidget title="Top merchants" items={items} barClassName={accentBg} />;
+        .map(([label, value], i) => ({ label, value, displayValue: formatCurrency(value, currency), colorClassName: accentBgClasses(colorFor(i)) }));
+      return <ExpenseRankedWidget title="Top merchants" items={items} />;
     }
     case "topTags": {
       const counts = new Map<string, number>();
@@ -603,8 +565,8 @@ export default function DashboardWidgetContent({
       const items = [...counts.entries()]
         .sort((a, b) => b[1] - a[1])
         .slice(0, widget.limit ?? 5)
-        .map(([label, value]) => ({ label: `#${label}`, value, displayValue: String(value) }));
-      return <ListStatWidget title="Top tags" items={items} barClassName={accentBg} />;
+        .map(([label, value], i) => ({ label: `#${label}`, value, displayValue: String(value), colorClassName: accentBgClasses(colorFor(i)) }));
+      return <ExpenseRankedWidget title="Top tags" items={items} />;
     }
     case "topIncomeSources": {
       const items = [...groupSum(monthIncomeItems, (e) => e.category).entries()]
@@ -630,14 +592,14 @@ export default function DashboardWidgetContent({
         .sort((a, b) => b[1] - a[1])
         .slice(0, widget.limit ?? 3)
         .map(([label, value]) => ({ label, displayValue: formatCurrency(value, currency) }));
-      return <LeaderboardWidget title="Merchant leaderboard" items={items} />;
+      return <ExpenseLeaderboardWidget title="Merchant leaderboard" items={items} />;
     }
     case "topCategoriesLeaderboard": {
       const items = [...groupSum(monthExpenses, (e) => e.category).entries()]
         .sort((a, b) => b[1] - a[1])
         .slice(0, widget.limit ?? 3)
         .map(([label, value]) => ({ label, displayValue: formatCurrency(value, currency) }));
-      return <LeaderboardWidget title="Category leaderboard" items={items} />;
+      return <ExpenseLeaderboardWidget title="Category leaderboard" items={items} />;
     }
 
     // ---- Bar chart ----
@@ -646,7 +608,7 @@ export default function DashboardWidgetContent({
         const key = daysAgoKey(6 - i);
         return { label: weekdayLabel(key), value: sum(expenses.filter((e) => e.type === "expense" && e.date === key)) };
       });
-      return <MiniBarChartWidget title="Last 7 days" bars={bars} barClassName={accentBg} />;
+      return <MiniBarChartWidget title="Last 7 days" bars={bars} barClassName={widget.accent ? accentBg : "bg-rose-500"} />;
     }
 
     // ---- Creative widgets ----
@@ -700,7 +662,7 @@ export default function DashboardWidgetContent({
           icon={<PillIcon />}
           label="Today's spending"
           value={formatCurrency(sum(expenses.filter((e) => e.type === "expense" && e.date === today)), currency)}
-          iconBgClassName={widget.accent ? `${accentBg} text-white` : undefined}
+          iconBgClassName={`${widget.accent ? accentBg : "bg-rose-500"} text-white`}
         />
       );
     case "pacePill": {
@@ -731,7 +693,7 @@ export default function DashboardWidgetContent({
           value={`${count}/7`}
           label="No-spend days this week"
           days={days}
-          cardClassName={widget.accent ? `${accentBg} text-white` : undefined}
+          cardClassName={`${widget.accent ? accentBg : "bg-rose-500"} text-white`}
         />
       );
     }
@@ -785,7 +747,7 @@ export default function DashboardWidgetContent({
           value={`${streak} days`}
           label="Under-average spending this week"
           bars={days}
-          cardClassName={widget.accent ? `${accentBg} text-white` : undefined}
+          cardClassName={`${widget.accent ? accentBg : "bg-rose-500"} text-white`}
         />
       );
     }
