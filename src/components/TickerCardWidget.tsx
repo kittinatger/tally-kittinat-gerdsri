@@ -5,7 +5,7 @@ export default function TickerCardWidget({
   deltaLabel,
   deltaPositive,
   points,
-  accentClassName = "text-emerald-600 dark:text-emerald-400",
+  accentClassName = "text-sky-600 dark:text-sky-400",
 }: {
   icon: React.ReactNode;
   name: string;

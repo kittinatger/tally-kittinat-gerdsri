@@ -168,8 +168,6 @@ export const LIMIT_OPTIONS = [3, 5, 10, 15, 20] as const;
 // meaningful semantic red/green coloring — trend arrows, income/expense
 // comparisons).
 export const ACCENT_CAPABLE_TYPES: readonly DashboardWidgetType[] = [
-  "netWorth",
-  "totalBalance",
   "transactionCount",
   "transfersTotal",
   "walletCount",
@@ -182,8 +180,6 @@ export const ACCENT_CAPABLE_TYPES: readonly DashboardWidgetType[] = [
   "walletUsage",
   "last30DaysHeatmap",
   "last90DaysHeatmap",
-  "walletDistribution",
-  "expensesByWallet",
   "last7Days",
   "netWorthTicker",
   "walletTicker",

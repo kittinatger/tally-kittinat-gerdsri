@@ -22,7 +22,6 @@ import DonutChartWidget from "./DonutChartWidget";
 import HeatmapWidget from "./HeatmapWidget";
 import ComparisonBarsWidget from "./ComparisonBarsWidget";
 import StackedBarWidget from "./StackedBarWidget";
-import ListStatWidget from "./ListStatWidget";
 import MiniBarChartWidget from "./MiniBarChartWidget";
 import ActionStatWidget from "./ActionStatWidget";
 import TickerCardWidget from "./TickerCardWidget";
@@ -41,6 +40,8 @@ import ExpenseStatCard from "./ExpenseStatCard";
 import ExpenseAreaSparkWidget from "./ExpenseAreaSparkWidget";
 import ExpenseRankedWidget from "./ExpenseRankedWidget";
 import ExpenseLeaderboardWidget from "./ExpenseLeaderboardWidget";
+import WalletStatCard from "./WalletStatCard";
+import WalletRankedWidget from "./WalletRankedWidget";
 
 function noop() {}
 
@@ -235,22 +236,14 @@ export default function DashboardWidgetContent({
         />
       );
     case "netWorth":
-      return (
-        <StatWidget
-          label="Net worth"
-          value={formatCurrency(convertedNetWorth ?? remaining, currency)}
-          sublabel="All wallets combined"
-          valueClassName={accentText}
-        />
-      );
+      return <WalletStatCard label="Net worth" value={formatCurrency(convertedNetWorth ?? remaining, currency)} sublabel="All wallets combined" />;
     case "totalBalance": {
       const total = wallets.reduce((s, w) => s + w.balance, 0);
       return (
-        <StatWidget
+        <WalletStatCard
           label="Total balance"
           value={formatCurrency(total, currency)}
           sublabel={`Across ${wallets.length} active wallet${wallets.length === 1 ? "" : "s"}`}
-          valueClassName={accentText}
         />
       );
     }
@@ -435,7 +428,7 @@ export default function DashboardWidgetContent({
           label={`${wallet.name} share`}
           percent={share}
           sublabel={formatCurrency(wallet.balance, currency)}
-          needleClassName={accentText}
+          needleClassName={widget.accent ? accentText : "text-sky-500 dark:text-sky-400"}
         />
       );
     }
@@ -576,14 +569,14 @@ export default function DashboardWidgetContent({
       return <IncomeSourcesRankedWidget title="Top income sources" items={items} />;
     }
     case "walletDistribution": {
-      const items = wallets.map((w) => ({ label: w.name, value: Math.max(w.balance, 0), displayValue: formatCurrency(w.balance, currency) }));
-      return <ListStatWidget title="Wallet distribution" items={items} barClassName={accentBg} />;
+      const items = wallets.map((w, i) => ({ label: w.name, value: Math.max(w.balance, 0), displayValue: formatCurrency(w.balance, currency), colorClassName: accentBgClasses(colorFor(i)) }));
+      return <WalletRankedWidget title="Wallet distribution" items={items} />;
     }
     case "expensesByWallet": {
       const items = [...groupSum(monthExpenses, (e) => e.walletName ?? "Unassigned").entries()]
         .sort((a, b) => b[1] - a[1])
-        .map(([label, value]) => ({ label, value, displayValue: formatCurrency(value, currency) }));
-      return <ListStatWidget title="Spending by wallet" items={items} barClassName={accentBg} />;
+        .map(([label, value], i) => ({ label, value, displayValue: formatCurrency(value, currency), colorClassName: accentBgClasses(colorFor(i)) }));
+      return <WalletRankedWidget title="Spending by wallet" items={items} />;
     }
 
     // ---- Leaderboards ----
