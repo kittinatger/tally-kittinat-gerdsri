@@ -22,7 +22,11 @@ export type CategoriesByType = {
   transfer: string[];
 };
 
-const MODEL = "gemini-2.5-flash";
+// A stable alias (rather than a pinned version) so this doesn't go stale the
+// same way "gemini-2.5-flash" did — that model was quietly retired for new
+// API keys/projects while staying listed in the models API, which is what
+// broke scanning/voice entry for weeks with no code change on our end.
+const MODEL = "gemini-flash-latest";
 
 function getClient(): GoogleGenAI {
   const apiKey = process.env.GEMINI_API_KEY;
