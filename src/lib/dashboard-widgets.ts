@@ -408,6 +408,97 @@ export const DASHBOARD_WIDGET_INFO: Record<DashboardWidgetType, { title: string;
   savingsGoals: { title: "Savings goals", description: "Progress toward each of your savings goals" },
 };
 
+// Groups the catalog above for the "Add a widget" picker, so a list of 60+
+// options is browsable instead of one long scroll. Categorized by subject
+// where a widget clearly has one (income/expense/wallet); cross-subject
+// comparisons and budget/goal progress get their own buckets.
+export const WIDGET_CATEGORIES = ["overview", "income", "expense", "wallet", "chart", "goals"] as const;
+export type WidgetCategory = (typeof WIDGET_CATEGORIES)[number];
+
+export const WIDGET_CATEGORY_LABELS: Record<WidgetCategory, string> = {
+  overview: "Overview",
+  income: "Income",
+  expense: "Expense",
+  wallet: "Wallet",
+  chart: "Charts",
+  goals: "Budgets & goals",
+};
+
+export const WIDGET_CATEGORY_OF: Record<DashboardWidgetType, WidgetCategory> = {
+  summary: "overview",
+  categoryOverview: "overview",
+  wallets: "overview",
+  recentTransactions: "overview",
+  remainingCard: "overview",
+  monthProgress: "overview",
+  yearProgress: "overview",
+  payPeriodStepper: "overview",
+  transactionCount: "overview",
+  categoryCount: "overview",
+  tagCount: "overview",
+  transfersTotal: "overview",
+  walletCount: "overview",
+
+  incomeCard: "income",
+  todayIncome: "income",
+  monthIncome: "income",
+  yearIncome: "income",
+  avgIncomeAmount: "income",
+  biggestIncome: "income",
+  incomeComparison: "income",
+  last14DaysIncomeSpark: "income",
+  topIncomeSources: "income",
+
+  expensesCard: "expense",
+  todaySpending: "expense",
+  yesterdaySpending: "expense",
+  weekSpending: "expense",
+  monthSpending: "expense",
+  yearSpending: "expense",
+  avgDailySpending: "expense",
+  avgTransactionAmount: "expense",
+  biggestExpense: "expense",
+  monthComparison: "expense",
+  weekComparison: "expense",
+  yearOverYear: "expense",
+  spendPace: "expense",
+  last14DaysSpark: "expense",
+  last6MonthsSpark: "expense",
+  categoryDonut: "expense",
+  last30DaysHeatmap: "expense",
+  last90DaysHeatmap: "expense",
+  categoryShareBar: "expense",
+  topCategories: "expense",
+  topMerchants: "expense",
+  topTags: "expense",
+  topMerchantsLeaderboard: "expense",
+  topCategoriesLeaderboard: "expense",
+  last7Days: "expense",
+  todayPill: "expense",
+  pacePill: "expense",
+  noSpendDays: "expense",
+  spendingStreak: "expense",
+
+  netWorth: "wallet",
+  totalBalance: "wallet",
+  walletUsage: "wallet",
+  walletDonut: "wallet",
+  walletShareBar: "wallet",
+  walletDistribution: "wallet",
+  expensesByWallet: "wallet",
+  netWorthTicker: "wallet",
+  walletTicker: "wallet",
+  balanceHero: "wallet",
+  cashVsDigitalBars: "wallet",
+
+  incomeVsExpenseBars: "chart",
+  typeDonut: "chart",
+
+  savingsRate: "goals",
+  budgetOverview: "goals",
+  savingsGoals: "goals",
+};
+
 function makeId(type: DashboardWidgetType): string {
   return `${type}-${Math.random().toString(36).slice(2, 9)}`;
 }

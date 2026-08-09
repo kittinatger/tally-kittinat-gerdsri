@@ -16,10 +16,14 @@ import {
   LIMIT_OPTIONS,
   ACCENT_CAPABLE_TYPES,
   LIMIT_CAPABLE_TYPES,
+  WIDGET_CATEGORIES,
+  WIDGET_CATEGORY_LABELS,
+  WIDGET_CATEGORY_OF,
   newWidgetInstance,
   type DashboardWidgetInstance,
   type SummaryCardId,
   type WidgetAccent,
+  type WidgetCategory,
 } from "@/lib/dashboard-widgets";
 import { dotClasses } from "@/lib/category-styles";
 import DashboardWidgetContent from "./DashboardWidgetContent";
@@ -118,6 +122,7 @@ export default function DashboardWidgetsSettings({
   const tileRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
+  const [addCategory, setAddCategory] = useState<WidgetCategory | "all">("all");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -415,25 +420,55 @@ export default function DashboardWidgetsSettings({
 
       {addSheetOpen && (
         <Modal onClose={() => setAddSheetOpen(false)} title="Add a widget">
-          <div className="space-y-1.5">
-            {DASHBOARD_WIDGET_TYPES.map((type) => (
+          <div className="-mx-1 mb-3 flex gap-1.5 overflow-x-auto px-1 pb-1">
+            <button
+              type="button"
+              onClick={() => setAddCategory("all")}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-semibold transition ${
+                addCategory === "all"
+                  ? "bg-navy text-white"
+                  : "bg-bg-soft text-ink-soft hover:text-foreground"
+              }`}
+            >
+              All
+            </button>
+            {WIDGET_CATEGORIES.map((cat) => (
               <button
-                key={type}
+                key={cat}
                 type="button"
-                onClick={() => addWidget(type)}
-                className="flex w-full items-center gap-3 rounded-card border border-surface-line bg-surface-soft px-3.5 py-3 text-left transition hover:border-surface-accent"
+                onClick={() => setAddCategory(cat)}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-semibold transition ${
+                  addCategory === cat
+                    ? "bg-navy text-white"
+                    : "bg-bg-soft text-ink-soft hover:text-foreground"
+                }`}
               >
-                <WidgetThumbnail type={type} expenses={expenses} categories={categories} remaining={remaining} />
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold text-surface-foreground">
-                    {DASHBOARD_WIDGET_INFO[type].title}
-                  </span>
-                  <span className="block truncate text-xs text-surface-foreground-soft">
-                    {DASHBOARD_WIDGET_INFO[type].description}
-                  </span>
-                </span>
+                {WIDGET_CATEGORY_LABELS[cat]}
               </button>
             ))}
+          </div>
+
+          <div className="space-y-1.5">
+            {DASHBOARD_WIDGET_TYPES.filter((type) => addCategory === "all" || WIDGET_CATEGORY_OF[type] === addCategory).map(
+              (type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => addWidget(type)}
+                  className="flex w-full items-center gap-3 rounded-card border border-surface-line bg-surface-soft px-3.5 py-3 text-left transition hover:border-surface-accent"
+                >
+                  <WidgetThumbnail type={type} expenses={expenses} categories={categories} remaining={remaining} />
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-semibold text-surface-foreground">
+                      {DASHBOARD_WIDGET_INFO[type].title}
+                    </span>
+                    <span className="block truncate text-xs text-surface-foreground-soft">
+                      {DASHBOARD_WIDGET_INFO[type].description}
+                    </span>
+                  </span>
+                </button>
+              ),
+            )}
           </div>
         </Modal>
       )}
