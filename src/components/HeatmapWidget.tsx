@@ -9,7 +9,7 @@ export default function HeatmapWidget({
   colorClassName?: string;
 }) {
   return (
-    <div className="rounded-card border border-surface-line bg-surface p-4">
+    <div className="widget-gradient-card rounded-card border border-surface-line p-4">
       <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">{title}</p>
       <div className="grid gap-1" style={{ gridTemplateColumns: "repeat(15, minmax(0, 1fr))" }}>
         {cells.map((c) => (

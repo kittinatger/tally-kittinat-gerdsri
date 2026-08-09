@@ -12,7 +12,7 @@ export default function MiniBarChartWidget({
   const max = Math.max(...bars.map((b) => b.value), 1);
 
   return (
-    <div className="rounded-card border border-surface-line bg-surface p-4">
+    <div className="widget-gradient-card rounded-card border border-surface-line p-4">
       <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">{title}</p>
       <div className="flex h-20 items-end gap-1">
         {bars.map((b, i) => (

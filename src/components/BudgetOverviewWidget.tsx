@@ -9,7 +9,7 @@ export type BudgetItem = {
 
 export default function BudgetOverviewWidget({ items }: { items: BudgetItem[] }) {
   return (
-    <div className="rounded-card border border-surface-line bg-surface p-4">
+    <div className="widget-gradient-card rounded-card border border-surface-line p-4">
       <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">Budgets</p>
       {items.length === 0 ? (
         <p className="text-sm text-surface-foreground-soft">No budgets set yet — add one in Settings.</p>

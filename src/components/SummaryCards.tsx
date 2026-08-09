@@ -33,7 +33,7 @@ export default function SummaryCards({
       {visible.includes("income") && (
         <button
           onClick={onAddIncome}
-          className="rounded-card border border-surface-line bg-surface p-4 text-left transition hover:border-surface-accent"
+          className="rounded-card border border-emerald-200/70 bg-gradient-to-br from-emerald-50 via-surface to-surface p-4 text-left shadow-sm transition hover:border-emerald-400 dark:border-emerald-900/50 dark:from-emerald-950/40 dark:via-surface dark:to-surface dark:hover:border-emerald-600"
         >
           <div className="flex items-center justify-between gap-1">
             <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">Income</p>
@@ -50,7 +50,7 @@ export default function SummaryCards({
       {visible.includes("expenses") && (
         <button
           onClick={onAddExpense}
-          className="rounded-card border border-surface-line bg-surface p-4 text-left transition hover:border-surface-accent"
+          className="rounded-card border border-rose-200/70 bg-gradient-to-br from-rose-50 via-surface to-surface p-4 text-left shadow-sm transition hover:border-rose-400 dark:border-rose-900/50 dark:from-rose-950/40 dark:via-surface dark:to-surface dark:hover:border-rose-600"
         >
           <div className="flex items-center justify-between gap-1">
             <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">Expenses</p>
@@ -67,7 +67,7 @@ export default function SummaryCards({
       {visible.includes("remaining") && (
         <button
           onClick={onEditBalance}
-          className="rounded-card border border-surface-line bg-surface p-4 text-left transition hover:border-surface-accent"
+          className="widget-gradient-card rounded-card border border-surface-line p-4 text-left transition hover:border-surface-accent"
         >
           <div className="flex items-center justify-between gap-1">
             <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">Remaining</p>

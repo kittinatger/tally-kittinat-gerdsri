@@ -15,7 +15,7 @@ export default function GaugeWidget({
   const circumference = Math.PI * radius;
 
   return (
-    <div className="rounded-card border border-surface-line bg-surface p-4">
+    <div className="widget-gradient-card rounded-card border border-surface-line p-4">
       <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">{label}</p>
       <svg viewBox="0 0 84 46" className="mx-auto h-16 w-full max-w-[140px]">
         <path

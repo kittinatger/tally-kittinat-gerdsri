@@ -13,7 +13,7 @@ export default function DonutChartWidget({ title, segments }: { title: string; s
   }, []);
 
   return (
-    <div className="rounded-card border border-surface-line bg-surface p-4">
+    <div className="widget-gradient-card rounded-card border border-surface-line p-4">
       <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">{title}</p>
       {total <= 0 ? (
         <p className="text-sm text-surface-foreground-soft">No data yet.</p>

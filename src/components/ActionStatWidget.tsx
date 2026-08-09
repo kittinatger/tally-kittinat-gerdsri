@@ -14,7 +14,7 @@ export default function ActionStatWidget({
   return (
     <button
       onClick={onClick}
-      className="w-full rounded-card border border-surface-line bg-surface p-4 text-left transition hover:border-surface-accent"
+      className="widget-gradient-card w-full rounded-card border border-surface-line p-4 text-left transition hover:border-surface-accent"
     >
       <div className="flex items-center justify-between gap-1">
         <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">{label}</p>

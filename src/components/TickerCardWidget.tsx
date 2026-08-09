@@ -25,7 +25,7 @@ export default function TickerCardWidget({
   const avgY = height - ((points.reduce((a, b) => a + b, 0) / points.length - min) / range) * height;
 
   return (
-    <div className="rounded-card border border-surface-line bg-surface p-4 text-surface-foreground">
+    <div className="widget-gradient-card rounded-card border border-surface-line p-4 text-surface-foreground">
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg-soft">{icon}</span>

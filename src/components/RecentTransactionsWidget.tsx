@@ -44,7 +44,7 @@ export default function RecentTransactionsWidget({ expenses, limit = 5 }: { expe
   const recent = expenses.slice(0, limit);
 
   return (
-    <div className="rounded-card border border-surface-line bg-surface p-4">
+    <div className="widget-gradient-card rounded-card border border-surface-line p-4">
       <div className="mb-3 flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">
           Recent transactions

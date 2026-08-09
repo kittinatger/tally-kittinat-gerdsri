@@ -30,7 +30,7 @@ export default function WalletsWidget() {
   if (wallets.length === 0) return null;
 
   return (
-    <div className="rounded-card border border-surface-line bg-surface p-4">
+    <div className="widget-gradient-card rounded-card border border-surface-line p-4">
       <div className="mb-3 flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">Wallets</p>
         <Link href="/settings" className="text-xs font-semibold text-surface-accent hover:underline">

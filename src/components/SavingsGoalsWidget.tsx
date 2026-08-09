@@ -9,7 +9,7 @@ export type SavingsGoalItem = {
 
 export default function SavingsGoalsWidget({ items }: { items: SavingsGoalItem[] }) {
   return (
-    <div className="rounded-card border border-surface-line bg-surface p-4">
+    <div className="widget-gradient-card rounded-card border border-surface-line p-4">
       <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">Savings goals</p>
       {items.length === 0 ? (
         <p className="text-sm text-surface-foreground-soft">No savings goals yet — add one in Settings.</p>

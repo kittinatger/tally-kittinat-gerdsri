@@ -17,7 +17,7 @@ export default function ProgressRingWidget({
   const offset = circumference * (1 - clamped / 100);
 
   return (
-    <div className="rounded-card border border-surface-line bg-surface p-4">
+    <div className="widget-gradient-card rounded-card border border-surface-line p-4">
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">{label}</p>
       <div className="flex items-center gap-3">
         <svg viewBox="0 0 64 64" className="h-16 w-16 shrink-0 -rotate-90">
