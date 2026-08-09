@@ -37,6 +37,9 @@ import StepperProgressWidget from "./StepperProgressWidget";
 import CornerArrowStatWidget from "./CornerArrowStatWidget";
 import BudgetOverviewWidget from "./BudgetOverviewWidget";
 import SavingsGoalsWidget from "./SavingsGoalsWidget";
+import IncomeStatCard from "./IncomeStatCard";
+import IncomeAreaSparkWidget from "./IncomeAreaSparkWidget";
+import IncomeSourcesRankedWidget from "./IncomeSourcesRankedWidget";
 
 function noop() {}
 
@@ -196,15 +199,7 @@ export default function DashboardWidgetContent({
       return <RecentTransactionsWidget expenses={expenses} limit={widget.limit} />;
 
     case "incomeCard":
-      return (
-        <ActionStatWidget
-          label="Income"
-          value={formatCurrency(monthIncome, currency)}
-          icon={<IncomeIcon />}
-          onClick={onAddIncome ?? noop}
-          valueClassName="text-emerald-600 dark:text-emerald-400"
-        />
-      );
+      return <IncomeStatCard label="Income" value={formatCurrency(monthIncome, currency)} sublabel="This month — tap to add" onClick={onAddIncome ?? noop} />;
     case "expensesCard":
       return (
         <ActionStatWidget
@@ -264,21 +259,14 @@ export default function DashboardWidgetContent({
         />
       );
     case "todayIncome":
-      return (
-        <StatWidget
-          label="Today's income"
-          value={formatCurrency(sum(expenses.filter((e) => e.type === "income" && e.date === today)), currency)}
-          valueClassName={accentText}
-        />
-      );
+      return <IncomeStatCard label="Today's income" value={formatCurrency(sum(expenses.filter((e) => e.type === "income" && e.date === today)), currency)} />;
     case "monthIncome":
-      return <StatWidget label="This month's income" value={formatCurrency(monthIncome, currency)} valueClassName={accentText} />;
+      return <IncomeStatCard label="This month's income" value={formatCurrency(monthIncome, currency)} />;
     case "yearIncome":
       return (
-        <StatWidget
+        <IncomeStatCard
           label="This year's income"
           value={formatCurrency(sum(expenses.filter((e) => e.type === "income" && e.date.startsWith(thisYear))), currency)}
-          valueClassName={accentText}
         />
       );
     case "netWorth":
@@ -323,11 +311,10 @@ export default function DashboardWidgetContent({
       );
     case "avgIncomeAmount":
       return (
-        <StatWidget
+        <IncomeStatCard
           label="Average income"
           value={formatCurrency(monthIncomeItems.length > 0 ? monthIncome / monthIncomeItems.length : 0, currency)}
           sublabel="This month"
-          valueClassName={accentText}
         />
       );
     case "biggestExpense": {
@@ -344,11 +331,10 @@ export default function DashboardWidgetContent({
     case "biggestIncome": {
       const biggest = monthIncomeItems.reduce<Expense | null>((max, e) => (!max || e.amount > max.amount ? e : max), null);
       return (
-        <StatWidget
+        <IncomeStatCard
           label="Biggest income"
           value={biggest ? formatCurrency(biggest.amount, currency) : "—"}
           sublabel={biggest ? biggest.merchant : "No income this month"}
-          valueClassName={accentText}
         />
       );
     }
@@ -391,11 +377,11 @@ export default function DashboardWidgetContent({
       const lastMonthIncome = sum(expenses.filter((e) => e.type === "income" && monthKey(e.date) === lastMonthKey));
       const pct = lastMonthIncome > 0 ? ((monthIncome - lastMonthIncome) / lastMonthIncome) * 100 : 0;
       return (
-        <TrendStatWidget
+        <IncomeStatCard
           label="Income vs last month"
-          value={`${pct >= 0 ? "+" : ""}${pct.toFixed(0)}%`}
-          deltaLabel={`${formatCurrency(monthIncome, currency)} vs ${formatCurrency(lastMonthIncome, currency)}`}
-          direction={pct > 1 ? "down" : pct < -1 ? "up" : "flat"}
+          value={formatCurrency(monthIncome, currency)}
+          sublabel={`vs ${formatCurrency(lastMonthIncome, currency)} last month`}
+          trend={{ label: `${pct >= 0 ? "+" : ""}${pct.toFixed(0)}%`, positive: pct >= 0 }}
         />
       );
     }
@@ -499,7 +485,7 @@ export default function DashboardWidgetContent({
     }
     case "last14DaysIncomeSpark": {
       const points = Array.from({ length: 14 }, (_, i) => sum(expenses.filter((e) => e.type === "income" && e.date === daysAgoKey(13 - i))));
-      return <SparklineWidget label="14-day income trend" value={formatCurrency(points.reduce((a, b) => a + b, 0), currency)} points={points} lineClassName={accentText} />;
+      return <IncomeAreaSparkWidget label="14-day income trend" value={formatCurrency(points.reduce((a, b) => a + b, 0), currency)} points={points} />;
     }
     case "last6MonthsSpark": {
       const points = Array.from({ length: 6 }, (_, i) => {
@@ -624,8 +610,8 @@ export default function DashboardWidgetContent({
       const items = [...groupSum(monthIncomeItems, (e) => e.category).entries()]
         .sort((a, b) => b[1] - a[1])
         .slice(0, widget.limit ?? 5)
-        .map(([label, value]) => ({ label, value, displayValue: formatCurrency(value, currency) }));
-      return <ListStatWidget title="Top income sources" items={items} barClassName={accentBg} />;
+        .map(([label, value], i) => ({ label, value, displayValue: formatCurrency(value, currency), colorClassName: accentBgClasses(colorFor(i)) }));
+      return <IncomeSourcesRankedWidget title="Top income sources" items={items} />;
     }
     case "walletDistribution": {
       const items = wallets.map((w) => ({ label: w.name, value: Math.max(w.balance, 0), displayValue: formatCurrency(w.balance, currency) }));
