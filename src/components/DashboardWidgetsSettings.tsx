@@ -31,6 +31,22 @@ import Modal from "./Modal";
 
 const WIDTH_LETTER = { small: "S", medium: "M", large: "L" } as const;
 
+function ChevronRightIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0">
+      <path d="m9 6 6 6-6 6" />
+    </svg>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+      <path d="m15 6-6 6 6 6" />
+    </svg>
+  );
+}
+
 function PaintbrushIcon() {
   return (
     <svg viewBox="0 0 26.6019 29.6695" fill="currentColor" className="h-4 w-4">
@@ -122,7 +138,7 @@ export default function DashboardWidgetsSettings({
   const tileRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
-  const [addCategory, setAddCategory] = useState<WidgetCategory | "all">("all");
+  const [addCategory, setAddCategory] = useState<WidgetCategory | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -419,57 +435,69 @@ export default function DashboardWidgetsSettings({
       )}
 
       {addSheetOpen && (
-        <Modal onClose={() => setAddSheetOpen(false)} title="Add a widget">
-          <div className="-mx-1 mb-3 flex gap-1.5 overflow-x-auto px-1 pb-1">
-            <button
-              type="button"
-              onClick={() => setAddCategory("all")}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-semibold transition ${
-                addCategory === "all"
-                  ? "bg-navy text-white"
-                  : "bg-bg-soft text-ink-soft hover:text-foreground"
-              }`}
-            >
-              All
-            </button>
-            {WIDGET_CATEGORIES.map((cat) => (
+        <Modal
+          onClose={() => {
+            setAddSheetOpen(false);
+            setAddCategory(null);
+          }}
+          title={addCategory ? WIDGET_CATEGORY_LABELS[addCategory] : "Add a widget"}
+        >
+          {addCategory === null ? (
+            <div className="space-y-1.5">
+              {WIDGET_CATEGORIES.map((cat) => {
+                const count = DASHBOARD_WIDGET_TYPES.filter((type) => WIDGET_CATEGORY_OF[type] === cat).length;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setAddCategory(cat)}
+                    className="flex w-full items-center justify-between gap-3 rounded-card border border-surface-line bg-surface-soft px-3.5 py-3 text-left transition hover:border-surface-accent"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-surface-foreground">
+                        {WIDGET_CATEGORY_LABELS[cat]}
+                      </span>
+                      <span className="block truncate text-xs text-surface-foreground-soft">
+                        {count} widget{count === 1 ? "" : "s"}
+                      </span>
+                    </span>
+                    <ChevronRightIcon />
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div>
               <button
-                key={cat}
                 type="button"
-                onClick={() => setAddCategory(cat)}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-semibold transition ${
-                  addCategory === cat
-                    ? "bg-navy text-white"
-                    : "bg-bg-soft text-ink-soft hover:text-foreground"
-                }`}
+                onClick={() => setAddCategory(null)}
+                className="mb-3 flex items-center gap-1 text-xs font-semibold text-ink-soft transition hover:text-foreground"
               >
-                {WIDGET_CATEGORY_LABELS[cat]}
+                <BackIcon />
+                Categories
               </button>
-            ))}
-          </div>
-
-          <div className="space-y-1.5">
-            {DASHBOARD_WIDGET_TYPES.filter((type) => addCategory === "all" || WIDGET_CATEGORY_OF[type] === addCategory).map(
-              (type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => addWidget(type)}
-                  className="flex w-full items-center gap-3 rounded-card border border-surface-line bg-surface-soft px-3.5 py-3 text-left transition hover:border-surface-accent"
-                >
-                  <WidgetThumbnail type={type} expenses={expenses} categories={categories} remaining={remaining} />
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-semibold text-surface-foreground">
-                      {DASHBOARD_WIDGET_INFO[type].title}
+              <div className="space-y-1.5">
+                {DASHBOARD_WIDGET_TYPES.filter((type) => WIDGET_CATEGORY_OF[type] === addCategory).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => addWidget(type)}
+                    className="flex w-full items-center gap-3 rounded-card border border-surface-line bg-surface-soft px-3.5 py-3 text-left transition hover:border-surface-accent"
+                  >
+                    <WidgetThumbnail type={type} expenses={expenses} categories={categories} remaining={remaining} />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-surface-foreground">
+                        {DASHBOARD_WIDGET_INFO[type].title}
+                      </span>
+                      <span className="block truncate text-xs text-surface-foreground-soft">
+                        {DASHBOARD_WIDGET_INFO[type].description}
+                      </span>
                     </span>
-                    <span className="block truncate text-xs text-surface-foreground-soft">
-                      {DASHBOARD_WIDGET_INFO[type].description}
-                    </span>
-                  </span>
-                </button>
-              ),
-            )}
-          </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </Modal>
       )}
     </div>
