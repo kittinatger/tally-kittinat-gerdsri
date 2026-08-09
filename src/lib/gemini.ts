@@ -134,7 +134,11 @@ function responseSchema(allCategories: string[], includeNotes: boolean, walletNa
       category: { type: Type.STRING, enum: allCategories },
       currency: { type: Type.STRING },
       ...(includeNotes ? { notes: { type: Type.STRING } } : {}),
-      ...(walletNames.length > 0 ? { wallet: { type: Type.STRING, enum: [...walletNames, ""] } } : {}),
+      // No empty-string sentinel in the enum -- Gemini's schema validation
+      // now rejects empty-string enum values outright. `wallet` is omitted
+      // from `required` below, so the model can just leave the field out
+      // entirely when it can't tell which wallet was used.
+      ...(walletNames.length > 0 ? { wallet: { type: Type.STRING, enum: walletNames } } : {}),
     },
     required: ["type", "merchant", "amount", "date", "category"],
   };
