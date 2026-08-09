@@ -33,10 +33,15 @@ function getClient(): GoogleGenAI {
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY environment variable is not set.");
   }
-  // Gemini occasionally returns transient 429/503 "overloaded" errors;
-  // retrying with the SDK's built-in backoff avoids surfacing those to the
-  // user as a hard failure on the first blip.
-  return new GoogleGenAI({ apiKey, httpOptions: { retryOptions: { attempts: 3 } } });
+  // NOTE: httpOptions.retryOptions is intentionally NOT set here. When it is,
+  // the SDK's retry-capable fetch path (`apiCall` in the SDK) throws a bare
+  // Error containing only the HTTP statusText (e.g. "Bad Request") and
+  // discards the actual JSON error body from Google -- it never constructs
+  // an ApiError. That made every real failure reason invisible to us (and to
+  // describeGeminiError's ApiError-specific branches). Without retryOptions,
+  // the SDK uses `throwErrorIfNotOK`, which parses the real error body into
+  // a proper ApiError with the true status/message.
+  return new GoogleGenAI({ apiKey });
 }
 
 function buildPrompt(categories: CategoriesByType, walletNames: string[]): string {
