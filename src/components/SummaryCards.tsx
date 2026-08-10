@@ -67,7 +67,7 @@ export default function SummaryCards({
       {visible.includes("remaining") && (
         <button
           onClick={onEditBalance}
-          className="widget-gradient-card rounded-card border border-surface-line p-4 text-left transition hover:border-surface-accent"
+          className="relative overflow-hidden rounded-card border border-slate-200/70 bg-gradient-to-br from-slate-50 via-surface to-surface p-4 text-left shadow-sm transition hover:border-slate-400 dark:border-slate-900/50 dark:from-slate-950/40 dark:via-surface dark:to-surface dark:hover:border-slate-600"
         >
           <div className="flex items-center justify-between gap-1">
             <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">Remaining</p>
