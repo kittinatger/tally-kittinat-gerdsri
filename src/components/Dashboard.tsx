@@ -33,6 +33,7 @@ export default function Dashboard({
   widgets,
   budgets: initialBudgets,
   savingsGoals,
+  username,
 }: {
   initialExpenses: Expense[];
   initialRemaining: number;
@@ -44,6 +45,7 @@ export default function Dashboard({
   widgets: DashboardWidgetInstance[];
   budgets: Budget[];
   savingsGoals: SavingsGoal[];
+  username: string;
 }) {
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [remaining, setRemaining] = useState(initialRemaining);
@@ -90,6 +92,8 @@ export default function Dashboard({
                       onEditBalance={() => setEditingBalance(true)}
                       onAddIncome={() => setAddingType("income")}
                       onAddExpense={() => setAddingType("expense")}
+                      onAddTransfer={() => setAddingType("transfer")}
+                      username={username}
                     />
                   </div>
                 ))}

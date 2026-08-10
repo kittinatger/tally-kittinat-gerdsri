@@ -29,6 +29,7 @@ import PillStatWidget from "./PillStatWidget";
 import AlertPillWidget from "./AlertPillWidget";
 import WeekdayTrackerWidget from "./WeekdayTrackerWidget";
 import BalanceHeroWidget from "./BalanceHeroWidget";
+import WelcomeWidget from "./WelcomeWidget";
 import StepperProgressWidget from "./StepperProgressWidget";
 import CornerArrowStatWidget from "./CornerArrowStatWidget";
 import BudgetOverviewWidget from "./BudgetOverviewWidget";
@@ -139,6 +140,8 @@ export default function DashboardWidgetContent({
   onEditBalance,
   onAddIncome,
   onAddExpense,
+  onAddTransfer,
+  username,
 }: {
   widget: DashboardWidgetInstance;
   expenses: Expense[];
@@ -151,6 +154,9 @@ export default function DashboardWidgetContent({
   onEditBalance?: () => void;
   onAddIncome?: () => void;
   onAddExpense?: () => void;
+  onAddTransfer?: () => void;
+  /** Optional — falls back to a generic greeting in the Customize dashboard preview, where no user context is loaded. */
+  username?: string;
 }) {
   const currency = useCurrency();
   const wallets = useWallets();
@@ -173,6 +179,16 @@ export default function DashboardWidgetContent({
   const accentBg = accentBgClasses(widget.accent);
 
   switch (widget.type) {
+    case "welcome":
+      return (
+        <WelcomeWidget
+          username={username ?? "there"}
+          remaining={remaining}
+          onAddExpense={onAddExpense ?? noop}
+          onAddIncome={onAddIncome ?? noop}
+          onAddTransfer={onAddTransfer ?? noop}
+        />
+      );
     case "summary":
       return (
         <SummaryCards

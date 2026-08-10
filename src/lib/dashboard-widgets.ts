@@ -3,6 +3,7 @@
 // visual widgets — see DASHBOARD_WIDGET_INFO for the full catalog and
 // DashboardWidgetContent.tsx for what each one actually renders.
 export const DASHBOARD_WIDGET_TYPES = [
+  "welcome",
   "summary",
   "categoryOverview",
   "wallets",
@@ -269,6 +270,7 @@ export const SUPPORTED_WIDTHS: Record<DashboardWidgetType, readonly WidgetWidth[
   pacePill: ["medium", "large"],
   noSpendDays: ["small", "medium", "large"],
   balanceHero: ["large"],
+  welcome: ["large"],
   payPeriodStepper: ["medium", "large"],
   spendingStreak: ["small", "medium", "large"],
   budgetOverview: ["medium", "large"],
@@ -382,6 +384,8 @@ export const DASHBOARD_WIDGET_INFO: Record<DashboardWidgetType, { title: string;
 
   budgetOverview: { title: "Budgets", description: "This month's spending against each category's budget" },
   savingsGoals: { title: "Savings goals", description: "Progress toward each of your savings goals" },
+
+  welcome: { title: "Welcome card", description: "Your profile picture, greeting, total balance, and quick add buttons" },
 };
 
 // Groups the catalog above for the "Add a widget" picker, so a list of 60+
@@ -402,6 +406,7 @@ export const WIDGET_CATEGORY_LABELS: Record<WidgetCategory, string> = {
 };
 
 export const WIDGET_CATEGORY_OF: Record<DashboardWidgetType, WidgetCategory> = {
+  welcome: "overview",
   summary: "overview",
   categoryOverview: "overview",
   wallets: "overview",
@@ -482,6 +487,7 @@ function makeId(type: DashboardWidgetType): string {
 
 export function DEFAULT_DASHBOARD_WIDGETS(): DashboardWidgetInstance[] {
   return [
+    { id: makeId("welcome"), type: "welcome", width: "large" },
     { id: makeId("summary"), type: "summary", width: "large", cards: [...SUMMARY_CARDS] },
     { id: makeId("wallets"), type: "wallets", width: "large" },
     { id: makeId("walletTicker"), type: "walletTicker", width: "medium" },

@@ -9,6 +9,7 @@ import {
   processDueRecurringRules,
   listBudgets,
   listSavingsGoals,
+  getUserById,
 } from "@/lib/db";
 import { after } from "next/server";
 import { getUserId } from "@/lib/auth";
@@ -28,7 +29,7 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   const userId = await getUserId();
   const loggedRecurring = await processDueRecurringRules(userId);
-  const [rows, remaining, categoryRows, currency, walletRows, widgets, budgetRows, savingsGoalRows, convertEnabled] =
+  const [rows, remaining, categoryRows, currency, walletRows, widgets, budgetRows, savingsGoalRows, convertEnabled, user] =
     await Promise.all([
       listExpenses(userId),
       getRemaining(userId),
@@ -39,6 +40,7 @@ export default async function HomePage() {
       listBudgets(userId),
       listSavingsGoals(userId),
       getConvertWalletBalances(userId),
+      getUserById(userId),
     ]);
   // Reuses the wallets/currency already fetched above instead of re-querying
   // them, and only touches the network (Frankfurter, with its own cache and
@@ -107,6 +109,7 @@ export default async function HomePage() {
       widgets={widgets}
       budgets={budgets}
       savingsGoals={savingsGoals}
+      username={user?.username ?? "there"}
     />
   );
 }
