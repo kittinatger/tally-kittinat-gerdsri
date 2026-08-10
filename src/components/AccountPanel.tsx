@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Modal from "./Modal";
 import { describeFetchError } from "@/lib/fetch-error";
+import ProfilePictureUploader from "./ProfilePictureUploader";
 
 const DELETE_CONFIRM_PHRASE = "I wish to delete this account";
 
@@ -421,6 +422,10 @@ export default function AccountPanel({
           before you'd touched anything. */}
       <div className="rounded-card border border-line bg-surface p-5">
         <h3 className="mb-4 font-display text-xl text-foreground">Profile</h3>
+
+        <ProfilePictureUploader />
+
+        <div className="mt-6 border-t border-line pt-6" />
 
         <div className={editingUsername ? "" : "flex items-center justify-between gap-3"}>
           <div className="min-w-0">

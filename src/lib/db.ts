@@ -181,7 +181,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 8;
+const CURRENT_SCHEMA_VERSION = 9;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -634,6 +634,9 @@ function ensureSchema(): Promise<void> {
           `;
         }
       }
+
+      // Add profile picture column (stores image as bytea)
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture BYTEA;`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -2278,5 +2281,24 @@ export async function seedDefaultCategoriesForUser(userId: number): Promise<void
       VALUES (${userId}, ${d.type}, ${d.name}, ${d.color}, ${d.sort})
       ON CONFLICT (user_id, type, name) DO NOTHING;
     `;
+  }
+}
+
+export async function getProfilePicture(userId: number): Promise<Buffer | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ profile_picture: string | null }>`
+    SELECT encode(profile_picture, 'base64') as profile_picture FROM users WHERE id = ${userId} AND profile_picture IS NOT NULL;
+  `;
+  if (!rows[0]?.profile_picture) return null;
+  return Buffer.from(rows[0].profile_picture, "base64");
+}
+
+export async function updateProfilePicture(userId: number, imageBuffer: Buffer | null): Promise<void> {
+  await ensureSchema();
+  if (imageBuffer) {
+    const encoded = imageBuffer.toString("base64");
+    await sql`UPDATE users SET profile_picture = decode(${encoded}, 'base64') WHERE id = ${userId};`;
+  } else {
+    await sql`UPDATE users SET profile_picture = NULL WHERE id = ${userId};`;
   }
 }
