@@ -205,7 +205,6 @@ export default function DashboardWidgetContent({
           label="Income"
           value={formatCurrency(monthIncome, currency)}
           currencyCode={currency}
-          actionLabel="Withdraw"
           onClick={onAddIncome ?? noop}
         />
       );
@@ -215,7 +214,6 @@ export default function DashboardWidgetContent({
           label="Expenses"
           value={formatCurrency(monthSpent, currency)}
           currencyCode={currency}
-          actionLabel="Top up"
           onClick={onAddExpense ?? noop}
         />
       );
@@ -226,7 +224,6 @@ export default function DashboardWidgetContent({
           value={`${remaining < 0 ? "-" : ""}${formatCurrency(Math.abs(remaining), currency)}`}
           currencyCode={currency}
           negative={remaining < 0}
-          actionLabel="Manage"
           onClick={onEditBalance ?? noop}
         />
       );

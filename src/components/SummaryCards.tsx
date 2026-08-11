@@ -34,22 +34,10 @@ export default function SummaryCards({
   return (
     <div className={`mb-6 grid gap-3 ${gridColsClass}`}>
       {visible.includes("income") && (
-        <IncomeStatCard
-          label="Income"
-          value={formatCurrency(monthIncome, currency)}
-          currencyCode={currency}
-          actionLabel="Withdraw"
-          onClick={onAddIncome}
-        />
+        <IncomeStatCard label="Income" value={formatCurrency(monthIncome, currency)} currencyCode={currency} onClick={onAddIncome} />
       )}
       {visible.includes("expenses") && (
-        <ExpenseStatCard
-          label="Expenses"
-          value={formatCurrency(monthSpent, currency)}
-          currencyCode={currency}
-          actionLabel="Top up"
-          onClick={onAddExpense}
-        />
+        <ExpenseStatCard label="Expenses" value={formatCurrency(monthSpent, currency)} currencyCode={currency} onClick={onAddExpense} />
       )}
       {visible.includes("remaining") && (
         <BalanceStatCard
@@ -57,7 +45,6 @@ export default function SummaryCards({
           value={`${remaining < 0 ? "-" : ""}${formatCurrency(Math.abs(remaining), currency)}`}
           currencyCode={currency}
           negative={remaining < 0}
-          actionLabel="Manage"
           onClick={onEditBalance}
         />
       )}
