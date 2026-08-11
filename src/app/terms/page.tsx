@@ -1,4 +1,3 @@
-import Link from "next/link";
 import AppHeader from "@/components/AppHeader";
 import BackToSettingsLink from "@/components/BackToSettingsLink";
 
@@ -46,12 +45,6 @@ export default function TermsPage() {
             </p>
           </section>
         </div>
-
-        <p className="mt-6 text-center text-sm text-ink-soft">
-          <Link href="/settings" className="text-navy hover:underline dark:text-blue-300">
-            Back to Settings
-          </Link>
-        </p>
       </main>
     </div>
   );

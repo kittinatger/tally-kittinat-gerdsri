@@ -68,12 +68,6 @@ export default function ReportIssuePage() {
             <p>Reports are acknowledged within 2 business days; critical fixes are targeted within 2 weeks.</p>
           </section>
         </div>
-
-        <p className="mt-6 text-center text-sm text-ink-soft">
-          <Link href="/settings" className="text-navy hover:underline dark:text-blue-300">
-            Back to Settings
-          </Link>
-        </p>
       </main>
     </div>
   );

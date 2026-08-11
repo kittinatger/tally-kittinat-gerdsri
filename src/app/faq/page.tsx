@@ -1,4 +1,3 @@
-import Link from "next/link";
 import AppHeader from "@/components/AppHeader";
 import BackToSettingsLink from "@/components/BackToSettingsLink";
 import FaqAccordion from "@/components/FaqAccordion";
@@ -88,12 +87,6 @@ export default function FaqPage() {
         <p className="mb-5 text-sm text-ink-soft">Tap a question to expand it, or search to jump straight to one.</p>
 
         <FaqAccordion faqs={FAQS} />
-
-        <p className="mt-6 text-center text-sm text-ink-soft">
-          <Link href="/settings" className="text-navy hover:underline dark:text-blue-300">
-            Back to Settings
-          </Link>
-        </p>
       </main>
     </div>
   );
