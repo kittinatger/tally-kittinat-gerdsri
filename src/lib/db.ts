@@ -181,7 +181,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 9;
+const CURRENT_SCHEMA_VERSION = 10;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -637,6 +637,42 @@ function ensureSchema(): Promise<void> {
 
       // Add profile picture column (stores image as bytea)
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture BYTEA;`;
+
+      // Friend requests: a single row per (requester, addressee) pair,
+      // status flips from 'pending' to 'accepted' (or the row is deleted on
+      // decline/cancel — no need to keep a record of a declined request).
+      // Once accepted, the friendship is symmetric: either side's id can be
+      // the requester, so "are these two people friends" always checks both
+      // directions.
+      await sql`
+        CREATE TABLE IF NOT EXISTS friend_requests (
+          id SERIAL PRIMARY KEY,
+          requester_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          addressee_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          status TEXT NOT NULL DEFAULT 'pending',
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          responded_at TIMESTAMPTZ,
+          CONSTRAINT friend_requests_pair_unique UNIQUE (requester_id, addressee_id),
+          CONSTRAINT friend_requests_no_self CHECK (requester_id <> addressee_id)
+        );
+      `;
+
+      // Family is a subset of Friends: marking someone as family is
+      // one-directional (only meaningful from the marking user's own point
+      // of view) and enforced at the application layer to require an
+      // existing accepted friendship — no DB-level FK to friend_requests,
+      // since the friendship could later be removed without needing to
+      // cascade this too.
+      await sql`
+        CREATE TABLE IF NOT EXISTS family_members (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          member_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT family_members_pair_unique UNIQUE (user_id, member_id),
+          CONSTRAINT family_members_no_self CHECK (user_id <> member_id)
+        );
+      `;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -2301,4 +2337,161 @@ export async function updateProfilePicture(userId: number, imageBuffer: Buffer |
   } else {
     await sql`UPDATE users SET profile_picture = NULL WHERE id = ${userId};`;
   }
+}
+
+// ---- Friends & family ----
+
+export type UserSearchResult = { id: number; username: string };
+
+export async function searchUsers(userId: number, query: string): Promise<UserSearchResult[]> {
+  await ensureSchema();
+  const q = query.trim();
+  if (!q) return [];
+  const { rows } = await sql<UserSearchResult>`
+    SELECT id, username FROM users
+    WHERE id <> ${userId} AND (username ILIKE ${"%" + q + "%"} OR lower(email) = lower(${q}))
+    ORDER BY username
+    LIMIT 10;
+  `;
+  return rows;
+}
+
+export type FriendRow = { id: number; username: string; is_family: boolean };
+export type FriendRequestRow = { id: number; username: string; created_at: string };
+
+export async function listFriends(userId: number): Promise<FriendRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<FriendRow>`
+    SELECT u.id, u.username,
+      EXISTS(SELECT 1 FROM family_members fm WHERE fm.user_id = ${userId} AND fm.member_id = u.id) AS is_family
+    FROM friend_requests fr
+    JOIN users u ON u.id = (CASE WHEN fr.requester_id = ${userId} THEN fr.addressee_id ELSE fr.requester_id END)
+    WHERE fr.status = 'accepted' AND (fr.requester_id = ${userId} OR fr.addressee_id = ${userId})
+    ORDER BY u.username;
+  `;
+  return rows;
+}
+
+export async function listFamilyMembers(userId: number): Promise<FriendRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<FriendRow>`
+    SELECT u.id, u.username, true AS is_family
+    FROM family_members fm
+    JOIN users u ON u.id = fm.member_id
+    WHERE fm.user_id = ${userId}
+    ORDER BY u.username;
+  `;
+  return rows;
+}
+
+export async function listIncomingFriendRequests(userId: number): Promise<FriendRequestRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<FriendRequestRow>`
+    SELECT fr.id, u.username, fr.created_at
+    FROM friend_requests fr
+    JOIN users u ON u.id = fr.requester_id
+    WHERE fr.addressee_id = ${userId} AND fr.status = 'pending'
+    ORDER BY fr.created_at DESC;
+  `;
+  return rows;
+}
+
+export async function listOutgoingFriendRequests(userId: number): Promise<FriendRequestRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<FriendRequestRow>`
+    SELECT fr.id, u.username, fr.created_at
+    FROM friend_requests fr
+    JOIN users u ON u.id = fr.addressee_id
+    WHERE fr.requester_id = ${userId} AND fr.status = 'pending'
+    ORDER BY fr.created_at DESC;
+  `;
+  return rows;
+}
+
+// Auto-accepts instead of creating a second pending row if the target
+// already sent *us* a request — mirrors how most social apps resolve two
+// people requesting each other around the same time.
+export async function sendFriendRequest(
+  userId: number,
+  targetUserId: number,
+): Promise<{ status: "requested" | "accepted" } | { error: string }> {
+  await ensureSchema();
+  if (userId === targetUserId) return { error: "You can't add yourself." };
+  const target = await getUserById(targetUserId);
+  if (!target) return { error: "User not found." };
+
+  const { rows: existing } = await sql<{ id: number; requester_id: number; status: string }>`
+    SELECT id, requester_id, status FROM friend_requests
+    WHERE (requester_id = ${userId} AND addressee_id = ${targetUserId})
+       OR (requester_id = ${targetUserId} AND addressee_id = ${userId});
+  `;
+  const row = existing[0];
+  if (row) {
+    if (row.status === "accepted") return { error: "You're already friends." };
+    if (row.requester_id === targetUserId) {
+      await sql`UPDATE friend_requests SET status = 'accepted', responded_at = now() WHERE id = ${row.id};`;
+      return { status: "accepted" };
+    }
+    return { error: "Friend request already sent." };
+  }
+
+  await sql`INSERT INTO friend_requests (requester_id, addressee_id) VALUES (${userId}, ${targetUserId});`;
+  return { status: "requested" };
+}
+
+export async function acceptFriendRequest(userId: number, requestId: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    UPDATE friend_requests SET status = 'accepted', responded_at = now()
+    WHERE id = ${requestId} AND addressee_id = ${userId} AND status = 'pending';
+  `;
+  return (rowCount ?? 0) > 0;
+}
+
+// Also covers declining an incoming request and cancelling one you sent —
+// both are just "delete the pending row," gated to whichever side of the
+// pair the caller is on.
+export async function deleteFriendRequest(userId: number, requestId: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    DELETE FROM friend_requests
+    WHERE id = ${requestId} AND status = 'pending' AND (requester_id = ${userId} OR addressee_id = ${userId});
+  `;
+  return (rowCount ?? 0) > 0;
+}
+
+export async function removeFriend(userId: number, friendId: number): Promise<void> {
+  await ensureSchema();
+  await sql`
+    DELETE FROM friend_requests
+    WHERE status = 'accepted'
+      AND ((requester_id = ${userId} AND addressee_id = ${friendId})
+        OR (requester_id = ${friendId} AND addressee_id = ${userId}));
+  `;
+  await sql`
+    DELETE FROM family_members
+    WHERE (user_id = ${userId} AND member_id = ${friendId})
+       OR (user_id = ${friendId} AND member_id = ${userId});
+  `;
+}
+
+export async function addFamilyMember(userId: number, memberId: number): Promise<{ ok: true } | { error: string }> {
+  await ensureSchema();
+  const { rows } = await sql<{ status: string }>`
+    SELECT status FROM friend_requests
+    WHERE status = 'accepted'
+      AND ((requester_id = ${userId} AND addressee_id = ${memberId})
+        OR (requester_id = ${memberId} AND addressee_id = ${userId}));
+  `;
+  if (!rows[0]) return { error: "You can only add friends to Family." };
+  await sql`
+    INSERT INTO family_members (user_id, member_id) VALUES (${userId}, ${memberId})
+    ON CONFLICT (user_id, member_id) DO NOTHING;
+  `;
+  return { ok: true };
+}
+
+export async function removeFamilyMember(userId: number, memberId: number): Promise<void> {
+  await ensureSchema();
+  await sql`DELETE FROM family_members WHERE user_id = ${userId} AND member_id = ${memberId};`;
 }

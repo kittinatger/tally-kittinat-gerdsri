@@ -262,3 +262,15 @@ export const categoryUpdateSchema = z.object({
   color: z.string().trim().min(1).max(30).optional(),
   icon: categoryIconSchema.optional(),
 });
+
+export const userSearchQuerySchema = z.object({
+  q: z.string().trim().min(1).max(100),
+});
+
+export const friendRequestInputSchema = z.object({
+  targetUserId: z.number().int().positive(),
+});
+
+export const familyMemberInputSchema = z.object({
+  memberId: z.number().int().positive(),
+});
