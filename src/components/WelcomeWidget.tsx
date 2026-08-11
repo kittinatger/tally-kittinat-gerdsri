@@ -7,15 +7,19 @@ import { formatCurrency } from "@/lib/format";
 export default function WelcomeWidget({
   username,
   remaining,
+  balanceLabel = "All Accounts • Total Balance",
   onAddExpense,
   onAddIncome,
   onAddTransfer,
 }: {
   username: string;
   remaining: number;
-  onAddExpense: () => void;
-  onAddIncome: () => void;
-  onAddTransfer: () => void;
+  /** Describes what `remaining` is scoped to — the combined total, or a single chosen wallet. */
+  balanceLabel?: string;
+  /** Omit (or leave undefined) to hide the quick-action row entirely. */
+  onAddExpense?: () => void;
+  onAddIncome?: () => void;
+  onAddTransfer?: () => void;
 }) {
   const currency = useCurrency();
   const [pictureUrl, setPictureUrl] = useState<string | null>(null);
@@ -57,31 +61,39 @@ export default function WelcomeWidget({
         </div>
       </div>
 
-      <div className="mb-5 space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">All Accounts • Total Balance</p>
+      <div className={onAddExpense || onAddIncome || onAddTransfer ? "mb-5 space-y-1" : "space-y-1"}>
+        <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">{balanceLabel}</p>
         <p className="font-display text-3xl text-foreground">{formatCurrency(remaining, currency)}</p>
       </div>
 
-      <div className="flex gap-2">
-        <button
-          onClick={onAddExpense}
-          className="flex-1 rounded-2xl border border-rose-200/70 bg-gradient-to-br from-rose-50 via-surface to-surface px-3 py-2.5 text-center text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-400 dark:border-rose-900/50 dark:from-rose-950/40 dark:via-surface dark:to-surface dark:text-rose-400 dark:hover:border-rose-600"
-        >
-          Expense
-        </button>
-        <button
-          onClick={onAddIncome}
-          className="flex-1 rounded-2xl border border-emerald-200/70 bg-gradient-to-br from-emerald-50 via-surface to-surface px-3 py-2.5 text-center text-sm font-semibold text-emerald-700 shadow-sm transition hover:border-emerald-400 dark:border-emerald-900/50 dark:from-emerald-950/40 dark:via-surface dark:to-surface dark:text-emerald-400 dark:hover:border-emerald-600"
-        >
-          Income
-        </button>
-        <button
-          onClick={onAddTransfer}
-          className="flex-1 rounded-2xl border border-sky-200/70 bg-gradient-to-br from-sky-50 via-surface to-surface px-3 py-2.5 text-center text-sm font-semibold text-sky-700 shadow-sm transition hover:border-sky-400 dark:border-sky-900/50 dark:from-sky-950/40 dark:via-surface dark:to-surface dark:text-sky-400 dark:hover:border-sky-600"
-        >
-          Transfer
-        </button>
-      </div>
+      {(onAddExpense || onAddIncome || onAddTransfer) && (
+        <div className="flex gap-2">
+          {onAddExpense && (
+            <button
+              onClick={onAddExpense}
+              className="flex-1 rounded-2xl border border-rose-200/70 bg-gradient-to-br from-rose-50 via-surface to-surface px-3 py-2.5 text-center text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-400 dark:border-rose-900/50 dark:from-rose-950/40 dark:via-surface dark:to-surface dark:text-rose-400 dark:hover:border-rose-600"
+            >
+              Expense
+            </button>
+          )}
+          {onAddIncome && (
+            <button
+              onClick={onAddIncome}
+              className="flex-1 rounded-2xl border border-emerald-200/70 bg-gradient-to-br from-emerald-50 via-surface to-surface px-3 py-2.5 text-center text-sm font-semibold text-emerald-700 shadow-sm transition hover:border-emerald-400 dark:border-emerald-900/50 dark:from-emerald-950/40 dark:via-surface dark:to-surface dark:text-emerald-400 dark:hover:border-emerald-600"
+            >
+              Income
+            </button>
+          )}
+          {onAddTransfer && (
+            <button
+              onClick={onAddTransfer}
+              className="flex-1 rounded-2xl border border-sky-200/70 bg-gradient-to-br from-sky-50 via-surface to-surface px-3 py-2.5 text-center text-sm font-semibold text-sky-700 shadow-sm transition hover:border-sky-400 dark:border-sky-900/50 dark:from-sky-950/40 dark:via-surface dark:to-surface dark:text-sky-400 dark:hover:border-sky-600"
+            >
+              Transfer
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

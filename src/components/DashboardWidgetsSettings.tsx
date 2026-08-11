@@ -4,6 +4,7 @@ import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useRef, useState } from "react";
 import type { Expense } from "@/types/expense";
 import type { CategoryOption } from "@/types/category";
+import type { WalletOption } from "@/types/wallet";
 import {
   DASHBOARD_WIDGET_TYPES,
   DASHBOARD_WIDGET_INFO,
@@ -17,6 +18,7 @@ import {
   ACCENT_CAPABLE_TYPES,
   LIMIT_CAPABLE_TYPES,
   ACTION_HIDABLE_TYPES,
+  WALLET_CAPABLE_TYPES,
   WIDGET_CATEGORIES,
   WIDGET_CATEGORY_LABELS,
   WIDGET_CATEGORY_OF,
@@ -126,11 +128,13 @@ export default function DashboardWidgetsSettings({
   expenses,
   categories,
   remaining,
+  wallets,
   onDone,
 }: {
   expenses: Expense[];
   categories: CategoryOption[];
   remaining: number;
+  wallets: WalletOption[];
   onDone: () => void;
 }) {
   const [widgets, setWidgets] = useState<DashboardWidgetInstance[]>(() => DEFAULT_DASHBOARD_WIDGETS());
@@ -242,6 +246,10 @@ export default function DashboardWidgetsSettings({
     persist(widgets.map((w, i) => (i === index ? { ...w, hideAction: !w.hideAction } : w)));
   }
 
+  function setWidgetWalletId(index: number, walletId: number | null) {
+    persist(widgets.map((w, i) => (i === index ? { ...w, walletId: walletId ?? undefined } : w)));
+  }
+
   function removeWidget(index: number) {
     if (expandedId === widgets[index].id) setExpandedId(null);
     persist(widgets.filter((_, i) => i !== index));
@@ -291,7 +299,8 @@ export default function DashboardWidgetsSettings({
               w.type === "summary" ||
               LIMIT_CAPABLE_TYPES.includes(w.type) ||
               ACCENT_CAPABLE_TYPES.includes(w.type) ||
-              ACTION_HIDABLE_TYPES.includes(w.type);
+              ACTION_HIDABLE_TYPES.includes(w.type) ||
+              WALLET_CAPABLE_TYPES.includes(w.type);
             const expanded = expandedId === w.id;
             return (
               <div
@@ -431,6 +440,33 @@ export default function DashboardWidgetsSettings({
                               w.accent === accent ? "ring-2 ring-navy ring-offset-1 ring-offset-surface" : ""
                             }`}
                           />
+                        ))}
+                      </div>
+                    )}
+
+                    {WALLET_CAPABLE_TYPES.includes(w.type) && wallets.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="text-[11px] font-semibold text-ink-soft">Wallet</span>
+                        <button
+                          type="button"
+                          onClick={() => setWidgetWalletId(i, null)}
+                          className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                            w.walletId == null ? "bg-navy text-white" : "bg-bg-soft text-ink-soft hover:text-foreground"
+                          }`}
+                        >
+                          All wallets
+                        </button>
+                        {wallets.map((wallet) => (
+                          <button
+                            key={wallet.id}
+                            type="button"
+                            onClick={() => setWidgetWalletId(i, wallet.id)}
+                            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                              w.walletId === wallet.id ? "bg-navy text-white" : "bg-bg-soft text-ink-soft hover:text-foreground"
+                            }`}
+                          >
+                            {wallet.name}
+                          </button>
                         ))}
                       </div>
                     )}

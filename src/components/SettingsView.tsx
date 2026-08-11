@@ -341,6 +341,7 @@ export default function SettingsView({
                     expenses={expenses}
                     categories={categories}
                     remaining={remaining}
+                    wallets={wallets}
                     onDone={() => setPanel(null)}
                   />
                 )}

@@ -208,7 +208,13 @@ export const ACTION_HIDABLE_TYPES: readonly DashboardWidgetType[] = [
   "incomeCard",
   "expensesCard",
   "remainingCard",
+  "welcome",
 ];
+
+// Widgets that can be scoped to a single wallet instead of the combined
+// total across all wallets. Undefined/null on the instance means "all
+// wallets".
+export const WALLET_CAPABLE_TYPES: readonly DashboardWidgetType[] = ["welcome"];
 
 // Which sizes each widget type can actually be displayed at, ordered
 // smallest first. Single-number/ring/gauge widgets look fine as a
@@ -312,6 +318,8 @@ export type DashboardWidgetInstance = {
   limit?: number;
   /** Only meaningful for ACTION_HIDABLE_TYPES. True hides the bottom quick-action button, making the card display-only. */
   hideAction?: boolean;
+  /** Only meaningful for WALLET_CAPABLE_TYPES. Undefined/null means "all wallets combined". */
+  walletId?: number | null;
 };
 
 export const DASHBOARD_WIDGET_INFO: Record<DashboardWidgetType, { title: string; description: string }> = {
@@ -561,6 +569,8 @@ export function normalizeDashboardWidgets(raw: unknown): DashboardWidgetInstance
           : undefined;
       const rawHideAction = (item as { hideAction?: unknown }).hideAction;
       const hideAction = ACTION_HIDABLE_TYPES.includes(type) && rawHideAction === true ? true : undefined;
+      const rawWalletId = (item as { walletId?: unknown }).walletId;
+      const walletId = WALLET_CAPABLE_TYPES.includes(type) && typeof rawWalletId === "number" ? rawWalletId : undefined;
       result.push({
         id,
         type,
@@ -569,6 +579,7 @@ export function normalizeDashboardWidgets(raw: unknown): DashboardWidgetInstance
         accent,
         limit,
         hideAction,
+        walletId,
       });
     }
   }

@@ -171,16 +171,19 @@ export default function DashboardWidgetContent({
   const accentBg = accentBgClasses(widget.accent);
 
   switch (widget.type) {
-    case "welcome":
+    case "welcome": {
+      const scopedWallet = widget.walletId != null ? wallets.find((w) => w.id === widget.walletId) : undefined;
       return (
         <WelcomeWidget
           username={username ?? "there"}
-          remaining={remaining}
-          onAddExpense={onAddExpense ?? noop}
-          onAddIncome={onAddIncome ?? noop}
-          onAddTransfer={onAddTransfer ?? noop}
+          remaining={scopedWallet ? scopedWallet.balance : remaining}
+          balanceLabel={scopedWallet ? scopedWallet.name : "All Accounts • Total Balance"}
+          onAddExpense={widget.hideAction ? undefined : (onAddExpense ?? noop)}
+          onAddIncome={widget.hideAction ? undefined : (onAddIncome ?? noop)}
+          onAddTransfer={widget.hideAction ? undefined : (onAddTransfer ?? noop)}
         />
       );
+    }
     case "summary":
       return (
         <SummaryCards
