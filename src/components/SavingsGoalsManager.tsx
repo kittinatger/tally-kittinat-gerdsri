@@ -2,7 +2,7 @@
 
 import { describeFetchError } from "@/lib/fetch-error";
 import { useCallback, useEffect, useState } from "react";
-import { dotClasses } from "@/lib/category-styles";
+import { badgeClasses, dotClasses } from "@/lib/category-styles";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency } from "@/lib/format";
 import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
@@ -10,6 +10,42 @@ import CsvManagerButtons from "./CsvManagerButtons";
 
 type SavingsGoal = { id: number; name: string; color: string; target_amount: string; current_amount: string };
 type Contribution = { id: number; delta: string; created_at: string };
+
+function TargetIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
+      <circle cx="10" cy="10" r="7" />
+      <circle cx="10" cy="10" r="3.5" />
+      <circle cx="10" cy="10" r="0.75" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+      <path d="M4.5 5.5h11M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M14.5 5.5l-.6 9.4a1.5 1.5 0 0 1-1.5 1.4H7.6a1.5 1.5 0 0 1-1.5-1.4l-.6-9.4" />
+    </svg>
+  );
+}
+
+function HistoryIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+      <path d="M4 10a6 6 0 1 0 1.8-4.3M4 4v3h3" />
+      <path d="M10 6.5V10l2.3 2.3" />
+    </svg>
+  );
+}
+
+function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <div className="flex flex-col items-center gap-2 rounded-card border border-dashed border-line px-4 py-10 text-center">
+      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-bg-soft text-ink-soft">{icon}</span>
+      <p className="text-sm text-ink-soft">{text}</p>
+    </div>
+  );
+}
 
 export default function SavingsGoalsManager() {
   const currency = useCurrency();
@@ -20,6 +56,7 @@ export default function SavingsGoalsManager() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [contributeAmount, setContributeAmount] = useState<Record<number, string>>({});
   const [historyOpenId, setHistoryOpenId] = useState<number | null>(null);
   const [historyByGoal, setHistoryByGoal] = useState<Record<number, Contribution[] | undefined>>({});
@@ -119,6 +156,10 @@ export default function SavingsGoalsManager() {
   }
 
   async function handleDelete(id: number) {
+    if (confirmDeleteId !== id) {
+      setConfirmDeleteId(id);
+      return;
+    }
     setBusyId(id);
     try {
       const res = await fetch(`/api/savings-goals/${id}`, { method: "DELETE" });
@@ -127,6 +168,7 @@ export default function SavingsGoalsManager() {
       }
     } finally {
       setBusyId(null);
+      setConfirmDeleteId(null);
     }
   }
 
@@ -151,9 +193,18 @@ export default function SavingsGoalsManager() {
         <h3 className="font-display text-xl text-foreground">Savings goals</h3>
         <button
           onClick={() => setAdding((v) => !v)}
-          className="flex items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark"
+          aria-label={adding ? "Cancel" : "Add goal"}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark"
         >
-          {adding ? "Cancel" : "Add goal"}
+          {adding ? (
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-3.5 w-3.5">
+              <path d="M5 5l10 10M15 5L5 15" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 20.918 20.5762" fill="currentColor" className="h-3.5 w-3.5 shrink-0">
+              <path d="M11.2305 19.5996L11.2305 0.957031C11.2305 0.439453 10.8008 0 10.2734 0C9.75586 0 9.32617 0.439453 9.32617 0.957031L9.32617 19.5996C9.32617 20.1172 9.75586 20.5566 10.2734 20.5566C10.8008 20.5566 11.2305 20.1172 11.2305 19.5996ZM0.957031 11.2305L19.5996 11.2305C20.1172 11.2305 20.5566 10.8008 20.5566 10.2832C20.5566 9.75586 20.1172 9.32617 19.5996 9.32617L0.957031 9.32617C0.439453 9.32617 0 9.75586 0 10.2832C0 10.8008 0.439453 11.2305 0.957031 11.2305Z" />
+            </svg>
+          )}
         </button>
       </div>
       <p className="mt-2 text-[11px] leading-snug text-ink-soft">
@@ -167,18 +218,18 @@ export default function SavingsGoalsManager() {
       {adding && (
         <form onSubmit={handleAdd} className="mt-4 space-y-3 rounded-card border border-line bg-surface p-4">
           <div>
-            <label className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">Name</label>
+            <label className="mb-1.5 block text-sm font-semibold text-foreground">Name</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. New laptop"
-              className="w-full rounded-card border border-surface-line bg-surface-soft px-3.5 py-2.5 text-base text-surface-foreground outline-none transition focus:border-surface-accent focus:ring-2 focus:ring-surface-accent/20"
+              className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">Target amount</label>
+            <label className="mb-1.5 block text-sm font-semibold text-foreground">Target amount</label>
             <input
               type="number"
               inputMode="decimal"
@@ -188,11 +239,11 @@ export default function SavingsGoalsManager() {
               value={target}
               onChange={(e) => setTarget(e.target.value)}
               placeholder="0.00"
-              className="w-full rounded-card border border-surface-line bg-surface-soft px-3.5 py-2.5 text-base text-surface-foreground outline-none transition focus:border-surface-accent focus:ring-2 focus:ring-surface-accent/20"
+              className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">Color</label>
+            <label className="mb-1.5 block text-sm font-semibold text-foreground">Color</label>
             <div className="flex flex-wrap gap-2">
               {WIDGET_ACCENTS.map((c) => (
                 <button
@@ -200,7 +251,7 @@ export default function SavingsGoalsManager() {
                   type="button"
                   onClick={() => setColor(c)}
                   aria-label={c}
-                  className={`h-7 w-7 rounded-full ${dotClasses(c)} ${color === c ? "ring-2 ring-offset-2 ring-surface-accent ring-offset-surface" : ""}`}
+                  className={`h-7 w-7 rounded-full ${dotClasses(c)} ${color === c ? "ring-2 ring-offset-2 ring-navy ring-offset-surface" : ""}`}
                 />
               ))}
             </div>
@@ -212,7 +263,7 @@ export default function SavingsGoalsManager() {
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+              className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
             >
               {submitting ? "Saving..." : "Save goal"}
             </button>
@@ -225,59 +276,96 @@ export default function SavingsGoalsManager() {
       {goals === null ? (
         <p className="mt-4 text-sm text-ink-soft">Loading…</p>
       ) : goals.length === 0 ? (
-        <p className="mt-4 text-sm text-ink-soft">No savings goals yet.</p>
+        <div className="mt-4">
+          <EmptyState icon={<TargetIcon />} text="No savings goals yet — add one to start tracking your progress." />
+        </div>
       ) : (
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
           {goals.map((g, i) => {
             const current = Number(g.current_amount);
             const goalTarget = Number(g.target_amount);
             const percent = goalTarget > 0 ? Math.min(100, (current / goalTarget) * 100) : 0;
+            const confirming = confirmDeleteId === g.id;
             return (
-              <div key={g.id} className="rounded-card border border-line bg-surface p-4">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <span className={`h-3 w-3 shrink-0 rounded-full ${dotClasses(g.color)}`} />
-                    <p className="truncate font-medium text-foreground">{g.name}</p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    <div className="flex flex-col">
-                      <button
-                        onClick={() => handleMove(g.id, "up")}
-                        disabled={busyId === g.id || i === 0}
-                        aria-label="Move up"
-                        className="rounded p-0.5 text-ink-soft transition hover:text-foreground disabled:opacity-30"
-                      >
-                        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-                          <path d="M5 12l5-5 5 5" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => handleMove(g.id, "down")}
-                        disabled={busyId === g.id || i === goals.length - 1}
-                        aria-label="Move down"
-                        className="rounded p-0.5 text-ink-soft transition hover:text-foreground disabled:opacity-30"
-                      >
-                        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-                          <path d="M5 8l5 5 5-5" />
-                        </svg>
-                      </button>
-                    </div>
+              <div key={g.id} className={`px-4 py-3 ${i === 0 ? "" : "border-t border-line"}`}>
+                <div className="flex items-center gap-3">
+                  <div className="flex shrink-0 flex-col">
                     <button
-                      onClick={() => handleDelete(g.id)}
-                      disabled={busyId === g.id}
-                      className="rounded-full px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60 dark:text-red-400 dark:hover:bg-red-900/20"
+                      onClick={() => handleMove(g.id, "up")}
+                      disabled={busyId === g.id || i === 0}
+                      aria-label={`Move ${g.name} up`}
+                      className="rounded p-0.5 text-ink-soft transition hover:text-foreground disabled:opacity-30"
                     >
-                      Delete
+                      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+                        <path d="M5 12l5-5 5 5" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleMove(g.id, "down")}
+                      disabled={busyId === g.id || i === goals.length - 1}
+                      aria-label={`Move ${g.name} down`}
+                      className="rounded p-0.5 text-ink-soft transition hover:text-foreground disabled:opacity-30"
+                    >
+                      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+                        <path d="M5 8l5 5 5-5" />
+                      </svg>
                     </button>
                   </div>
+
+                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses(g.color)}`}>
+                    <TargetIcon />
+                  </span>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-foreground">{g.name}</p>
+                    <p className="text-xs text-ink-soft">
+                      {formatCurrency(current, currency)} / {formatCurrency(goalTarget, currency)} ({percent.toFixed(0)}%)
+                    </p>
+                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-bg-soft">
+                      <div className={`h-full rounded-full ${dotClasses(g.color)}`} style={{ width: `${Math.max(4, percent)}%` }} />
+                    </div>
+                  </div>
+
+                  {confirming ? (
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <button
+                        onClick={() => setConfirmDeleteId(null)}
+                        disabled={busyId === g.id}
+                        className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleDelete(g.id)}
+                        disabled={busyId === g.id}
+                        className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                      >
+                        {busyId === g.id ? "Deleting..." : "Confirm delete"}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button
+                        onClick={() => toggleHistory(g.id)}
+                        aria-label={historyOpenId === g.id ? "Hide history" : "Show history"}
+                        className={`rounded-full p-2 transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground ${
+                          historyOpenId === g.id ? "text-foreground" : "text-ink-soft"
+                        }`}
+                      >
+                        <HistoryIcon />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(g.id)}
+                        aria-label={`Delete ${g.name}`}
+                        className="rounded-full p-2 text-ink-soft transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                      >
+                        <TrashIcon />
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <p className="mt-1 text-xs text-ink-soft">
-                  {formatCurrency(current, currency)} / {formatCurrency(goalTarget, currency)} ({percent.toFixed(0)}%)
-                </p>
-                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-bg-soft">
-                  <div className={`h-full rounded-full ${dotClasses(g.color)}`} style={{ width: `${Math.max(4, percent)}%` }} />
-                </div>
-                <div className="mt-3 flex items-center gap-2">
+
+                <div className="mt-3 flex items-center gap-2 pl-[3.25rem]">
                   <input
                     type="number"
                     inputMode="decimal"
@@ -285,7 +373,7 @@ export default function SavingsGoalsManager() {
                     placeholder="Amount"
                     value={contributeAmount[g.id] ?? ""}
                     onChange={(e) => setContributeAmount((prev) => ({ ...prev, [g.id]: e.target.value }))}
-                    className="w-28 rounded-card border border-surface-line bg-surface-soft px-3 py-1.5 text-sm text-surface-foreground outline-none transition focus:border-surface-accent focus:ring-2 focus:ring-surface-accent/20"
+                    className="w-28 rounded-card border border-line bg-bg-soft px-3 py-1.5 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
                   />
                   <button
                     onClick={() => handleContribute(g, Number(contributeAmount[g.id] ?? 0))}
@@ -301,44 +389,40 @@ export default function SavingsGoalsManager() {
                   >
                     Withdraw
                   </button>
-                  <button
-                    onClick={() => toggleHistory(g.id)}
-                    className="ml-auto text-xs font-semibold text-ink-soft transition hover:text-foreground"
-                  >
-                    {historyOpenId === g.id ? "Hide history" : "History"}
-                  </button>
                 </div>
+
                 {historyOpenId === g.id && (
-                  <div className="mt-3 border-t border-line pt-3">
+                  <div className="mt-3 ml-[3.25rem] overflow-hidden rounded-card border border-line bg-bg-soft">
                     {historyByGoal[g.id] === undefined ? (
-                      <p className="text-xs text-ink-soft">Loading…</p>
+                      <p className="px-3 py-3 text-xs text-ink-soft">Loading…</p>
                     ) : historyByGoal[g.id]!.length === 0 ? (
-                      <p className="text-xs text-ink-soft">No contributions yet.</p>
+                      <p className="px-3 py-3 text-xs text-ink-soft">No contributions yet.</p>
                     ) : (
-                      <ul className="space-y-1">
-                        {historyByGoal[g.id]!.map((c) => {
-                          const delta = Number(c.delta);
-                          return (
-                            <li key={c.id} className="flex items-center justify-between gap-3 text-xs">
-                              <span className={delta >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>
-                                {delta >= 0 ? "+" : ""}
-                                {formatCurrency(delta, currency)}
-                              </span>
-                              <span className="text-ink-soft">{new Date(c.created_at).toLocaleString()}</span>
-                              <button
-                                onClick={() => handleDeleteContribution(g.id, c.id)}
-                                disabled={busyId === g.id}
-                                aria-label="Delete this contribution"
-                                className="shrink-0 text-ink-soft transition hover:text-red-600 disabled:opacity-60 dark:hover:text-red-400"
-                              >
-                                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-3 w-3">
-                                  <path d="M5 5l10 10M15 5L5 15" />
-                                </svg>
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul>
+                      historyByGoal[g.id]!.map((c, ci) => {
+                        const delta = Number(c.delta);
+                        return (
+                          <div
+                            key={c.id}
+                            className={`flex items-center justify-between gap-3 px-3 py-2 text-xs ${ci === 0 ? "" : "border-t border-line"}`}
+                          >
+                            <span className={delta >= 0 ? "font-medium text-emerald-600 dark:text-emerald-400" : "font-medium text-red-600 dark:text-red-400"}>
+                              {delta >= 0 ? "+" : ""}
+                              {formatCurrency(delta, currency)}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate text-right text-ink-soft">{new Date(c.created_at).toLocaleString()}</span>
+                            <button
+                              onClick={() => handleDeleteContribution(g.id, c.id)}
+                              disabled={busyId === g.id}
+                              aria-label="Delete this contribution"
+                              className="shrink-0 rounded-full p-1 text-ink-soft transition hover:bg-red-50 hover:text-red-600 disabled:opacity-60 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                            >
+                              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-3 w-3">
+                                <path d="M5 5l10 10M15 5L5 15" />
+                              </svg>
+                            </button>
+                          </div>
+                        );
+                      })
                     )}
                   </div>
                 )}
