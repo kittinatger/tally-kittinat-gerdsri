@@ -152,6 +152,8 @@ export const dashboardWidgetsInputSchema = z.object({
           .int()
           .refine((n) => (LIMIT_OPTIONS as readonly number[]).includes(n))
           .optional(),
+        hideAction: z.boolean().optional(),
+        walletId: z.number().int().positive().nullable().optional(),
       }),
     )
     .max(20),
