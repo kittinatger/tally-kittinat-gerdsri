@@ -37,9 +37,6 @@ export default function SummaryCards({
       {visible.includes("income") && (
         <IncomeStatCard label="Income" value={formatCurrency(monthIncome, currency)} currencyCode={currency} onClick={onAddIncome} />
       )}
-      {visible.includes("expenses") && (
-        <ExpenseStatCard label="Expenses" value={formatCurrency(monthSpent, currency)} currencyCode={currency} onClick={onAddExpense} />
-      )}
       {visible.includes("remaining") && (
         <BalanceStatCard
           label="Remaining"
@@ -48,6 +45,9 @@ export default function SummaryCards({
           negative={remaining < 0}
           onClick={onEditBalance}
         />
+      )}
+      {visible.includes("expenses") && (
+        <ExpenseStatCard label="Expenses" value={formatCurrency(monthSpent, currency)} currencyCode={currency} onClick={onAddExpense} />
       )}
     </div>
   );
