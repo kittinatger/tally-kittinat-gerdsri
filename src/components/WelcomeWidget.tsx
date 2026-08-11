@@ -23,7 +23,7 @@ export default function WelcomeWidget({
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/account/profile-picture");
+        const res = await fetch("/api/account/profile-picture", { cache: "no-store" });
         if (res.ok) {
           const blob = await res.blob();
           setPictureUrl(URL.createObjectURL(blob));

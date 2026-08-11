@@ -20,7 +20,11 @@ export async function GET() {
     return new NextResponse(new Uint8Array(picture), {
       headers: {
         "Content-Type": "image/jpeg",
-        "Cache-Control": "public, max-age=3600",
+        // Must not be a shared/public cache: the URL is the same for every
+        // account, so a public cache (or the browser's HTTP cache reused
+        // across a session switch in the same browser) would serve one
+        // user's photo to another.
+        "Cache-Control": "private, no-cache, no-store, must-revalidate",
       },
     });
   } catch {
