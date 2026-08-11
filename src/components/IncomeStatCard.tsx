@@ -1,61 +1,72 @@
-function PlusIcon() {
+function DownLeftIcon() {
   return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" className="h-3 w-3">
-      <path d="M10 4v12M4 10h12" />
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+      <path d="M15 5L5 15M5 15V7M5 15H13" />
     </svg>
   );
 }
 
-// The shared visual identity for income widgets: a soft emerald gradient
-// card with a blurred glow blob, distinct from the neutral gray StatWidget
-// used everywhere else -- income should read as its own "money coming in"
-// language at a glance.
+// The shared visual identity for income widgets: a bold, solid dark-emerald
+// card (currency pill + circular direction badge + a bottom action pill),
+// distinct from the neutral gray StatWidget used elsewhere -- income should
+// read as its own "money coming in" language at a glance.
 export default function IncomeStatCard({
   label,
   value,
   sublabel,
+  currencyCode,
   trend,
+  actionLabel = "Withdraw",
   onClick,
 }: {
   label: string;
   value: string;
   sublabel?: string;
+  currencyCode?: string;
   trend?: { label: string; positive: boolean };
+  actionLabel?: string;
   onClick?: () => void;
 }) {
-  const Wrapper = onClick ? "button" : "div";
   return (
-    <Wrapper
-      type={onClick ? "button" : undefined}
-      onClick={onClick}
-      className={`group relative w-full overflow-hidden rounded-card border border-emerald-200/70 bg-gradient-to-br from-emerald-50 via-surface to-surface p-4 text-left shadow-sm transition dark:border-emerald-900/50 dark:from-emerald-950/40 dark:via-surface dark:to-surface ${
-        onClick ? "hover:border-emerald-400 dark:hover:border-emerald-600" : ""
-      }`}
-    >
-      <div className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full bg-emerald-400/25 blur-2xl dark:bg-emerald-500/15" />
+    <div className="relative flex h-full flex-col overflow-hidden rounded-[28px] bg-gradient-to-br from-emerald-800 via-emerald-900 to-[#0b2b28] p-4 text-white shadow-lg">
+      <div className="pointer-events-none absolute -right-10 -top-14 h-40 w-40 rounded-full bg-emerald-400/10 blur-3xl" />
 
-      <div className="relative flex items-start justify-between gap-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700/80 dark:text-emerald-300/80">{label}</p>
-        {trend && (
+      <div className="relative flex items-center justify-between">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-400 text-emerald-950 shadow-sm">
+          <DownLeftIcon />
+        </span>
+        {trend ? (
           <span
-            className={`inline-flex shrink-0 items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-              trend.positive
-                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                : "bg-red-500/15 text-red-600 dark:text-red-400"
+            className={`rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wide ${
+              trend.positive ? "bg-emerald-400/20 text-emerald-300" : "bg-red-400/20 text-red-300"
             }`}
           >
             {trend.positive ? "▲" : "▼"} {trend.label}
           </span>
-        )}
-        {onClick && (
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm transition group-hover:scale-105">
-            <PlusIcon />
-          </span>
+        ) : (
+          currencyCode && (
+            <span className="rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white/90">
+              {currencyCode}
+            </span>
+          )
         )}
       </div>
 
-      <p className="relative mt-2 truncate font-display text-xl text-emerald-700 dark:text-emerald-300 sm:text-2xl">{value}</p>
-      {sublabel && <p className="relative mt-1 truncate text-xs text-emerald-700/60 dark:text-emerald-400/70">{sublabel}</p>}
-    </Wrapper>
+      <div className="relative mt-4 flex-1">
+        <p className="text-sm text-white/60">{label}</p>
+        <p className="mt-1 truncate font-display text-2xl text-white sm:text-3xl">{value}</p>
+        {sublabel && <p className="mt-1 truncate text-xs text-white/50">{sublabel}</p>}
+      </div>
+
+      {onClick && (
+        <button
+          type="button"
+          onClick={onClick}
+          className="relative mt-4 w-full rounded-2xl bg-white/15 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/25"
+        >
+          {actionLabel}
+        </button>
+      )}
+    </div>
   );
 }
