@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.15.0] - 2026-08-11
+
+### Added
+- New "Welcome" widget on the Dashboard (shown by default): your profile picture, a greeting, total balance, and Expense/Income/Transfer quick-add buttons in one card — configurable in Customize Dashboard to hide the quick-action buttons or scope the balance to a single wallet instead of all wallets combined
+- Profile pictures — upload, change, or remove one from Settings > Account; shown on the new Welcome widget
+- Drill-down category navigation in the "Add a widget" picker (Income/Expense/Wallet/Chart/Budget/Goals/Overview), replacing the old filter chips
+- A "Quick action button" toggle in Customize Dashboard for the Income, Expenses, Remaining, and Summary widgets — hide the Add income/Add expense/Edit balance button to make the card display-only
+- New Income, Expense, and Wallet widget families with their own color identity (emerald, rose, and sky/blue) — stat cards, ranked lists, sparkline charts, and a leaderboard, replacing the old neutral-gray versions
+- "Budget" split out as its own widget category, separate from "Goals"
+
+### Changed
+- Every Dashboard widget now shares a consistent soft-gradient card style, so newly-redesigned widgets no longer look out of place next to older flat ones
+- Income, Expenses, and Remaining cards redesigned with a direction-badge icon and currency pill, and their buttons relabeled to describe what they actually do ("Add income", "Add expense", "Edit balance") instead of bank-style "Withdraw"/"Top up"
+
+### Fixed
+- Receipt scanning and voice entry, broken by the `gemini-2.5-flash` model being retired for new API keys and a Gemini schema validation change rejecting an empty-string enum value for wallet
+- A profile picture uploaded on one account could appear on another account viewed earlier in the same browser, due to the image endpoint being cached as a shared/public resource instead of per-account
+- Settings changes like hiding a widget's quick-action button appeared to save in Customize Dashboard but didn't actually persist or show up on the Dashboard, because the save endpoint's validation silently dropped the new fields
+
 ## [0.14.0] - 2026-08-08
 
 ### Added
