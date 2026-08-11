@@ -16,6 +16,7 @@ import {
   LIMIT_OPTIONS,
   ACCENT_CAPABLE_TYPES,
   LIMIT_CAPABLE_TYPES,
+  ACTION_HIDABLE_TYPES,
   WIDGET_CATEGORIES,
   WIDGET_CATEGORY_LABELS,
   WIDGET_CATEGORY_OF,
@@ -237,6 +238,10 @@ export default function DashboardWidgetsSettings({
     persist(widgets.map((w, i) => (i === index ? { ...w, limit } : w)));
   }
 
+  function toggleHideAction(index: number) {
+    persist(widgets.map((w, i) => (i === index ? { ...w, hideAction: !w.hideAction } : w)));
+  }
+
   function removeWidget(index: number) {
     if (expandedId === widgets[index].id) setExpandedId(null);
     persist(widgets.filter((_, i) => i !== index));
@@ -283,7 +288,10 @@ export default function DashboardWidgetsSettings({
           {widgets.map((w, i) => {
             const supported = SUPPORTED_WIDTHS[w.type];
             const hasConfig =
-              w.type === "summary" || LIMIT_CAPABLE_TYPES.includes(w.type) || ACCENT_CAPABLE_TYPES.includes(w.type);
+              w.type === "summary" ||
+              LIMIT_CAPABLE_TYPES.includes(w.type) ||
+              ACCENT_CAPABLE_TYPES.includes(w.type) ||
+              ACTION_HIDABLE_TYPES.includes(w.type);
             const expanded = expandedId === w.id;
             return (
               <div
@@ -425,6 +433,27 @@ export default function DashboardWidgetsSettings({
                           />
                         ))}
                       </div>
+                    )}
+
+                    {ACTION_HIDABLE_TYPES.includes(w.type) && (
+                      <label className="flex items-center justify-between gap-2">
+                        <span className="text-[11px] font-semibold text-ink-soft">Quick action button</span>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={!w.hideAction}
+                          onClick={() => toggleHideAction(i)}
+                          className={`relative h-5 w-9 shrink-0 rounded-full transition ${
+                            w.hideAction ? "bg-bg-soft" : "bg-navy"
+                          }`}
+                        >
+                          <span
+                            className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition ${
+                              w.hideAction ? "left-0.5" : "left-[18px]"
+                            }`}
+                          />
+                        </button>
+                      </label>
                     )}
                   </div>
                 )}

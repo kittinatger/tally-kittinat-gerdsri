@@ -187,9 +187,9 @@ export default function DashboardWidgetContent({
           expenses={expenses}
           remaining={remaining}
           cards={widget.cards}
-          onEditBalance={onEditBalance ?? noop}
-          onAddIncome={onAddIncome ?? noop}
-          onAddExpense={onAddExpense ?? noop}
+          onEditBalance={widget.hideAction ? undefined : (onEditBalance ?? noop)}
+          onAddIncome={widget.hideAction ? undefined : (onAddIncome ?? noop)}
+          onAddExpense={widget.hideAction ? undefined : (onAddExpense ?? noop)}
         />
       );
     case "categoryOverview":
@@ -205,7 +205,7 @@ export default function DashboardWidgetContent({
           label="Income"
           value={formatCurrency(monthIncome, currency)}
           currencyCode={currency}
-          onClick={onAddIncome ?? noop}
+          onClick={widget.hideAction ? undefined : (onAddIncome ?? noop)}
         />
       );
     case "expensesCard":
@@ -214,7 +214,7 @@ export default function DashboardWidgetContent({
           label="Expenses"
           value={formatCurrency(monthSpent, currency)}
           currencyCode={currency}
-          onClick={onAddExpense ?? noop}
+          onClick={widget.hideAction ? undefined : (onAddExpense ?? noop)}
         />
       );
     case "remainingCard":
@@ -224,7 +224,7 @@ export default function DashboardWidgetContent({
           value={`${remaining < 0 ? "-" : ""}${formatCurrency(Math.abs(remaining), currency)}`}
           currencyCode={currency}
           negative={remaining < 0}
-          onClick={onEditBalance ?? noop}
+          onClick={widget.hideAction ? undefined : (onEditBalance ?? noop)}
         />
       );
 

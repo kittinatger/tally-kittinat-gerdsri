@@ -17,9 +17,10 @@ export default function SummaryCards({
   expenses: Expense[];
   remaining: number;
   cards?: readonly SummaryCardId[];
-  onEditBalance: () => void;
-  onAddIncome: () => void;
-  onAddExpense: () => void;
+  /** Omit (or leave undefined) to hide that card's quick-action button, making it display-only. */
+  onEditBalance?: () => void;
+  onAddIncome?: () => void;
+  onAddExpense?: () => void;
 }) {
   const currency = useCurrency();
   const currentMonthKey = monthKey(todayInputValue());

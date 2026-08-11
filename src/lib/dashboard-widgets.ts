@@ -201,6 +201,15 @@ export const LIMIT_CAPABLE_TYPES: readonly DashboardWidgetType[] = [
   "topCategoriesLeaderboard",
 ];
 
+// Widgets with a bottom quick-action button (Add income/expense, Edit
+// balance) that can be hidden to make the card display-only.
+export const ACTION_HIDABLE_TYPES: readonly DashboardWidgetType[] = [
+  "summary",
+  "incomeCard",
+  "expensesCard",
+  "remainingCard",
+];
+
 // Which sizes each widget type can actually be displayed at, ordered
 // smallest first. Single-number/ring/gauge widgets look fine as a
 // quarter-row tile; anything with a chart, multi-item list, or SummaryCards'
@@ -301,6 +310,8 @@ export type DashboardWidgetInstance = {
   accent?: WidgetAccent;
   /** Only meaningful for LIMIT_CAPABLE_TYPES. Undefined means that widget's own default. */
   limit?: number;
+  /** Only meaningful for ACTION_HIDABLE_TYPES. True hides the bottom quick-action button, making the card display-only. */
+  hideAction?: boolean;
 };
 
 export const DASHBOARD_WIDGET_INFO: Record<DashboardWidgetType, { title: string; description: string }> = {
@@ -548,6 +559,8 @@ export function normalizeDashboardWidgets(raw: unknown): DashboardWidgetInstance
         LIMIT_CAPABLE_TYPES.includes(type) && typeof rawLimit === "number" && (LIMIT_OPTIONS as readonly number[]).includes(rawLimit)
           ? rawLimit
           : undefined;
+      const rawHideAction = (item as { hideAction?: unknown }).hideAction;
+      const hideAction = ACTION_HIDABLE_TYPES.includes(type) && rawHideAction === true ? true : undefined;
       result.push({
         id,
         type,
@@ -555,6 +568,7 @@ export function normalizeDashboardWidgets(raw: unknown): DashboardWidgetInstance
         cards: cards && cards.length > 0 ? cards : type === "summary" ? [...SUMMARY_CARDS] : undefined,
         accent,
         limit,
+        hideAction,
       });
     }
   }
