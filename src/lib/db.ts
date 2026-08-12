@@ -4,6 +4,7 @@ import type { ExpenseInput } from "@/lib/validation";
 import { hashPassword } from "@/lib/password";
 import { normalizeDashboardWidgets, type DashboardWidgetInstance } from "@/lib/dashboard-widgets";
 import type { ChallengeType, ChallengeMode } from "@/lib/challenges";
+import type { SplitMethod, SplitPaymentMethod } from "@/lib/splits";
 
 export type Expense = {
   id: number;
@@ -182,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 11;
+const CURRENT_SCHEMA_VERSION = 12;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -734,6 +735,47 @@ function ensureSchema(): Promise<void> {
           CONSTRAINT challenge_reveal_requests_no_self CHECK (requester_id <> target_id)
         );
       `;
+
+      // Split bills: one row per bill, one participant row per person
+      // (including the creator). owed_amount is each participant's share
+      // of total_amount; paid_amount is what they actually contributed —
+      // (paid_amount - owed_amount) is their net balance on the bill,
+      // positive meaning they're owed money back, negative meaning they
+      // still owe. Deliberately not linked to the expenses table: a split
+      // is a standalone ledger of "who owes whom for a shared bill," not a
+      // personal transaction.
+      await sql`
+        CREATE TABLE IF NOT EXISTS splits (
+          id SERIAL PRIMARY KEY,
+          creator_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          title TEXT NOT NULL,
+          total_amount NUMERIC(12, 2) NOT NULL,
+          split_method TEXT NOT NULL,
+          date DATE NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `;
+
+      // confirm_status starts 'accepted' unless the creator has
+      // require_split_confirmation turned on, in which case every
+      // participant but the creator starts 'pending' until they respond.
+      await sql`
+        CREATE TABLE IF NOT EXISTS split_participants (
+          id SERIAL PRIMARY KEY,
+          split_id INTEGER NOT NULL REFERENCES splits(id) ON DELETE CASCADE,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          owed_amount NUMERIC(12, 2) NOT NULL,
+          paid_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
+          confirm_status TEXT NOT NULL DEFAULT 'accepted',
+          settled BOOLEAN NOT NULL DEFAULT false,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT split_participants_unique UNIQUE (split_id, user_id)
+        );
+      `;
+
+      // Per-user preference: whether a split you create needs the other
+      // participants to accept before it counts, or is added immediately.
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS require_split_confirmation BOOLEAN NOT NULL DEFAULT false;`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -2818,4 +2860,216 @@ export async function respondToChallengeReveal(userId: number, requestId: number
     WHERE id = ${requestId} AND target_id = ${userId} AND status = 'pending';
   `;
   return (rowCount ?? 0) > 0;
+}
+
+// ---- Split bills ----
+
+export async function getRequireSplitConfirmation(userId: number): Promise<boolean> {
+  await ensureSchema();
+  const { rows } = await sql<{ require_split_confirmation: boolean }>`
+    SELECT require_split_confirmation FROM app_settings WHERE user_id = ${userId};
+  `;
+  return rows[0]?.require_split_confirmation ?? false;
+}
+
+export async function setRequireSplitConfirmation(userId: number, enabled: boolean): Promise<boolean> {
+  await ensureSchema();
+  await sql`UPDATE app_settings SET require_split_confirmation = ${enabled} WHERE user_id = ${userId};`;
+  return enabled;
+}
+
+export type SplitRow = {
+  id: number;
+  creator_id: number;
+  title: string;
+  total_amount: string;
+  split_method: SplitMethod;
+  date: string;
+};
+
+export type SplitParticipantRow = {
+  id: number;
+  user_id: number;
+  username: string;
+  owed_amount: string;
+  paid_amount: string;
+  confirm_status: "pending" | "accepted" | "declined";
+  settled: boolean;
+  is_me: boolean;
+};
+
+export type SplitListItem = SplitRow & {
+  participant_count: number;
+  my_net: string;
+  my_confirm_status: "pending" | "accepted" | "declined";
+  my_settled: boolean;
+};
+
+export async function listSplits(userId: number): Promise<SplitListItem[]> {
+  await ensureSchema();
+  const { rows } = await sql<SplitListItem & { participant_count: string }>`
+    SELECT s.id, s.creator_id, s.title, s.total_amount::text AS total_amount, s.split_method,
+      to_char(s.date, 'YYYY-MM-DD') AS date,
+      sp.confirm_status AS my_confirm_status, sp.settled AS my_settled,
+      (sp.paid_amount - sp.owed_amount)::text AS my_net,
+      (SELECT COUNT(*) FROM split_participants sp2 WHERE sp2.split_id = s.id) AS participant_count
+    FROM splits s
+    JOIN split_participants sp ON sp.split_id = s.id AND sp.user_id = ${userId}
+    ORDER BY s.created_at DESC;
+  `;
+  return rows.map((r) => ({ ...r, participant_count: Number(r.participant_count) }));
+}
+
+// Rounds to cents and assigns any leftover fraction (from a total that
+// doesn't divide evenly) to the creator, so shares always sum to exactly
+// totalAmount.
+function splitEqually(totalAmount: number, participantIds: number[], creatorId: number): Map<number, number> {
+  const n = participantIds.length;
+  const base = Math.floor((totalAmount / n) * 100) / 100;
+  const owed = new Map<number, number>();
+  let assigned = 0;
+  for (const id of participantIds) {
+    owed.set(id, base);
+    assigned += base;
+  }
+  const remainder = Math.round((totalAmount - assigned) * 100) / 100;
+  owed.set(creatorId, Math.round(((owed.get(creatorId) ?? 0) + remainder) * 100) / 100);
+  return owed;
+}
+
+function splitByCustomAmounts(
+  totalAmount: number,
+  participantIds: number[],
+  entries: { userId: number; amount: number }[] | undefined,
+): Map<number, number> | { error: string } {
+  const provided = new Map((entries ?? []).map((e) => [e.userId, e.amount]));
+  const amounts = new Map<number, number>();
+  let sum = 0;
+  for (const id of participantIds) {
+    const amt = provided.get(id) ?? 0;
+    amounts.set(id, amt);
+    sum += amt;
+  }
+  if (Math.abs(sum - totalAmount) > 0.01) return { error: "Amounts must add up to the total." };
+  return amounts;
+}
+
+export async function createSplit(
+  creatorId: number,
+  input: {
+    title: string;
+    totalAmount: number;
+    splitMethod: SplitMethod;
+    paymentMethod: SplitPaymentMethod;
+    date: string;
+    participantIds: number[];
+    customOwed?: { userId: number; amount: number }[];
+    customPaid?: { userId: number; amount: number }[];
+  },
+): Promise<{ id: number } | { error: string }> {
+  await ensureSchema();
+  const others = [...new Set(input.participantIds)].filter((id) => id !== creatorId);
+  for (const id of others) {
+    if (!(await areFriends(creatorId, id))) return { error: "You can only split a bill with friends." };
+  }
+  const allIds = [creatorId, ...others];
+
+  const owed =
+    input.splitMethod === "equal"
+      ? splitEqually(input.totalAmount, allIds, creatorId)
+      : splitByCustomAmounts(input.totalAmount, allIds, input.customOwed);
+  if ("error" in owed) return owed;
+
+  const paid =
+    input.paymentMethod === "single_payer"
+      ? new Map(allIds.map((id) => [id, id === creatorId ? input.totalAmount : 0]))
+      : splitByCustomAmounts(input.totalAmount, allIds, input.customPaid);
+  if ("error" in paid) return paid;
+
+  const requireConfirmation = await getRequireSplitConfirmation(creatorId);
+
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    const { rows } = await client.sql<{ id: number }>`
+      INSERT INTO splits (creator_id, title, total_amount, split_method, date)
+      VALUES (${creatorId}, ${input.title}, ${input.totalAmount}, ${input.splitMethod}, ${input.date})
+      RETURNING id;
+    `;
+    const splitId = rows[0].id;
+    for (const id of allIds) {
+      const status = id === creatorId ? "accepted" : requireConfirmation ? "pending" : "accepted";
+      await client.sql`
+        INSERT INTO split_participants (split_id, user_id, owed_amount, paid_amount, confirm_status)
+        VALUES (${splitId}, ${id}, ${owed.get(id)}, ${paid.get(id)}, ${status});
+      `;
+    }
+    await client.query("COMMIT");
+    return { id: splitId };
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+export async function getSplit(
+  userId: number,
+  splitId: number,
+): Promise<{ split: SplitRow; participants: SplitParticipantRow[] } | null> {
+  await ensureSchema();
+  const { rows: splitRows } = await sql<SplitRow>`
+    SELECT id, creator_id, title, total_amount::text AS total_amount, split_method,
+      to_char(date, 'YYYY-MM-DD') AS date
+    FROM splits WHERE id = ${splitId};
+  `;
+  const split = splitRows[0];
+  if (!split) return null;
+
+  const { rows: myRow } = await sql`
+    SELECT 1 FROM split_participants WHERE split_id = ${splitId} AND user_id = ${userId};
+  `;
+  if (!myRow[0]) return null;
+
+  const { rows: participants } = await sql<SplitParticipantRow>`
+    SELECT sp.id, sp.user_id, u.username, sp.owed_amount::text AS owed_amount, sp.paid_amount::text AS paid_amount,
+      sp.confirm_status, sp.settled, (sp.user_id = ${userId}) AS is_me
+    FROM split_participants sp
+    JOIN users u ON u.id = sp.user_id
+    WHERE sp.split_id = ${splitId}
+    ORDER BY sp.id;
+  `;
+  return { split, participants };
+}
+
+export async function respondToSplit(userId: number, splitId: number, accept: boolean): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    UPDATE split_participants SET confirm_status = ${accept ? "accepted" : "declined"}
+    WHERE split_id = ${splitId} AND user_id = ${userId} AND confirm_status = 'pending';
+  `;
+  return (rowCount ?? 0) > 0;
+}
+
+export async function toggleSplitSettled(userId: number, splitId: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    UPDATE split_participants SET settled = NOT settled
+    WHERE split_id = ${splitId} AND user_id = ${userId};
+  `;
+  return (rowCount ?? 0) > 0;
+}
+
+// Deletes the whole split if the caller created it (cascades every
+// participant row), otherwise just removes the caller's own participation.
+export async function leaveOrDeleteSplit(userId: number, splitId: number): Promise<void> {
+  await ensureSchema();
+  const { rows } = await sql<{ creator_id: number }>`SELECT creator_id FROM splits WHERE id = ${splitId};`;
+  if (!rows[0]) return;
+  if (rows[0].creator_id === userId) {
+    await sql`DELETE FROM splits WHERE id = ${splitId};`;
+  } else {
+    await sql`DELETE FROM split_participants WHERE split_id = ${splitId} AND user_id = ${userId};`;
+  }
 }

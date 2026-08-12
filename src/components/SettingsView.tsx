@@ -27,6 +27,7 @@ import BudgetManager from "./BudgetManager";
 import SavingsGoalsManager from "./SavingsGoalsManager";
 import FriendsManager from "./FriendsManager";
 import ChallengesManager from "./ChallengesManager";
+import SplitBillManager from "./SplitBillManager";
 import ApiTokensManager from "./ApiTokensManager";
 import AutoImportInstructions from "./AutoImportInstructions";
 import ErrorReportsPanel from "./ErrorReportsPanel";
@@ -41,6 +42,7 @@ type Panel =
   | "wallets"
   | "friends"
   | "challenges"
+  | "splitBills"
   | "theme"
   | "currency"
   | "calendar"
@@ -59,6 +61,7 @@ const PANEL_TITLES: Record<Panel, string> = {
   wallets: "Wallets",
   friends: "Friends & Family",
   challenges: "Challenges",
+  splitBills: "Split bills",
   theme: "Theme",
   currency: "Currency",
   calendar: "Calendar settings",
@@ -117,6 +120,15 @@ function FriendsIcon() {
       <path d="M1.5 17c0-3 2.46-5 5.5-5s5.5 2 5.5 5" />
       <circle cx="14.5" cy="7" r="2.25" />
       <path d="M12.9 12.3c2.53.24 4.6 2.13 4.6 4.7" />
+    </svg>
+  );
+}
+
+function ReceiptNavIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <path d="M5 2.5h10v15l-2-1.3-1.5 1.3-1.5-1.3-1.5 1.3-1.5-1.3-2 1.3v-15Z" />
+      <path d="M7.5 6.5h5M7.5 9.5h5M7.5 12.5h3" />
     </svg>
   );
 }
@@ -332,7 +344,7 @@ export default function SettingsView({
                     Settings
                   </button>
                 )}
-                {(panel === "theme" || panel === "currency" || panel === "tags" || panel === "calendar" || panel === "friends" || panel === "challenges") && (
+                {(panel === "theme" || panel === "currency" || panel === "tags" || panel === "calendar" || panel === "friends" || panel === "challenges" || panel === "splitBills") && (
                   <h2 className="mb-5 font-display text-2xl text-foreground">{PANEL_TITLES[panel]}</h2>
                 )}
 
@@ -352,6 +364,7 @@ export default function SettingsView({
                 )}
                 {panel === "friends" && <FriendsManager />}
                 {panel === "challenges" && <ChallengesManager />}
+                {panel === "splitBills" && <SplitBillManager />}
                 {panel === "theme" && <ThemeSetting />}
                 {panel === "currency" && <CurrencySettings />}
                 {panel === "calendar" && <CalendarSettings />}
@@ -395,6 +408,7 @@ export default function SettingsView({
                 <SettingsSection title="Social">
                   <SettingsListItem icon={<FriendsIcon />} label="Friends & Family" onClick={() => setPanel("friends")} />
                   <SettingsListItem icon={<TrophyNavIcon />} label="Challenges" onClick={() => setPanel("challenges")} />
+                  <SettingsListItem icon={<ReceiptNavIcon />} label="Split bills" onClick={() => setPanel("splitBills")} />
                 </SettingsSection>
 
                 <SettingsSection title="Budgeting">

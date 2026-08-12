@@ -9,6 +9,7 @@ import {
   LIMIT_OPTIONS,
 } from "@/lib/dashboard-widgets";
 import { CHALLENGE_TYPES, CHALLENGE_MODES } from "@/lib/challenges";
+import { SPLIT_METHODS, SPLIT_PAYMENT_METHODS } from "@/lib/splits";
 
 export const forgotPasswordInputSchema = z.object({
   email: z.string().trim().email().max(255),
@@ -68,6 +69,7 @@ export const settingsInputSchema = z
     convertWalletBalances: z.boolean().optional(),
     notifyRecurringEmail: z.boolean().optional(),
     notifyBudgetEmail: z.boolean().optional(),
+    requireSplitConfirmation: z.boolean().optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
     message: "Provide at least one setting to update",
@@ -276,7 +278,7 @@ export const familyMemberInputSchema = z.object({
   memberId: z.number().int().positive(),
 });
 
-const dateStringSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD");
+export const dateStringSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD");
 
 export const challengeInputSchema = z
   .object({
@@ -301,4 +303,24 @@ export const challengeContributionInputSchema = z.object({
 
 export const challengeRevealRequestInputSchema = z.object({
   targetUserId: z.number().int().positive(),
+});
+
+const splitAmountEntrySchema = z.object({
+  userId: z.number().int().positive(),
+  amount: z.number().nonnegative().finite(),
+});
+
+export const splitInputSchema = z.object({
+  title: z.string().trim().min(1).max(60),
+  totalAmount: z.number().positive().finite(),
+  splitMethod: z.enum(SPLIT_METHODS),
+  paymentMethod: z.enum(SPLIT_PAYMENT_METHODS),
+  date: dateStringSchema,
+  participantIds: z.array(z.number().int().positive()).min(1).max(20),
+  customOwed: z.array(splitAmountEntrySchema).optional(),
+  customPaid: z.array(splitAmountEntrySchema).optional(),
+});
+
+export const splitRespondSchema = z.object({
+  accept: z.boolean(),
 });

@@ -28,6 +28,7 @@ export async function GET() {
     return NextResponse.json({ error: "Account not found." }, { status: 404 });
   }
   return NextResponse.json({
+    id: user.id,
     username: user.username,
     email: user.email,
     hasPassword: user.password_hash !== null,
