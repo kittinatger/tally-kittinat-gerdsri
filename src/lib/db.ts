@@ -2719,7 +2719,7 @@ export async function getChallenge(
       )) AS revealed_to_me
     FROM challenge_participants cp
     JOIN users u ON u.id = cp.user_id
-    WHERE cp.challenge_id = ${challengeId}
+    WHERE cp.challenge_id = ${challengeId} AND cp.status = 'accepted'
     ORDER BY cp.progress_amount DESC;
   `;
   return { challenge, participants };
@@ -2778,10 +2778,15 @@ export async function requestChallengeReveal(
     SELECT 1 FROM challenge_participants WHERE challenge_id = ${challengeId} AND user_id IN (${requesterId}, ${targetId});
   `;
   if (rows.length < 2) return { error: "Both people must be participants in this challenge." };
+  // ON CONFLICT DO NOTHING would leave a previously-declined request stuck
+  // as 'declined' forever, with no way to ask again -- reset it back to
+  // pending instead (a no-op if it's already pending or accepted).
   await sql`
     INSERT INTO challenge_reveal_requests (challenge_id, requester_id, target_id)
     VALUES (${challengeId}, ${requesterId}, ${targetId})
-    ON CONFLICT (challenge_id, requester_id, target_id) DO NOTHING;
+    ON CONFLICT (challenge_id, requester_id, target_id)
+    DO UPDATE SET status = 'pending', responded_at = NULL
+    WHERE challenge_reveal_requests.status = 'declined';
   `;
   return { ok: true };
 }
