@@ -9,6 +9,32 @@ import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/
 import { todayInputValue } from "@/lib/format";
 import { downscaleImage } from "@/lib/image-downscale";
 
+function ReceiptIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+      <path d="M5 2.5h10v15l-2-1.3-1.5 1.3-1.5-1.3-1.5 1.3-1.5-1.3-2 1.3v-15Z" />
+      <path d="M7.5 6.5h5M7.5 9.5h5M7.5 12.5h3" />
+    </svg>
+  );
+}
+
+function CopyIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+      <rect x="7" y="7" width="10" height="10" rx="2" />
+      <path d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+      <path d="M4 5.5h12M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5 6 16a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l.5-10.5" />
+    </svg>
+  );
+}
+
 export default function EditExpenseModal({
   expense,
   onClose,
@@ -189,7 +215,7 @@ export default function EditExpenseModal({
           href={`/api/expenses/${expense.id}/receipt`}
           target="_blank"
           rel="noopener noreferrer"
-          className="mb-4 flex items-center gap-3 rounded-card bg-surface-soft p-3 transition hover:bg-[var(--surface-nav-hover)]"
+          className="mb-4 flex items-center gap-3 rounded-card border border-amber-200/70 bg-gradient-to-br from-amber-50 via-surface-soft to-surface-soft p-3 transition hover:border-amber-400 dark:border-amber-900/50 dark:from-amber-950/30 dark:via-surface-soft dark:to-surface-soft"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -197,7 +223,10 @@ export default function EditExpenseModal({
             alt="Receipt"
             className="h-14 w-14 shrink-0 rounded-lg object-cover"
           />
-          <span className="text-sm font-semibold text-surface-foreground">View original receipt</span>
+          <span className="flex items-center gap-1.5 text-sm font-semibold text-surface-foreground">
+            <ReceiptIcon />
+            View original receipt
+          </span>
         </a>
       )}
       {!expense.hasReceipt && (
@@ -206,12 +235,9 @@ export default function EditExpenseModal({
             type="button"
             onClick={() => receiptInputRef.current?.click()}
             disabled={attaching}
-            className="flex items-center gap-2 rounded-full border border-surface-line px-3.5 py-2 text-sm font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground disabled:opacity-60"
+            className="flex items-center gap-2 rounded-full border border-amber-200/70 bg-amber-500/10 px-3.5 py-2 text-sm font-semibold text-amber-700 transition hover:border-amber-400 disabled:opacity-60 dark:border-amber-900/50 dark:text-amber-400"
           >
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-              <rect x="2.5" y="4" width="15" height="12" rx="2" />
-              <circle cx="10" cy="10" r="2.5" />
-            </svg>
+            <ReceiptIcon />
             {attaching ? "Attaching..." : "Attach receipt"}
           </button>
           <input
@@ -240,21 +266,27 @@ export default function EditExpenseModal({
               type="button"
               onClick={handleDuplicate}
               disabled={duplicating}
-              className="rounded-full px-3.5 py-2 text-sm font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground disabled:opacity-60"
+              aria-label="Duplicate transaction"
+              className="flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground disabled:opacity-60"
             >
-              {duplicating ? "Duplicating..." : "Duplicate"}
+              <CopyIcon />
+              <span className="hidden sm:inline">{duplicating ? "Duplicating..." : "Duplicate"}</span>
             </button>
             <button
               type="button"
               onClick={handleDelete}
               disabled={deleting}
-              className={`rounded-full px-3.5 py-2 text-sm font-semibold transition ${
+              aria-label={confirmingDelete ? "Confirm delete" : "Delete transaction"}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition ${
                 confirmingDelete
                   ? "bg-red-600 text-white hover:bg-red-700"
                   : "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
               }`}
             >
-              {deleting ? "Deleting..." : confirmingDelete ? "Confirm delete" : "Delete"}
+              <TrashIcon />
+              <span className={confirmingDelete ? "inline" : "hidden sm:inline"}>
+                {deleting ? "Deleting..." : confirmingDelete ? "Confirm delete" : "Delete"}
+              </span>
             </button>
           </div>
         }
