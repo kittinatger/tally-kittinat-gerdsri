@@ -19,6 +19,31 @@ type Tab = "manual" | "scan" | "voice";
 type ScanStatus = "idle" | "analyzing" | "review" | "error";
 type ConversionInfo = { originalAmount: number; originalCurrency: string };
 
+function PencilTabIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+      <path d="M13.5 3.5a1.5 1.5 0 0 1 2 2l-8.5 8.5-3 1 1-3Z" />
+    </svg>
+  );
+}
+
+function ScanTabIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+      <path d="M4 6.5V5a1 1 0 0 1 1-1h1.5M14.5 4H16a1 1 0 0 1 1 1v1.5M17 13.5V15a1 1 0 0 1-1 1h-1.5M5.5 16H4a1 1 0 0 1-1-1v-1.5M3 10h14" />
+    </svg>
+  );
+}
+
+function MicTabIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+      <rect x="7.5" y="2.5" width="5" height="9" rx="2.5" />
+      <path d="M4.5 9.5a5.5 5.5 0 0 0 11 0M10 15v2.5" />
+    </svg>
+  );
+}
+
 export default function AddExpenseModal({
   onClose,
   onCreated,
@@ -299,26 +324,37 @@ export default function AddExpenseModal({
       <div className="mb-4 flex gap-1 rounded-full bg-bg-soft p-1">
         <button
           onClick={() => setTab("manual")}
-          className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-            tab === "manual" ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold transition ${
+            tab === "manual"
+              ? "bg-surface-soft text-surface-foreground shadow-sm"
+              : "text-surface-foreground-soft hover:text-surface-foreground"
           }`}
         >
-          Manual entry
+          <PencilTabIcon />
+          <span className="hidden sm:inline">Manual entry</span>
+          <span className="sm:hidden">Manual</span>
         </button>
         <button
           onClick={() => setTab("scan")}
-          className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-            tab === "scan" ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold transition ${
+            tab === "scan"
+              ? "bg-surface-soft text-surface-foreground shadow-sm"
+              : "text-surface-foreground-soft hover:text-surface-foreground"
           }`}
         >
-          Scan document
+          <ScanTabIcon />
+          <span className="hidden sm:inline">Scan document</span>
+          <span className="sm:hidden">Scan</span>
         </button>
         <button
           onClick={() => setTab("voice")}
-          className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-            tab === "voice" ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold transition ${
+            tab === "voice"
+              ? "bg-surface-soft text-surface-foreground shadow-sm"
+              : "text-surface-foreground-soft hover:text-surface-foreground"
           }`}
         >
+          <MicTabIcon />
           Speak
         </button>
       </div>
@@ -379,14 +415,18 @@ export default function AddExpenseModal({
 
           {scanStatus === "review" && scanValues && (
             <div>
-              <div className="mb-4 flex items-center gap-3 rounded-card bg-surface-soft p-3">
-                {previewUrl && (
+              <div className="mb-4 flex items-center gap-3 rounded-card border border-amber-200/70 bg-gradient-to-br from-amber-50 via-surface-soft to-surface-soft p-3 dark:border-amber-900/50 dark:from-amber-950/30 dark:via-surface-soft dark:to-surface-soft">
+                {previewUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={previewUrl} alt="Document preview" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+                ) : (
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                    <ScanTabIcon />
+                  </span>
                 )}
                 <div className="min-w-0">
                   {queue.length > 1 && (
-                    <p className="mb-1 text-xs font-semibold text-surface-accent">
+                    <p className="mb-1 text-xs font-semibold text-amber-700 dark:text-amber-400">
                       Reviewing {queueIndex + 1} of {queue.length}
                     </p>
                   )}
@@ -397,7 +437,7 @@ export default function AddExpenseModal({
                 </div>
               </div>
               {scanConversion && (
-                <p className="mb-4 rounded-card bg-surface-soft px-3 py-2 text-xs font-medium text-surface-accent">
+                <p className="mb-4 rounded-card bg-sky-500/10 px-3 py-2 text-xs font-medium text-sky-700 dark:text-sky-300">
                   Converted from {formatCurrency(scanConversion.originalAmount, scanConversion.originalCurrency)} to{" "}
                   {currency}.
                 </p>
@@ -452,20 +492,25 @@ export default function AddExpenseModal({
 
           {voiceStatus === "review" && voiceQueue[voiceQueueIndex] && (
             <div>
-              <div className="mb-4 rounded-card bg-surface-soft p-3">
-                {voiceQueue.length > 1 && (
-                  <p className="mb-1 text-xs font-semibold text-surface-accent">
-                    Reviewing {voiceQueueIndex + 1} of {voiceQueue.length}
+              <div className="mb-4 flex items-center gap-3 rounded-card border border-violet-200/70 bg-gradient-to-br from-violet-50 via-surface-soft to-surface-soft p-3 dark:border-violet-900/50 dark:from-violet-950/30 dark:via-surface-soft dark:to-surface-soft">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-500/15 text-violet-600 dark:text-violet-400">
+                  <MicTabIcon />
+                </span>
+                <div className="min-w-0">
+                  {voiceQueue.length > 1 && (
+                    <p className="mb-1 text-xs font-semibold text-violet-700 dark:text-violet-400">
+                      Reviewing {voiceQueueIndex + 1} of {voiceQueue.length}
+                    </p>
+                  )}
+                  <p className="text-xs text-surface-foreground-soft">
+                    {voiceQueue.length > 1
+                      ? "Heard multiple transactions — review each before saving. Double-check the amounts and expense/income toggles, since spoken numbers can occasionally be misheard."
+                      : "Review the details below before saving — double-check the amount and expense/income toggle, since spoken numbers can occasionally be misheard."}
                   </p>
-                )}
-                <p className="text-xs text-surface-foreground-soft">
-                  {voiceQueue.length > 1
-                    ? "Heard multiple transactions — review each before saving. Double-check the amounts and expense/income toggles, since spoken numbers can occasionally be misheard."
-                    : "Review the details below before saving — double-check the amount and expense/income toggle, since spoken numbers can occasionally be misheard."}
-                </p>
+                </div>
               </div>
               {voiceQueue[voiceQueueIndex].conversion && (
-                <p className="mb-4 rounded-card bg-surface-soft px-3 py-2 text-xs font-medium text-surface-accent">
+                <p className="mb-4 rounded-card bg-sky-500/10 px-3 py-2 text-xs font-medium text-sky-700 dark:text-sky-300">
                   Converted from{" "}
                   {formatCurrency(
                     voiceQueue[voiceQueueIndex].conversion!.originalAmount,

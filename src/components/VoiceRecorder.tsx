@@ -83,14 +83,14 @@ export default function VoiceRecorder({
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 py-10 text-center">
+    <div className="flex flex-col items-center gap-4 rounded-card border border-violet-200/70 bg-gradient-to-br from-violet-50 via-surface-soft to-surface-soft py-10 text-center dark:border-violet-900/50 dark:from-violet-950/30 dark:via-surface-soft dark:to-surface-soft">
       <button
         type="button"
         onClick={recording ? stopRecording : startRecording}
         disabled={disabled}
         aria-pressed={recording}
         className={`flex h-20 w-20 items-center justify-center rounded-full text-white shadow-soft transition disabled:opacity-40 ${
-          recording ? "animate-pulse bg-red-600 hover:bg-red-700" : "bg-navy hover:bg-navy-dark"
+          recording ? "animate-pulse bg-red-600 hover:bg-red-700" : "bg-violet-500 hover:bg-violet-600"
         }`}
       >
         {recording ? (

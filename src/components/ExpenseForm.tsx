@@ -117,8 +117,14 @@ export default function ExpenseForm({
     values.type === "income"
       ? "text-emerald-600 dark:text-emerald-400"
       : values.type === "expense"
-        ? "text-red-600 dark:text-red-400"
-        : "text-surface-foreground";
+        ? "text-rose-600 dark:text-rose-400"
+        : "text-sky-600 dark:text-sky-400";
+  const amountCardClass =
+    values.type === "income"
+      ? "border-emerald-200/70 bg-gradient-to-br from-emerald-50 via-surface to-surface dark:border-emerald-900/50 dark:from-emerald-950/40 dark:via-surface dark:to-surface"
+      : values.type === "expense"
+        ? "border-rose-200/70 bg-gradient-to-br from-rose-50 via-surface to-surface dark:border-rose-900/50 dark:from-rose-950/40 dark:via-surface dark:to-surface"
+        : "border-sky-200/70 bg-gradient-to-br from-sky-50 via-surface to-surface dark:border-sky-900/50 dark:from-sky-950/40 dark:via-surface dark:to-surface";
   function categoryDot(name: string) {
     const c = categories.find((cat) => cat.name === name);
     return <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dotClasses(c?.color)}`} aria-hidden="true" />;
@@ -192,7 +198,9 @@ export default function ExpenseForm({
           type="button"
           onClick={() => updateType("expense")}
           className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-            values.type === "expense" ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
+            values.type === "expense"
+              ? "bg-rose-500 text-white shadow-sm"
+              : "text-surface-foreground-soft hover:text-surface-foreground"
           }`}
         >
           Expense
@@ -201,7 +209,9 @@ export default function ExpenseForm({
           type="button"
           onClick={() => updateType("income")}
           className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-            values.type === "income" ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
+            values.type === "income"
+              ? "bg-emerald-500 text-white shadow-sm"
+              : "text-surface-foreground-soft hover:text-surface-foreground"
           }`}
         >
           Income
@@ -210,7 +220,9 @@ export default function ExpenseForm({
           type="button"
           onClick={() => updateType("transfer")}
           className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-            values.type === "transfer" ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
+            values.type === "transfer"
+              ? "bg-sky-500 text-white shadow-sm"
+              : "text-surface-foreground-soft hover:text-surface-foreground"
           }`}
         >
           Transfer
@@ -226,8 +238,8 @@ export default function ExpenseForm({
               onClick={() => update("direction", "out")}
               className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
                 values.direction === "out"
-                  ? "bg-surface-soft text-surface-foreground shadow-sm"
-                  : "text-surface-foreground-soft"
+                  ? "bg-rose-500 text-white shadow-sm"
+                  : "text-surface-foreground-soft hover:text-surface-foreground"
               }`}
             >
               Money out
@@ -237,8 +249,8 @@ export default function ExpenseForm({
               onClick={() => update("direction", "in")}
               className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
                 values.direction === "in"
-                  ? "bg-surface-soft text-surface-foreground shadow-sm"
-                  : "text-surface-foreground-soft"
+                  ? "bg-emerald-500 text-white shadow-sm"
+                  : "text-surface-foreground-soft hover:text-surface-foreground"
               }`}
             >
               Money in
@@ -254,7 +266,7 @@ export default function ExpenseForm({
           you're most likely typing right after opening this form, so it
           gets a hero-sized, type-colored input instead of sitting level
           with everything else. */}
-      <div className="text-center sm:order-3 sm:text-left">
+      <div className={`rounded-card border px-4 py-3 text-center transition sm:order-3 sm:text-left ${amountCardClass}`}>
         <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft" htmlFor="amount">
           Amount
         </label>
