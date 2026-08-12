@@ -26,7 +26,12 @@ export const metadata: Metadata = {
     title: "Tally",
   },
   icons: {
+    // The plain, unconditional PNG comes first as a fallback for surfaces
+    // that don't evaluate the media-conditional SVGs below (e.g. Chrome on
+    // Android's "Create shortcut" icon picker, which otherwise falls back
+    // to a generated letter monogram instead of the real icon).
     icon: [
+      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
       { url: "/favicon-light.svg", type: "image/svg+xml", media: "(prefers-color-scheme: light)" },
       { url: "/favicon-dark.svg", type: "image/svg+xml", media: "(prefers-color-scheme: dark)" },
     ],
