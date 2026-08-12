@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { badgeClasses } from "@/lib/category-styles";
 
 export function ChevronRight() {
   return (
@@ -10,10 +11,26 @@ export function ChevronRight() {
 
 const rowClass = "flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover:bg-[var(--surface-nav-hover)]";
 
-function RowContent({ icon, label, badge }: { icon: React.ReactNode; label: string; badge?: string }) {
+function RowContent({
+  icon,
+  label,
+  badge,
+  accent,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  badge?: string;
+  accent?: string;
+}) {
   return (
     <>
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center text-ink-soft">{icon}</span>
+      <span
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+          accent ? badgeClasses(accent) : "text-ink-soft"
+        }`}
+      >
+        {icon}
+      </span>
       <span className="flex-1 text-sm font-medium text-foreground">{label}</span>
       {badge ? (
         <span className="shrink-0 rounded-full bg-bg-soft px-3 py-1.5 text-xs font-semibold text-ink-soft">{badge}</span>
@@ -31,6 +48,7 @@ export default function SettingsListItem({
   href,
   disabled,
   badge,
+  accent,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -38,11 +56,13 @@ export default function SettingsListItem({
   href?: string;
   disabled?: boolean;
   badge?: string;
+  /** One of the shared category-color tokens (e.g. "sky", "violet", "amber") — tints the icon's circular badge, same palette used across the rest of the app. Omit for a plain neutral icon. */
+  accent?: string;
 }) {
   if (href && !disabled) {
     return (
       <Link href={href} className={rowClass}>
-        <RowContent icon={icon} label={label} badge={badge} />
+        <RowContent icon={icon} label={label} badge={badge} accent={accent} />
       </Link>
     );
   }
@@ -54,7 +74,7 @@ export default function SettingsListItem({
       disabled={disabled || !onClick}
       className={`${rowClass} ${disabled || !onClick ? "opacity-60" : ""}`}
     >
-      <RowContent icon={icon} label={label} badge={badge} />
+      <RowContent icon={icon} label={label} badge={badge} accent={accent} />
     </button>
   );
 }

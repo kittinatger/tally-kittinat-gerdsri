@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCurrency } from "@/lib/currency-context";
 import CurrencyDropdown from "./CurrencyDropdown";
+import { badgeClasses } from "@/lib/category-styles";
 
 function ScanIcon() {
   return (
@@ -43,12 +44,12 @@ function ToggleRow({
   error?: string | null;
 }) {
   return (
-    <div className="py-3 first:pt-0 last:pb-0">
+    <div className="p-4">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <span
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-              checked ? "bg-navy/10 text-navy dark:text-blue-300" : "bg-bg-soft text-ink-soft"
+              checked ? badgeClasses("green") : badgeClasses("slate")
             }`}
           >
             {icon}
@@ -182,21 +183,21 @@ export default function CurrencySettings() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-card border border-line bg-surface p-5">
-        <p className="text-sm font-semibold text-foreground">Default currency</p>
-        <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">
+    <div className="space-y-6">
+      <div>
+        <h3 className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">Default currency</h3>
+        <p className="mb-3 px-1 text-[11px] leading-snug text-ink-soft">
           Used for new transactions and everywhere amounts are shown, unless a wallet has its own currency label.
         </p>
-        <div className="mt-3">
+        <div className="rounded-card border border-line bg-surface p-4">
           <CurrencyDropdown value={currency} onChange={handleCurrencyChange} disabled={savingCurrency} />
+          {currencyError && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{currencyError}</p>}
         </div>
-        {currencyError && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{currencyError}</p>}
       </div>
 
-      <div className="rounded-card border border-line bg-surface p-5">
-        <p className="text-sm font-semibold text-foreground">Conversion</p>
-        <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">
+      <div>
+        <h3 className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">Conversion</h3>
+        <p className="mb-3 px-1 text-[11px] leading-snug text-ink-soft">
           Uses live exchange rates from{" "}
           <a
             href="https://frankfurter.app"
@@ -209,7 +210,7 @@ export default function CurrencySettings() {
           , a free ECB-rate API.
         </p>
 
-        <div className="mt-3 divide-y divide-line">
+        <div className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface">
           <ToggleRow
             icon={<ScanIcon />}
             label="Auto-convert"

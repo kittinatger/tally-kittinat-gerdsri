@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import NotificationSettings from "./NotificationSettings";
 import { describeMediaError } from "@/lib/media-error";
+import { badgeClasses } from "@/lib/category-styles";
 
 type PermissionStatus = "granted" | "denied" | "prompt" | "unsupported";
 
@@ -100,14 +101,13 @@ export default function PermissionsSettings({ hasEmail }: { hasEmail: boolean })
   }
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-card border border-line bg-surface p-5">
-        <h3 className="font-display text-xl text-foreground">Permissions</h3>
-        <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">
+    <div className="space-y-6">
+      <div>
+        <h3 className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">Device access</h3>
+        <p className="mb-3 px-1 text-[11px] leading-snug text-ink-soft">
           What Tally can access on this device, for receipt scanning and voice entry.
         </p>
-
-        <div className="mt-4 divide-y divide-line">
+        <div className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface">
           <PermissionRow
             icon={<MicIcon />}
             label="Microphone"
@@ -144,8 +144,11 @@ export default function PermissionsSettings({ hasEmail }: { hasEmail: boolean })
         />
       </div>
 
-      <div className="rounded-card border border-line bg-surface p-5">
-        <NotificationSettings hasEmail={hasEmail} />
+      <div>
+        <h3 className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">Notifications</h3>
+        <div className="overflow-hidden rounded-card border border-line bg-surface p-4">
+          <NotificationSettings hasEmail={hasEmail} />
+        </div>
       </div>
     </div>
   );
@@ -167,16 +170,16 @@ function PermissionRow({
   error?: string | null;
 }) {
   return (
-    <div className="py-3 first:pt-0 last:pb-0">
+    <div className="p-4">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <span
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
               status === "granted"
-                ? "bg-navy/10 text-navy dark:text-blue-300"
+                ? badgeClasses("emerald")
                 : status === "denied"
                   ? "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400"
-                  : "bg-bg-soft text-ink-soft"
+                  : badgeClasses("slate")
             }`}
           >
             {icon}
@@ -187,7 +190,7 @@ function PermissionRow({
           </div>
         </div>
         {status === "granted" ? (
-          <span className="shrink-0 rounded-full bg-navy/10 px-3 py-1.5 text-xs font-semibold text-navy dark:text-blue-300">
+          <span className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${badgeClasses("emerald")}`}>
             Granted
           </span>
         ) : (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { CategoryOption } from "@/types/category";
 import type { WalletOption } from "@/types/wallet";
@@ -12,7 +12,6 @@ import { APP_VERSION } from "@/lib/version";
 import PullToRefresh from "./PullToRefresh";
 import AppHeader from "./AppHeader";
 import AccountPanel from "./AccountPanel";
-import ThemeSetting from "./ThemeSetting";
 import CurrencySettings from "./CurrencySettings";
 import CalendarSettings from "./CalendarSettings";
 import DashboardWidgetsSettings from "./DashboardWidgetsSettings";
@@ -43,7 +42,6 @@ type Panel =
   | "friends"
   | "challenges"
   | "splitBills"
-  | "theme"
   | "currency"
   | "calendar"
   | "dashboardWidgets"
@@ -62,7 +60,6 @@ const PANEL_TITLES: Record<Panel, string> = {
   friends: "Friends & Family",
   challenges: "Challenges",
   splitBills: "Split bills",
-  theme: "Theme",
   currency: "Currency",
   calendar: "Calendar settings",
   dashboardWidgets: "Customize dashboard",
@@ -173,6 +170,73 @@ function SunMoonIcon() {
   );
 }
 
+// Was its own settings panel (a single toggle button and nothing else) —
+// folded inline into the top of the Settings list instead, since a whole
+// navigation tap for one button was more empty page than setting.
+function ThemeToggleButton() {
+  const [theme, setTheme] = useState<"light" | "dark">(() =>
+    typeof document !== "undefined" && document.documentElement.getAttribute("data-theme") === "dark"
+      ? "dark"
+      : "light",
+  );
+
+  function toggleTheme() {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    document.documentElement.setAttribute("data-theme", next);
+    try {
+      localStorage.setItem("tally-theme", next);
+    } catch {
+      // Storage can be unavailable (private browsing, etc.) — the toggle
+      // still works for the current session either way.
+    }
+  }
+
+  return (
+    <button
+      onClick={toggleTheme}
+      aria-label="Toggle dark mode"
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-bg-soft text-ink-soft transition hover:text-foreground"
+    >
+      <SunMoonIcon />
+    </button>
+  );
+}
+
+// Anchors the top of the Settings list with the same profile picture used
+// on the Dashboard's Welcome widget, so Settings reads as "your account"
+// rather than a bare list of links.
+function ProfileAvatar({ username }: { username: string }) {
+  const [pictureUrl, setPictureUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/account/profile-picture", { cache: "no-store" })
+      .then((res) => (res.ok ? res.blob() : null))
+      .then((blob) => {
+        if (!cancelled && blob) setPictureUrl(URL.createObjectURL(blob));
+      })
+      .catch(() => {
+        // Leave it blank — the initial-letter fallback below still works.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (pictureUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={pictureUrl} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-surface-accent" />
+    );
+  }
+  return (
+    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-accent/10">
+      <span className="text-lg font-bold text-surface-accent">{username.charAt(0).toUpperCase()}</span>
+    </div>
+  );
+}
+
 function CoinIcon() {
   return (
     <svg viewBox="0 0 25.8008 25.459" fill="currentColor" className="h-5 w-5">
@@ -181,13 +245,6 @@ function CoinIcon() {
   );
 }
 
-function GlobeIcon() {
-  return (
-    <svg viewBox="0 0 25.752 25.2441" fill="currentColor" className="h-5 w-5">
-      <path d="M4.05273 3.29102C4.84375 4.12109 5.95703 4.78516 7.35352 5.24414C7.94922 3.01758 8.82812 1.28906 9.85352 0.234375C7.63672 0.722656 5.64453 1.79688 4.05273 3.29102ZM8.59375 5.5957C9.63867 5.82031 10.791 5.95703 12.0605 5.98633L12.0605 0.0292969C10.6445 0.488281 9.36523 2.5293 8.59375 5.5957ZM13.3398 5.98633C14.5996 5.95703 15.752 5.82031 16.7969 5.5957C16.0254 2.5293 14.7461 0.488281 13.3398 0.0292969ZM18.0371 5.24414C19.4336 4.78516 20.5469 4.12109 21.3379 3.29102C19.7461 1.79688 17.7539 0.722656 15.5371 0.234375C16.5625 1.28906 17.4414 3.01758 18.0371 5.24414ZM0 11.9727L6.50391 11.9727C6.5332 9.94141 6.74805 8.08594 7.08008 6.47461C5.3125 5.9082 3.94531 5.08789 3.23242 4.12109C1.33789 6.2207 0.146484 8.96484 0 11.9727ZM7.8125 11.9727L12.0605 11.9727L12.0605 7.26562C10.7324 7.22656 9.48242 7.07031 8.33984 6.81641C8.02734 8.35938 7.8418 10.0977 7.8125 11.9727ZM13.3398 11.9727L17.5781 11.9727C17.5488 10.0977 17.3633 8.35938 17.0508 6.81641C15.9082 7.07031 14.6582 7.22656 13.3398 7.26562ZM18.8965 11.9727L25.3906 11.9727C25.2441 8.96484 24.0527 6.2207 22.1582 4.12109C21.4453 5.08789 20.0781 5.9082 18.3105 6.47461C18.6426 8.08594 18.8574 9.94141 18.8965 11.9727ZM3.26172 21.1328C3.98438 20.1855 5.33203 19.375 7.08008 18.8281C6.74805 17.1875 6.5332 15.3125 6.49414 13.252L0 13.252C0.146484 16.2793 1.35742 19.0332 3.26172 21.1328ZM8.35938 18.4668C9.49219 18.2227 10.7422 18.0664 12.0605 18.0273L12.0605 13.252L7.80273 13.252C7.83203 15.1367 8.02734 16.9141 8.35938 18.4668ZM13.3398 18.0273C14.6484 18.0664 15.8984 18.2227 17.0312 18.4668C17.3535 16.9141 17.5586 15.1367 17.5879 13.252L13.3398 13.252ZM18.3105 18.8281C20.0586 19.375 21.4062 20.1855 22.1289 21.1328C24.0332 19.0332 25.2441 16.2793 25.3906 13.252L18.8965 13.252C18.8574 15.3125 18.6426 17.1875 18.3105 18.8281ZM9.81445 24.9902C8.80859 23.9355 7.93945 22.2363 7.35352 20.0488C5.97656 20.498 4.88281 21.1426 4.0918 21.9629C5.66406 23.4375 7.62695 24.502 9.81445 24.9902ZM12.0605 25.2441L12.0605 19.3066C10.8008 19.3359 9.64844 19.4727 8.61328 19.6973C9.38477 22.7246 10.6445 24.7852 12.0605 25.2441ZM13.3398 25.2441C14.7461 24.7852 16.0059 22.7246 16.7773 19.6973C15.7422 19.4727 14.5898 19.3359 13.3398 19.3066ZM15.5762 24.9902C17.7539 24.502 19.7266 23.4375 21.3086 21.9629C20.5078 21.1426 19.4141 20.498 18.0371 20.0488C17.4512 22.2363 16.582 23.9355 15.5762 24.9902Z" />
-    </svg>
-  );
-}
 
 function BookIcon() {
   return (
@@ -344,7 +401,7 @@ export default function SettingsView({
                     Settings
                   </button>
                 )}
-                {(panel === "theme" || panel === "currency" || panel === "tags" || panel === "calendar" || panel === "friends" || panel === "challenges" || panel === "splitBills") && (
+                {(panel === "currency" || panel === "tags" || panel === "calendar" || panel === "friends" || panel === "challenges" || panel === "splitBills") && (
                   <h2 className="mb-5 font-display text-2xl text-foreground">{PANEL_TITLES[panel]}</h2>
                 )}
 
@@ -365,7 +422,6 @@ export default function SettingsView({
                 {panel === "friends" && <FriendsManager />}
                 {panel === "challenges" && <ChallengesManager />}
                 {panel === "splitBills" && <SplitBillManager />}
-                {panel === "theme" && <ThemeSetting />}
                 {panel === "currency" && <CurrencySettings />}
                 {panel === "calendar" && <CalendarSettings />}
                 {panel === "recurring" && <RecurringManager />}
@@ -390,47 +446,53 @@ export default function SettingsView({
               </div>
             ) : (
               <div>
-                <h2 className="mb-5 font-display text-2xl text-foreground">Settings</h2>
+                <div className="mb-6 flex items-center gap-3 rounded-card border border-line bg-surface p-4">
+                  <ProfileAvatar username={username} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-display text-lg text-foreground">{username}</p>
+                    <p className="truncate text-xs text-ink-soft">{email ?? "No email on file"}</p>
+                  </div>
+                  <ThemeToggleButton />
+                </div>
 
                 <SettingsSection title="App settings">
-                  <SettingsListItem icon={<AccountIcon />} label="Account" onClick={() => setPanel("account")} />
-                  <SettingsListItem icon={<ShieldIcon />} label="Permissions" onClick={() => setPanel("permissions")} />
+                  <SettingsListItem icon={<AccountIcon />} label="Account" accent="slate" onClick={() => setPanel("account")} />
+                  <SettingsListItem icon={<ShieldIcon />} label="Permissions" accent="slate" onClick={() => setPanel("permissions")} />
                 </SettingsSection>
 
                 <SettingsSection title="Records">
-                  <SettingsListItem icon={<GridIcon />} label="Manage categories" onClick={() => setPanel("categories")} />
-                  <SettingsListItem icon={<HashIcon />} label="Manage tags" onClick={() => setPanel("tags")} />
-                  <SettingsListItem icon={<WalletIcon />} label="Wallets" onClick={() => setPanel("wallets")} />
+                  <SettingsListItem icon={<GridIcon />} label="Manage categories" accent="indigo" onClick={() => setPanel("categories")} />
+                  <SettingsListItem icon={<HashIcon />} label="Manage tags" accent="indigo" onClick={() => setPanel("tags")} />
+                  <SettingsListItem icon={<WalletIcon />} label="Wallets" accent="sky" onClick={() => setPanel("wallets")} />
                   <ExportDataButton />
                   <ImportDataButton />
                 </SettingsSection>
 
                 <SettingsSection title="Social">
-                  <SettingsListItem icon={<FriendsIcon />} label="Friends & Family" onClick={() => setPanel("friends")} />
-                  <SettingsListItem icon={<TrophyNavIcon />} label="Challenges" onClick={() => setPanel("challenges")} />
-                  <SettingsListItem icon={<ReceiptNavIcon />} label="Split bills" onClick={() => setPanel("splitBills")} />
+                  <SettingsListItem icon={<FriendsIcon />} label="Friends & Family" accent="pink" onClick={() => setPanel("friends")} />
+                  <SettingsListItem icon={<TrophyNavIcon />} label="Challenges" accent="violet" onClick={() => setPanel("challenges")} />
+                  <SettingsListItem icon={<ReceiptNavIcon />} label="Split bills" accent="amber" onClick={() => setPanel("splitBills")} />
                 </SettingsSection>
 
                 <SettingsSection title="Budgeting">
-                  <SettingsListItem icon={<RecurringIcon />} label="Recurring transactions" onClick={() => setPanel("recurring")} />
-                  <SettingsListItem icon={<BudgetIcon />} label="Budgets" onClick={() => setPanel("budgets")} />
-                  <SettingsListItem icon={<GoalIcon />} label="Savings goals" onClick={() => setPanel("savingsGoals")} />
-                  <SettingsListItem icon={<AutoImportIcon />} label="Automatic import" onClick={() => setPanel("autoImport")} />
+                  <SettingsListItem icon={<RecurringIcon />} label="Recurring transactions" accent="teal" onClick={() => setPanel("recurring")} />
+                  <SettingsListItem icon={<BudgetIcon />} label="Budgets" accent="orange" onClick={() => setPanel("budgets")} />
+                  <SettingsListItem icon={<GoalIcon />} label="Savings goals" accent="emerald" onClick={() => setPanel("savingsGoals")} />
+                  <SettingsListItem icon={<AutoImportIcon />} label="Automatic import" accent="cyan" onClick={() => setPanel("autoImport")} />
                 </SettingsSection>
 
                 <SettingsSection title="Display">
                   <SettingsListItem
                     icon={<DashboardWidgetsIcon />}
                     label="Customize dashboard"
+                    accent="fuchsia"
                     onClick={() => setPanel("dashboardWidgets")}
                   />
-                  <SettingsListItem icon={<CalendarIcon />} label="Calendar settings" onClick={() => setPanel("calendar")} />
-                  <SettingsListItem icon={<SunMoonIcon />} label="Theme" onClick={() => setPanel("theme")} />
-                  <SettingsListItem icon={<CoinIcon />} label="Currency" onClick={() => setPanel("currency")} />
-                  <SettingsListItem icon={<GlobeIcon />} label="Language" badge="Coming soon" />
+                  <SettingsListItem icon={<CalendarIcon />} label="Calendar settings" accent="blue" onClick={() => setPanel("calendar")} />
+                  <SettingsListItem icon={<CoinIcon />} label="Currency" accent="green" onClick={() => setPanel("currency")} />
                 </SettingsSection>
 
-                <SettingsSection title="Support">
+                <SettingsSection title="Support" defaultOpen={false}>
                   <SettingsListItem icon={<BookIcon />} label="Usage guide" href="/usage-guide" />
                   <SettingsListItem icon={<QuestionIcon />} label="FAQs" href="/faq" />
                   <SettingsListItem icon={<WrenchIcon />} label="Troubleshooting" href="/troubleshooting" />

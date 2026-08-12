@@ -131,110 +131,116 @@ export default function CalendarSettings() {
   }
 
   return (
-    <div className="space-y-3.5">
-      <div className="rounded-card border border-line bg-surface p-5">
-        <p className="mb-1.5 text-sm font-medium text-foreground">Week starts on</p>
-        <p className="mb-2 text-[11px] leading-snug text-ink-soft">Controls the first day shown in date pickers.</p>
-        <SelectDropdown
-          value={WEEKDAY_OPTIONS[settings.weekStartDay]}
-          options={WEEKDAY_OPTIONS}
-          onChange={(label) => save({ weekStartDay: WEEKDAY_OPTIONS.indexOf(label) })}
-        />
-      </div>
-
-      <div className="rounded-card border border-line bg-surface p-5">
-        <p className="mb-1.5 text-sm font-medium text-foreground">Month starts on date</p>
-        <p className="mb-2 text-[11px] leading-snug text-ink-soft">
-          Day of the month your budgeting period begins, for custom pay cycles.
-        </p>
-        <input
-          type="number"
-          min={1}
-          max={28}
-          value={settings.monthStartDay}
-          onChange={(e) => {
-            const value = Number(e.target.value);
-            if (Number.isFinite(value) && value >= 1 && value <= 28) save({ monthStartDay: value });
-          }}
-          className="w-24 rounded-card border border-surface-line bg-surface-soft px-3.5 py-2.5 text-base text-surface-foreground outline-none transition focus:border-surface-accent focus:ring-2 focus:ring-surface-accent/20"
-        />
-      </div>
-
-      <div className="rounded-card border border-line bg-surface p-5">
-        <p className="mb-1.5 text-sm font-medium text-foreground">Bi-weekly period anchor</p>
-        <p className="mb-2 text-[11px] leading-snug text-ink-soft">
-          Pick any date that starts one of your pay periods; every 14 days from it marks the next.
-        </p>
-        <div className="flex items-center gap-2">
-          <DatePicker
-            value={settings.biweeklyAnchorDate ?? ""}
-            onChange={(value) => save({ biweeklyAnchorDate: value })}
+    <div>
+      {/* One grouped card with divided rows instead of seven separate
+          floating cards — same convention as every other Settings list
+          (WalletManager, TagManager, etc.), rather than a stack of
+          near-identical boxes for what's really one settings group. */}
+      <div className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface">
+        <div className="p-4">
+          <p className="mb-1.5 text-sm font-medium text-foreground">Week starts on</p>
+          <p className="mb-2 text-[11px] leading-snug text-ink-soft">Controls the first day shown in date pickers.</p>
+          <SelectDropdown
+            value={WEEKDAY_OPTIONS[settings.weekStartDay]}
+            options={WEEKDAY_OPTIONS}
+            onChange={(label) => save({ weekStartDay: WEEKDAY_OPTIONS.indexOf(label) })}
           />
-          {settings.biweeklyAnchorDate && (
-            <button
-              type="button"
-              onClick={() => save({ biweeklyAnchorDate: null })}
-              className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-bg-soft hover:text-foreground"
-            >
-              Clear
-            </button>
-          )}
         </div>
-      </div>
 
-      <div className="rounded-card border border-line bg-surface p-5">
-        <p className="mb-1.5 text-sm font-medium text-foreground">Default view when app launches</p>
-        <SelectDropdown
-          value={DEFAULT_VIEW_OPTIONS.find((o) => o.value === settings.defaultView)?.label ?? "Today"}
-          options={DEFAULT_VIEW_OPTIONS.map((o) => o.label)}
-          onChange={(label) => {
-            const opt = DEFAULT_VIEW_OPTIONS.find((o) => o.label === label);
-            if (opt) save({ defaultView: opt.value });
-          }}
-        />
-      </div>
+        <div className="p-4">
+          <p className="mb-1.5 text-sm font-medium text-foreground">Month starts on date</p>
+          <p className="mb-2 text-[11px] leading-snug text-ink-soft">
+            Day of the month your budgeting period begins, for custom pay cycles.
+          </p>
+          <input
+            type="number"
+            min={1}
+            max={28}
+            value={settings.monthStartDay}
+            onChange={(e) => {
+              const value = Number(e.target.value);
+              if (Number.isFinite(value) && value >= 1 && value <= 28) save({ monthStartDay: value });
+            }}
+            className="w-24 rounded-card border border-surface-line bg-surface-soft px-3.5 py-2.5 text-base text-surface-foreground outline-none transition focus:border-surface-accent focus:ring-2 focus:ring-surface-accent/20"
+          />
+        </div>
 
-      <div className="rounded-card border border-line bg-surface p-5">
-        <p className="mb-1.5 text-sm font-medium text-foreground">Time zone</p>
-        <SelectDropdown
-          value={TIMEZONE_OPTIONS.find((o) => o.value === settings.timezone)?.label ?? "Auto (device)"}
-          options={TIMEZONE_OPTIONS.map((o) => o.label)}
-          onChange={(label) => {
-            const opt = TIMEZONE_OPTIONS.find((o) => o.label === label);
-            if (opt) save({ timezone: opt.value });
-          }}
-        />
-      </div>
-
-      <div className="rounded-card border border-line bg-surface p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground">Show week numbers</p>
-            <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">Adds a week-number column to date pickers.</p>
+        <div className="p-4">
+          <p className="mb-1.5 text-sm font-medium text-foreground">Bi-weekly period anchor</p>
+          <p className="mb-2 text-[11px] leading-snug text-ink-soft">
+            Pick any date that starts one of your pay periods; every 14 days from it marks the next.
+          </p>
+          <div className="flex items-center gap-2">
+            <DatePicker
+              value={settings.biweeklyAnchorDate ?? ""}
+              onChange={(value) => save({ biweeklyAnchorDate: value })}
+            />
+            {settings.biweeklyAnchorDate && (
+              <button
+                type="button"
+                onClick={() => save({ biweeklyAnchorDate: null })}
+                className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-bg-soft hover:text-foreground"
+              >
+                Clear
+              </button>
+            )}
           </div>
-          <Toggle
-            checked={settings.showWeekNumbers}
-            onChange={() => save({ showWeekNumbers: !settings.showWeekNumbers })}
-            disabled={saving}
-            label="Toggle week numbers"
+        </div>
+
+        <div className="p-4">
+          <p className="mb-1.5 text-sm font-medium text-foreground">Default view when app launches</p>
+          <SelectDropdown
+            value={DEFAULT_VIEW_OPTIONS.find((o) => o.value === settings.defaultView)?.label ?? "Today"}
+            options={DEFAULT_VIEW_OPTIONS.map((o) => o.label)}
+            onChange={(label) => {
+              const opt = DEFAULT_VIEW_OPTIONS.find((o) => o.label === label);
+              if (opt) save({ defaultView: opt.value });
+            }}
+          />
+        </div>
+
+        <div className="p-4">
+          <p className="mb-1.5 text-sm font-medium text-foreground">Time zone</p>
+          <SelectDropdown
+            value={TIMEZONE_OPTIONS.find((o) => o.value === settings.timezone)?.label ?? "Auto (device)"}
+            options={TIMEZONE_OPTIONS.map((o) => o.label)}
+            onChange={(label) => {
+              const opt = TIMEZONE_OPTIONS.find((o) => o.label === label);
+              if (opt) save({ timezone: opt.value });
+            }}
+          />
+        </div>
+
+        <div className="p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground">Show week numbers</p>
+              <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">Adds a week-number column to date pickers.</p>
+            </div>
+            <Toggle
+              checked={settings.showWeekNumbers}
+              onChange={() => save({ showWeekNumbers: !settings.showWeekNumbers })}
+              disabled={saving}
+              label="Toggle week numbers"
+            />
+          </div>
+        </div>
+
+        <div className="p-4">
+          <p className="mb-1.5 text-sm font-medium text-foreground">Alternate calendar</p>
+          <p className="mb-2 text-[11px] leading-snug text-ink-soft">Show an additional calendar system alongside Gregorian dates.</p>
+          <SelectDropdown
+            value={ALTERNATE_CALENDAR_OPTIONS.find((o) => o.value === settings.alternateCalendar)?.label ?? "None (Gregorian only)"}
+            options={ALTERNATE_CALENDAR_OPTIONS.map((o) => o.label)}
+            onChange={(label) => {
+              const opt = ALTERNATE_CALENDAR_OPTIONS.find((o) => o.label === label);
+              if (opt) save({ alternateCalendar: opt.value });
+            }}
           />
         </div>
       </div>
 
-      <div className="rounded-card border border-line bg-surface p-5">
-        <p className="mb-1.5 text-sm font-medium text-foreground">Alternate calendar</p>
-        <p className="mb-2 text-[11px] leading-snug text-ink-soft">Show an additional calendar system alongside Gregorian dates.</p>
-        <SelectDropdown
-          value={ALTERNATE_CALENDAR_OPTIONS.find((o) => o.value === settings.alternateCalendar)?.label ?? "None (Gregorian only)"}
-          options={ALTERNATE_CALENDAR_OPTIONS.map((o) => o.label)}
-          onChange={(label) => {
-            const opt = ALTERNATE_CALENDAR_OPTIONS.find((o) => o.label === label);
-            if (opt) save({ alternateCalendar: opt.value });
-          }}
-        />
-      </div>
-
-      {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mt-3 text-xs text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
 }
