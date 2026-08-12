@@ -111,20 +111,40 @@ export default function ExpenseForm({
   // there's already something in one of these fields (e.g. editing an
   // existing entry) so nothing looks silently hidden.
   const [moreOpen, setMoreOpen] = useState(
-    () => Boolean(initialValues.walletId) || initialValues.tags.length > 0 || initialValues.notes.trim().length > 0,
+    () => initialValues.tags.length > 0 || initialValues.notes.trim().length > 0,
   );
-  const amountColorClass =
+  // One accent per type, threaded through the header band, the submit
+  // button, and the torn-edge divider between them — the whole form reads
+  // as a single "ticket" for whichever kind of entry you're making.
+  const bandGradientClass =
     values.type === "income"
-      ? "text-emerald-600 dark:text-emerald-400"
+      ? "from-emerald-400 to-emerald-600 dark:from-emerald-600 dark:to-emerald-800"
       : values.type === "expense"
-        ? "text-rose-600 dark:text-rose-400"
-        : "text-sky-600 dark:text-sky-400";
-  const amountCardClass =
+        ? "from-rose-400 to-rose-600 dark:from-rose-600 dark:to-rose-800"
+        : "from-sky-400 to-sky-600 dark:from-sky-600 dark:to-sky-800";
+  const chipActiveClass =
     values.type === "income"
-      ? "border-emerald-200/70 bg-gradient-to-br from-emerald-50 via-surface to-surface dark:border-emerald-900/50 dark:from-emerald-950/40 dark:via-surface dark:to-surface"
+      ? "bg-white text-emerald-700"
       : values.type === "expense"
-        ? "border-rose-200/70 bg-gradient-to-br from-rose-50 via-surface to-surface dark:border-rose-900/50 dark:from-rose-950/40 dark:via-surface dark:to-surface"
-        : "border-sky-200/70 bg-gradient-to-br from-sky-50 via-surface to-surface dark:border-sky-900/50 dark:from-sky-950/40 dark:via-surface dark:to-surface";
+        ? "bg-white text-rose-700"
+        : "bg-white text-sky-700";
+  const submitButtonClass =
+    values.type === "income"
+      ? "bg-emerald-500 hover:bg-emerald-600"
+      : values.type === "expense"
+        ? "bg-rose-500 hover:bg-rose-600"
+        : "bg-sky-500 hover:bg-sky-600";
+  // Fakes a torn-paper edge under the header band with two diagonal
+  // gradients tiled into little triangles, in the app's own surface color
+  // so it reads as a notch cut out of the band revealing the page behind —
+  // no image assets, just a repeating CSS background.
+  const tornEdgeStyle: React.CSSProperties = {
+    backgroundImage:
+      "linear-gradient(135deg, var(--surface) 50%, transparent 50%), linear-gradient(225deg, var(--surface) 50%, transparent 50%)",
+    backgroundSize: "14px 14px",
+    backgroundPosition: "left bottom",
+    backgroundRepeat: "repeat-x",
+  };
   function categoryDot(name: string) {
     const c = categories.find((cat) => cat.name === name);
     return <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dotClasses(c?.color)}`} aria-hidden="true" />;
@@ -182,120 +202,108 @@ export default function ExpenseForm({
   }
 
   return (
-    // Below sm: a single mobile-optimized column in DOM order (hero amount,
-    // then merchant, category, date, collapsed "more details"). At sm+: a
-    // real two-column desktop layout — same fields, but amount/date share a
-    // row, wallet/tags/notes are always visible instead of behind a
-    // disclosure (no scroll-fatigue reason to hide them with a mouse and
-    // more vertical room), and every sm:order-N below controls the desktop
-    // sequence independent of DOM order, which stays mobile-first.
+    // Below sm: a single mobile-optimized column in DOM order (colored
+    // ticket header, then merchant, category, date, wallet, collapsed
+    // "Tags & notes"). At sm+: a real two-column desktop layout — same
+    // fields, but Date/Wallet share a row and tags/notes are always visible
+    // instead of behind a disclosure (no scroll-fatigue reason to hide them
+    // with a mouse and more vertical room) — every sm:order-N below controls
+    // the desktop sequence independent of DOM order, which stays
+    // mobile-first.
     <form
       onSubmit={handleSubmit}
       className="space-y-4 sm:grid sm:grid-cols-2 sm:items-start sm:gap-x-5 sm:gap-y-4 sm:space-y-0"
     >
-      <div className="flex gap-1 rounded-full bg-bg-soft p-1 sm:order-1 sm:col-span-2">
-        <button
-          type="button"
-          onClick={() => updateType("expense")}
-          className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-            values.type === "expense"
-              ? "bg-rose-500 text-white shadow-sm"
-              : "text-surface-foreground-soft hover:text-surface-foreground"
-          }`}
-        >
-          Expense
-        </button>
-        <button
-          type="button"
-          onClick={() => updateType("income")}
-          className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-            values.type === "income"
-              ? "bg-emerald-500 text-white shadow-sm"
-              : "text-surface-foreground-soft hover:text-surface-foreground"
-          }`}
-        >
-          Income
-        </button>
-        <button
-          type="button"
-          onClick={() => updateType("transfer")}
-          className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-            values.type === "transfer"
-              ? "bg-sky-500 text-white shadow-sm"
-              : "text-surface-foreground-soft hover:text-surface-foreground"
-          }`}
-        >
-          Transfer
-        </button>
-      </div>
-
-      {values.type === "transfer" && (
-        <div className="sm:order-2 sm:col-span-2">
-          <label className={labelClass}>Direction</label>
-          <div className="flex gap-1 rounded-full bg-bg-soft p-1">
+      {/* The whole entry reads as one "ticket": a bold colored header band
+          (type toggle, transfer direction, hero amount) bleeding edge-to-
+          edge past the modal's own padding, torn off from the plain body
+          below it with a faked paper-notch edge instead of a hard line. */}
+      <div className="-mx-5 sm:order-1 sm:col-span-2 sm:-mx-6">
+        <div className={`bg-gradient-to-br px-5 pb-5 pt-1 text-white transition-colors sm:px-6 ${bandGradientClass}`}>
+          <div className="flex gap-1 rounded-full bg-white/15 p-1 backdrop-blur-sm">
             <button
               type="button"
-              onClick={() => update("direction", "out")}
+              onClick={() => updateType("expense")}
               className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-                values.direction === "out"
-                  ? "bg-rose-500 text-white shadow-sm"
-                  : "text-surface-foreground-soft hover:text-surface-foreground"
+                values.type === "expense" ? chipActiveClass + " shadow-sm" : "text-white/75 hover:text-white"
               }`}
             >
-              Money out
+              Expense
             </button>
             <button
               type="button"
-              onClick={() => update("direction", "in")}
+              onClick={() => updateType("income")}
               className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-                values.direction === "in"
-                  ? "bg-emerald-500 text-white shadow-sm"
-                  : "text-surface-foreground-soft hover:text-surface-foreground"
+                values.type === "income" ? chipActiveClass + " shadow-sm" : "text-white/75 hover:text-white"
               }`}
             >
-              Money in
+              Income
+            </button>
+            <button
+              type="button"
+              onClick={() => updateType("transfer")}
+              className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+                values.type === "transfer" ? chipActiveClass + " shadow-sm" : "text-white/75 hover:text-white"
+              }`}
+            >
+              Transfer
             </button>
           </div>
-          <p className="mt-1.5 text-xs text-surface-foreground-soft">
-            Transfers aren&apos;t counted as income or spending, but still move your Remaining balance.
-          </p>
+
+          {values.type === "transfer" && (
+            <div className="mt-3">
+              <div className="flex gap-1 rounded-full bg-white/15 p-1 backdrop-blur-sm">
+                <button
+                  type="button"
+                  onClick={() => update("direction", "out")}
+                  className={`flex-1 rounded-full py-1.5 text-xs font-semibold transition ${
+                    values.direction === "out" ? "bg-white text-sky-700 shadow-sm" : "text-white/75 hover:text-white"
+                  }`}
+                >
+                  Money out
+                </button>
+                <button
+                  type="button"
+                  onClick={() => update("direction", "in")}
+                  className={`flex-1 rounded-full py-1.5 text-xs font-semibold transition ${
+                    values.direction === "in" ? "bg-white text-sky-700 shadow-sm" : "text-white/75 hover:text-white"
+                  }`}
+                >
+                  Money in
+                </button>
+              </div>
+              <p className="mt-1.5 text-xs text-white/70">
+                Transfers aren&apos;t counted as income or spending, but still move your Remaining balance.
+              </p>
+            </div>
+          )}
+
+          <div className="mt-4 text-center sm:text-left">
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-white/70" htmlFor="amount">
+              Amount
+            </label>
+            {splitMode ? (
+              <div className="py-1 text-4xl font-bold tabular-nums sm:text-3xl">{splitTotal.toFixed(2)}</div>
+            ) : (
+              <input
+                id="amount"
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                required
+                value={values.amount}
+                onChange={(e) => update("amount", e.target.value)}
+                placeholder="0.00"
+                className="w-full bg-transparent text-center text-4xl font-bold tabular-nums outline-none placeholder:text-white/40 sm:text-left sm:text-3xl"
+              />
+            )}
+          </div>
         </div>
-      )}
-
-      {/* Amount leads — it's the one field every entry has and the one
-          you're most likely typing right after opening this form, so it
-          gets a hero-sized, type-colored input instead of sitting level
-          with everything else. */}
-      <div className={`rounded-card border px-4 py-3 text-center transition sm:order-3 sm:text-left ${amountCardClass}`}>
-        <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft" htmlFor="amount">
-          Amount
-        </label>
-        {splitMode ? (
-          <div className={`py-1 text-4xl font-bold tabular-nums sm:text-3xl ${amountColorClass}`}>{splitTotal.toFixed(2)}</div>
-        ) : (
-          <input
-            id="amount"
-            type="number"
-            inputMode="decimal"
-            step="0.01"
-            min="0"
-            required
-            value={values.amount}
-            onChange={(e) => update("amount", e.target.value)}
-            placeholder="0.00"
-            className={`w-full bg-transparent text-center text-4xl font-bold tabular-nums outline-none placeholder:text-surface-foreground-soft/40 sm:text-left sm:text-3xl ${amountColorClass}`}
-          />
-        )}
+        <div className="h-3.5" style={tornEdgeStyle} />
       </div>
 
-      <div className="sm:order-4">
-        <label className={labelClass} htmlFor="date">
-          Date
-        </label>
-        <DatePicker id="date" value={values.date} onChange={(date) => update("date", date)} required />
-      </div>
-
-      <div className="sm:order-5 sm:col-span-2">
+      <div className="sm:order-2 sm:col-span-2">
         <label className={labelClass} htmlFor="merchant">
           {sourceLabel}
         </label>
@@ -313,7 +321,7 @@ export default function ExpenseForm({
       </div>
 
       {allowSplit && values.type !== "transfer" && (
-        <label className="flex items-center gap-2 text-sm font-medium text-surface-foreground-soft sm:order-6 sm:col-span-2">
+        <label className="flex items-center gap-2 text-sm font-medium text-surface-foreground-soft sm:order-3 sm:col-span-2">
           <input
             type="checkbox"
             checked={splitMode}
@@ -325,7 +333,7 @@ export default function ExpenseForm({
       )}
 
       {splitMode ? (
-        <div className="space-y-2.5 sm:order-7 sm:col-span-2">
+        <div className="space-y-2.5 sm:order-4 sm:col-span-2">
           <label className={labelClass}>Categories &amp; amounts</label>
           {splitLines.map((line, i) => (
             <div key={i} className="flex items-center gap-2">
@@ -369,16 +377,54 @@ export default function ExpenseForm({
           </button>
         </div>
       ) : (
-        <div className="sm:order-7 sm:col-span-2">
-          <label className={labelClass} htmlFor="category">
-            Category
+        <div className="sm:order-4 sm:col-span-2">
+          <label className={labelClass}>Category</label>
+          {/* A horizontal chip strip instead of a dropdown — every category
+              is a single tap away and its own color rides along, instead of
+              being hidden a menu open away. */}
+          <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+            {categories.map((c) => {
+              const selected = values.category === c.name;
+              return (
+                <button
+                  key={c.name}
+                  type="button"
+                  onClick={() => update("category", c.name)}
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
+                    selected
+                      ? "border-transparent bg-surface-accent/10 text-surface-accent"
+                      : "border-surface-line text-surface-foreground-soft hover:border-surface-accent hover:text-surface-foreground"
+                  }`}
+                >
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${dotClasses(c.color)}`} aria-hidden="true" />
+                  {c.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="sm:order-5">
+        <label className={labelClass} htmlFor="date">
+          Date
+        </label>
+        <DatePicker id="date" value={values.date} onChange={(date) => update("date", date)} required />
+      </div>
+
+      {wallets.length > 0 && (
+        <div className="sm:order-6">
+          <label className={labelClass} htmlFor="wallet">
+            Wallet
           </label>
           <SelectDropdown
-            id="category"
-            value={values.category}
-            options={categories.map((c) => c.name)}
-            onChange={(name) => update("category", name)}
-            renderIndicator={categoryDot}
+            id="wallet"
+            value={selectedWalletName}
+            options={wallets.map((w) => w.name)}
+            onChange={(name) => {
+              const wallet = wallets.find((w) => w.name === name);
+              if (wallet) update("walletId", wallet.id);
+            }}
           />
         </div>
       )}
@@ -479,23 +525,22 @@ export default function ExpenseForm({
         </div>
       )}
 
-      {/* Wallet/tags/notes are all optional and, for most entries, left at
-          their defaults. On mobile they're tucked behind a disclosure so the
-          common fast-entry case doesn't scroll past three more fields; at
-          sm+ the toggle is hidden and the panel forced open via CSS (see
-          sm:!block below) since there's no scroll-fatigue reason to hide
-          them with a mouse and more vertical room to work with. Still
-          starts open on mobile if any already has a value (see moreOpen's
-          initializer), so editing an existing entry never hides data that's
-          actually there. */}
-      <div className="rounded-card border border-surface-line sm:order-8 sm:col-span-2 sm:border-0 sm:p-0">
+      {/* Tags/notes are optional and, for most entries, left blank. On
+          mobile they're tucked behind a disclosure so the common fast-entry
+          case doesn't scroll past two more fields; at sm+ the toggle is
+          hidden and the panel forced open via CSS since there's no
+          scroll-fatigue reason to hide them with a mouse and more vertical
+          room to work with. Still starts open on mobile if either already
+          has a value (see moreOpen's initializer), so editing an existing
+          entry never hides data that's actually there. */}
+      <div className="rounded-card border border-surface-line sm:order-9 sm:col-span-2 sm:border-0 sm:p-0">
         <button
           type="button"
           onClick={() => setMoreOpen((o) => !o)}
           aria-expanded={moreOpen}
           className="flex w-full items-center justify-between gap-2 px-3.5 py-2.5 text-left text-sm font-semibold text-surface-foreground-soft sm:hidden"
         >
-          More details
+          Tags &amp; notes
           <svg
             viewBox="0 0 21.6895 12.959"
             fill="currentColor"
@@ -507,29 +552,12 @@ export default function ExpenseForm({
         <div
           className={`${moreOpen ? "block" : "hidden"} space-y-4 border-t border-surface-line p-3.5 sm:grid sm:grid-cols-2 sm:gap-x-5 sm:gap-y-4 sm:space-y-0 sm:border-0 sm:p-0`}
         >
-          {wallets.length > 0 && (
-            <div>
-              <label className={labelClass} htmlFor="wallet">
-                Wallet
-              </label>
-              <SelectDropdown
-                id="wallet"
-                value={selectedWalletName}
-                options={wallets.map((w) => w.name)}
-                onChange={(name) => {
-                  const wallet = wallets.find((w) => w.name === name);
-                  if (wallet) update("walletId", wallet.id);
-                }}
-              />
-            </div>
-          )}
-
           <div>
             <label className={labelClass}>Tags</label>
             <TagInput tags={values.tags} onChange={(tags) => update("tags", tags)} />
           </div>
 
-          <div className="sm:col-span-2">
+          <div>
             <label className={labelClass} htmlFor="notes">
               Notes
             </label>
@@ -545,7 +573,7 @@ export default function ExpenseForm({
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-600 dark:text-red-400 sm:order-9 sm:col-span-2">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400 sm:order-10 sm:col-span-2">{error}</p>}
 
       {/* Sticky rather than flowing at the end of the form: this form runs
           15+ fields long, and on mobile (where the modal is a bottom sheet
@@ -568,7 +596,7 @@ export default function ExpenseForm({
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+            className={`rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition disabled:opacity-60 ${submitButtonClass}`}
           >
             {submitting ? "Saving..." : submitLabel}
           </button>

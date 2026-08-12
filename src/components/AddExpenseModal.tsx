@@ -321,40 +321,60 @@ export default function AddExpenseModal({
 
   return (
     <Modal onClose={onClose} title="Add transaction" wide={tab === "manual"}>
-      <div className="mb-4 flex gap-1 rounded-full bg-bg-soft p-1">
+      {/* Three tappable method tiles instead of a thin pill row — each
+          carries its own accent (matching the amber/violet used on the
+          scan/voice review cards below) so which entry method you're on
+          reads at a glance, not just from a text label. */}
+      <div className="mb-4 grid grid-cols-3 gap-2">
         <button
           onClick={() => setTab("manual")}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold transition ${
+          className={`flex flex-col items-center gap-1.5 rounded-2xl border py-3 text-xs font-semibold transition ${
             tab === "manual"
-              ? "bg-surface-soft text-surface-foreground shadow-sm"
-              : "text-surface-foreground-soft hover:text-surface-foreground"
+              ? "border-navy/30 bg-navy/10 text-navy dark:border-blue-400/30 dark:bg-blue-400/10 dark:text-blue-300"
+              : "border-surface-line text-surface-foreground-soft hover:border-navy/30 hover:text-surface-foreground"
           }`}
         >
-          <PencilTabIcon />
-          <span className="hidden sm:inline">Manual entry</span>
-          <span className="sm:hidden">Manual</span>
+          <span
+            className={`flex h-8 w-8 items-center justify-center rounded-full ${
+              tab === "manual" ? "bg-navy text-white dark:bg-blue-500" : "bg-bg-soft"
+            }`}
+          >
+            <PencilTabIcon />
+          </span>
+          Manual
         </button>
         <button
           onClick={() => setTab("scan")}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold transition ${
+          className={`flex flex-col items-center gap-1.5 rounded-2xl border py-3 text-xs font-semibold transition ${
             tab === "scan"
-              ? "bg-surface-soft text-surface-foreground shadow-sm"
-              : "text-surface-foreground-soft hover:text-surface-foreground"
+              ? "border-amber-400/40 bg-amber-500/10 text-amber-700 dark:text-amber-400"
+              : "border-surface-line text-surface-foreground-soft hover:border-amber-400/40 hover:text-surface-foreground"
           }`}
         >
-          <ScanTabIcon />
-          <span className="hidden sm:inline">Scan document</span>
-          <span className="sm:hidden">Scan</span>
+          <span
+            className={`flex h-8 w-8 items-center justify-center rounded-full ${
+              tab === "scan" ? "bg-amber-500 text-white" : "bg-bg-soft"
+            }`}
+          >
+            <ScanTabIcon />
+          </span>
+          Scan
         </button>
         <button
           onClick={() => setTab("voice")}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold transition ${
+          className={`flex flex-col items-center gap-1.5 rounded-2xl border py-3 text-xs font-semibold transition ${
             tab === "voice"
-              ? "bg-surface-soft text-surface-foreground shadow-sm"
-              : "text-surface-foreground-soft hover:text-surface-foreground"
+              ? "border-violet-400/40 bg-violet-500/10 text-violet-700 dark:text-violet-400"
+              : "border-surface-line text-surface-foreground-soft hover:border-violet-400/40 hover:text-surface-foreground"
           }`}
         >
-          <MicTabIcon />
+          <span
+            className={`flex h-8 w-8 items-center justify-center rounded-full ${
+              tab === "voice" ? "bg-violet-500 text-white" : "bg-bg-soft"
+            }`}
+          >
+            <MicTabIcon />
+          </span>
           Speak
         </button>
       </div>
