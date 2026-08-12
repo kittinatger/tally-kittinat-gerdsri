@@ -3,6 +3,7 @@ import { createHash, randomBytes } from "crypto";
 import type { ExpenseInput } from "@/lib/validation";
 import { hashPassword } from "@/lib/password";
 import { normalizeDashboardWidgets, type DashboardWidgetInstance } from "@/lib/dashboard-widgets";
+import type { ChallengeType, ChallengeMode } from "@/lib/challenges";
 
 export type Expense = {
   id: number;
@@ -181,7 +182,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 10;
+const CURRENT_SCHEMA_VERSION = 11;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -671,6 +672,66 @@ function ensureSchema(): Promise<void> {
           created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
           CONSTRAINT family_members_pair_unique UNIQUE (user_id, member_id),
           CONSTRAINT family_members_no_self CHECK (user_id <> member_id)
+        );
+      `;
+
+      // Challenges: a savings race, spending-limit contest, or no-spend-days
+      // contest run against (or alongside) friends/family. `target_amount`'s
+      // meaning depends on `type` (a savings target to reach, a spending cap
+      // not to exceed, or a target day count) and applies per-participant in
+      // "competitive" mode or to the shared pool in "collaborative" mode.
+      // `category` is only meaningful for the spending_limit type (null
+      // means "all spending").
+      await sql`
+        CREATE TABLE IF NOT EXISTS challenges (
+          id SERIAL PRIMARY KEY,
+          creator_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          title TEXT NOT NULL,
+          type TEXT NOT NULL,
+          mode TEXT NOT NULL,
+          target_amount NUMERIC(12, 2) NOT NULL,
+          category TEXT,
+          start_date DATE NOT NULL,
+          end_date DATE NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `;
+
+      // One row per invited/participating user. progress_amount is a
+      // write-through cache: for the auto-tracked types (spending_limit,
+      // no_spend_days) it's recomputed from the viewer's OWN expenses every
+      // time they open the challenge (see recomputeChallengeProgress) —
+      // never from another participant's data, since each account's
+      // transactions stay private. For the savings type it's incremented
+      // directly by manual contributions (mirrors savings_goals).
+      await sql`
+        CREATE TABLE IF NOT EXISTS challenge_participants (
+          id SERIAL PRIMARY KEY,
+          challenge_id INTEGER NOT NULL REFERENCES challenges(id) ON DELETE CASCADE,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          status TEXT NOT NULL DEFAULT 'invited',
+          progress_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
+          progress_updated_at TIMESTAMPTZ,
+          joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT challenge_participants_unique UNIQUE (challenge_id, user_id)
+        );
+      `;
+
+      // In a competitive challenge, other participants only ever see your
+      // rank/percent by default (see getChallenge) — this table is the
+      // consent record for revealing your exact progress_amount to a
+      // specific requester, which only takes effect once you accept it.
+      await sql`
+        CREATE TABLE IF NOT EXISTS challenge_reveal_requests (
+          id SERIAL PRIMARY KEY,
+          challenge_id INTEGER NOT NULL REFERENCES challenges(id) ON DELETE CASCADE,
+          requester_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          target_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          status TEXT NOT NULL DEFAULT 'pending',
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          responded_at TIMESTAMPTZ,
+          CONSTRAINT challenge_reveal_requests_unique UNIQUE (challenge_id, requester_id, target_id),
+          CONSTRAINT challenge_reveal_requests_no_self CHECK (requester_id <> target_id)
         );
       `;
 
@@ -2494,4 +2555,262 @@ export async function addFamilyMember(userId: number, memberId: number): Promise
 export async function removeFamilyMember(userId: number, memberId: number): Promise<void> {
   await ensureSchema();
   await sql`DELETE FROM family_members WHERE user_id = ${userId} AND member_id = ${memberId};`;
+}
+
+// ---- Challenges ----
+
+
+async function areFriends(userId: number, otherId: number): Promise<boolean> {
+  const { rows } = await sql`
+    SELECT 1 FROM friend_requests
+    WHERE status = 'accepted'
+      AND ((requester_id = ${userId} AND addressee_id = ${otherId})
+        OR (requester_id = ${otherId} AND addressee_id = ${userId}));
+  `;
+  return rows.length > 0;
+}
+
+export type ChallengeRow = {
+  id: number;
+  creator_id: number;
+  title: string;
+  type: ChallengeType;
+  mode: ChallengeMode;
+  target_amount: string;
+  category: string | null;
+  start_date: string;
+  end_date: string;
+};
+
+export type ChallengeParticipantRow = {
+  id: number;
+  user_id: number;
+  username: string;
+  status: "invited" | "accepted" | "declined";
+  progress_amount: string;
+  is_me: boolean;
+  revealed_to_me: boolean;
+};
+
+export type ChallengeListItem = ChallengeRow & { participant_count: number; my_status: "invited" | "accepted" | "declined" };
+
+export async function listChallenges(userId: number): Promise<ChallengeListItem[]> {
+  await ensureSchema();
+  const { rows } = await sql<ChallengeListItem & { participant_count: string }>`
+    SELECT c.id, c.creator_id, c.title, c.type, c.mode, c.target_amount::text AS target_amount, c.category,
+      to_char(c.start_date, 'YYYY-MM-DD') AS start_date, to_char(c.end_date, 'YYYY-MM-DD') AS end_date,
+      cp.status AS my_status,
+      (SELECT COUNT(*) FROM challenge_participants cp2 WHERE cp2.challenge_id = c.id) AS participant_count
+    FROM challenges c
+    JOIN challenge_participants cp ON cp.challenge_id = c.id AND cp.user_id = ${userId}
+    ORDER BY c.created_at DESC;
+  `;
+  return rows.map((r) => ({ ...r, participant_count: Number(r.participant_count) }));
+}
+
+export async function createChallenge(
+  creatorId: number,
+  input: {
+    title: string;
+    type: ChallengeType;
+    mode: ChallengeMode;
+    targetAmount: number;
+    category?: string | null;
+    startDate: string;
+    endDate: string;
+    inviteeIds: number[];
+  },
+): Promise<{ id: number } | { error: string }> {
+  await ensureSchema();
+  const invitees = [...new Set(input.inviteeIds)].filter((id) => id !== creatorId);
+  for (const id of invitees) {
+    if (!(await areFriends(creatorId, id))) {
+      return { error: "You can only invite friends to a challenge." };
+    }
+  }
+
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    const { rows } = await client.sql<{ id: number }>`
+      INSERT INTO challenges (creator_id, title, type, mode, target_amount, category, start_date, end_date)
+      VALUES (${creatorId}, ${input.title}, ${input.type}, ${input.mode}, ${input.targetAmount}, ${input.category ?? null}, ${input.startDate}, ${input.endDate})
+      RETURNING id;
+    `;
+    const challengeId = rows[0].id;
+    await client.sql`
+      INSERT INTO challenge_participants (challenge_id, user_id, status) VALUES (${challengeId}, ${creatorId}, 'accepted');
+    `;
+    for (const inviteeId of invitees) {
+      await client.sql`
+        INSERT INTO challenge_participants (challenge_id, user_id, status) VALUES (${challengeId}, ${inviteeId}, 'invited');
+      `;
+    }
+    await client.query("COMMIT");
+    return { id: challengeId };
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+// Only ever recomputes the CALLER's own progress, from the CALLER's own
+// expenses — never another participant's, keeping every account's
+// transactions private even though the challenge itself is shared.
+async function recomputeChallengeProgress(userId: number, challenge: ChallengeRow): Promise<void> {
+  if (challenge.type === "savings") return; // tracked by manual contributions instead
+  let amount = 0;
+  if (challenge.type === "spending_limit") {
+    const { rows } = await sql<{ total: string | null }>`
+      SELECT SUM(amount)::text AS total FROM expenses
+      WHERE user_id = ${userId} AND type = 'expense'
+        AND date >= ${challenge.start_date} AND date <= ${challenge.end_date}
+        AND (${challenge.category}::text IS NULL OR category = ${challenge.category});
+    `;
+    amount = Number(rows[0]?.total ?? 0);
+  } else {
+    const { rows } = await sql<{ count: string }>`
+      SELECT COUNT(*)::text AS count FROM (
+        SELECT d::date AS day
+        FROM generate_series(${challenge.start_date}::timestamp, LEAST(${challenge.end_date}::date, CURRENT_DATE)::timestamp, interval '1 day') d
+        WHERE NOT EXISTS (
+          SELECT 1 FROM expenses e
+          WHERE e.user_id = ${userId} AND e.type = 'expense' AND e.date = d::date
+        )
+      ) no_spend_days;
+    `;
+    amount = Number(rows[0]?.count ?? 0);
+  }
+  await sql`
+    UPDATE challenge_participants SET progress_amount = ${amount}, progress_updated_at = now()
+    WHERE challenge_id = ${challenge.id} AND user_id = ${userId};
+  `;
+}
+
+export async function getChallenge(
+  userId: number,
+  challengeId: number,
+): Promise<{ challenge: ChallengeRow; participants: ChallengeParticipantRow[] } | null> {
+  await ensureSchema();
+  const { rows: challengeRows } = await sql<ChallengeRow>`
+    SELECT id, creator_id, title, type, mode, target_amount::text AS target_amount, category,
+      to_char(start_date, 'YYYY-MM-DD') AS start_date, to_char(end_date, 'YYYY-MM-DD') AS end_date
+    FROM challenges WHERE id = ${challengeId};
+  `;
+  const challenge = challengeRows[0];
+  if (!challenge) return null;
+
+  const { rows: myRow } = await sql`
+    SELECT 1 FROM challenge_participants WHERE challenge_id = ${challengeId} AND user_id = ${userId};
+  `;
+  if (!myRow[0]) return null;
+
+  // Refresh only the caller's own cached progress before reading the list.
+  await recomputeChallengeProgress(userId, challenge);
+
+  const { rows: participants } = await sql<ChallengeParticipantRow>`
+    SELECT cp.id, cp.user_id, u.username, cp.status, cp.progress_amount::text AS progress_amount,
+      (cp.user_id = ${userId}) AS is_me,
+      (cp.user_id = ${userId} OR EXISTS(
+        SELECT 1 FROM challenge_reveal_requests rr
+        WHERE rr.challenge_id = ${challengeId} AND rr.requester_id = ${userId} AND rr.target_id = cp.user_id AND rr.status = 'accepted'
+      )) AS revealed_to_me
+    FROM challenge_participants cp
+    JOIN users u ON u.id = cp.user_id
+    WHERE cp.challenge_id = ${challengeId}
+    ORDER BY cp.progress_amount DESC;
+  `;
+  return { challenge, participants };
+}
+
+export async function respondToChallengeInvite(userId: number, challengeId: number, accept: boolean): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    UPDATE challenge_participants SET status = ${accept ? "accepted" : "declined"}
+    WHERE challenge_id = ${challengeId} AND user_id = ${userId} AND status = 'invited';
+  `;
+  return (rowCount ?? 0) > 0;
+}
+
+// Deletes the whole challenge if the caller created it (cascades every
+// participant row), otherwise just removes the caller's own participation.
+export async function leaveChallenge(userId: number, challengeId: number): Promise<void> {
+  await ensureSchema();
+  const { rows } = await sql<{ creator_id: number }>`SELECT creator_id FROM challenges WHERE id = ${challengeId};`;
+  if (!rows[0]) return;
+  if (rows[0].creator_id === userId) {
+    await sql`DELETE FROM challenges WHERE id = ${challengeId};`;
+  } else {
+    await sql`DELETE FROM challenge_participants WHERE challenge_id = ${challengeId} AND user_id = ${userId};`;
+  }
+}
+
+export async function addChallengeContribution(
+  userId: number,
+  challengeId: number,
+  amount: number,
+): Promise<{ ok: true } | { error: string }> {
+  await ensureSchema();
+  const { rows } = await sql<{ type: ChallengeType; status: string }>`
+    SELECT c.type, cp.status FROM challenges c
+    JOIN challenge_participants cp ON cp.challenge_id = c.id AND cp.user_id = ${userId}
+    WHERE c.id = ${challengeId};
+  `;
+  const row = rows[0];
+  if (!row || row.status !== "accepted") return { error: "Not a participant in this challenge." };
+  if (row.type !== "savings") return { error: "Only savings challenges take contributions." };
+  await sql`
+    UPDATE challenge_participants SET progress_amount = progress_amount + ${amount}, progress_updated_at = now()
+    WHERE challenge_id = ${challengeId} AND user_id = ${userId};
+  `;
+  return { ok: true };
+}
+
+export async function requestChallengeReveal(
+  requesterId: number,
+  challengeId: number,
+  targetId: number,
+): Promise<{ ok: true } | { error: string }> {
+  await ensureSchema();
+  const { rows } = await sql`
+    SELECT 1 FROM challenge_participants WHERE challenge_id = ${challengeId} AND user_id IN (${requesterId}, ${targetId});
+  `;
+  if (rows.length < 2) return { error: "Both people must be participants in this challenge." };
+  await sql`
+    INSERT INTO challenge_reveal_requests (challenge_id, requester_id, target_id)
+    VALUES (${challengeId}, ${requesterId}, ${targetId})
+    ON CONFLICT (challenge_id, requester_id, target_id) DO NOTHING;
+  `;
+  return { ok: true };
+}
+
+export type ChallengeRevealRequestRow = {
+  id: number;
+  challenge_id: number;
+  challenge_title: string;
+  requester_username: string;
+};
+
+export async function listIncomingChallengeReveals(userId: number): Promise<ChallengeRevealRequestRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<ChallengeRevealRequestRow>`
+    SELECT rr.id, rr.challenge_id, c.title AS challenge_title, u.username AS requester_username
+    FROM challenge_reveal_requests rr
+    JOIN challenges c ON c.id = rr.challenge_id
+    JOIN users u ON u.id = rr.requester_id
+    WHERE rr.target_id = ${userId} AND rr.status = 'pending'
+    ORDER BY rr.created_at DESC;
+  `;
+  return rows;
+}
+
+export async function respondToChallengeReveal(userId: number, requestId: number, accept: boolean): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    UPDATE challenge_reveal_requests SET status = ${accept ? "accepted" : "declined"}, responded_at = now()
+    WHERE id = ${requestId} AND target_id = ${userId} AND status = 'pending';
+  `;
+  return (rowCount ?? 0) > 0;
 }

@@ -26,6 +26,7 @@ import RecurringManager from "./RecurringManager";
 import BudgetManager from "./BudgetManager";
 import SavingsGoalsManager from "./SavingsGoalsManager";
 import FriendsManager from "./FriendsManager";
+import ChallengesManager from "./ChallengesManager";
 import ApiTokensManager from "./ApiTokensManager";
 import AutoImportInstructions from "./AutoImportInstructions";
 import ErrorReportsPanel from "./ErrorReportsPanel";
@@ -39,6 +40,7 @@ type Panel =
   | "tags"
   | "wallets"
   | "friends"
+  | "challenges"
   | "theme"
   | "currency"
   | "calendar"
@@ -56,6 +58,7 @@ const PANEL_TITLES: Record<Panel, string> = {
   tags: "Manage tags",
   wallets: "Wallets",
   friends: "Friends & Family",
+  challenges: "Challenges",
   theme: "Theme",
   currency: "Currency",
   calendar: "Calendar settings",
@@ -114,6 +117,16 @@ function FriendsIcon() {
       <path d="M1.5 17c0-3 2.46-5 5.5-5s5.5 2 5.5 5" />
       <circle cx="14.5" cy="7" r="2.25" />
       <path d="M12.9 12.3c2.53.24 4.6 2.13 4.6 4.7" />
+    </svg>
+  );
+}
+
+function TrophyNavIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <path d="M6 3h8v4a4 4 0 0 1-8 0V3Z" />
+      <path d="M6 4H3.5a1 1 0 0 0-1 1.2l.4 1.6A2 2 0 0 0 4.85 8.3H6M14 4h2.5a1 1 0 0 1 1 1.2l-.4 1.6a2 2 0 0 1-1.95 1.5H14" />
+      <path d="M8 12v2a2 2 0 0 0 2 2 2 2 0 0 0 2-2v-2M7 17h6" />
     </svg>
   );
 }
@@ -319,7 +332,7 @@ export default function SettingsView({
                     Settings
                   </button>
                 )}
-                {(panel === "theme" || panel === "currency" || panel === "tags" || panel === "calendar" || panel === "friends") && (
+                {(panel === "theme" || panel === "currency" || panel === "tags" || panel === "calendar" || panel === "friends" || panel === "challenges") && (
                   <h2 className="mb-5 font-display text-2xl text-foreground">{PANEL_TITLES[panel]}</h2>
                 )}
 
@@ -338,6 +351,7 @@ export default function SettingsView({
                   <WalletManager wallets={wallets} initialActivitiesDefaultWalletId={activitiesDefaultWalletId} />
                 )}
                 {panel === "friends" && <FriendsManager />}
+                {panel === "challenges" && <ChallengesManager />}
                 {panel === "theme" && <ThemeSetting />}
                 {panel === "currency" && <CurrencySettings />}
                 {panel === "calendar" && <CalendarSettings />}
@@ -380,6 +394,7 @@ export default function SettingsView({
 
                 <SettingsSection title="Social">
                   <SettingsListItem icon={<FriendsIcon />} label="Friends & Family" onClick={() => setPanel("friends")} />
+                  <SettingsListItem icon={<TrophyNavIcon />} label="Challenges" onClick={() => setPanel("challenges")} />
                 </SettingsSection>
 
                 <SettingsSection title="Budgeting">

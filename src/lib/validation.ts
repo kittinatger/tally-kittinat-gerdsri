@@ -8,6 +8,7 @@ import {
   WIDGET_ACCENTS,
   LIMIT_OPTIONS,
 } from "@/lib/dashboard-widgets";
+import { CHALLENGE_TYPES, CHALLENGE_MODES } from "@/lib/challenges";
 
 export const forgotPasswordInputSchema = z.object({
   email: z.string().trim().email().max(255),
@@ -273,4 +274,31 @@ export const friendRequestInputSchema = z.object({
 
 export const familyMemberInputSchema = z.object({
   memberId: z.number().int().positive(),
+});
+
+const dateStringSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD");
+
+export const challengeInputSchema = z
+  .object({
+    title: z.string().trim().min(1).max(60),
+    type: z.enum(CHALLENGE_TYPES),
+    mode: z.enum(CHALLENGE_MODES),
+    targetAmount: z.number().positive().finite(),
+    category: z.string().trim().min(1).max(60).nullable().optional(),
+    startDate: dateStringSchema,
+    endDate: dateStringSchema,
+    inviteeIds: z.array(z.number().int().positive()).max(20),
+  })
+  .refine((data) => data.startDate <= data.endDate, { message: "End date must be on or after the start date.", path: ["endDate"] });
+
+export const challengeRespondSchema = z.object({
+  accept: z.boolean(),
+});
+
+export const challengeContributionInputSchema = z.object({
+  amount: z.number().positive().finite(),
+});
+
+export const challengeRevealRequestInputSchema = z.object({
+  targetUserId: z.number().int().positive(),
 });
