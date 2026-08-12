@@ -215,6 +215,16 @@ export default function AddExpenseModal({
     }
   }
 
+  async function maybeSplitWithFriends(values: ExpenseFormValues, totalAmount: number) {
+    if (!values.splitWithFriends || values.splitWithFriends.participantIds.length === 0) return;
+    try {
+      await createSplitFromExpense(totalAmount, values.merchant, values.date, values.splitWithFriends);
+    } catch (err) {
+      // Best-effort: the transaction is already saved even if the split-with-friends record fails to create.
+      logAppError("Split with friends", err instanceof Error ? err.message : "Could not create the split with friends.");
+    }
+  }
+
   async function handleManualSubmit(values: ExpenseFormValues) {
     setSubmitting(true);
     setSubmitError(null);
@@ -222,9 +232,14 @@ export default function AddExpenseModal({
       if (values.splitLines && values.splitLines.length > 0) {
         const expenses = await createSplitExpense(values);
         expenses.forEach(onCreated);
+        await maybeSplitWithFriends(
+          values,
+          expenses.reduce((sum, e) => sum + e.amount, 0),
+        );
       } else {
         const expense = await createExpense(values);
         onCreated(expense);
+        await maybeSplitWithFriends(values, expense.amount);
       }
       onClose();
     } catch (err) {
@@ -255,6 +270,7 @@ export default function AddExpenseModal({
         }
       }
       onCreated({ ...expense, hasReceipt });
+      await maybeSplitWithFriends(values, expense.amount);
       advanceQueue();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Could not save that entry.");
@@ -269,6 +285,7 @@ export default function AddExpenseModal({
     try {
       const expense = await createExpense(values);
       onCreated(expense);
+      await maybeSplitWithFriends(values, expense.amount);
       advanceVoiceQueue();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Could not save that entry.");
@@ -314,6 +331,7 @@ export default function AddExpenseModal({
           submitting={submitting}
           error={submitError}
           allowSplit
+          allowFriendSplit
         />
       )}
 
@@ -392,6 +410,7 @@ export default function AddExpenseModal({
                 onCancel={advanceQueue}
                 submitting={submitting}
                 error={submitError}
+                allowFriendSplit
               />
             </div>
           )}
@@ -463,6 +482,7 @@ export default function AddExpenseModal({
                 onCancel={advanceVoiceQueue}
                 submitting={submitting}
                 error={submitError}
+                allowFriendSplit
               />
             </div>
           )}
@@ -470,6 +490,50 @@ export default function AddExpenseModal({
       )}
     </Modal>
   );
+}
+
+// Creates the shared Split bills record for a "split this bill with
+// friends" expense: the friends' amounts came straight from the form, but
+// for a custom split the creator's own share is never asked for directly
+// (it's just "whatever's left") -- so it's computed here as the remainder
+// and the creator's own account id is fetched to attach it, since
+// POST /api/splits requires every participant's share to be given
+// explicitly and to sum to exactly the total.
+async function createSplitFromExpense(
+  totalAmount: number,
+  title: string,
+  date: string,
+  splitWithFriends: NonNullable<ExpenseFormValues["splitWithFriends"]>,
+): Promise<void> {
+  let customOwed: { userId: number; amount: number }[] | undefined;
+  if (splitWithFriends.splitMethod === "custom") {
+    const accountRes = await fetch("/api/account");
+    const account = await accountRes.json();
+    const friendsOwed = splitWithFriends.participantIds.map((id) => ({
+      userId: id,
+      amount: splitWithFriends.customOwed?.find((e) => e.userId === id)?.amount ?? 0,
+    }));
+    const friendsTotal = friendsOwed.reduce((sum, e) => sum + e.amount, 0);
+    const myShare = Math.round((totalAmount - friendsTotal) * 100) / 100;
+    customOwed = [...friendsOwed, { userId: account.id, amount: myShare }];
+  }
+  const res = await fetch("/api/splits", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: title || "Split bill",
+      totalAmount,
+      splitMethod: splitWithFriends.splitMethod,
+      paymentMethod: "single_payer",
+      date,
+      participantIds: splitWithFriends.participantIds,
+      customOwed,
+    }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(typeof data.error === "string" ? data.error : "Could not create the split.");
+  }
 }
 
 async function createSplitExpense(values: ExpenseFormValues): Promise<Expense[]> {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { TransactionType, TransferDirection } from "@/lib/categories";
 import { useAllCategories } from "@/lib/categories-context";
 import { useWallets } from "@/lib/wallets-context";
@@ -24,7 +24,15 @@ export type ExpenseFormValues = {
   walletId: number | null;
   /** Only meaningful when allowSplit is used and split mode is on — see AddExpenseModal. */
   splitLines?: { category: string; amount: string }[];
+  /** Only meaningful when allowFriendSplit is used and friend-split mode is on — see AddExpenseModal. Divides the bill between you (the payer) and the listed friends; your own share is whatever's left after theirs. */
+  splitWithFriends?: {
+    participantIds: number[];
+    splitMethod: "equal" | "custom";
+    customOwed?: { userId: number; amount: number }[];
+  };
 };
+
+type Friend = { id: number; username: string };
 
 export const emptyExpenseFormValues: ExpenseFormValues = {
   type: "expense",
@@ -51,6 +59,7 @@ export default function ExpenseForm({
   error = null,
   footerLeft,
   allowSplit = false,
+  allowFriendSplit = false,
 }: {
   initialValues: ExpenseFormValues;
   submitLabel: string;
@@ -61,6 +70,8 @@ export default function ExpenseForm({
   footerLeft?: React.ReactNode;
   /** Shows a "Split into multiple categories" toggle for expense/income entries — see AddExpenseModal. */
   allowSplit?: boolean;
+  /** Shows a "Split this bill with friends" toggle for expense entries — see AddExpenseModal. */
+  allowFriendSplit?: boolean;
 }) {
   const [values, setValues] = useState<ExpenseFormValues>(initialValues);
   const [splitMode, setSplitMode] = useState(false);
@@ -68,8 +79,29 @@ export default function ExpenseForm({
     { category: "Other", amount: "" },
     { category: "Other", amount: "" },
   ]);
+  const [friendSplitMode, setFriendSplitMode] = useState(false);
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [friendIds, setFriendIds] = useState<number[]>([]);
+  const [friendSplitMethod, setFriendSplitMethod] = useState<"equal" | "custom">("equal");
+  const [customFriendOwed, setCustomFriendOwed] = useState<Record<number, string>>({});
   const allCategories = useAllCategories();
   const wallets = useWallets();
+
+  useEffect(() => {
+    if (!allowFriendSplit) return;
+    let cancelled = false;
+    fetch("/api/friends")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled && Array.isArray(data.friends)) setFriends(data.friends);
+      })
+      .catch(() => {
+        // Leave the list empty — the toggle just won't have anyone to pick.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [allowFriendSplit]);
   const categories = allCategories.filter((c) => c.type === values.type);
   const defaultWallet = wallets.find((w) => w.isDefault) ?? wallets[0];
   const selectedWalletId = values.walletId ?? defaultWallet?.id ?? null;
@@ -117,13 +149,30 @@ export default function ExpenseForm({
     setSplitLines((prev) => (prev.length > 2 ? prev.filter((_, i) => i !== index) : prev));
   }
 
+  function toggleFriend(id: number) {
+    setFriendIds((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]));
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const withFriends =
+      values.type === "expense" && friendSplitMode && friendIds.length > 0
+        ? {
+            splitWithFriends: {
+              participantIds: friendIds,
+              splitMethod: friendSplitMethod,
+              customOwed:
+                friendSplitMethod === "custom"
+                  ? friendIds.map((id) => ({ userId: id, amount: Number(customFriendOwed[id]) || 0 }))
+                  : undefined,
+            },
+          }
+        : {};
     if (splitMode) {
-      onSubmit({ ...values, splitLines });
+      onSubmit({ ...values, splitLines, ...withFriends });
       return;
     }
-    onSubmit(values);
+    onSubmit({ ...values, ...withFriends });
   }
 
   return (
@@ -319,6 +368,102 @@ export default function ExpenseForm({
             onChange={(name) => update("category", name)}
             renderIndicator={categoryDot}
           />
+        </div>
+      )}
+
+      {allowFriendSplit && values.type === "expense" && friends.length > 0 && (
+        <label className="flex items-center gap-2 text-sm font-medium text-surface-foreground-soft sm:order-7 sm:col-span-2">
+          <input
+            type="checkbox"
+            checked={friendSplitMode}
+            onChange={(e) => setFriendSplitMode(e.target.checked)}
+            className="h-4 w-4 rounded border-surface-line accent-surface-accent"
+          />
+          Split this bill with friends
+        </label>
+      )}
+
+      {values.type === "expense" && friendSplitMode && (
+        <div className="space-y-2.5 sm:order-7 sm:col-span-2">
+          <div>
+            <label className={labelClass}>Who else was in on it?</label>
+            <div className="flex flex-wrap gap-1.5">
+              {friends.map((f) => {
+                const selected = friendIds.includes(f.id);
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => toggleFriend(f.id)}
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                      selected
+                        ? "bg-surface-accent text-white"
+                        : "bg-surface-soft text-surface-foreground-soft hover:text-surface-foreground"
+                    }`}
+                  >
+                    {f.username}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {friendIds.length > 0 && (
+            <>
+              <div className="flex gap-1 rounded-full bg-surface-soft p-1">
+                <button
+                  type="button"
+                  onClick={() => setFriendSplitMethod("equal")}
+                  className={`flex-1 rounded-full py-1.5 text-xs font-semibold transition ${
+                    friendSplitMethod === "equal"
+                      ? "bg-surface text-surface-foreground shadow-sm"
+                      : "text-surface-foreground-soft"
+                  }`}
+                >
+                  Equal split
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFriendSplitMethod("custom")}
+                  className={`flex-1 rounded-full py-1.5 text-xs font-semibold transition ${
+                    friendSplitMethod === "custom"
+                      ? "bg-surface text-surface-foreground shadow-sm"
+                      : "text-surface-foreground-soft"
+                  }`}
+                >
+                  Custom amounts
+                </button>
+              </div>
+
+              {friendSplitMethod === "custom" ? (
+                <div className="space-y-1.5">
+                  <p className="text-xs text-surface-foreground-soft">How much does each person owe you?</p>
+                  {friendIds.map((id) => (
+                    <div key={id} className="flex items-center gap-2">
+                      <span className="w-28 shrink-0 truncate text-sm text-surface-foreground">
+                        {friends.find((f) => f.id === id)?.username}
+                      </span>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.01"
+                        min="0"
+                        value={customFriendOwed[id] ?? ""}
+                        onChange={(e) => setCustomFriendOwed((prev) => ({ ...prev, [id]: e.target.value }))}
+                        placeholder="0.00"
+                        className={`${inputClass} flex-1`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-surface-foreground-soft">
+                  Split evenly between you and {friendIds.length} friend{friendIds.length === 1 ? "" : "s"} — they&apos;ll each
+                  owe their share, tracked in Split bills.
+                </p>
+              )}
+            </>
+          )}
         </div>
       )}
 
