@@ -92,10 +92,12 @@ export function isDashboardWidgetType(value: string): value is DashboardWidgetTy
   return (DASHBOARD_WIDGET_TYPES as readonly string[]).includes(value);
 }
 
-// Three sizes on a 4-column grid — small is a quarter row, medium is half,
-// large is the full row. Not every widget supports every size (see
-// SUPPORTED_WIDTHS): a 3-card summary or a wide chart genuinely breaks at
-// quarter width, so those simply never offer "small" as an option.
+// Three sizes on a grid that's 2 columns on mobile and 4 from sm: up (see
+// callers — grid-cols-2 sm:grid-cols-4) — small is a half row on mobile /
+// quarter row on desktop, medium is a full row on mobile / half row on
+// desktop, large is always the full row. Not every widget supports every
+// size (see SUPPORTED_WIDTHS): a 3-card summary or a wide chart genuinely
+// breaks at quarter width, so those simply never offer "small" as an option.
 export const WIDGET_WIDTHS = ["small", "medium", "large"] as const;
 export type WidgetWidth = (typeof WIDGET_WIDTHS)[number];
 
@@ -109,10 +111,13 @@ export const WIDGET_WIDTH_LABELS: Record<WidgetWidth, string> = {
   large: "Large",
 };
 
+// "large" must stay full-width at both column counts — a flat "col-span-4"
+// would force the browser to add implicit extra columns on the 2-column
+// mobile grid instead of just spanning it, breaking the mobile layout.
 export const WIDGET_WIDTH_COLSPAN: Record<WidgetWidth, string> = {
   small: "col-span-1",
   medium: "col-span-2",
-  large: "col-span-4",
+  large: "col-span-2 sm:col-span-4",
 };
 
 // Legacy values from before sizes were split into three — mapped forward so

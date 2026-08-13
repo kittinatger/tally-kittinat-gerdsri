@@ -390,129 +390,155 @@ export default function SettingsView({
   const [panel, setPanel] = useState<Panel | null>(githubLinked || githubError ? "account" : null);
   const activeWallets = wallets.filter((w) => !w.archived);
 
+  // Below lg: a drill-down (list OR detail, with a Back button). At lg+: a
+  // persistent two-pane layout (list always visible left, detail — or an
+  // empty state — right), same as e.g. macOS System Settings. Both panes
+  // below are each rendered exactly once (not duplicated per breakpoint) —
+  // several panels (WalletManager, RecurringManager, etc.) fetch their own
+  // data on mount, so mounting two copies would double those requests.
+  // Visibility per breakpoint is driven purely by Tailwind classes (the
+  // same `hidden ... sm:flex` technique AppHeader.tsx uses for its nav),
+  // so there's no client-only breakpoint detection and no flash on load.
+  const listContent = (
+    <div>
+      <div className="mb-6 flex items-center gap-3 rounded-card border border-line bg-surface p-4">
+        <ProfileAvatar username={username} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-display text-lg text-foreground">{username}</p>
+          <p className="truncate text-xs text-ink-soft">{email ?? "No email on file"}</p>
+        </div>
+        <ThemeToggleButton />
+      </div>
+
+      <SettingsSection title="App settings">
+        <SettingsListItem icon={<AccountIcon />} label="Account" accent="slate" selected={panel === "account"} onClick={() => setPanel("account")} />
+        <SettingsListItem icon={<ShieldIcon />} label="Permissions" accent="slate" selected={panel === "permissions"} onClick={() => setPanel("permissions")} />
+      </SettingsSection>
+
+      <SettingsSection title="Records">
+        <SettingsListItem icon={<GridIcon />} label="Manage categories" accent="indigo" selected={panel === "categories"} onClick={() => setPanel("categories")} />
+        <SettingsListItem icon={<HashIcon />} label="Manage tags" accent="indigo" selected={panel === "tags"} onClick={() => setPanel("tags")} />
+        <SettingsListItem icon={<WalletIcon />} label="Wallets" accent="sky" selected={panel === "wallets"} onClick={() => setPanel("wallets")} />
+        <ExportDataButton />
+        <ImportDataButton />
+      </SettingsSection>
+
+      <SettingsSection title="Social">
+        <SettingsListItem icon={<FriendsIcon />} label="Friends & Family" accent="pink" selected={panel === "friends"} onClick={() => setPanel("friends")} />
+        <SettingsListItem icon={<TrophyNavIcon />} label="Challenges" accent="violet" selected={panel === "challenges"} onClick={() => setPanel("challenges")} />
+        <SettingsListItem icon={<ReceiptNavIcon />} label="Split bills" accent="amber" selected={panel === "splitBills"} onClick={() => setPanel("splitBills")} />
+      </SettingsSection>
+
+      <SettingsSection title="Budgeting">
+        <SettingsListItem icon={<RecurringIcon />} label="Recurring transactions" accent="teal" selected={panel === "recurring"} onClick={() => setPanel("recurring")} />
+        <SettingsListItem icon={<BudgetIcon />} label="Budgets" accent="orange" selected={panel === "budgets"} onClick={() => setPanel("budgets")} />
+        <SettingsListItem icon={<GoalIcon />} label="Savings goals" accent="emerald" selected={panel === "savingsGoals"} onClick={() => setPanel("savingsGoals")} />
+        <SettingsListItem icon={<AutoImportIcon />} label="Automatic import" accent="cyan" selected={panel === "autoImport"} onClick={() => setPanel("autoImport")} />
+      </SettingsSection>
+
+      <SettingsSection title="Display">
+        <SettingsListItem
+          icon={<DashboardWidgetsIcon />}
+          label="Customize dashboard"
+          accent="fuchsia"
+          selected={panel === "dashboardWidgets"}
+          onClick={() => setPanel("dashboardWidgets")}
+        />
+        <SettingsListItem icon={<CalendarIcon />} label="Calendar settings" accent="blue" selected={panel === "calendar"} onClick={() => setPanel("calendar")} />
+        <SettingsListItem icon={<CoinIcon />} label="Currency" accent="green" selected={panel === "currency"} onClick={() => setPanel("currency")} />
+      </SettingsSection>
+
+      <SettingsSection title="Support" defaultOpen={false}>
+        <SettingsListItem icon={<BookIcon />} label="Usage guide" href="/usage-guide" />
+        <SettingsListItem icon={<QuestionIcon />} label="FAQs" href="/faq" />
+        <SettingsListItem icon={<WrenchIcon />} label="Troubleshooting" href="/troubleshooting" />
+        <SettingsListItem icon={<WarningIcon />} label="Error log" selected={panel === "errorReports"} onClick={() => setPanel("errorReports")} />
+        <SettingsListItem icon={<MailIcon />} label="Contact" href="/contact" />
+        <SettingsListItem icon={<FlagIcon />} label="Report an issue" href="/report-issue" />
+        <SettingsListItem icon={<ClockIcon />} label="Changelog" href="/changelog" />
+      </SettingsSection>
+    </div>
+  );
+
+  const detailContent = panel && (
+    <div>
+      {panel !== "dashboardWidgets" && (
+        <button
+          type="button"
+          onClick={() => setPanel(null)}
+          className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-ink-soft transition hover:text-foreground lg:hidden"
+        >
+          <BackIcon />
+          Settings
+        </button>
+      )}
+      {(panel === "currency" || panel === "tags" || panel === "calendar" || panel === "friends" || panel === "challenges" || panel === "splitBills") && (
+        <h2 className="mb-5 font-display text-2xl text-foreground">{PANEL_TITLES[panel]}</h2>
+      )}
+
+      {panel === "account" && (
+        <AccountPanel
+          initialUsername={username}
+          initialEmail={email}
+          githubLinked={githubLinked}
+          githubError={githubError}
+        />
+      )}
+      {panel === "permissions" && <PermissionsSettings hasEmail={Boolean(email)} />}
+      {panel === "categories" && <CategoryManager categories={categories} />}
+      {panel === "tags" && <TagManager />}
+      {panel === "wallets" && (
+        <WalletManager wallets={wallets} initialActivitiesDefaultWalletId={activitiesDefaultWalletId} />
+      )}
+      {panel === "friends" && <FriendsManager />}
+      {panel === "challenges" && <ChallengesManager />}
+      {panel === "splitBills" && <SplitBillManager />}
+      {panel === "currency" && <CurrencySettings />}
+      {panel === "calendar" && <CalendarSettings />}
+      {panel === "recurring" && <RecurringManager />}
+      {panel === "budgets" && <BudgetManager />}
+      {panel === "savingsGoals" && <SavingsGoalsManager />}
+      {panel === "autoImport" && (
+        <div>
+          <ApiTokensManager />
+          <AutoImportInstructions />
+        </div>
+      )}
+      {panel === "errorReports" && <ErrorReportsPanel />}
+      {panel === "dashboardWidgets" && (
+        <DashboardWidgetsSettings
+          expenses={expenses}
+          categories={categories}
+          remaining={remaining}
+          wallets={wallets}
+          onDone={() => setPanel(null)}
+        />
+      )}
+    </div>
+  );
+
+  const detailEmptyState = (
+    <div className="hidden h-64 flex-col items-center justify-center gap-1 rounded-card border border-dashed border-line px-6 text-center lg:flex">
+      <p className="text-sm font-medium text-foreground">Choose a setting</p>
+      <p className="text-xs text-ink-soft">Pick something from the list to see it here.</p>
+    </div>
+  );
+
   return (
     <CategoriesProvider categories={categories}>
     <WalletsProvider wallets={activeWallets}>
     <CurrencyProvider currency={currency}>
-      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10">
+      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10 lg:max-w-6xl">
         <PullToRefresh>
           <AppHeader />
 
           <main className="flex-1 px-1 py-6 sm:px-2">
-            {panel ? (
-              <div>
-                {panel !== "dashboardWidgets" && (
-                  <button
-                    type="button"
-                    onClick={() => setPanel(null)}
-                    className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-ink-soft transition hover:text-foreground"
-                  >
-                    <BackIcon />
-                    Settings
-                  </button>
-                )}
-                {(panel === "currency" || panel === "tags" || panel === "calendar" || panel === "friends" || panel === "challenges" || panel === "splitBills") && (
-                  <h2 className="mb-5 font-display text-2xl text-foreground">{PANEL_TITLES[panel]}</h2>
-                )}
-
-                {panel === "account" && (
-                  <AccountPanel
-                    initialUsername={username}
-                    initialEmail={email}
-                    githubLinked={githubLinked}
-                    githubError={githubError}
-                  />
-                )}
-                {panel === "permissions" && <PermissionsSettings hasEmail={Boolean(email)} />}
-                {panel === "categories" && <CategoryManager categories={categories} />}
-                {panel === "tags" && <TagManager />}
-                {panel === "wallets" && (
-                  <WalletManager wallets={wallets} initialActivitiesDefaultWalletId={activitiesDefaultWalletId} />
-                )}
-                {panel === "friends" && <FriendsManager />}
-                {panel === "challenges" && <ChallengesManager />}
-                {panel === "splitBills" && <SplitBillManager />}
-                {panel === "currency" && <CurrencySettings />}
-                {panel === "calendar" && <CalendarSettings />}
-                {panel === "recurring" && <RecurringManager />}
-                {panel === "budgets" && <BudgetManager />}
-                {panel === "savingsGoals" && <SavingsGoalsManager />}
-                {panel === "autoImport" && (
-                  <div>
-                    <ApiTokensManager />
-                    <AutoImportInstructions />
-                  </div>
-                )}
-                {panel === "errorReports" && <ErrorReportsPanel />}
-                {panel === "dashboardWidgets" && (
-                  <DashboardWidgetsSettings
-                    expenses={expenses}
-                    categories={categories}
-                    remaining={remaining}
-                    wallets={wallets}
-                    onDone={() => setPanel(null)}
-                  />
-                )}
+            <div className="lg:flex lg:items-start lg:gap-6">
+              <div className={`${panel ? "hidden" : "block"} lg:block lg:w-[320px] lg:shrink-0`}>{listContent}</div>
+              <div className={`${panel ? "block" : "hidden"} lg:block lg:flex-1`}>
+                {panel ? detailContent : detailEmptyState}
               </div>
-            ) : (
-              <div>
-                <div className="mb-6 flex items-center gap-3 rounded-card border border-line bg-surface p-4">
-                  <ProfileAvatar username={username} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-display text-lg text-foreground">{username}</p>
-                    <p className="truncate text-xs text-ink-soft">{email ?? "No email on file"}</p>
-                  </div>
-                  <ThemeToggleButton />
-                </div>
-
-                <SettingsSection title="App settings">
-                  <SettingsListItem icon={<AccountIcon />} label="Account" accent="slate" onClick={() => setPanel("account")} />
-                  <SettingsListItem icon={<ShieldIcon />} label="Permissions" accent="slate" onClick={() => setPanel("permissions")} />
-                </SettingsSection>
-
-                <SettingsSection title="Records">
-                  <SettingsListItem icon={<GridIcon />} label="Manage categories" accent="indigo" onClick={() => setPanel("categories")} />
-                  <SettingsListItem icon={<HashIcon />} label="Manage tags" accent="indigo" onClick={() => setPanel("tags")} />
-                  <SettingsListItem icon={<WalletIcon />} label="Wallets" accent="sky" onClick={() => setPanel("wallets")} />
-                  <ExportDataButton />
-                  <ImportDataButton />
-                </SettingsSection>
-
-                <SettingsSection title="Social">
-                  <SettingsListItem icon={<FriendsIcon />} label="Friends & Family" accent="pink" onClick={() => setPanel("friends")} />
-                  <SettingsListItem icon={<TrophyNavIcon />} label="Challenges" accent="violet" onClick={() => setPanel("challenges")} />
-                  <SettingsListItem icon={<ReceiptNavIcon />} label="Split bills" accent="amber" onClick={() => setPanel("splitBills")} />
-                </SettingsSection>
-
-                <SettingsSection title="Budgeting">
-                  <SettingsListItem icon={<RecurringIcon />} label="Recurring transactions" accent="teal" onClick={() => setPanel("recurring")} />
-                  <SettingsListItem icon={<BudgetIcon />} label="Budgets" accent="orange" onClick={() => setPanel("budgets")} />
-                  <SettingsListItem icon={<GoalIcon />} label="Savings goals" accent="emerald" onClick={() => setPanel("savingsGoals")} />
-                  <SettingsListItem icon={<AutoImportIcon />} label="Automatic import" accent="cyan" onClick={() => setPanel("autoImport")} />
-                </SettingsSection>
-
-                <SettingsSection title="Display">
-                  <SettingsListItem
-                    icon={<DashboardWidgetsIcon />}
-                    label="Customize dashboard"
-                    accent="fuchsia"
-                    onClick={() => setPanel("dashboardWidgets")}
-                  />
-                  <SettingsListItem icon={<CalendarIcon />} label="Calendar settings" accent="blue" onClick={() => setPanel("calendar")} />
-                  <SettingsListItem icon={<CoinIcon />} label="Currency" accent="green" onClick={() => setPanel("currency")} />
-                </SettingsSection>
-
-                <SettingsSection title="Support" defaultOpen={false}>
-                  <SettingsListItem icon={<BookIcon />} label="Usage guide" href="/usage-guide" />
-                  <SettingsListItem icon={<QuestionIcon />} label="FAQs" href="/faq" />
-                  <SettingsListItem icon={<WrenchIcon />} label="Troubleshooting" href="/troubleshooting" />
-                  <SettingsListItem icon={<WarningIcon />} label="Error log" onClick={() => setPanel("errorReports")} />
-                  <SettingsListItem icon={<MailIcon />} label="Contact" href="/contact" />
-                  <SettingsListItem icon={<FlagIcon />} label="Report an issue" href="/report-issue" />
-                  <SettingsListItem icon={<ClockIcon />} label="Changelog" href="/changelog" />
-                </SettingsSection>
-              </div>
-            )}
+            </div>
 
             <footer className="mt-12 flex flex-col items-center gap-2 border-t border-line pt-6 text-center text-xs text-ink-soft">
               <p>Tally v{APP_VERSION}</p>

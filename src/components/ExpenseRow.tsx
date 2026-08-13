@@ -7,19 +7,19 @@ import { badgeClasses } from "@/lib/category-styles";
 import { useCategoryColor, useCategoryIcon } from "@/lib/categories-context";
 import { useCurrency } from "@/lib/currency-context";
 import { isCategoryIconKey } from "@/lib/category-icons";
-import { CategoryIcon, TrashIcon } from "@/lib/icons";
+import { CategoryIcon, TrashIcon, EditIcon } from "@/lib/icons";
 
 const OPEN_DELETE = -76;
 const OPEN_SHARE = 76;
 const MOVE_THRESHOLD = 6;
 
-function DeleteIcon() {
-  return <TrashIcon className="h-5 w-5" />;
+function DeleteIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return <TrashIcon className={className} />;
 }
 
-function ShareIcon() {
+function ShareIcon({ className = "h-5 w-5" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <path d="M10 12.5V3.5M6.5 7 10 3.5 13.5 7" />
       <path d="M4 10.5v4a1.5 1.5 0 0 0 1.5 1.5h9a1.5 1.5 0 0 0 1.5-1.5v-4" />
     </svg>
@@ -48,6 +48,7 @@ export default function ExpenseRow({
   expense,
   onClick,
   onDelete,
+  onEdit,
   isLast,
   selectMode = false,
   selected = false,
@@ -57,6 +58,10 @@ export default function ExpenseRow({
   onClick: () => void;
   /** Enables swipe-left-to-delete when provided (Activities list only). */
   onDelete?: (id: number) => void;
+  /** Enables the sm:+ hover-revealed Edit button (desktop mouse users don't
+   * have a reason to discover the swipe gesture — see ShareIcon/DeleteIcon
+   * below, which get the same hover treatment). */
+  onEdit?: (expense: Expense) => void;
   isLast: boolean;
   selectMode?: boolean;
   selected?: boolean;
@@ -71,6 +76,11 @@ export default function ExpenseRow({
   const [gestureStartX, setGestureStartX] = useState<number | null>(null);
   const [moved, setMoved] = useState(false);
   const swipeEnabled = Boolean(onDelete) && !selectMode;
+  // Swipe stays available everywhere (it's how touch users reach these
+  // actions), but a mouse user has no reason to know to drag a row — so
+  // sm:+ also gets a conventional hover-revealed button cluster as the
+  // discoverable path. Both can coexist since hover never fires on touch.
+  const showHoverActions = !selectMode && Boolean(onDelete || onEdit);
 
   function closeSwipe() {
     setRestX(0);
@@ -122,8 +132,23 @@ export default function ExpenseRow({
     await shareExpense(expense, currency);
   }
 
+  function handleHoverEdit(e: React.MouseEvent) {
+    e.stopPropagation();
+    onEdit?.(expense);
+  }
+
+  function handleHoverShare(e: React.MouseEvent) {
+    e.stopPropagation();
+    shareExpense(expense, currency);
+  }
+
+  function handleHoverDelete(e: React.MouseEvent) {
+    e.stopPropagation();
+    onDelete?.(expense.id);
+  }
+
   return (
-    <div className={`relative overflow-hidden ${isLast ? "" : "border-b border-surface-line"}`}>
+    <div className={`group relative overflow-hidden ${isLast ? "" : "border-b border-surface-line"}`}>
       {swipeEnabled && (
         <div className="absolute inset-y-0 left-0 right-0 flex items-stretch justify-between">
           <button
@@ -154,7 +179,9 @@ export default function ExpenseRow({
         style={{ transform: `translateX(${liveX}px)`, touchAction: swipeEnabled ? "pan-y" : undefined }}
         className={`relative flex w-full items-center justify-between gap-3 bg-surface px-4 py-3.5 text-left ${
           gestureStartX === null ? "transition-transform" : ""
-        } hover:bg-[var(--surface-nav-hover)] ${selected ? "bg-[var(--surface-nav-hover)]" : ""}`}
+        } hover:bg-[var(--surface-nav-hover)] ${selected ? "bg-[var(--surface-nav-hover)]" : ""} ${
+          showHoverActions ? "sm:pr-28" : ""
+        }`}
       >
         {selectMode && (
           <span
@@ -209,6 +236,38 @@ export default function ExpenseRow({
           {formatCurrency(expense.amount, currency)}
         </p>
       </button>
+      {showHoverActions && (
+        <div className="pointer-events-none absolute inset-y-0 right-2 hidden items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto sm:flex">
+          {onEdit && (
+            <button
+              type="button"
+              onClick={handleHoverEdit}
+              aria-label={`Edit ${expense.merchant}`}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-surface-foreground-soft shadow-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
+            >
+              <EditIcon className="h-3.5 w-3.5" />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={handleHoverShare}
+            aria-label={`Share ${expense.merchant}`}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-surface-foreground-soft shadow-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
+          >
+            <ShareIcon className="h-3.5 w-3.5" />
+          </button>
+          {onDelete && (
+            <button
+              type="button"
+              onClick={handleHoverDelete}
+              aria-label={`Delete ${expense.merchant}`}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-red-600 shadow-soft transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+            >
+              <DeleteIcon className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

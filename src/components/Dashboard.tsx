@@ -72,13 +72,13 @@ export default function Dashboard({
     <CategoriesProvider categories={categories}>
       <WalletsProvider wallets={wallets}>
       <CurrencyProvider currency={currency}>
-        <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10">
+        <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10 lg:max-w-6xl">
           <PullToRefresh>
             <AppHeader onAddClick={() => setAddingType("expense")} />
 
             <main className="flex-1 px-1 py-6 sm:px-2">
               <BudgetAlerts expenses={expenses} budgets={budgets} onDismissed={handleBudgetDismissed} />
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 {widgets.map((w) => (
                   <div key={w.id} className={WIDGET_WIDTH_COLSPAN[w.width]}>
                     <DashboardWidgetContent

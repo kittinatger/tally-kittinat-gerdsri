@@ -16,11 +16,13 @@ function RowContent({
   label,
   badge,
   accent,
+  selected,
 }: {
   icon: React.ReactNode;
   label: string;
   badge?: string;
   accent?: string;
+  selected?: boolean;
 }) {
   return (
     <>
@@ -31,7 +33,9 @@ function RowContent({
       >
         {icon}
       </span>
-      <span className="flex-1 text-sm font-medium text-foreground">{label}</span>
+      <span className={`flex-1 text-sm font-medium ${selected ? "text-surface-accent" : "text-foreground"}`}>
+        {label}
+      </span>
       {badge ? (
         <span className="shrink-0 rounded-full bg-bg-soft px-3 py-1.5 text-xs font-semibold text-ink-soft">{badge}</span>
       ) : (
@@ -49,6 +53,7 @@ export default function SettingsListItem({
   disabled,
   badge,
   accent,
+  selected,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -58,6 +63,9 @@ export default function SettingsListItem({
   badge?: string;
   /** One of the shared category-color tokens (e.g. "sky", "violet", "amber") — tints the icon's circular badge, same palette used across the rest of the app. Omit for a plain neutral icon. */
   accent?: string;
+  /** Highlights the row — used by the lg:+ two-pane Settings layout so the
+   * persistent left list shows which panel the right pane is showing. */
+  selected?: boolean;
 }) {
   if (href && !disabled) {
     return (
@@ -72,9 +80,9 @@ export default function SettingsListItem({
       type="button"
       onClick={onClick}
       disabled={disabled || !onClick}
-      className={`${rowClass} ${disabled || !onClick ? "opacity-60" : ""}`}
+      className={`${rowClass} ${disabled || !onClick ? "opacity-60" : ""} ${selected ? "bg-surface-accent/10" : ""}`}
     >
-      <RowContent icon={icon} label={label} badge={badge} accent={accent} />
+      <RowContent icon={icon} label={label} badge={badge} accent={accent} selected={selected} />
     </button>
   );
 }

@@ -57,6 +57,7 @@ function buildDisplayRows(items: Expense[]): DisplayRow[] {
 export default function ExpenseList({
   expenses,
   onSelect,
+  onEdit,
   onBulkDeleted,
   onBulkUpdated,
   typeFilter,
@@ -66,6 +67,9 @@ export default function ExpenseList({
 }: {
   expenses: Expense[];
   onSelect: (expense: Expense) => void;
+  /** Enables the sm:+ hover-revealed Edit button on each row (desktop
+   * quick-edit, bypassing the detail view/modal). */
+  onEdit?: (expense: Expense) => void;
   onBulkDeleted: (ids: number[]) => void;
   onBulkUpdated: (expenses: Expense[]) => void;
   /** Controlled from ActivitiesView so the balance card's Expense/Income/
@@ -543,6 +547,7 @@ export default function ExpenseList({
                             expense={row.expense}
                             onClick={() => onSelect(row.expense)}
                             onDelete={handleSwipeDelete}
+                            onEdit={onEdit}
                             isLast={i === arr.length - 1}
                           />
                         ),

@@ -293,7 +293,7 @@ export default function DashboardWidgetsSettings({
           Your dashboard is empty. Tap the paintbrush above to add a widget.
         </p>
       ) : (
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {widgets.map((w, i) => {
             const supported = SUPPORTED_WIDTHS[w.type];
             const hasConfig =

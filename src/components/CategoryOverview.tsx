@@ -213,7 +213,7 @@ export default function CategoryOverview({
           </p>
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {breakdown.rows.map((row) => (
             <div key={row.category} className="rounded-card border border-line bg-surface p-4">
               <div className="mb-2 flex items-center justify-between gap-2">

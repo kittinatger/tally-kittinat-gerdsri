@@ -7,12 +7,14 @@ import type { WalletOption } from "@/types/wallet";
 import { CategoriesProvider } from "@/lib/categories-context";
 import { CurrencyProvider } from "@/lib/currency-context";
 import { WalletsProvider } from "@/lib/wallets-context";
+import { useMediaQuery, DESKTOP_QUERY } from "@/lib/use-media-query";
 import PullToRefresh from "./PullToRefresh";
 import ExpenseList, { type TypeFilter } from "./ExpenseList";
 import ActivitiesBalanceCard from "./ActivitiesBalanceCard";
 import AddExpenseModal from "./AddExpenseModal";
 import EditExpenseModal from "./EditExpenseModal";
 import ExpenseDetailModal from "./ExpenseDetailModal";
+import ExpenseDetailContent from "./ExpenseDetailContent";
 import AppHeader from "./AppHeader";
 
 function sortByDateDesc(a: Expense, b: Expense): number {
@@ -42,6 +44,7 @@ export default function ActivitiesView({
   const [editing, setEditing] = useState<Expense | null>(null);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [walletFilter, setWalletFilter] = useState(initialWalletFilter);
+  const isDesktop = useMediaQuery(DESKTOP_QUERY);
 
   const activeWallets = wallets.filter((w) => !w.archived);
 
@@ -78,34 +81,54 @@ export default function ActivitiesView({
     <CategoriesProvider categories={categories}>
       <WalletsProvider wallets={wallets}>
       <CurrencyProvider currency={currency}>
-        <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10">
+        <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10 lg:max-w-6xl">
           <PullToRefresh>
             <AppHeader onAddClick={() => setAddOpen(true)} />
 
-            <main className="flex-1 px-1 py-6 sm:px-2">
-              <ActivitiesBalanceCard
-                wallets={activeWallets}
-                currency={currency}
-                typeFilter={typeFilter}
-                onTypeFilterChange={setTypeFilter}
-                walletFilter={walletFilter}
-                onWalletFilterChange={setWalletFilter}
-              />
-              <ExpenseList
-                expenses={expenses}
-                onSelect={setViewing}
-                onBulkDeleted={handleBulkDeleted}
-                onBulkUpdated={handleBulkUpdated}
-                typeFilter={typeFilter}
-                onTypeFilterChange={setTypeFilter}
-                walletFilter={walletFilter}
-                onWalletFilterChange={setWalletFilter}
-              />
+            <main className="flex-1 px-1 py-6 sm:px-2 lg:flex lg:items-start lg:gap-6">
+              <div className="lg:w-[420px] lg:shrink-0">
+                <ActivitiesBalanceCard
+                  wallets={activeWallets}
+                  currency={currency}
+                  typeFilter={typeFilter}
+                  onTypeFilterChange={setTypeFilter}
+                  walletFilter={walletFilter}
+                  onWalletFilterChange={setWalletFilter}
+                />
+                <ExpenseList
+                  expenses={expenses}
+                  onSelect={setViewing}
+                  onEdit={setEditing}
+                  onBulkDeleted={handleBulkDeleted}
+                  onBulkUpdated={handleBulkUpdated}
+                  typeFilter={typeFilter}
+                  onTypeFilterChange={setTypeFilter}
+                  walletFilter={walletFilter}
+                  onWalletFilterChange={setWalletFilter}
+                />
+              </div>
+
+              {/* Desktop-only right pane — below lg: transaction detail is
+                  always the ExpenseDetailModal bottom sheet instead (see
+                  isDesktop guard further down), so this stays out of the DOM
+                  on mobile/tablet rather than just being visually hidden. */}
+              <div className="hidden lg:sticky lg:top-20 lg:block lg:flex-1">
+                {viewing ? (
+                  <div className="rounded-card border border-surface-line bg-surface p-5 sm:p-6">
+                    <ExpenseDetailContent expense={viewing} onEdit={handleEditFromDetail} />
+                  </div>
+                ) : (
+                  <div className="flex h-64 flex-col items-center justify-center gap-1 rounded-card border border-dashed border-surface-line px-6 text-center">
+                    <p className="text-sm font-medium text-foreground">No transaction selected</p>
+                    <p className="text-xs text-ink-soft">Pick one from the list to see its details here.</p>
+                  </div>
+                )}
+              </div>
             </main>
           </PullToRefresh>
 
           {addOpen && <AddExpenseModal onClose={() => setAddOpen(false)} onCreated={handleCreated} />}
-          {viewing && (
+          {viewing && !isDesktop && (
             <ExpenseDetailModal expense={viewing} onClose={() => setViewing(null)} onEdit={handleEditFromDetail} />
           )}
           {editing && (
