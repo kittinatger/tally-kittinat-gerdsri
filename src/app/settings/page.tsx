@@ -11,6 +11,7 @@ import { getUserId } from "@/lib/auth";
 import SettingsView from "@/components/SettingsView";
 import { isTransactionType } from "@/lib/categories";
 import { isWalletKind } from "@/lib/wallets";
+import { isPanel } from "@/lib/settings-panels";
 import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
 import type { CategoryOption } from "@/types/category";
 import type { WalletOption } from "@/types/wallet";
@@ -21,9 +22,9 @@ export const dynamic = "force-dynamic";
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ githubLinked?: string; githubError?: string }>;
+  searchParams: Promise<{ githubLinked?: string; githubError?: string; panel?: string }>;
 }) {
-  const { githubLinked, githubError } = await searchParams;
+  const { githubLinked, githubError, panel } = await searchParams;
   const userId = await getUserId();
   const [categoryRows, currency, user, walletRows, expenseRows, remaining, activitiesDefaultWalletId] =
     await Promise.all([
@@ -80,6 +81,7 @@ export default async function SettingsPage({
       activitiesDefaultWalletId={activitiesDefaultWalletId}
       githubLinked={githubLinked === "1"}
       githubError={githubError}
+      initialPanel={panel && isPanel(panel) ? panel : undefined}
     />
   );
 }

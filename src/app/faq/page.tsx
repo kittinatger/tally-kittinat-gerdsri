@@ -1,6 +1,9 @@
-import AppHeader from "@/components/AppHeader";
-import BackToSettingsLink from "@/components/BackToSettingsLink";
+import { getUserById } from "@/lib/db";
+import { getUserId } from "@/lib/auth";
+import SettingsSubpageLayout from "@/components/SettingsSubpageLayout";
 import FaqAccordion from "@/components/FaqAccordion";
+
+export const dynamic = "force-dynamic";
 
 const FAQS: { q: string; a: React.ReactNode; keywords?: string }[] = [
   {
@@ -76,18 +79,14 @@ const FAQS: { q: string; a: React.ReactNode; keywords?: string }[] = [
   },
 ];
 
-export default function FaqPage() {
+export default async function FaqPage() {
+  const userId = await getUserId();
+  const user = await getUserById(userId);
+
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10">
-      <AppHeader />
-
-      <main className="flex-1 px-1 py-6 sm:px-2">
-        <BackToSettingsLink />
-        <h2 className="mb-1 font-display text-2xl text-foreground">FAQs</h2>
-        <p className="mb-5 text-sm text-ink-soft">Tap a question to expand it, or search to jump straight to one.</p>
-
-        <FaqAccordion faqs={FAQS} />
-      </main>
-    </div>
+    <SettingsSubpageLayout username={user?.username ?? ""} email={user?.email ?? null} title="FAQs">
+      <p className="-mt-3 mb-5 text-sm text-ink-soft">Tap a question to expand it, or search to jump straight to one.</p>
+      <FaqAccordion faqs={FAQS} />
+    </SettingsSubpageLayout>
   );
 }

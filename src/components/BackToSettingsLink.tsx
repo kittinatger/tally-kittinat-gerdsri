@@ -13,11 +13,11 @@ function BackIcon() {
 // built-in top-of-page back button for free — this is that same button,
 // placed the same way, so navigating back doesn't require scrolling to
 // the bottom of a long page to find a text link.
-export default function BackToSettingsLink() {
+export default function BackToSettingsLink({ className = "" }: { className?: string }) {
   return (
     <Link
       href="/settings"
-      className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-ink-soft transition hover:text-foreground"
+      className={`mb-4 flex items-center gap-1.5 text-sm font-semibold text-ink-soft transition hover:text-foreground ${className}`}
     >
       <BackIcon />
       Settings

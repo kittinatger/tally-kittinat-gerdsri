@@ -69,8 +69,8 @@ export default function SettingsListItem({
 }) {
   if (href && !disabled) {
     return (
-      <Link href={href} className={rowClass}>
-        <RowContent icon={icon} label={label} badge={badge} accent={accent} />
+      <Link href={href} className={`${rowClass} ${selected ? "bg-surface-accent/10" : ""}`}>
+        <RowContent icon={icon} label={label} badge={badge} accent={accent} selected={selected} />
       </Link>
     );
   }

@@ -1,16 +1,16 @@
 import Link from "next/link";
-import AppHeader from "@/components/AppHeader";
-import BackToSettingsLink from "@/components/BackToSettingsLink";
+import { getUserById } from "@/lib/db";
+import { getUserId } from "@/lib/auth";
+import SettingsSubpageLayout from "@/components/SettingsSubpageLayout";
 
-export default function ContactPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ContactPage() {
+  const userId = await getUserId();
+  const user = await getUserById(userId);
+
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10">
-      <AppHeader />
-
-      <main className="flex-1 px-1 py-6 sm:px-2">
-        <BackToSettingsLink />
-        <h2 className="mb-5 font-display text-2xl text-foreground">Contact</h2>
-
+    <SettingsSubpageLayout username={user?.username ?? ""} email={user?.email ?? null} title="Contact">
         <div className="space-y-6 rounded-card border border-line bg-surface p-5 text-sm leading-relaxed text-ink-soft">
           <section>
             <h3 className="mb-1.5 font-semibold text-foreground">Email</h3>
@@ -70,7 +70,6 @@ export default function ContactPage() {
             </p>
           </section>
         </div>
-      </main>
-    </div>
+    </SettingsSubpageLayout>
   );
 }

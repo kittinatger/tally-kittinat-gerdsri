@@ -1,5 +1,8 @@
-import AppHeader from "@/components/AppHeader";
-import BackToSettingsLink from "@/components/BackToSettingsLink";
+import { getUserById } from "@/lib/db";
+import { getUserId } from "@/lib/auth";
+import SettingsSubpageLayout from "@/components/SettingsSubpageLayout";
+
+export const dynamic = "force-dynamic";
 
 const RELEASES: { version: string; date: string; sections: { heading: string; items: string[] }[] }[] = [
   {
@@ -382,15 +385,13 @@ const RELEASES: { version: string; date: string; sections: { heading: string; it
   },
 ];
 
-export default function ChangelogPage() {
-  return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10">
-      <AppHeader />
+export default async function ChangelogPage() {
+  const userId = await getUserId();
+  const user = await getUserById(userId);
 
-      <main className="flex-1 px-1 py-6 sm:px-2">
-        <BackToSettingsLink />
-        <h2 className="mb-2 font-display text-2xl text-foreground">Changelog</h2>
-        <p className="mb-5 text-sm text-ink-soft">
+  return (
+    <SettingsSubpageLayout username={user?.username ?? ""} email={user?.email ?? null} title="Changelog">
+        <p className="-mt-3 mb-5 text-sm text-ink-soft">
           Full history on{" "}
           <a
             href="https://github.com/kittinatger/tally-kittinat-gerdsri/blob/master/CHANGELOG.md"
@@ -427,7 +428,6 @@ export default function ChangelogPage() {
             </div>
           ))}
         </div>
-      </main>
-    </div>
+    </SettingsSubpageLayout>
   );
 }

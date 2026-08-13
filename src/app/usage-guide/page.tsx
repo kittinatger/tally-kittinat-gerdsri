@@ -1,5 +1,8 @@
-import AppHeader from "@/components/AppHeader";
-import BackToSettingsLink from "@/components/BackToSettingsLink";
+import { getUserById } from "@/lib/db";
+import { getUserId } from "@/lib/auth";
+import SettingsSubpageLayout from "@/components/SettingsSubpageLayout";
+
+export const dynamic = "force-dynamic";
 
 function SignInIcon() {
   return (
@@ -253,15 +256,13 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
   },
 ];
 
-export default function UsageGuidePage() {
-  return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10">
-      <AppHeader />
+export default async function UsageGuidePage() {
+  const userId = await getUserId();
+  const user = await getUserById(userId);
 
-      <main className="flex-1 px-1 py-6 sm:px-2">
-        <BackToSettingsLink />
-        <h2 className="mb-1 font-display text-2xl text-foreground">Usage Guide</h2>
-        <p className="mb-5 text-sm text-ink-soft">Everything Tally can do, in one place.</p>
+  return (
+    <SettingsSubpageLayout username={user?.username ?? ""} email={user?.email ?? null} title="Usage Guide">
+        <p className="-mt-3 mb-5 text-sm text-ink-soft">Everything Tally can do, in one place.</p>
 
         <div className="mb-6 flex flex-wrap gap-1.5">
           {SECTIONS.map((s) => (
@@ -288,7 +289,6 @@ export default function UsageGuidePage() {
             </section>
           ))}
         </div>
-      </main>
-    </div>
+    </SettingsSubpageLayout>
   );
 }
