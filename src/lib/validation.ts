@@ -10,6 +10,7 @@ import {
 } from "@/lib/dashboard-widgets";
 import { CHALLENGE_TYPES, CHALLENGE_MODES } from "@/lib/challenges";
 import { SPLIT_METHODS, SPLIT_PAYMENT_METHODS } from "@/lib/splits";
+import { CATEGORY_ICON_KEYS } from "@/lib/category-icons";
 
 export const forgotPasswordInputSchema = z.object({
   email: z.string().trim().email().max(255),
@@ -251,7 +252,7 @@ export const csvImportInputSchema = z.object({
   csv: z.string().min(1).max(2_000_000),
 });
 
-const categoryIconSchema = z.string().trim().min(1).max(8).nullable();
+const categoryIconSchema = z.enum(CATEGORY_ICON_KEYS).nullable();
 
 export const categoryInputSchema = z.object({
   type: z.enum(TRANSACTION_TYPES),

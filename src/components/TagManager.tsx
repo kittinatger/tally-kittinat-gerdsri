@@ -2,6 +2,7 @@
 
 import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useState } from "react";
+import { EditIcon } from "@/lib/icons";
 
 type TagCount = { name: string; count: number };
 
@@ -175,9 +176,7 @@ export default function TagManager() {
                     aria-label={`Rename ${tag.name}`}
                     className="rounded-full p-2 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
                   >
-                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-                      <path d="M13.586 3.586a2 2 0 1 1 2.828 2.828l-8.5 8.5a2 2 0 0 1-.848.503l-3.03.86a.5.5 0 0 1-.618-.618l.86-3.03a2 2 0 0 1 .503-.848l8.5-8.5Z" />
-                    </svg>
+                    <EditIcon className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(tag.name)}

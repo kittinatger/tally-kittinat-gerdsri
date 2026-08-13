@@ -6,16 +6,10 @@ import { formatCurrency, formatDateLong } from "@/lib/format";
 import { badgeClasses, dotClasses } from "@/lib/category-styles";
 import { useCategoryColor, useCategoryIcon } from "@/lib/categories-context";
 import { useCurrency } from "@/lib/currency-context";
+import { isCategoryIconKey } from "@/lib/category-icons";
+import { CategoryIcon, EditIcon } from "@/lib/icons";
 import Modal from "./Modal";
 import ReceiptLightbox from "./ReceiptLightbox";
-
-function EditIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-      <path d="M13.586 3.586a2 2 0 1 1 2.828 2.828l-8.5 8.5a2 2 0 0 1-.848.503l-3.03.86a.5.5 0 0 1-.618-.618l.86-3.03a2 2 0 0 1 .503-.848l8.5-8.5Z" />
-    </svg>
-  );
-}
 
 function CalendarIcon() {
   return (
@@ -93,7 +87,11 @@ export default function ExpenseDetailModal({
           <span
             className={`mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold backdrop-blur-sm`}
           >
-            {icon ? <span>{icon}</span> : <span className={`h-2 w-2 rounded-full ${dotClasses(color)}`} />}
+            {icon && isCategoryIconKey(icon) ? (
+              <CategoryIcon iconKey={icon} className="h-3 w-3" />
+            ) : (
+              <span className={`h-2 w-2 rounded-full ${dotClasses(color)}`} />
+            )}
             {expense.category}
           </span>
         </div>

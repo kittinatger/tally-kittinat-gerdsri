@@ -1,3 +1,5 @@
+import { CheckIcon } from "@/lib/icons";
+
 export default function WeekdayTrackerWidget({
   value,
   label,
@@ -6,7 +8,7 @@ export default function WeekdayTrackerWidget({
 }: {
   value: string;
   label: string;
-  days: { label: string; hit: boolean; display: string }[];
+  days: { label: string; hit: boolean }[];
   cardClassName?: string;
 }) {
   return (
@@ -23,11 +25,11 @@ export default function WeekdayTrackerWidget({
         {days.map((d, i) => (
           <div key={i} className="flex flex-col items-center gap-1">
             <span
-              className={`flex h-6 w-6 items-center justify-center rounded-full text-[13px] ${
+              className={`flex h-6 w-6 items-center justify-center rounded-full ${
                 d.hit ? "bg-white/25" : "bg-black/15"
               }`}
             >
-              {d.display}
+              {d.hit ? <CheckIcon className="h-3 w-3" /> : <span className="h-1 w-1 rounded-full bg-current opacity-70" />}
             </span>
             <span className="text-[9px] font-semibold uppercase opacity-70">{d.label}</span>
           </div>

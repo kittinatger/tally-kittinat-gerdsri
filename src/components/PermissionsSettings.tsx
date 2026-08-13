@@ -4,17 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import NotificationSettings from "./NotificationSettings";
 import { describeMediaError } from "@/lib/media-error";
 import { badgeClasses } from "@/lib/category-styles";
+import { MicIcon } from "@/lib/icons";
 
 type PermissionStatus = "granted" | "denied" | "prompt" | "unsupported";
-
-function MicIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <rect x="7" y="2.5" width="6" height="10" rx="3" />
-      <path d="M4.5 9.5a5.5 5.5 0 0 0 11 0M10 15v2.5" />
-    </svg>
-  );
-}
 
 function CameraIcon() {
   return (
@@ -109,7 +101,7 @@ export default function PermissionsSettings({ hasEmail }: { hasEmail: boolean })
         </p>
         <div className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface">
           <PermissionRow
-            icon={<MicIcon />}
+            icon={<MicIcon className="h-4.5 w-4.5" />}
             label="Microphone"
             description="Needed for voice entry."
             status={micStatus}

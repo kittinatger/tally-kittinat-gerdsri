@@ -5,7 +5,8 @@ import { useState } from "react";
 import Modal from "./Modal";
 import { CATEGORY_PALETTE, type TransactionType } from "@/lib/categories";
 import { dotClasses } from "@/lib/category-styles";
-import { CATEGORY_ICONS } from "@/lib/category-icons";
+import { CATEGORY_ICON_KEYS, CATEGORY_ICON_LABELS } from "@/lib/category-icons";
+import { CATEGORY_ICON_COMPONENTS } from "@/lib/icons";
 import type { CategoryOption } from "@/types/category";
 
 export default function CategoryModal({
@@ -109,19 +110,24 @@ export default function CategoryModal({
             >
               None
             </button>
-            {CATEGORY_ICONS.map((e) => (
-              <button
-                key={e}
-                type="button"
-                onClick={() => setIcon(e)}
-                aria-label={e}
-                className={`flex h-9 w-9 items-center justify-center rounded-full border text-base transition ${
-                  icon === e ? "border-navy bg-navy/10" : "border-line hover:bg-[var(--nav-hover-bg)]"
-                }`}
-              >
-                {e}
-              </button>
-            ))}
+            {CATEGORY_ICON_KEYS.map((key) => {
+              const Icon = CATEGORY_ICON_COMPONENTS[key];
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setIcon(key)}
+                  aria-label={CATEGORY_ICON_LABELS[key]}
+                  className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
+                    icon === key
+                      ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                      : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                  }`}
+                >
+                  <Icon className="h-4.5 w-4.5" />
+                </button>
+              );
+            })}
           </div>
         </div>
 

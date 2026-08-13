@@ -703,7 +703,7 @@ export default function DashboardWidgetContent({
       const days = Array.from({ length: 7 }, (_, i) => {
         const key = toKeyOffsetFromWeekStart(weekStart, i);
         const spent = sum(expenses.filter((e) => e.type === "expense" && e.date === key));
-        return { label: weekdayLabel(key), hit: spent === 0 && key <= today, display: spent === 0 ? "✓" : "·" };
+        return { label: weekdayLabel(key), hit: spent === 0 && key <= today };
       });
       const count = days.filter((d) => d.hit).length;
       return (

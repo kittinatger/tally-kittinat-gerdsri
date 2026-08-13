@@ -32,6 +32,7 @@ import AutoImportInstructions from "./AutoImportInstructions";
 import ErrorReportsPanel from "./ErrorReportsPanel";
 import SettingsSection from "./SettingsSection";
 import SettingsListItem from "./SettingsListItem";
+import { SunMoonIcon } from "@/lib/icons";
 
 type Panel =
   | "account"
@@ -164,20 +165,6 @@ function DashboardWidgetsIcon() {
       <rect x="11.5" y="9" width="6" height="8.5" rx="1.5" />
       <rect x="2.5" y="11.5" width="7" height="6" rx="1.5" />
     </svg>
-  );
-}
-
-function SunMoonIcon() {
-  return (
-    <>
-      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 dark:hidden">
-        <circle cx="10" cy="10" r="3.5" />
-        <path d="M10 2.5v2M10 15.5v2M17.5 10h-2M4.5 10h-2M15.3 4.7l-1.4 1.4M6.1 13.9l-1.4 1.4M15.3 15.3l-1.4-1.4M6.1 6.1 4.7 4.7" />
-      </svg>
-      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="hidden h-5 w-5 dark:block">
-        <path d="M16.5 11.8A6.8 6.8 0 0 1 8.2 3.5a7 7 0 1 0 8.3 8.3Z" />
-      </svg>
-    </>
   );
 }
 
