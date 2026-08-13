@@ -1,8 +1,9 @@
 import { useId } from "react";
+import WidgetCard, { WIDGET_GRADIENT_TEXT } from "./WidgetCard";
 
 // The expense counterpart to IncomeAreaSparkWidget -- a filled gradient
-// area chart in the rose/red palette instead of the plain line used by
-// SparklineWidget elsewhere.
+// area chart in the rose/red palette, part of the expense widgets' shared
+// visual language.
 export default function ExpenseAreaSparkWidget({
   label,
   value,
@@ -25,11 +26,11 @@ export default function ExpenseAreaSparkWidget({
   const last = coords[coords.length - 1];
 
   return (
-    <div className="relative overflow-hidden rounded-card border border-rose-200/70 bg-gradient-to-br from-rose-50 via-surface to-surface p-4 dark:border-rose-900/50 dark:from-rose-950/40 dark:via-surface dark:to-surface">
-      <div className="pointer-events-none absolute -bottom-10 -left-8 h-28 w-28 rounded-full bg-rose-400/20 blur-2xl dark:bg-rose-500/10" />
-
-      <p className="relative text-xs font-semibold uppercase tracking-wide text-rose-700/80 dark:text-rose-300/80">{label}</p>
-      <p className="relative mt-1 truncate font-display text-xl text-rose-700 dark:text-rose-300 sm:text-2xl">{value}</p>
+    <WidgetCard color="rose" blob="bottom-left">
+      <p className="text-xs font-semibold uppercase tracking-wide text-rose-700/80 dark:text-rose-300/80">{label}</p>
+      <p className={`mt-1 truncate bg-gradient-to-br bg-clip-text font-display text-2xl text-transparent sm:text-3xl ${WIDGET_GRADIENT_TEXT.rose}`}>
+        {value}
+      </p>
 
       <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="relative mt-2 h-12 w-full text-rose-500">
         <defs>
@@ -42,6 +43,6 @@ export default function ExpenseAreaSparkWidget({
         <path d={linePath} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         {last && <circle cx={last[0]} cy={last[1]} r="2.6" fill="currentColor" />}
       </svg>
-    </div>
+    </WidgetCard>
   );
 }

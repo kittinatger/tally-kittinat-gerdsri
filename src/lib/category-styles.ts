@@ -79,3 +79,30 @@ export function accentBgClasses(color: string | undefined): string {
   if (!color) return "bg-surface-accent";
   return CATEGORY_DOT_CLASSES[color as CategoryColor] ?? "bg-surface-accent";
 }
+
+// A two-stop diagonal gradient per accent, for the small set of "hero" pill/
+// solid-color widgets (WeekdayTrackerWidget, CornerArrowStatWidget) that
+// want a richer saturated card instead of the pastel gradient-glow cards
+// everywhere else — same palette, just a bolder full-bleed treatment.
+export const CATEGORY_HERO_GRADIENT_CLASSES: Record<CategoryColor, string> = {
+  emerald: "bg-gradient-to-br from-emerald-400 to-emerald-600",
+  green: "bg-gradient-to-br from-green-400 to-green-600",
+  teal: "bg-gradient-to-br from-teal-400 to-teal-600",
+  cyan: "bg-gradient-to-br from-cyan-400 to-cyan-600",
+  sky: "bg-gradient-to-br from-sky-400 to-sky-600",
+  blue: "bg-gradient-to-br from-blue-400 to-blue-600",
+  indigo: "bg-gradient-to-br from-indigo-400 to-indigo-600",
+  violet: "bg-gradient-to-br from-violet-400 to-violet-600",
+  fuchsia: "bg-gradient-to-br from-fuchsia-400 to-fuchsia-600",
+  pink: "bg-gradient-to-br from-pink-400 to-pink-600",
+  rose: "bg-gradient-to-br from-rose-400 to-rose-600",
+  orange: "bg-gradient-to-br from-orange-400 to-orange-600",
+  amber: "bg-gradient-to-br from-amber-400 to-amber-600",
+  lime: "bg-gradient-to-br from-lime-400 to-lime-600",
+  slate: "bg-gradient-to-br from-surface-accent to-surface-accent-dark",
+};
+
+export function heroGradientClasses(color: string | undefined): string {
+  if (!color) return "bg-gradient-to-br from-rose-400 to-rose-600";
+  return CATEGORY_HERO_GRADIENT_CLASSES[color as CategoryColor] ?? "bg-gradient-to-br from-rose-400 to-rose-600";
+}

@@ -1,5 +1,8 @@
 import { dotClasses } from "@/lib/category-styles";
 
+// The large "hero" balance card — its own blue accent, matching
+// BalanceStatCard's total-balance color language (distinct from income/
+// emerald, expense/rose, and the sky used for individual wallets).
 export default function BalanceHeroWidget({
   balance,
   wallets,
@@ -14,17 +17,18 @@ export default function BalanceHeroWidget({
   onAddExpense: () => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-card border border-surface-line bg-gradient-to-br from-sky-500 to-sky-700 p-5 text-white">
-      <p className="text-xs font-semibold uppercase tracking-wide text-white/70">Your balance</p>
-      <p className="mt-1.5 truncate font-display text-3xl">{balance}</p>
+    <div className="relative overflow-hidden rounded-card border border-surface-line bg-gradient-to-br from-blue-500 to-blue-700 p-5 text-white shadow-sm">
+      <div className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
+      <p className="relative text-xs font-semibold uppercase tracking-wide text-white/70">Your balance</p>
+      <p className="relative mt-1.5 truncate font-display text-3xl">{balance}</p>
 
       {wallets.length > 0 && (
-        <div className="mt-3 flex -space-x-2">
+        <div className="relative mt-3 flex -space-x-2">
           {wallets.slice(0, 6).map((w) => (
             <span
               key={w.id}
               title={w.name}
-              className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold text-white ring-2 ring-sky-600 ${dotClasses(w.color)}`}
+              className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold text-white ring-2 ring-blue-600 ${dotClasses(w.color)}`}
             >
               {w.name.slice(0, 1).toUpperCase()}
             </span>
@@ -33,7 +37,7 @@ export default function BalanceHeroWidget({
       )}
 
       {lastTransaction && (
-        <div className="mt-4 flex items-center justify-between gap-2 rounded-2xl bg-white/10 px-3.5 py-2.5">
+        <div className="relative mt-4 flex items-center justify-between gap-2 rounded-2xl bg-white/10 px-3.5 py-2.5">
           <div className="min-w-0">
             <p className="truncate text-xs text-white/60">Last transaction</p>
             <p className="truncate text-sm font-semibold">{lastTransaction.label}</p>
@@ -42,7 +46,7 @@ export default function BalanceHeroWidget({
         </div>
       )}
 
-      <div className="mt-4 flex items-center gap-2">
+      <div className="relative mt-4 flex items-center gap-2">
         <button
           onClick={onAddIncome}
           className="flex-1 rounded-full bg-white/15 py-2.5 text-sm font-semibold transition hover:bg-white/25"
@@ -51,7 +55,7 @@ export default function BalanceHeroWidget({
         </button>
         <button
           onClick={onAddExpense}
-          className="flex-1 rounded-full bg-white py-2.5 text-sm font-semibold text-sky-700 transition hover:bg-white/90"
+          className="flex-1 rounded-full bg-white py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-white/90"
         >
           + Expense
         </button>

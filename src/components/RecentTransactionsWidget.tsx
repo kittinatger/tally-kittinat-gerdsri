@@ -7,15 +7,17 @@ import { useCategoryColor } from "@/lib/categories-context";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency, formatDateShort } from "@/lib/format";
 import { dotClasses } from "@/lib/category-styles";
+import WidgetCard from "./WidgetCard";
 
 function Row({ expense, isLast }: { expense: Expense; isLast: boolean }) {
   const color = useCategoryColor(expense.type, expense.category);
   const currency = useCurrency();
 
   return (
-    <div className="relative flex gap-3 pb-4 pl-1 last:pb-0">
-      {!isLast && <span className="absolute bottom-0 left-[7px] top-4 w-px bg-surface-line" />}
-      <span className={`mt-1 h-3.5 w-3.5 shrink-0 rounded-full ring-4 ring-surface ${dotClasses(color)}`} />
+    <div className={`flex items-center gap-3 py-2.5 ${isLast ? "" : "border-b border-surface-line"}`}>
+      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${dotClasses(color)}`}>
+        <span className="h-2 w-2 rounded-full bg-white/80" />
+      </span>
       <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-surface-foreground">{expense.merchant}</p>
@@ -44,8 +46,8 @@ export default function RecentTransactionsWidget({ expenses, limit = 5 }: { expe
   const recent = expenses.slice(0, limit);
 
   return (
-    <div className="widget-gradient-card rounded-card border border-surface-line p-4">
-      <div className="mb-3 flex items-center justify-between">
+    <WidgetCard color="slate">
+      <div className="mb-1 flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">
           Recent transactions
         </p>
@@ -62,6 +64,6 @@ export default function RecentTransactionsWidget({ expenses, limit = 5 }: { expe
           ))}
         </div>
       )}
-    </div>
+    </WidgetCard>
   );
 }

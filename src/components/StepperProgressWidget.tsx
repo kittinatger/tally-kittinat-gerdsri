@@ -1,3 +1,5 @@
+import WidgetCard from "./WidgetCard";
+
 export default function StepperProgressWidget({
   title,
   subtitle,
@@ -14,19 +16,22 @@ export default function StepperProgressWidget({
   accentClassName?: string;
 }) {
   return (
-    <div className="rounded-card border border-surface-line bg-surface p-4">
+    <WidgetCard color="slate">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-semibold text-surface-foreground">{title}</p>
         <p className="text-xs text-surface-foreground-soft">{subtitle}</p>
       </div>
-      <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-bg-soft">
-        <div className={`h-full rounded-full transition-all ${accentClassName}`} style={{ width: `${Math.max(0, Math.min(100, progressPercent))}%` }} />
+      <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-bg-soft">
+        <div
+          className={`h-full rounded-full transition-all ${accentClassName}`}
+          style={{ width: `${Math.max(0, Math.min(100, progressPercent))}%` }}
+        />
       </div>
       <div className="mt-2.5 flex justify-between">
         {stages.map((stage, i) => (
-          <div key={stage} className="flex flex-col items-center gap-1" style={{ width: `${100 / stages.length}%` }}>
+          <div key={stage} className="flex flex-col items-center gap-1.5" style={{ width: `${100 / stages.length}%` }}>
             <span
-              className={`h-2 w-2 rounded-full ${i <= activeIndex ? accentClassName : "bg-bg-soft"}`}
+              className={`h-2.5 w-2.5 rounded-full ring-4 ring-surface transition-colors ${i <= activeIndex ? accentClassName : "bg-bg-soft"}`}
             />
             <span
               className={`truncate text-[10px] font-medium ${
@@ -38,6 +43,6 @@ export default function StepperProgressWidget({
           </div>
         ))}
       </div>
-    </div>
+    </WidgetCard>
   );
 }

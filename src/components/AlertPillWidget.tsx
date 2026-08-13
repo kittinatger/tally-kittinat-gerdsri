@@ -18,7 +18,9 @@ export default function AlertPillWidget({
 
   return (
     <div className="flex items-center gap-3 rounded-full border border-surface-line bg-surface px-3.5 py-2.5 shadow-soft">
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-500 text-white">{icon}</span>
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-red-400 to-rose-600 text-white shadow-sm">
+        {icon}
+      </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-surface-foreground">{title}</p>
         <p className="truncate text-xs text-surface-foreground-soft">{subtitle}</p>
@@ -35,7 +37,7 @@ export default function AlertPillWidget({
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           stroke="currentColor"
-          className={ringClassName}
+          className={`transition-all ${ringClassName}`}
         />
       </svg>
     </div>

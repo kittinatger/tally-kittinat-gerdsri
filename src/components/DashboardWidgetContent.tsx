@@ -8,7 +8,7 @@ import type { DashboardWidgetInstance } from "@/lib/dashboard-widgets";
 import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
 import { computeEffectiveBudgetLimit } from "@/lib/budget-rollover";
 import { formatCurrency, monthKey, todayInputValue } from "@/lib/format";
-import { accentTextClasses, accentBgClasses } from "@/lib/category-styles";
+import { accentTextClasses, accentBgClasses, heroGradientClasses } from "@/lib/category-styles";
 import { useCurrency } from "@/lib/currency-context";
 import { useWallets } from "@/lib/wallets-context";
 import SummaryCards from "./SummaryCards";
@@ -169,6 +169,7 @@ export default function DashboardWidgetContent({
   const monthSpent = sum(monthExpenses);
   const accentText = accentTextClasses(widget.accent);
   const accentBg = accentBgClasses(widget.accent);
+  const heroGradient = widget.accent ? heroGradientClasses(widget.accent) : "bg-gradient-to-br from-rose-400 to-rose-600";
 
   switch (widget.type) {
     case "welcome": {
@@ -711,7 +712,7 @@ export default function DashboardWidgetContent({
           value={`${count}/7`}
           label="No-spend days this week"
           days={days}
-          cardClassName={`${widget.accent ? accentBg : "bg-rose-500"} text-white`}
+          cardClassName={`${heroGradient} text-white`}
         />
       );
     }
@@ -765,7 +766,7 @@ export default function DashboardWidgetContent({
           value={`${streak} days`}
           label="Under-average spending this week"
           bars={days}
-          cardClassName={`${widget.accent ? accentBg : "bg-rose-500"} text-white`}
+          cardClassName={`${heroGradient} text-white`}
         />
       );
     }

@@ -1,3 +1,5 @@
+import WidgetCard from "./WidgetCard";
+
 export default function HeatmapWidget({
   title,
   cells,
@@ -9,18 +11,18 @@ export default function HeatmapWidget({
   colorClassName?: string;
 }) {
   return (
-    <div className="widget-gradient-card rounded-card border border-surface-line p-4">
+    <WidgetCard color="slate">
       <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">{title}</p>
-      <div className="grid gap-1" style={{ gridTemplateColumns: "repeat(15, minmax(0, 1fr))" }}>
+      <div className="grid gap-1.5" style={{ gridTemplateColumns: "repeat(15, minmax(0, 1fr))" }}>
         {cells.map((c) => (
           <div
             key={c.date}
             title={c.date}
-            className={`aspect-square rounded-[3px] ${c.intensity > 0 ? colorClassName : "bg-bg-soft"}`}
-            style={{ opacity: c.intensity > 0 ? Math.max(0.2, c.intensity) : 1 }}
+            className={`aspect-square rounded-full ${c.intensity > 0 ? colorClassName : "bg-bg-soft"}`}
+            style={{ opacity: c.intensity > 0 ? Math.max(0.25, c.intensity) : 1 }}
           />
         ))}
       </div>
-    </div>
+    </WidgetCard>
   );
 }

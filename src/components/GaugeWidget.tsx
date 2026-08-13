@@ -1,3 +1,5 @@
+import WidgetCard from "./WidgetCard";
+
 export default function GaugeWidget({
   label,
   percent,
@@ -15,39 +17,44 @@ export default function GaugeWidget({
   const circumference = Math.PI * radius;
 
   return (
-    <div className="widget-gradient-card rounded-card border border-surface-line p-4">
-      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">{label}</p>
-      <svg viewBox="0 0 84 46" className="mx-auto h-16 w-full max-w-[140px]">
-        <path
-          d="M 6 44 A 36 36 0 0 1 78 44"
-          fill="none"
-          strokeWidth="8"
-          strokeLinecap="round"
-          stroke="var(--bg-soft)"
-        />
-        <path
-          d="M 6 44 A 36 36 0 0 1 78 44"
-          fill="none"
-          strokeWidth="8"
-          strokeLinecap="round"
-          stroke="currentColor"
-          className={needleClassName}
-          strokeDasharray={circumference}
-          strokeDashoffset={circumference * (1 - clamped / 100)}
-        />
-        <line
-          x1="42"
-          y1="44"
-          x2={42 + 26 * Math.cos((angle * Math.PI) / 180)}
-          y2={44 + 26 * Math.sin((angle * Math.PI) / 180)}
-          stroke="var(--foreground)"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        />
-        <circle cx="42" cy="44" r="2.5" fill="var(--foreground)" />
-      </svg>
-      <p className="text-center font-display text-lg text-surface-foreground">{Math.round(clamped)}%</p>
-      {sublabel && <p className="text-center text-xs text-surface-foreground-soft">{sublabel}</p>}
-    </div>
+    <WidgetCard color="slate">
+      <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">{label}</p>
+      <div className="mt-1 flex flex-1 flex-col items-center justify-center">
+        <svg viewBox="0 0 84 46" className="mx-auto h-20 w-full max-w-[160px]">
+          <path d="M 6 44 A 36 36 0 0 1 78 44" fill="none" strokeWidth="9" strokeLinecap="round" stroke="var(--bg-soft)" />
+          <path
+            d="M 6 44 A 36 36 0 0 1 78 44"
+            fill="none"
+            strokeWidth="9"
+            strokeLinecap="round"
+            stroke="currentColor"
+            className={`transition-all ${needleClassName}`}
+            strokeDasharray={circumference}
+            strokeDashoffset={circumference * (1 - clamped / 100)}
+          />
+          <circle
+            cx={42 + 36 * Math.cos((angle * Math.PI) / 180)}
+            cy={44 + 36 * Math.sin((angle * Math.PI) / 180)}
+            r="3.2"
+            className={needleClassName}
+            fill="currentColor"
+            stroke="var(--surface)"
+            strokeWidth="1.5"
+          />
+          <line
+            x1="42"
+            y1="44"
+            x2={42 + 24 * Math.cos((angle * Math.PI) / 180)}
+            y2={44 + 24 * Math.sin((angle * Math.PI) / 180)}
+            stroke="var(--foreground)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
+          <circle cx="42" cy="44" r="3" fill="var(--foreground)" />
+        </svg>
+        <p className="-mt-1 font-display text-2xl text-surface-foreground">{Math.round(clamped)}%</p>
+      </div>
+      {sublabel && <p className="truncate text-center text-xs text-surface-foreground-soft">{sublabel}</p>}
+    </WidgetCard>
   );
 }

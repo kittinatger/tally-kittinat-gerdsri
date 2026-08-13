@@ -5,6 +5,7 @@ import { dotClasses } from "@/lib/category-styles";
 import { useCurrency } from "@/lib/currency-context";
 import { useWallets } from "@/lib/wallets-context";
 import { formatCurrency } from "@/lib/format";
+import WidgetCard from "./WidgetCard";
 
 function WalletKindIcon({ kind }: { kind: string }) {
   if (kind === "digital") {
@@ -30,9 +31,9 @@ export default function WalletsWidget() {
   if (wallets.length === 0) return null;
 
   return (
-    <div className="widget-gradient-card rounded-card border border-surface-line p-4">
+    <WidgetCard color="sky">
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">Wallets</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-sky-700/80 dark:text-sky-300/80">Wallets</p>
         <Link href="/settings" className="text-xs font-semibold text-surface-accent hover:underline">
           Manage
         </Link>
@@ -41,9 +42,9 @@ export default function WalletsWidget() {
         {wallets.map((w) => (
           <div
             key={w.id}
-            className="w-32 shrink-0 snap-start rounded-2xl border border-surface-line bg-surface-soft p-3"
+            className="w-32 shrink-0 snap-start rounded-2xl border border-surface-line bg-surface p-3 shadow-sm"
           >
-            <div className={`mb-2 flex h-7 w-7 items-center justify-center rounded-full text-white ${dotClasses(w.color)}`}>
+            <div className={`mb-2 flex h-8 w-8 items-center justify-center rounded-xl text-white shadow-sm ${dotClasses(w.color)}`}>
               <WalletKindIcon kind={w.kind} />
             </div>
             <p className="truncate text-xs font-semibold text-surface-foreground">{w.name}</p>
@@ -57,6 +58,6 @@ export default function WalletsWidget() {
           </div>
         ))}
       </div>
-    </div>
+    </WidgetCard>
   );
 }

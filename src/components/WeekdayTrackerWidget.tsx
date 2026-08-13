@@ -4,7 +4,7 @@ export default function WeekdayTrackerWidget({
   value,
   label,
   days,
-  cardClassName = "bg-emerald-500 text-white",
+  cardClassName = "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white",
 }: {
   value: string;
   label: string;
@@ -12,16 +12,19 @@ export default function WeekdayTrackerWidget({
   cardClassName?: string;
 }) {
   return (
-    <div className={`rounded-card p-4 ${cardClassName}`}>
-      <div className="flex items-center justify-between gap-2">
+    <div className={`relative overflow-hidden rounded-card p-4 shadow-sm ${cardClassName}`}>
+      <div className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
+      <div className="relative flex items-center justify-between gap-2">
         <p className="truncate text-2xl font-bold">{value}</p>
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 shrink-0 opacity-90">
-          <path d="M4 14l4-4 3 3 6-6" />
-          <path d="M13 6h4v4" />
-        </svg>
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+            <path d="M4 14l4-4 3 3 6-6" />
+            <path d="M13 6h4v4" />
+          </svg>
+        </span>
       </div>
-      <p className="mt-0.5 truncate text-xs font-medium opacity-80">{label}</p>
-      <div className="mt-3 grid grid-cols-7 gap-1.5 text-center">
+      <p className="relative mt-0.5 truncate text-xs font-medium opacity-80">{label}</p>
+      <div className="relative mt-3 grid grid-cols-7 gap-1.5 text-center">
         {days.map((d, i) => (
           <div key={i} className="flex flex-col items-center gap-1">
             <span

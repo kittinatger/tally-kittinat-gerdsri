@@ -148,26 +148,3 @@ input:-webkit-autofill:focus {
   transition: background-color 9999s ease-in-out 0s;
   caret-color: var(--foreground);
 }
-
-/* Shared gradient-card treatment for Dashboard widgets that don't have
-   their own category color (income/expense widgets use their own emerald/
-   rose gradients instead) -- keeps every tile on the same visual language
-   rather than mixing flat cards with gradient ones. */
-.widget-gradient-card {
-  position: relative;
-  overflow: hidden;
-  background-image: linear-gradient(135deg, var(--bg-soft) 0%, var(--surface) 65%);
-}
-.widget-gradient-card::before {
-  content: "";
-  position: absolute;
-  top: -2rem;
-  right: -1.5rem;
-  height: 6rem;
-  width: 6rem;
-  border-radius: 9999px;
-  background: var(--surface-accent);
-  opacity: 0.14;
-  filter: blur(28px);
-  pointer-events: none;
-}
