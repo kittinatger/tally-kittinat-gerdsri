@@ -4,6 +4,7 @@ import { describeFetchError } from "@/lib/fetch-error";
 import { logAppError } from "@/lib/error-log";
 import { useRef, useState } from "react";
 import Modal from "./Modal";
+import ReceiptLightbox from "./ReceiptLightbox";
 import ExpenseForm, { type ExpenseFormValues } from "./ExpenseForm";
 import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
 import { todayInputValue } from "@/lib/format";
@@ -55,7 +56,9 @@ export default function EditExpenseModal({
   const [attaching, setAttaching] = useState(false);
   const [attachError, setAttachError] = useState<string | null>(null);
   const [duplicating, setDuplicating] = useState(false);
+  const [viewingReceipt, setViewingReceipt] = useState(false);
   const receiptInputRef = useRef<HTMLInputElement>(null);
+  const receiptUrl = `/api/expenses/${expense.id}/receipt`;
 
   const initialValues: ExpenseFormValues = {
     type: expense.type,
@@ -211,24 +214,21 @@ export default function EditExpenseModal({
   return (
     <Modal onClose={onClose} title="Edit transaction" wide>
       {expense.hasReceipt && (
-        <a
-          href={`/api/expenses/${expense.id}/receipt`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mb-4 flex items-center gap-3 rounded-card border border-amber-200/70 bg-gradient-to-br from-amber-50 via-surface-soft to-surface-soft p-3 transition hover:border-amber-400 dark:border-amber-900/50 dark:from-amber-950/30 dark:via-surface-soft dark:to-surface-soft"
+        <button
+          type="button"
+          onClick={() => setViewingReceipt(true)}
+          className="mb-4 flex w-full items-center gap-3 rounded-card border border-amber-200/70 bg-gradient-to-br from-amber-50 via-surface-soft to-surface-soft p-3 text-left transition hover:border-amber-400 dark:border-amber-900/50 dark:from-amber-950/30 dark:via-surface-soft dark:to-surface-soft"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={`/api/expenses/${expense.id}/receipt`}
-            alt="Receipt"
-            className="h-14 w-14 shrink-0 rounded-lg object-cover"
-          />
+          <img src={receiptUrl} alt="Receipt" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
           <span className="flex items-center gap-1.5 text-sm font-semibold text-surface-foreground">
             <ReceiptIcon />
             View original receipt
           </span>
-        </a>
+        </button>
       )}
+
+      {viewingReceipt && <ReceiptLightbox src={receiptUrl} onClose={() => setViewingReceipt(false)} />}
       {!expense.hasReceipt && (
         <div className="mb-4">
           <button

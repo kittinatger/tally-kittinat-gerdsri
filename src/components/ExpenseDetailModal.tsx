@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { signedAmount, type Expense } from "@/types/expense";
 import { formatCurrency, formatDateLong } from "@/lib/format";
 import { badgeClasses, dotClasses } from "@/lib/category-styles";
 import { useCategoryColor, useCategoryIcon } from "@/lib/categories-context";
 import { useCurrency } from "@/lib/currency-context";
 import Modal from "./Modal";
+import ReceiptLightbox from "./ReceiptLightbox";
 
 function EditIcon() {
   return (
@@ -54,6 +56,8 @@ export default function ExpenseDetailModal({
   const color = useCategoryColor(expense.type, expense.category);
   const icon = useCategoryIcon(expense.type, expense.category);
   const currency = useCurrency();
+  const [viewingReceipt, setViewingReceipt] = useState(false);
+  const receiptUrl = `/api/expenses/${expense.id}/receipt`;
 
   // Same per-type accent language as the Add/Edit ticket: this view is the
   // same ticket, just torn open to read instead of filled in.
@@ -140,24 +144,21 @@ export default function ExpenseDetailModal({
       )}
 
       {expense.hasReceipt && (
-        <a
-          href={`/api/expenses/${expense.id}/receipt`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-2.5 flex items-center gap-3 rounded-card border border-surface-line bg-surface-soft p-3 transition hover:border-surface-accent"
+        <button
+          type="button"
+          onClick={() => setViewingReceipt(true)}
+          className="mt-2.5 flex w-full items-center gap-3 rounded-card border border-surface-line bg-surface-soft p-3 text-left transition hover:border-surface-accent"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={`/api/expenses/${expense.id}/receipt`}
-            alt="Receipt"
-            className="h-12 w-12 shrink-0 rounded-lg object-cover"
-          />
+          <img src={receiptUrl} alt="Receipt" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
           <span className="flex items-center gap-1.5 text-sm font-semibold text-surface-foreground">
             <ReceiptIcon />
             View original receipt
           </span>
-        </a>
+        </button>
       )}
+
+      {viewingReceipt && <ReceiptLightbox src={receiptUrl} onClose={() => setViewingReceipt(false)} />}
 
       <button
         type="button"
