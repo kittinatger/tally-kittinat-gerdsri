@@ -171,15 +171,16 @@ export default function ExpenseRow({
             )}
           </span>
         )}
+        <span
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg ${badgeClasses(color)}`}
+        >
+          {icon || expense.category.charAt(0).toUpperCase()}
+        </span>
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold text-surface-foreground">{expense.merchant}</p>
-          <div className="mt-1 flex items-center gap-2">
-            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClasses(color)}`}>
-              {icon ? `${icon} ` : ""}
-              {expense.category}
-            </span>
-            <span className="text-xs text-surface-foreground-soft">{formatDateLong(expense.date)}</span>
-          </div>
+          <p className="mt-0.5 truncate text-xs text-surface-foreground-soft">
+            {expense.category} · {formatDateLong(expense.date)}
+          </p>
           {expense.tags.length > 0 && (
             <div className="mt-1 flex flex-wrap items-center gap-1">
               {expense.tags.map((tag) => (

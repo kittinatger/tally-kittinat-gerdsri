@@ -7,6 +7,7 @@ import { monthKey, monthLabel, formatCurrency, todayInputValue } from "@/lib/for
 import { useAllCategories } from "@/lib/categories-context";
 import { useWallets } from "@/lib/wallets-context";
 import { useCurrency } from "@/lib/currency-context";
+import { badgeClasses } from "@/lib/category-styles";
 import ExpenseRow from "./ExpenseRow";
 import SplitExpenseGroup from "./SplitExpenseGroup";
 import FilterDropdown from "./FilterDropdown";
@@ -14,6 +15,24 @@ import DateRangeFilter from "./DateRangeFilter";
 import Modal from "./Modal";
 
 export type TypeFilter = "all" | TransactionType;
+
+function DownloadIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+      <path d="M10 3v9.5M6 9l4 4 4-4" />
+      <path d="M4 15.5h12" />
+    </svg>
+  );
+}
+
+function SelectCheckIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+      <rect x="3" y="3" width="14" height="14" rx="4" />
+      <path d="M6.5 10l2.5 2.5 4.5-5" />
+    </svg>
+  );
+}
 
 type DisplayRow = { kind: "single"; expense: Expense } | { kind: "split"; groupId: string; items: Expense[] };
 
@@ -391,33 +410,39 @@ export default function ExpenseList({
         </Modal>
       )}
 
-      <div className="mb-4 flex items-center justify-between gap-3 px-1 text-sm">
-        <span className="text-ink-soft">
-          {filtered.length} transaction{filtered.length === 1 ? "" : "s"}
-        </span>
-        <div className="flex items-center gap-3">
-          <span
-            className={`font-semibold ${
+      <div className="mb-4 flex items-center justify-between gap-3 rounded-card border border-surface-line bg-surface px-4 py-3.5">
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-surface-foreground-soft">
+            {filtered.length} transaction{filtered.length === 1 ? "" : "s"}
+          </p>
+          <p
+            className={`text-lg font-bold tabular-nums ${
               filteredNet >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
             }`}
           >
             {filteredNet >= 0 ? "+" : "-"}
             {formatCurrency(Math.abs(filteredNet), currency)}
-          </span>
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
           <button
             onClick={exportCsv}
             disabled={filtered.length === 0}
-            className="rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-bg-soft disabled:opacity-40"
+            aria-label="Export CSV"
+            className="flex items-center gap-1.5 rounded-full border border-line px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-bg-soft disabled:opacity-40"
           >
-            Export CSV
+            <DownloadIcon />
+            <span className="hidden sm:inline">Export</span>
           </button>
           <button
             onClick={toggleSelectMode}
             disabled={filtered.length === 0}
-            className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition disabled:opacity-40 ${
+            aria-label={selectMode ? "Cancel selection" : "Select transactions"}
+            className={`flex items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-semibold transition disabled:opacity-40 ${
               selectMode ? "border-surface-accent bg-surface-accent/10 text-surface-accent" : "border-line text-foreground hover:bg-bg-soft"
             }`}
           >
+            <SelectCheckIcon />
             {selectMode ? "Cancel" : "Select"}
           </button>
         </div>
@@ -475,10 +500,12 @@ export default function ExpenseList({
             return (
               <section key={key}>
                 <div className="mb-2 flex items-center justify-between px-1">
-                  <h2 className="text-sm font-semibold text-ink-soft">{monthLabel(key)}</h2>
+                  <h2 className="font-display text-base text-foreground">{monthLabel(key)}</h2>
                   <span
-                    className={`text-sm font-semibold ${
-                      net >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                      net >= 0
+                        ? badgeClasses("emerald")
+                        : "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400"
                     }`}
                   >
                     {net >= 0 ? "+" : "-"}
