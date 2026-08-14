@@ -30,20 +30,51 @@ You don't need to deploy anything — go to **[tally-kittinat.vercel.app](https:
 
 ## Screenshots
 
+**Dashboard** — a fully customizable, live-editable grid of 50+ widgets: balance hero, category breakdown, spending trends, budgets, savings goals, leaderboards, tickers, and more.
+
 <table>
 <tr>
-<td><img src="screenshots/01-dashboard-light.jpg" alt="Dashboard (light mode)" width="250"/></td>
-<td><img src="screenshots/02-dashboard-dark.jpg" alt="Dashboard (dark mode)" width="250"/></td>
-<td><img src="screenshots/03-activities-light.jpg" alt="Activities (light mode)" width="250"/></td>
+<td><img src="screenshots/01-dashboard-desktop-dark.jpg" alt="Dashboard, desktop, dark mode" width="400"/></td>
+<td><img src="screenshots/02-dashboard-desktop-light.jpg" alt="Dashboard, desktop, light mode" width="400"/></td>
 </tr>
 <tr>
-<td><img src="screenshots/04-activities-dark.jpg" alt="Activities (dark mode)" width="250"/></td>
-<td><img src="screenshots/05-scan-document-light.jpg" alt="Document scanning (light mode)" width="250"/></td>
-<td><img src="screenshots/06-scan-document-dark.jpg" alt="Document scanning (dark mode)" width="250"/></td>
+<td><img src="screenshots/03-dashboard-mobile-dark.jpg" alt="Dashboard, mobile, dark mode" width="200"/></td>
+<td><img src="screenshots/04-dashboard-mobile-light.jpg" alt="Dashboard, mobile, light mode" width="200"/></td>
+</tr>
+</table>
+
+**Activities** — search, filter, and manage every transaction; desktop gets a two-pane master-detail layout, mobile keeps a focused full-width list with swipe actions.
+
+<table>
+<tr>
+<td><img src="screenshots/05-activities-desktop-dark.jpg" alt="Activities, desktop, dark mode" width="400"/></td>
+<td><img src="screenshots/12-activities-detail-desktop-dark.jpg" alt="Activities with transaction detail open, desktop" width="400"/></td>
 </tr>
 <tr>
-<td><img src="screenshots/07-voice-entry-light.jpg" alt="Voice entry (light mode)" width="250"/></td>
-<td><img src="screenshots/08-voice-entry-dark.jpg" alt="Voice entry (dark mode)" width="250"/></td>
+<td><img src="screenshots/06-activities-desktop-light.jpg" alt="Activities, desktop, light mode" width="400"/></td>
+<td><img src="screenshots/07-activities-mobile-dark.jpg" alt="Activities, mobile, dark mode" width="180"/></td>
+</tr>
+</table>
+
+**Settings** — every account, wallet, budget, and customization option in one place; desktop shows the list and the active panel side by side.
+
+<table>
+<tr>
+<td><img src="screenshots/09-settings-desktop-dark.jpg" alt="Settings, desktop, dark mode" width="400"/></td>
+<td><img src="screenshots/13-settings-categories-desktop-dark.jpg" alt="Settings, Manage categories panel open" width="400"/></td>
+</tr>
+</table>
+
+**Receipt scanning & voice entry** — snap a photo or speak an expense out loud and let Gemini fill in the form.
+
+<table>
+<tr>
+<td><img src="screenshots/14-scan-document-light.jpg" alt="Document scanning (light mode)" width="250"/></td>
+<td><img src="screenshots/15-scan-document-dark.jpg" alt="Document scanning (dark mode)" width="250"/></td>
+</tr>
+<tr>
+<td><img src="screenshots/16-voice-entry-light.jpg" alt="Voice entry (light mode)" width="250"/></td>
+<td><img src="screenshots/17-voice-entry-dark.jpg" alt="Voice entry (dark mode)" width="250"/></td>
 </tr>
 </table>
 
