@@ -156,9 +156,9 @@ export default function DashboardWidgetContent({
   const today = todayInputValue();
   const currentMonthKey = monthKey(today);
   const lastMonthKey = monthsAgoKey(1);
-  const lastWeekStart = daysAgoKey(13);
-  const lastWeekEnd = daysAgoKey(7);
   const weekStart = startOfWeekKey();
+  const lastWeekStart = toKeyOffsetFromWeekStart(weekStart, -7);
+  const lastWeekEnd = weekStart;
   const thisYear = today.slice(0, 4);
   const lastYear = String(Number(thisYear) - 1);
 
@@ -634,9 +634,9 @@ export default function DashboardWidgetContent({
     case "netWorthTicker": {
       const points = Array.from({ length: 14 }, (_, i) => {
         const key = daysAgoKey(13 - i);
-        const spentUpTo = sum(expenses.filter((e) => e.type === "expense" && e.date <= key));
-        const earnedUpTo = sum(expenses.filter((e) => e.type === "income" && e.date <= key));
-        return remaining - earnedUpTo + spentUpTo;
+        const spentAfter = sum(expenses.filter((e) => e.type === "expense" && e.date > key));
+        const earnedAfter = sum(expenses.filter((e) => e.type === "income" && e.date > key));
+        return remaining - earnedAfter + spentAfter;
       });
       const first = points[0] ?? remaining;
       const deltaPct = first !== 0 ? ((remaining - first) / Math.abs(first)) * 100 : 0;
@@ -657,9 +657,9 @@ export default function DashboardWidgetContent({
       if (!wallet) return <StatWidget label="Wallet ticker" value="—" sublabel="No wallets yet" />;
       const points = Array.from({ length: 14 }, (_, i) => {
         const key = daysAgoKey(13 - i);
-        const spentUpTo = sum(expenses.filter((e) => e.type === "expense" && e.walletName === wallet.name && e.date <= key));
-        const earnedUpTo = sum(expenses.filter((e) => e.type === "income" && e.walletName === wallet.name && e.date <= key));
-        return wallet.balance - earnedUpTo + spentUpTo;
+        const spentAfter = sum(expenses.filter((e) => e.type === "expense" && e.walletName === wallet.name && e.date > key));
+        const earnedAfter = sum(expenses.filter((e) => e.type === "income" && e.walletName === wallet.name && e.date > key));
+        return wallet.balance - earnedAfter + spentAfter;
       });
       const first = points[0] ?? wallet.balance;
       const deltaPct = first !== 0 ? ((wallet.balance - first) / Math.abs(first)) * 100 : 0;
