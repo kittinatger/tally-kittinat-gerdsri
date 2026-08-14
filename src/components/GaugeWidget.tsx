@@ -12,7 +12,7 @@ export default function GaugeWidget({
   needleClassName?: string;
 }) {
   const clamped = Math.max(0, Math.min(100, percent));
-  const angle = -90 + (clamped / 100) * 180;
+  const angle = 180 + (clamped / 100) * 180;
   const radius = 34;
   const circumference = Math.PI * radius;
 

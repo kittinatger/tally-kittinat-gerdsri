@@ -14,7 +14,11 @@ export default function DonutChartWidget({ title, segments }: { title: string; s
     acc.push({ segment, dash, offset: cursor });
     return acc;
   }, []);
-  const topShare = total > 0 ? Math.round((segments[0]?.value ?? 0) / total * 100) : 0;
+  const dominant = segments.reduce<DonutSegment | undefined>(
+    (max, s) => (max === undefined || s.value > max.value ? s : max),
+    undefined,
+  );
+  const topShare = total > 0 ? Math.round((dominant?.value ?? 0) / total * 100) : 0;
 
   return (
     <WidgetCard color="slate">
@@ -44,7 +48,7 @@ export default function DonutChartWidget({ title, segments }: { title: string; s
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
               <p className="font-display text-xl text-surface-foreground">{topShare}%</p>
-              <p className="truncate px-3 text-[10px] text-surface-foreground-soft">{segments[0]?.label}</p>
+              <p className="truncate px-3 text-[10px] text-surface-foreground-soft">{dominant?.label}</p>
             </div>
           </div>
           <div className="mt-3 grid w-full grid-cols-2 gap-x-3 gap-y-1.5">
