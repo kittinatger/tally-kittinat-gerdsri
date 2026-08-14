@@ -34,12 +34,29 @@ You don't need to deploy anything — go to **[tally-kittinat.vercel.app](https:
 
 <table>
 <tr>
-<td><img src="screenshots/01-dashboard-desktop-dark.jpg" alt="Dashboard, desktop, dark mode" width="400"/></td>
-<td><img src="screenshots/02-dashboard-desktop-light.jpg" alt="Dashboard, desktop, light mode" width="400"/></td>
+<td><img src="screenshots/01-dashboard-desktop-dark-top.jpg" alt="Dashboard, desktop, dark mode" width="360"/></td>
+<td><img src="screenshots/04-dashboard-desktop-light-top.jpg" alt="Dashboard, desktop, light mode" width="360"/></td>
 </tr>
 <tr>
-<td><img src="screenshots/03-dashboard-mobile-dark.jpg" alt="Dashboard, mobile, dark mode" width="200"/></td>
-<td><img src="screenshots/04-dashboard-mobile-light.jpg" alt="Dashboard, mobile, light mode" width="200"/></td>
+<td><img src="screenshots/02-dashboard-desktop-dark-mid.jpg" alt="Dashboard mid-scroll, category breakdown and budgets" width="360"/></td>
+<td><img src="screenshots/03-dashboard-desktop-dark-widgets.jpg" alt="Dashboard, wallets and recent transactions" width="360"/></td>
+</tr>
+<tr>
+<td><img src="screenshots/09-dashboard-mobile-dark.jpg" alt="Dashboard, mobile, dark mode" width="200"/></td>
+<td><img src="screenshots/10-dashboard-mobile-light.jpg" alt="Dashboard, mobile, light mode" width="200"/></td>
+</tr>
+</table>
+
+**Adding a transaction** — manual entry, receipt scanning, or voice entry, all from the same modal.
+
+<table>
+<tr>
+<td><img src="screenshots/06-add-expense-manual-desktop.jpg" alt="Add transaction, manual entry" width="300"/></td>
+<td><img src="screenshots/07-add-expense-scan-desktop.jpg" alt="Add transaction, scan a receipt" width="300"/></td>
+<td><img src="screenshots/08-add-expense-voice-desktop.jpg" alt="Add transaction, speak it" width="300"/></td>
+</tr>
+<tr>
+<td><img src="screenshots/11-add-expense-manual-mobile.jpg" alt="Add transaction on mobile" width="200"/></td>
 </tr>
 </table>
 
@@ -47,12 +64,16 @@ You don't need to deploy anything — go to **[tally-kittinat.vercel.app](https:
 
 <table>
 <tr>
-<td><img src="screenshots/05-activities-desktop-dark.jpg" alt="Activities, desktop, dark mode" width="400"/></td>
-<td><img src="screenshots/12-activities-detail-desktop-dark.jpg" alt="Activities with transaction detail open, desktop" width="400"/></td>
+<td><img src="screenshots/12-activities-desktop-dark.jpg" alt="Activities, desktop, dark mode" width="360"/></td>
+<td><img src="screenshots/13-activities-detail-desktop-dark.jpg" alt="Activities with transaction detail open, desktop" width="360"/></td>
 </tr>
 <tr>
-<td><img src="screenshots/06-activities-desktop-light.jpg" alt="Activities, desktop, light mode" width="400"/></td>
-<td><img src="screenshots/07-activities-mobile-dark.jpg" alt="Activities, mobile, dark mode" width="180"/></td>
+<td><img src="screenshots/14-activities-desktop-light.jpg" alt="Activities, desktop, light mode" width="360"/></td>
+<td><img src="screenshots/15-activities-mobile-dark.jpg" alt="Activities, mobile, dark mode" width="180"/></td>
+</tr>
+<tr>
+<td><img src="screenshots/16-activities-detail-mobile-dark.jpg" alt="Transaction detail, mobile" width="180"/></td>
+<td><img src="screenshots/17-activities-mobile-light.jpg" alt="Activities, mobile, light mode" width="180"/></td>
 </tr>
 </table>
 
@@ -60,21 +81,23 @@ You don't need to deploy anything — go to **[tally-kittinat.vercel.app](https:
 
 <table>
 <tr>
-<td><img src="screenshots/09-settings-desktop-dark.jpg" alt="Settings, desktop, dark mode" width="400"/></td>
-<td><img src="screenshots/13-settings-categories-desktop-dark.jpg" alt="Settings, Manage categories panel open" width="400"/></td>
-</tr>
-</table>
-
-**Receipt scanning & voice entry** — snap a photo or speak an expense out loud and let Gemini fill in the form.
-
-<table>
-<tr>
-<td><img src="screenshots/14-scan-document-light.jpg" alt="Document scanning (light mode)" width="250"/></td>
-<td><img src="screenshots/15-scan-document-dark.jpg" alt="Document scanning (dark mode)" width="250"/></td>
+<td><img src="screenshots/18-settings-desktop-dark-empty.jpg" alt="Settings, desktop, dark mode" width="300"/></td>
+<td><img src="screenshots/19-settings-account-desktop.jpg" alt="Settings, Account panel" width="300"/></td>
+<td><img src="screenshots/20-settings-categories-desktop.jpg" alt="Settings, Manage categories panel" width="300"/></td>
 </tr>
 <tr>
-<td><img src="screenshots/16-voice-entry-light.jpg" alt="Voice entry (light mode)" width="250"/></td>
-<td><img src="screenshots/17-voice-entry-dark.jpg" alt="Voice entry (dark mode)" width="250"/></td>
+<td><img src="screenshots/22-settings-wallets-desktop.jpg" alt="Settings, Wallets panel" width="300"/></td>
+<td><img src="screenshots/24-settings-budgets-desktop.jpg" alt="Settings, Budgets panel" width="300"/></td>
+<td><img src="screenshots/25-settings-savingsgoals-desktop.jpg" alt="Settings, Savings goals panel" width="300"/></td>
+</tr>
+<tr>
+<td><img src="screenshots/23-settings-recurring-desktop.jpg" alt="Settings, Recurring transactions panel" width="300"/></td>
+<td><img src="screenshots/26-settings-customizedashboard-desktop.jpg" alt="Settings, Customize dashboard editor" width="300"/></td>
+<td><img src="screenshots/28-settings-desktop-light-empty.jpg" alt="Settings, desktop, light mode" width="300"/></td>
+</tr>
+<tr>
+<td><img src="screenshots/29-settings-mobile-dark-list.jpg" alt="Settings, mobile" width="180"/></td>
+<td><img src="screenshots/30-settings-account-mobile-dark.jpg" alt="Settings, Account panel, mobile" width="180"/></td>
 </tr>
 </table>
 
