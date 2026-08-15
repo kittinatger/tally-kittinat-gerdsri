@@ -5,14 +5,24 @@ import { useEffect, useState } from "react";
 import type { CalendarSettings as CalendarSettingsData } from "@/lib/db";
 import SelectDropdown from "./SelectDropdown";
 import DatePicker from "./DatePicker";
+import { useT } from "@/lib/language-context";
+import type { MessageKey } from "@/lib/i18n/messages";
 
-const WEEKDAY_OPTIONS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const WEEKDAY_KEYS: MessageKey[] = [
+  "calendar.weekday.sunday",
+  "calendar.weekday.monday",
+  "calendar.weekday.tuesday",
+  "calendar.weekday.wednesday",
+  "calendar.weekday.thursday",
+  "calendar.weekday.friday",
+  "calendar.weekday.saturday",
+];
 
-const DEFAULT_VIEW_OPTIONS: { value: string; label: string }[] = [
-  { value: "today", label: "Today" },
-  { value: "week", label: "This week" },
-  { value: "month", label: "This month" },
-  { value: "all", label: "All time" },
+const DEFAULT_VIEW_KEYS: { value: string; key: MessageKey }[] = [
+  { value: "today", key: "calendar.view.today" },
+  { value: "week", key: "calendar.view.thisWeek" },
+  { value: "month", key: "calendar.view.thisMonth" },
+  { value: "all", key: "calendar.view.allTime" },
 ];
 
 const TIMEZONE_OPTIONS: { value: string; label: string }[] = [
@@ -38,10 +48,10 @@ const TIMEZONE_OPTIONS: { value: string; label: string }[] = [
   { value: "Pacific/Auckland", label: "Pacific/Auckland" },
 ];
 
-const ALTERNATE_CALENDAR_OPTIONS: { value: string; label: string }[] = [
-  { value: "none", label: "None (Gregorian only)" },
-  { value: "lunar", label: "Lunar" },
-  { value: "buddhist", label: "Buddhist" },
+const ALTERNATE_CALENDAR_KEYS: { value: string; key: MessageKey }[] = [
+  { value: "none", key: "calendar.altcal.none" },
+  { value: "lunar", key: "calendar.altcal.lunar" },
+  { value: "buddhist", key: "calendar.altcal.buddhist" },
 ];
 
 function Toggle({
@@ -87,6 +97,10 @@ const DEFAULTS: CalendarSettingsData = {
 };
 
 export default function CalendarSettings() {
+  const t = useT();
+  const WEEKDAY_OPTIONS = WEEKDAY_KEYS.map((k) => t(k));
+  const DEFAULT_VIEW_OPTIONS = DEFAULT_VIEW_KEYS.map((o) => ({ value: o.value, label: t(o.key) }));
+  const ALTERNATE_CALENDAR_OPTIONS = ALTERNATE_CALENDAR_KEYS.map((o) => ({ value: o.value, label: t(o.key) }));
   const [settings, setSettings] = useState<CalendarSettingsData>(DEFAULTS);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -138,8 +152,8 @@ export default function CalendarSettings() {
           near-identical boxes for what's really one settings group. */}
       <div className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface">
         <div className="p-4">
-          <p className="mb-1.5 text-sm font-medium text-foreground">Week starts on</p>
-          <p className="mb-2 text-[11px] leading-snug text-ink-soft">Controls the first day shown in date pickers.</p>
+          <p className="mb-1.5 text-sm font-medium text-foreground">{t("calendar.weekStartsOn")}</p>
+          <p className="mb-2 text-[11px] leading-snug text-ink-soft">{t("calendar.weekStartsOnDesc")}</p>
           <SelectDropdown
             value={WEEKDAY_OPTIONS[settings.weekStartDay]}
             options={WEEKDAY_OPTIONS}
@@ -148,9 +162,9 @@ export default function CalendarSettings() {
         </div>
 
         <div className="p-4">
-          <p className="mb-1.5 text-sm font-medium text-foreground">Month starts on date</p>
+          <p className="mb-1.5 text-sm font-medium text-foreground">{t("calendar.monthStartsOn")}</p>
           <p className="mb-2 text-[11px] leading-snug text-ink-soft">
-            Day of the month your budgeting period begins, for custom pay cycles.
+            {t("calendar.monthStartsOnDesc")}
           </p>
           <input
             type="number"
@@ -166,9 +180,9 @@ export default function CalendarSettings() {
         </div>
 
         <div className="p-4">
-          <p className="mb-1.5 text-sm font-medium text-foreground">Bi-weekly period anchor</p>
+          <p className="mb-1.5 text-sm font-medium text-foreground">{t("calendar.biweeklyAnchor")}</p>
           <p className="mb-2 text-[11px] leading-snug text-ink-soft">
-            Pick any date that starts one of your pay periods; every 14 days from it marks the next.
+            {t("calendar.biweeklyAnchorDesc")}
           </p>
           <div className="flex items-center gap-2">
             <DatePicker
@@ -181,16 +195,16 @@ export default function CalendarSettings() {
                 onClick={() => save({ biweeklyAnchorDate: null })}
                 className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-bg-soft hover:text-foreground"
               >
-                Clear
+                {t("common.clear")}
               </button>
             )}
           </div>
         </div>
 
         <div className="p-4">
-          <p className="mb-1.5 text-sm font-medium text-foreground">Default view when app launches</p>
+          <p className="mb-1.5 text-sm font-medium text-foreground">{t("calendar.defaultView")}</p>
           <SelectDropdown
-            value={DEFAULT_VIEW_OPTIONS.find((o) => o.value === settings.defaultView)?.label ?? "Today"}
+            value={DEFAULT_VIEW_OPTIONS.find((o) => o.value === settings.defaultView)?.label ?? t("calendar.view.today")}
             options={DEFAULT_VIEW_OPTIONS.map((o) => o.label)}
             onChange={(label) => {
               const opt = DEFAULT_VIEW_OPTIONS.find((o) => o.label === label);
@@ -200,9 +214,9 @@ export default function CalendarSettings() {
         </div>
 
         <div className="p-4">
-          <p className="mb-1.5 text-sm font-medium text-foreground">Time zone</p>
+          <p className="mb-1.5 text-sm font-medium text-foreground">{t("calendar.timezone")}</p>
           <SelectDropdown
-            value={TIMEZONE_OPTIONS.find((o) => o.value === settings.timezone)?.label ?? "Auto (device)"}
+            value={TIMEZONE_OPTIONS.find((o) => o.value === settings.timezone)?.label ?? t("calendar.tz.auto")}
             options={TIMEZONE_OPTIONS.map((o) => o.label)}
             onChange={(label) => {
               const opt = TIMEZONE_OPTIONS.find((o) => o.label === label);
@@ -214,23 +228,23 @@ export default function CalendarSettings() {
         <div className="p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-sm font-medium text-foreground">Show week numbers</p>
-              <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">Adds a week-number column to date pickers.</p>
+              <p className="text-sm font-medium text-foreground">{t("calendar.showWeekNumbers")}</p>
+              <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">{t("calendar.showWeekNumbersDesc")}</p>
             </div>
             <Toggle
               checked={settings.showWeekNumbers}
               onChange={() => save({ showWeekNumbers: !settings.showWeekNumbers })}
               disabled={saving}
-              label="Toggle week numbers"
+              label={t("calendar.showWeekNumbers")}
             />
           </div>
         </div>
 
         <div className="p-4">
-          <p className="mb-1.5 text-sm font-medium text-foreground">Alternate calendar</p>
-          <p className="mb-2 text-[11px] leading-snug text-ink-soft">Show an additional calendar system alongside Gregorian dates.</p>
+          <p className="mb-1.5 text-sm font-medium text-foreground">{t("calendar.alternateCalendar")}</p>
+          <p className="mb-2 text-[11px] leading-snug text-ink-soft">{t("calendar.alternateCalendarDesc")}</p>
           <SelectDropdown
-            value={ALTERNATE_CALENDAR_OPTIONS.find((o) => o.value === settings.alternateCalendar)?.label ?? "None (Gregorian only)"}
+            value={ALTERNATE_CALENDAR_OPTIONS.find((o) => o.value === settings.alternateCalendar)?.label ?? t("calendar.altcal.none")}
             options={ALTERNATE_CALENDAR_OPTIONS.map((o) => o.label)}
             onChange={(label) => {
               const opt = ALTERNATE_CALENDAR_OPTIONS.find((o) => o.label === label);

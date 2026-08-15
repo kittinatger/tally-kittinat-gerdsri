@@ -5,6 +5,7 @@ import NotificationSettings from "./NotificationSettings";
 import { describeMediaError } from "@/lib/media-error";
 import { badgeClasses } from "@/lib/category-styles";
 import { MicIcon } from "@/lib/icons";
+import { useT } from "@/lib/language-context";
 
 type PermissionStatus = "granted" | "denied" | "prompt" | "unsupported";
 
@@ -28,6 +29,7 @@ function PhotosIcon() {
 }
 
 export default function PermissionsSettings({ hasEmail }: { hasEmail: boolean }) {
+  const t = useT();
   const [micStatus, setMicStatus] = useState<PermissionStatus>("unsupported");
   const [cameraStatus, setCameraStatus] = useState<PermissionStatus>("unsupported");
   const [photosStatus, setPhotosStatus] = useState<PermissionStatus>("prompt");
@@ -95,31 +97,31 @@ export default function PermissionsSettings({ hasEmail }: { hasEmail: boolean })
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">Device access</h3>
+        <h3 className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">{t("permissions.deviceAccess")}</h3>
         <p className="mb-3 px-1 text-[11px] leading-snug text-ink-soft">
-          What Tally can access on this device, for receipt scanning and voice entry.
+          {t("permissions.deviceAccessDesc")}
         </p>
         <div className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface">
           <PermissionRow
             icon={<MicIcon className="h-4.5 w-4.5" />}
-            label="Microphone"
-            description="Needed for voice entry."
+            label={t("permissions.microphone")}
+            description={t("permissions.microphoneDesc")}
             status={micStatus}
             onRequest={requestMicAccess}
             error={micError}
           />
           <PermissionRow
             icon={<CameraIcon />}
-            label="Camera"
-            description="Needed to take a photo of a receipt."
+            label={t("permissions.camera")}
+            description={t("permissions.cameraDesc")}
             status={cameraStatus}
             onRequest={requestCameraAccess}
             error={cameraError}
           />
           <PermissionRow
             icon={<PhotosIcon />}
-            label="Photos"
-            description="Needed to attach a receipt image from your gallery."
+            label={t("permissions.photos")}
+            description={t("permissions.photosDesc")}
             status={photosStatus}
             onRequest={requestPhotosAccess}
           />
@@ -137,7 +139,7 @@ export default function PermissionsSettings({ hasEmail }: { hasEmail: boolean })
       </div>
 
       <div>
-        <h3 className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">Notifications</h3>
+        <h3 className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">{t("permissions.notifications")}</h3>
         <div className="overflow-hidden rounded-card border border-line bg-surface p-4">
           <NotificationSettings hasEmail={hasEmail} />
         </div>
@@ -161,6 +163,7 @@ function PermissionRow({
   onRequest: () => void;
   error?: string | null;
 }) {
+  const t = useT();
   return (
     <div className="p-4">
       <div className="flex items-center justify-between gap-3">
@@ -183,7 +186,7 @@ function PermissionRow({
         </div>
         {status === "granted" ? (
           <span className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${badgeClasses("emerald")}`}>
-            Granted
+            {t("permissions.granted")}
           </span>
         ) : (
           <button
@@ -195,7 +198,7 @@ function PermissionRow({
                 : "border-line text-foreground hover:bg-[var(--nav-hover-bg)]"
             }`}
           >
-            {status === "denied" ? "Blocked — retry" : "Request access"}
+            {status === "denied" ? t("permissions.blockedRetry") : t("permissions.requestAccess")}
           </button>
         )}
       </div>

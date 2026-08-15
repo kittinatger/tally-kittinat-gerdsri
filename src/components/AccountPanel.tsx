@@ -6,38 +6,40 @@ import Modal from "./Modal";
 import { describeFetchError } from "@/lib/fetch-error";
 import { ChevronIcon } from "@/lib/icons";
 import ProfilePictureUploader from "./ProfilePictureUploader";
+import { useT } from "@/lib/language-context";
+import type { MessageKey } from "@/lib/i18n/messages";
 
 const DELETE_CONFIRM_PHRASE = "I wish to delete this account";
 
 type SecurityEvent = { event: string; created_at: string };
 
-function describeSecurityEvent(event: string): string {
+function describeSecurityEvent(event: string, t: (key: MessageKey) => string): string {
   if (event.startsWith("api_token_created:")) {
-    return `Access token created ("${event.slice("api_token_created:".length).trim()}")`;
+    return `${t("account.security.tokenCreated")} ("${event.slice("api_token_created:".length).trim()}")`;
   }
   switch (event) {
     case "username_changed":
-      return "Username changed";
+      return t("account.security.usernameChanged");
     case "password_changed":
-      return "Password changed";
+      return t("account.security.passwordChanged");
     case "password_reset_via_email":
-      return "Password reset via email link";
+      return t("account.security.passwordResetViaEmail");
     case "email_changed":
-      return "Email changed";
+      return t("account.security.emailChanged");
     case "email_removed":
-      return "Email removed";
+      return t("account.security.emailRemoved");
     case "signed_out_everywhere":
-      return "Signed out of all devices";
+      return t("account.security.signedOutEverywhere");
     case "api_token_revoked":
-      return "Access token revoked";
+      return t("account.security.tokenRevoked");
     case "login_succeeded":
-      return "Signed in";
+      return t("account.security.signedIn");
     case "github_account_created":
-      return "Account created via GitHub";
+      return t("account.security.accountCreatedGithub");
     case "github_account_linked":
-      return "GitHub account linked";
+      return t("account.security.githubLinked");
     case "github_account_unlinked":
-      return "GitHub account unlinked";
+      return t("account.security.githubUnlinked");
     default:
       return event;
   }
@@ -63,6 +65,7 @@ export default function AccountPanel({
   githubError?: string;
 }) {
   const router = useRouter();
+  const t = useT();
   const [username, setUsername] = useState(initialUsername);
   const [email, setEmail] = useState(initialEmail);
   // Accounts created via GitHub (or another OAuth provider, once added)
@@ -422,7 +425,7 @@ export default function AccountPanel({
           tap Edit — was two always-open forms taking up most of the panel
           before you'd touched anything. */}
       <div className="rounded-card border border-line bg-surface p-5">
-        <h3 className="mb-4 font-display text-xl text-foreground">Profile</h3>
+        <h3 className="mb-4 font-display text-xl text-foreground">{t("account.profile")}</h3>
 
         <ProfilePictureUploader />
 
@@ -430,7 +433,7 @@ export default function AccountPanel({
 
         <div className={editingUsername ? "" : "flex items-center justify-between gap-3"}>
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Username</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">{t("auth.username")}</p>
             {!editingUsername && <p className="mt-0.5 truncate text-sm text-foreground">{username}</p>}
           </div>
           {!editingUsername && (
@@ -439,7 +442,7 @@ export default function AccountPanel({
               onClick={() => setEditingUsername(true)}
               className="shrink-0 rounded-full border border-line px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
             >
-              Edit
+              {t("common.edit")}
             </button>
           )}
         </div>
@@ -451,7 +454,7 @@ export default function AccountPanel({
                 type="text"
                 value={newUsername}
                 onChange={(e) => setNewUsername(e.target.value)}
-                placeholder="New username"
+                placeholder={t("auth.enterUsername")}
                 className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
               />
               {hasPassword && (
@@ -459,13 +462,13 @@ export default function AccountPanel({
                   type="password"
                   value={usernamePassword}
                   onChange={(e) => setUsernamePassword(e.target.value)}
-                  placeholder="Current password"
+                  placeholder={t("account.currentPassword")}
                   className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
                 />
               )}
             </div>
             {hasPassword && (
-              <p className="mt-1.5 text-xs text-ink-soft">Enter your current password to confirm this change.</p>
+              <p className="mt-1.5 text-xs text-ink-soft">{t("account.enterCurrentPasswordConfirm")}</p>
             )}
             {usernameError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{usernameError}</p>}
             <div className="mt-3 flex gap-2">
@@ -474,27 +477,27 @@ export default function AccountPanel({
                 disabled={savingUsername}
                 className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
               >
-                {savingUsername ? "Saving..." : "Save username"}
+                {savingUsername ? t("common.saving") : t("account.saveUsername")}
               </button>
               <button
                 type="button"
                 onClick={cancelUsernameEdit}
                 className="rounded-full px-4 py-2 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           </form>
         )}
         {usernameSuccess && !editingUsername && (
-          <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400">Username updated.</p>
+          <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400">{t("account.usernameUpdated")}</p>
         )}
 
         <div className={`mt-4 border-t border-line pt-4 ${editingEmail ? "" : "flex items-center justify-between gap-3"}`}>
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Email</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">{t("account.email")}</p>
             {!editingEmail && (
-              <p className="mt-0.5 truncate text-sm text-foreground">{email ?? "Not set"}</p>
+              <p className="mt-0.5 truncate text-sm text-foreground">{email ?? t("account.notSet")}</p>
             )}
           </div>
           {!editingEmail && (
@@ -503,12 +506,12 @@ export default function AccountPanel({
               onClick={() => setEditingEmail(true)}
               className="shrink-0 rounded-full border border-line px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
             >
-              {email ? "Edit" : "Add"}
+              {email ? t("common.edit") : t("common.add")}
             </button>
           )}
         </div>
         {!editingEmail && !email && (
-          <p className="mt-1 text-xs text-ink-soft">Add an email so you can reset your password if you forget it.</p>
+          <p className="mt-1 text-xs text-ink-soft">{t("account.addEmailHint")}</p>
         )}
         {editingEmail && (
           <form onSubmit={handleEmailSubmit} className="mt-2">
@@ -526,7 +529,7 @@ export default function AccountPanel({
                   type="password"
                   value={emailPassword}
                   onChange={(e) => setEmailPassword(e.target.value)}
-                  placeholder="Current password"
+                  placeholder={t("account.currentPassword")}
                   className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
                 />
               )}
@@ -538,26 +541,26 @@ export default function AccountPanel({
                 disabled={savingEmail}
                 className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
               >
-                {savingEmail ? "Saving..." : "Save email"}
+                {savingEmail ? t("common.saving") : t("account.saveEmail")}
               </button>
               <button
                 type="button"
                 onClick={cancelEmailEdit}
                 className="rounded-full px-4 py-2 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           </form>
         )}
         {emailSuccess && !editingEmail && (
-          <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400">Email updated.</p>
+          <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400">{t("account.emailUpdated")}</p>
         )}
       </div>
 
       {/* Connected accounts */}
       <div className="rounded-card border border-line bg-surface p-5">
-        <h3 className="mb-3 font-display text-xl text-foreground">Connected accounts</h3>
+        <h3 className="mb-3 font-display text-xl text-foreground">{t("account.connectedAccounts")}</h3>
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2.5">
             <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 shrink-0 text-foreground" aria-hidden="true">
@@ -566,7 +569,7 @@ export default function AccountPanel({
             <div className="min-w-0">
               <p className="text-sm font-medium text-foreground">GitHub</p>
               <p className="text-xs text-ink-soft">
-                {githubId === null ? "Loading…" : githubId ? "Connected" : "Not connected"}
+                {githubId === null ? t("common.loading") : githubId ? t("account.connected") : t("account.notConnected")}
               </p>
             </div>
           </div>
@@ -576,26 +579,26 @@ export default function AccountPanel({
                 type="button"
                 onClick={() => setConfirmUnlinkOpen(true)}
                 disabled={!hasPassword}
-                title={hasPassword ? undefined : "Set a password first — otherwise unlinking would lock you out."}
+                title={hasPassword ? undefined : t("account.setPasswordFirstHint")}
                 className="shrink-0 rounded-full border border-line px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Unlink
+                {t("account.unlink")}
               </button>
             ) : (
               <a
                 href="/api/auth/github/link"
                 className="shrink-0 rounded-full border border-line px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
               >
-                Link
+                {t("account.link")}
               </a>
             ))}
         </div>
         {githubId === true && !hasPassword && (
-          <p className="mt-2 text-xs text-ink-soft">Set a password before unlinking, so you can still sign in afterward.</p>
+          <p className="mt-2 text-xs text-ink-soft">{t("account.setPasswordBeforeUnlink")}</p>
         )}
         {githubActionError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{githubActionError}</p>}
         {githubLinked && !githubActionError && (
-          <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">GitHub account linked.</p>
+          <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">{t("account.githubLinked")}</p>
         )}
       </div>
 
@@ -604,10 +607,10 @@ export default function AccountPanel({
       <div className="rounded-card border border-line bg-surface p-5">
         <div className={editingPassword ? "" : "flex items-center justify-between gap-3"}>
           <div className="min-w-0">
-            <h3 className="font-display text-xl text-foreground">Password</h3>
+            <h3 className="font-display text-xl text-foreground">{t("auth.password")}</h3>
             {!editingPassword && (
               <p className="mt-0.5 text-sm text-ink-soft">
-                {hasPassword ? "••••••••" : "No password set — signed in with GitHub"}
+                {hasPassword ? "••••••••" : t("account.noPasswordGithub")}
               </p>
             )}
           </div>
@@ -617,7 +620,7 @@ export default function AccountPanel({
               onClick={() => setEditingPassword(true)}
               className="shrink-0 rounded-full border border-line px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
             >
-              {hasPassword ? "Change" : "Set password"}
+              {hasPassword ? t("account.change") : t("account.setPassword")}
             </button>
           )}
         </div>
@@ -626,7 +629,7 @@ export default function AccountPanel({
           <form onSubmit={handlePasswordSubmit} className="mt-3">
             {!hasPassword && (
               <p className="mb-2.5 text-xs text-ink-soft">
-                Set a password so you can also sign in with a username and password, not just GitHub.
+                {t("account.setPasswordHint")}
               </p>
             )}
             <div className={`grid gap-2.5 ${hasPassword ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
@@ -636,7 +639,7 @@ export default function AccountPanel({
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Current password"
+                  placeholder={t("account.currentPassword")}
                   className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
                 />
               )}
@@ -644,7 +647,7 @@ export default function AccountPanel({
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="New password"
+                placeholder={t("account.newPassword")}
                 minLength={8}
                 className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
               />
@@ -652,7 +655,7 @@ export default function AccountPanel({
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
+                placeholder={t("account.confirmNewPassword")}
                 minLength={8}
                 className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
               />
@@ -664,20 +667,20 @@ export default function AccountPanel({
                 disabled={savingPassword}
                 className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
               >
-                {savingPassword ? "Saving..." : hasPassword ? "Save password" : "Set password"}
+                {savingPassword ? t("common.saving") : hasPassword ? t("account.savePassword") : t("account.setPassword")}
               </button>
               <button
                 type="button"
                 onClick={cancelPasswordEdit}
                 className="rounded-full px-4 py-2 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               {hasPassword && email && (
                 <span className="text-xs text-ink-soft">
-                  Forgot it instead?{" "}
+                  {t("account.forgotItInstead")}{" "}
                   {resetSent ? (
-                    <span className="text-emerald-600 dark:text-emerald-400">Reset link sent — check your inbox.</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">{t("account.resetLinkSent")}</span>
                   ) : (
                     <button
                       type="button"
@@ -685,7 +688,7 @@ export default function AccountPanel({
                       disabled={sendingReset}
                       className="font-semibold text-navy underline hover:no-underline disabled:opacity-60 dark:text-blue-300"
                     >
-                      {sendingReset ? "Sending..." : "Email me a reset link"}
+                      {sendingReset ? t("account.sending") : t("account.emailMeResetLink")}
                     </button>
                   )}
                 </span>
@@ -695,13 +698,13 @@ export default function AccountPanel({
           </form>
         )}
         {passwordSuccess && !editingPassword && (
-          <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400">Password updated.</p>
+          <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400">{t("account.passwordUpdated")}</p>
         )}
       </div>
 
       {/* Sessions */}
       <div className="rounded-card border border-line bg-surface p-5">
-        <h3 className="mb-3 font-display text-xl text-foreground">Sessions</h3>
+        <h3 className="mb-3 font-display text-xl text-foreground">{t("account.sessions")}</h3>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
@@ -712,14 +715,14 @@ export default function AccountPanel({
               <path d="M23.6914 5.55176L23.6914 10.1367L20.8057 10.1367L20.8057 5.68848C20.8057 3.90137 19.7949 2.90039 18.0078 2.90039L7.36328 2.90039C5.57129 2.90039 4.56543 3.90137 4.56543 5.68848L4.56543 21.875C4.56543 23.6621 5.57129 24.668 7.36328 24.668L18.0078 24.668C19.7949 24.668 20.8057 23.6621 20.8057 21.875L20.8057 17.4121L23.6914 17.4121L23.6914 22.0117C23.6914 25.5713 21.709 27.5586 18.1543 27.5586L7.22168 27.5586C3.66211 27.5586 1.66992 25.5713 1.66992 22.0117L1.66992 5.55176C1.66992 1.99707 3.66211 0.00976562 7.22168 0.00976562L18.1543 0.00976562C21.709 0.00976562 23.6914 1.99707 23.6914 5.55176Z" />
               <path d="M13.1299 13.7744C13.1299 14.4971 13.7256 15.0781 14.4141 15.0781L26.9727 15.0781L30.7568 14.8193C31.333 14.7754 31.8066 14.3457 31.8066 13.7744C31.8066 13.1934 31.333 12.7637 30.7568 12.7197L26.9727 12.4609L14.4141 12.4609C13.7256 12.4609 13.1299 13.042 13.1299 13.7744ZM25.7617 9.37988C25.7617 9.70215 25.8984 10.0244 26.1377 10.249L27.9248 11.9336L30.4248 13.7744L27.9248 15.6006L26.1377 17.2949C25.8984 17.5195 25.7617 17.8271 25.7617 18.1543C25.7617 18.7549 26.2158 19.292 26.8652 19.292C27.1924 19.292 27.4365 19.1699 27.6709 18.9355L31.6602 14.7949C31.9971 14.4531 32.1143 14.1211 32.1143 13.7744C32.1143 13.418 31.9971 13.0859 31.6602 12.7441L27.6709 8.60352C27.4365 8.37402 27.1924 8.24219 26.8652 8.24219C26.2158 8.24219 25.7617 8.77441 25.7617 9.37988Z" />
             </svg>
-            Sign out
+            {t("account.signOut")}
           </button>
           <button
             type="button"
             onClick={() => setSignOutEverywhereOpen(true)}
             className="flex items-center gap-1.5 rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
           >
-            Sign out of all devices
+            {t("account.signOutAllDevices")}
           </button>
         </div>
       </div>
@@ -733,7 +736,7 @@ export default function AccountPanel({
           aria-expanded={activityOpen}
           className="flex w-full items-center justify-between gap-2 text-left"
         >
-          <h3 className="font-display text-xl text-foreground">Recent security activity</h3>
+          <h3 className="font-display text-xl text-foreground">{t("account.recentSecurityActivity")}</h3>
           <ChevronIcon
             className={`h-3.5 w-3.5 shrink-0 text-ink-soft transition-transform ${activityOpen ? "rotate-180" : ""}`}
           />
@@ -741,14 +744,14 @@ export default function AccountPanel({
         {activityOpen && (
           <div className="mt-3 border-t border-line pt-3">
             {securityEvents === null ? (
-              <p className="text-sm text-ink-soft">Loading…</p>
+              <p className="text-sm text-ink-soft">{t("common.loading")}</p>
             ) : securityEvents.length === 0 ? (
-              <p className="text-sm text-ink-soft">No security-sensitive changes yet.</p>
+              <p className="text-sm text-ink-soft">{t("account.noSecurityChanges")}</p>
             ) : (
               <ul className="space-y-1.5 text-sm text-surface-foreground-soft">
                 {securityEvents.map((e, i) => (
                   <li key={i} className="flex items-baseline justify-between gap-3">
-                    <span className="text-foreground">{describeSecurityEvent(e.event)}</span>
+                    <span className="text-foreground">{describeSecurityEvent(e.event, t)}</span>
                     <span className="shrink-0 text-xs text-ink-soft">{new Date(e.created_at).toLocaleString()}</span>
                   </li>
                 ))}
@@ -760,23 +763,23 @@ export default function AccountPanel({
 
       {/* Danger zone */}
       <div className="rounded-card border border-red-200 bg-surface p-5 dark:border-red-900/40">
-        <h3 className="mb-1 font-display text-xl text-red-600 dark:text-red-400">Danger zone</h3>
+        <h3 className="mb-1 font-display text-xl text-red-600 dark:text-red-400">{t("account.dangerZone")}</h3>
         <p className="mb-3 text-xs text-ink-soft">
-          Permanently delete your account and all of its data. This can&apos;t be undone.
+          {t("account.deleteAccountWarning")}
         </p>
         <button
           type="button"
           onClick={() => setDeleteModalOpen(true)}
           className="rounded-full border border-red-300 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-900/60 dark:text-red-400 dark:hover:bg-red-900/20"
         >
-          Delete account
+          {t("account.deleteAccount")}
         </button>
       </div>
 
       {confirmUnlinkOpen && (
-        <Modal onClose={() => setConfirmUnlinkOpen(false)} title="Unlink GitHub?">
+        <Modal onClose={() => setConfirmUnlinkOpen(false)} title={t("account.unlinkGithubTitle")}>
           <p className="mb-5 text-sm text-surface-foreground-soft">
-            You&apos;ll need your username and password to sign in afterward instead.
+            {t("account.unlinkGithubDesc")}
           </p>
           {githubActionError && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{githubActionError}</p>}
           <div className="flex justify-end gap-2">
@@ -784,37 +787,37 @@ export default function AccountPanel({
               onClick={() => setConfirmUnlinkOpen(false)}
               className="rounded-full border border-surface-line px-4 py-2 text-sm font-semibold text-surface-foreground transition hover:bg-[var(--surface-nav-hover)]"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               onClick={handleUnlinkGithub}
               disabled={unlinkingGithub}
               className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-red-700 disabled:opacity-60"
             >
-              {unlinkingGithub ? "Unlinking..." : "Unlink"}
+              {unlinkingGithub ? t("account.unlinking") : t("account.unlink")}
             </button>
           </div>
         </Modal>
       )}
 
       {confirmingLogout && (
-        <Modal onClose={() => setConfirmingLogout(false)} title="Sign out?">
+        <Modal onClose={() => setConfirmingLogout(false)} title={t("account.signOutTitle")}>
           <p className="mb-5 text-sm text-surface-foreground-soft">
-            You&apos;ll need to sign in again to view your expenses.
+            {t("account.signOutDesc")}
           </p>
           <div className="flex justify-end gap-2">
             <button
               onClick={() => setConfirmingLogout(false)}
               className="rounded-full border border-surface-line px-4 py-2 text-sm font-semibold text-surface-foreground transition hover:bg-[var(--surface-nav-hover)]"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               onClick={confirmLogout}
               disabled={loggingOut}
               className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-red-700 disabled:opacity-60"
             >
-              {loggingOut ? "Signing out..." : "Sign out"}
+              {loggingOut ? t("account.signingOut") : t("account.signOut")}
             </button>
           </div>
         </Modal>
@@ -827,17 +830,16 @@ export default function AccountPanel({
             setSignOutEverywherePassword("");
             setSignOutEverywhereError(null);
           }}
-          title="Sign out of all devices?"
+          title={t("account.signOutEverywhereTitle")}
         >
           <form onSubmit={handleSignOutEverywhere} className="space-y-4">
             <p className="text-sm text-surface-foreground-soft">
-              This signs out every device where you&apos;re currently logged in, including this one. You&apos;ll
-              need to sign in again everywhere.
+              {t("account.signOutEverywhereDesc")}
             </p>
             {hasPassword && (
               <div>
                 <label htmlFor="signOutEverywherePassword" className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">
-                  Current password
+                  {t("account.currentPassword")}
                 </label>
                 <input
                   id="signOutEverywherePassword"
@@ -860,14 +862,14 @@ export default function AccountPanel({
                 }}
                 className="rounded-full border border-surface-line px-4 py-2 text-sm font-semibold text-surface-foreground transition hover:bg-[var(--surface-nav-hover)]"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 type="submit"
                 disabled={signingOutEverywhere || (hasPassword && !signOutEverywherePassword)}
                 className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-red-700 disabled:opacity-60"
               >
-                {signingOutEverywhere ? "Signing out..." : "Sign out everywhere"}
+                {signingOutEverywhere ? t("account.signingOut") : t("account.signOutEverywhereButton")}
               </button>
             </div>
           </form>
@@ -875,11 +877,10 @@ export default function AccountPanel({
       )}
 
       {deleteModalOpen && (
-        <Modal onClose={closeDeleteModal} title="Delete account">
+        <Modal onClose={closeDeleteModal} title={t("account.deleteAccountTitle")}>
           <form onSubmit={handleDeleteAccount} className="space-y-4">
             <p className="text-sm text-surface-foreground-soft">
-              This permanently deletes your account, including every transaction, category, receipt image, and
-              setting. There is no way to recover this data afterward.
+              {t("account.deleteAccountDesc")}
             </p>
 
             <label className="flex items-start gap-2.5 text-sm text-surface-foreground">
@@ -889,12 +890,12 @@ export default function AccountPanel({
                 onChange={(e) => setDeleteAcknowledged(e.target.checked)}
                 className="mt-0.5 h-4 w-4 shrink-0 rounded border-surface-line text-red-600 focus:ring-red-500"
               />
-              I understand this action is permanent and all of my data will be lost.
+              {t("account.deleteAcknowledge")}
             </label>
 
             <div>
               <label htmlFor="deletePhrase" className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">
-                Type <span className="font-mono text-surface-foreground">{DELETE_CONFIRM_PHRASE}</span> to confirm
+                {t("account.typeToConfirmPrefix")} <span className="font-mono text-surface-foreground">{DELETE_CONFIRM_PHRASE}</span> {t("account.typeToConfirmSuffix")}
               </label>
               <input
                 id="deletePhrase"
@@ -909,7 +910,7 @@ export default function AccountPanel({
             {hasPassword && (
               <div>
                 <label htmlFor="deletePassword" className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">
-                  Current password
+                  {t("account.currentPassword")}
                 </label>
                 <input
                   id="deletePassword"
@@ -929,14 +930,14 @@ export default function AccountPanel({
                 onClick={closeDeleteModal}
                 className="rounded-full border border-surface-line px-4 py-2 text-sm font-semibold text-surface-foreground transition hover:bg-[var(--surface-nav-hover)]"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 type="submit"
                 disabled={!deleteReady || deleting}
                 className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-red-700 disabled:opacity-40"
               >
-                {deleting ? "Deleting..." : "Delete my account"}
+                {deleting ? t("common.deleting") : t("account.deleteMyAccount")}
               </button>
             </div>
           </form>

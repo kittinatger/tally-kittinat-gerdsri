@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCurrency } from "@/lib/currency-context";
 import CurrencyDropdown from "./CurrencyDropdown";
 import { badgeClasses } from "@/lib/category-styles";
+import { useT } from "@/lib/language-context";
 
 function ScanIcon() {
   return (
@@ -84,6 +85,7 @@ function ToggleRow({
 
 export default function CurrencySettings() {
   const router = useRouter();
+  const t = useT();
   const currency = useCurrency();
   const [savingCurrency, setSavingCurrency] = useState(false);
   const [currencyError, setCurrencyError] = useState<string | null>(null);
@@ -185,9 +187,9 @@ export default function CurrencySettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">Default currency</h3>
+        <h3 className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">{t("currency.defaultCurrency")}</h3>
         <p className="mb-3 px-1 text-[11px] leading-snug text-ink-soft">
-          Used for new transactions and everywhere amounts are shown, unless a wallet has its own currency label.
+          {t("currency.defaultCurrencyDesc")}
         </p>
         <div className="rounded-card border border-line bg-surface p-4">
           <CurrencyDropdown value={currency} onChange={handleCurrencyChange} disabled={savingCurrency} />
@@ -196,9 +198,9 @@ export default function CurrencySettings() {
       </div>
 
       <div>
-        <h3 className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">Conversion</h3>
+        <h3 className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">{t("currency.conversion")}</h3>
         <p className="mb-3 px-1 text-[11px] leading-snug text-ink-soft">
-          Uses live exchange rates from{" "}
+          {t("currency.conversionDescPrefix")}{" "}
           <a
             href="https://frankfurter.app"
             target="_blank"
@@ -207,14 +209,14 @@ export default function CurrencySettings() {
           >
             Frankfurter
           </a>
-          , a free ECB-rate API.
+          {t("currency.conversionDescSuffix")}
         </p>
 
         <div className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface">
           <ToggleRow
             icon={<ScanIcon />}
-            label="Auto-convert"
-            description={`Convert detected foreign currencies to ${currency} when scanning or recording.`}
+            label={t("currency.autoConvert")}
+            description={`${t("currency.autoConvertDescPrefix")} ${currency} ${t("currency.autoConvertDescSuffix")}`}
             checked={autoConvert}
             disabled={savingAutoConvert}
             onToggle={handleAutoConvertToggle}
@@ -222,8 +224,8 @@ export default function CurrencySettings() {
           />
           <ToggleRow
             icon={<WalletIcon />}
-            label="Convert wallet balances"
-            description={`Convert wallets in a different currency to ${currency} for the Dashboard's Net worth total.`}
+            label={t("currency.convertBalances")}
+            description={`${t("currency.convertBalancesDescPrefix")} ${currency} ${t("currency.convertBalancesDescSuffix")}`}
             checked={convertBalances}
             disabled={savingConvertBalances}
             onToggle={handleConvertBalancesToggle}
