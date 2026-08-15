@@ -6,6 +6,46 @@ export const dynamic = "force-dynamic";
 
 const RELEASES: { version: string; date: string; sections: { heading: string; items: string[] }[] }[] = [
   {
+    version: "0.16.0",
+    date: "2026-08-15",
+    sections: [
+      {
+        heading: "Added",
+        items: [
+          "Full app translation: 16 languages (English, Mandarin Chinese, Hindi, Spanish, French, Arabic, Bengali, Portuguese, Russian, Urdu, Indonesian, German, Japanese, Vietnamese, Turkish, Thai) selectable in Settings > Language — the nav bar, Settings, transaction forms, Activities, and the sign-in/sign-up/welcome screens are now translated, with right-to-left layout for Arabic and Urdu and a matching font stack so every language renders in a font that fits the app's typography instead of a random system default",
+          "Friends & Family — search other Tally users, send and accept friend requests, mark any friend as family",
+          "Challenges — create a savings-race, spending-limit, or no-spend-days contest with friends or family, either competitive (ranked, amounts private by default) or collaborative (one shared progress bar)",
+          "Split bills — split a bill with friends by \"I paid the whole thing\" or \"track who paid what,\" evenly or by custom amounts, with an optional confirmation step before a split counts; also available as a checkbox right on the Add transaction form",
+          "Screenshots throughout the in-app Usage Guide and FAQ pages",
+        ],
+      },
+      {
+        heading: "Changed",
+        items: [
+          "Desktop gets its own layout instead of a stretched copy of the mobile one: hover-revealed row actions in Activities, a persistent two-pane Settings/Activities layout with content shown beside the list instead of as an overlay, and a wider, more flexible Dashboard widget grid",
+          "Every icon and category emoji in the app redrawn onto one consistent line-icon style, replacing a mix of two icon styles and a 32-emoji category picker",
+          "Add/Edit transaction, transaction details, the Activities list, the Settings hub and its sub-pages, Friends & Family, Recurring, Budgets, Savings goals, and Automatic import redesigned to match the app's colored-badge, grouped-card visual language",
+          "Every Dashboard widget remade with its own layout and color identity instead of a uniform recolor",
+          "Settings and Support pages (Usage Guide, FAQ, etc.) now share the same persistent navigation on desktop",
+          "Settings no longer fetches your entire transaction history on every page load, and several modals/panels now load on demand — page navigation is noticeably faster",
+        ],
+      },
+      {
+        heading: "Fixed",
+        items: [
+          "Receipt viewer no longer traps you with no way back when installed as an app (PWA) — it opens in an in-app overlay instead of navigating away",
+          "Android's \"Add to Home Screen\" now shows Tally's actual icon instead of a generic letter",
+          "Two Challenges bugs: a declined reveal request could never be asked again, and non-accepted invitees showed up ranked on the leaderboard",
+          "Dashboard's week-comparison and balance-history widgets now anchor to real calendar boundaries and reconstruct history correctly",
+          "Gauge widget's needle direction, and the donut chart's \"largest segment\" label showing the wrong slice",
+          "Wallet trend and transfer-total widgets now account for transfers correctly instead of double- or under-counting them",
+          "A failed currency-conversion request no longer silently produces a wrong net-worth total",
+          "Settings icon no longer looks like the theme toggle's sun/moon icon",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.15.0",
     date: "2026-08-11",
     sections: [
