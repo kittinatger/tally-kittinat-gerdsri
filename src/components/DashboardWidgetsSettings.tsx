@@ -2,7 +2,7 @@
 
 import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useRef, useState } from "react";
-import type { Expense } from "@/types/expense";
+import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
 import type { CategoryOption } from "@/types/category";
 import type { WalletOption } from "@/types/wallet";
 import {
@@ -126,13 +126,11 @@ function WidgetThumbnail({
 }
 
 export default function DashboardWidgetsSettings({
-  expenses,
   categories,
   remaining,
   wallets,
   onDone,
 }: {
-  expenses: Expense[];
   categories: CategoryOption[];
   remaining: number;
   wallets: WalletOption[];
@@ -146,6 +144,11 @@ export default function DashboardWidgetsSettings({
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [addCategory, setAddCategory] = useState<WidgetCategory | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // The live previews below are the only thing here that need real expense
+  // data — fetched on mount here rather than by the Settings page itself, so
+  // opening Settings for anything else (the common case) doesn't pay for a
+  // potentially-large transaction list it won't use.
+  const [expenses, setExpenses] = useState<Expense[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -157,6 +160,40 @@ export default function DashboardWidgetsSettings({
       })
       .catch(() => {
         // Keep defaults; the user can still edit and save.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/expenses")
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled || !Array.isArray(data.expenses)) return;
+        setExpenses(
+          data.expenses.map(
+            (e: Record<string, unknown>): Expense => ({
+              id: e.id as number,
+              type: normalizeExpenseType(e.type as string),
+              direction: normalizeDirection(e.direction as string | null),
+              date: e.date as string,
+              amount: Number(e.amount),
+              merchant: e.merchant as string,
+              category: e.category as string,
+              notes: e.notes as string | null,
+              tags: (e.tags as string[]) ?? [],
+              hasReceipt: (e.has_receipt as boolean) ?? false,
+              walletId: (e.wallet_id as number | null) ?? null,
+              walletName: (e.wallet_name as string | null) ?? null,
+              splitGroupId: (e.split_group_id as string | null) ?? null,
+            }),
+          ),
+        );
+      })
+      .catch(() => {
+        // Widget previews just render with no data; not worth surfacing an error for.
       });
     return () => {
       cancelled = true;

@@ -45,7 +45,7 @@ export default async function HomePage() {
   // Reuses the wallets/currency already fetched above instead of re-querying
   // them, and only touches the network (Frankfurter, with its own cache and
   // timeout — see lib/exchange-rate.ts) when the user has actually opted in.
-  const convertedNetWorth = convertEnabled ? await computeConvertedTotal(walletRows, currency) : remaining;
+  const convertedNetWorth = convertEnabled ? ((await computeConvertedTotal(walletRows, currency)) ?? remaining) : remaining;
   const budgets = budgetRows.map((b) => ({
     id: b.id,
     category: b.category,

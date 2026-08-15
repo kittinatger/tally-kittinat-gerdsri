@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { signedAmount, type Expense } from "@/types/expense";
 import type { CategoryOption } from "@/types/category";
 import type { TransactionType } from "@/lib/categories";
@@ -14,9 +15,13 @@ import { WalletsProvider } from "@/lib/wallets-context";
 import PullToRefresh from "./PullToRefresh";
 import BudgetAlerts from "./BudgetAlerts";
 import DashboardWidgetContent from "./DashboardWidgetContent";
-import EditBalanceModal from "./EditBalanceModal";
-import AddExpenseModal from "./AddExpenseModal";
 import AppHeader from "./AppHeader";
+
+// Both are only ever mounted after a click (edit balance / add transaction),
+// never on first paint — loading their code on demand instead of bundling
+// them into every Dashboard load noticeably shrinks its initial JS.
+const EditBalanceModal = dynamic(() => import("./EditBalanceModal"), { ssr: false });
+const AddExpenseModal = dynamic(() => import("./AddExpenseModal"), { ssr: false });
 
 function sortByDateDesc(a: Expense, b: Expense): number {
   if (a.date !== b.date) return a.date < b.date ? 1 : -1;

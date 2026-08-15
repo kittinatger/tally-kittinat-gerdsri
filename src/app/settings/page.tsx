@@ -1,18 +1,9 @@
-import {
-  listCategories,
-  getCurrency,
-  getUserById,
-  listWallets,
-  listExpenses,
-  getRemaining,
-  getActivitiesDefaultWalletId,
-} from "@/lib/db";
+import { listCategories, getCurrency, getUserById, listWallets, getRemaining, getActivitiesDefaultWalletId } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import SettingsView from "@/components/SettingsView";
 import { isTransactionType } from "@/lib/categories";
 import { isWalletKind } from "@/lib/wallets";
 import { isPanel } from "@/lib/settings-panels";
-import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
 import type { CategoryOption } from "@/types/category";
 import type { WalletOption } from "@/types/wallet";
 
@@ -26,16 +17,14 @@ export default async function SettingsPage({
 }) {
   const { githubLinked, githubError, panel } = await searchParams;
   const userId = await getUserId();
-  const [categoryRows, currency, user, walletRows, expenseRows, remaining, activitiesDefaultWalletId] =
-    await Promise.all([
-      listCategories(userId),
-      getCurrency(userId),
-      getUserById(userId),
-      listWallets(userId, { includeArchived: true }),
-      listExpenses(userId),
-      getRemaining(userId),
-      getActivitiesDefaultWalletId(userId),
-    ]);
+  const [categoryRows, currency, user, walletRows, remaining, activitiesDefaultWalletId] = await Promise.all([
+    listCategories(userId),
+    getCurrency(userId),
+    getUserById(userId),
+    listWallets(userId, { includeArchived: true }),
+    getRemaining(userId),
+    getActivitiesDefaultWalletId(userId),
+  ]);
   const categories: CategoryOption[] = categoryRows.map((c) => ({
     id: c.id,
     type: isTransactionType(c.type) ? c.type : "expense",
@@ -53,21 +42,6 @@ export default async function SettingsPage({
     archived: w.archived,
     balance: Number(w.balance),
   }));
-  const expenses: Expense[] = expenseRows.map((r) => ({
-    id: r.id,
-    type: normalizeExpenseType(r.type),
-    direction: normalizeDirection(r.direction),
-    date: r.date,
-    amount: Number(r.amount),
-    merchant: r.merchant,
-    category: r.category,
-    notes: r.notes,
-    tags: r.tags ?? [],
-    hasReceipt: r.has_receipt,
-    walletId: r.wallet_id,
-    walletName: r.wallet_name,
-    splitGroupId: r.split_group_id,
-  }));
 
   return (
     <SettingsView
@@ -76,7 +50,6 @@ export default async function SettingsPage({
       username={user?.username ?? ""}
       email={user?.email ?? null}
       wallets={wallets}
-      expenses={expenses}
       remaining={remaining}
       activitiesDefaultWalletId={activitiesDefaultWalletId}
       githubLinked={githubLinked === "1"}

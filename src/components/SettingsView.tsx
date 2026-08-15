@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import type { CategoryOption } from "@/types/category";
 import type { WalletOption } from "@/types/wallet";
-import type { Expense } from "@/types/expense";
 import { CurrencyProvider } from "@/lib/currency-context";
 import { CategoriesProvider } from "@/lib/categories-context";
 import { WalletsProvider } from "@/lib/wallets-context";
@@ -12,24 +12,28 @@ import { APP_VERSION } from "@/lib/version";
 import { type Panel } from "@/lib/settings-panels";
 import PullToRefresh from "./PullToRefresh";
 import AppHeader from "./AppHeader";
-import AccountPanel from "./AccountPanel";
-import CurrencySettings from "./CurrencySettings";
-import CalendarSettings from "./CalendarSettings";
-import DashboardWidgetsSettings from "./DashboardWidgetsSettings";
-import PermissionsSettings from "./PermissionsSettings";
-import CategoryManager from "./CategoryManager";
-import TagManager from "./TagManager";
-import WalletManager from "./WalletManager";
-import RecurringManager from "./RecurringManager";
-import BudgetManager from "./BudgetManager";
-import SavingsGoalsManager from "./SavingsGoalsManager";
-import FriendsManager from "./FriendsManager";
-import ChallengesManager from "./ChallengesManager";
-import SplitBillManager from "./SplitBillManager";
-import ApiTokensManager from "./ApiTokensManager";
-import AutoImportInstructions from "./AutoImportInstructions";
-import ErrorReportsPanel from "./ErrorReportsPanel";
 import SettingsNavList from "./SettingsNavList";
+
+// Exactly one of these renders at a time (whichever `panel` is selected), so
+// loading them on demand instead of bundling all ~16 into every Settings
+// visit meaningfully shrinks its initial JS.
+const AccountPanel = dynamic(() => import("./AccountPanel"), { ssr: false });
+const CurrencySettings = dynamic(() => import("./CurrencySettings"), { ssr: false });
+const CalendarSettings = dynamic(() => import("./CalendarSettings"), { ssr: false });
+const DashboardWidgetsSettings = dynamic(() => import("./DashboardWidgetsSettings"), { ssr: false });
+const PermissionsSettings = dynamic(() => import("./PermissionsSettings"), { ssr: false });
+const CategoryManager = dynamic(() => import("./CategoryManager"), { ssr: false });
+const TagManager = dynamic(() => import("./TagManager"), { ssr: false });
+const WalletManager = dynamic(() => import("./WalletManager"), { ssr: false });
+const RecurringManager = dynamic(() => import("./RecurringManager"), { ssr: false });
+const BudgetManager = dynamic(() => import("./BudgetManager"), { ssr: false });
+const SavingsGoalsManager = dynamic(() => import("./SavingsGoalsManager"), { ssr: false });
+const FriendsManager = dynamic(() => import("./FriendsManager"), { ssr: false });
+const ChallengesManager = dynamic(() => import("./ChallengesManager"), { ssr: false });
+const SplitBillManager = dynamic(() => import("./SplitBillManager"), { ssr: false });
+const ApiTokensManager = dynamic(() => import("./ApiTokensManager"), { ssr: false });
+const AutoImportInstructions = dynamic(() => import("./AutoImportInstructions"), { ssr: false });
+const ErrorReportsPanel = dynamic(() => import("./ErrorReportsPanel"), { ssr: false });
 
 const PANEL_TITLES: Record<Panel, string> = {
   account: "Account",
@@ -64,7 +68,6 @@ export default function SettingsView({
   username,
   email,
   wallets,
-  expenses,
   remaining,
   activitiesDefaultWalletId,
   githubLinked,
@@ -76,7 +79,6 @@ export default function SettingsView({
   username: string;
   email: string | null;
   wallets: WalletOption[];
-  expenses: Expense[];
   remaining: number;
   /** Which wallet Activities' balance card is scoped to by default; null means "All wallets". */
   activitiesDefaultWalletId: number | null;
@@ -155,7 +157,6 @@ export default function SettingsView({
       {panel === "errorReports" && <ErrorReportsPanel />}
       {panel === "dashboardWidgets" && (
         <DashboardWidgetsSettings
-          expenses={expenses}
           categories={categories}
           remaining={remaining}
           wallets={wallets}

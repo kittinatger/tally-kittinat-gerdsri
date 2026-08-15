@@ -325,7 +325,10 @@ export default function DashboardWidgetContent({
       return (
         <StatWidget
           label="Transfers total"
-          value={formatCurrency(sum(thisMonth.filter((e) => e.type === "transfer")), currency)}
+          // Every transfer is stored as two rows (an "out" leg on the source
+          // wallet and an "in" leg on the destination) — counting only one
+          // side avoids double-counting the amount actually moved.
+          value={formatCurrency(sum(thisMonth.filter((e) => e.type === "transfer" && e.direction === "out")), currency)}
           sublabel="This month"
           valueClassName={accentText}
         />
@@ -488,10 +491,16 @@ export default function DashboardWidgetContent({
       return <DonutChartWidget title="Category split" segments={segments} />;
     }
     case "typeDonut": {
+      // Each transfer is stored as two rows (out leg + in leg) — counting
+      // both would make "Transfer" look twice as common as it actually is
+      // relative to Expense/Income, which each have exactly one row per
+      // transaction.
+      const countOf = (t: "expense" | "income" | "transfer") =>
+        t === "transfer" ? thisMonth.filter((e) => e.type === t && e.direction === "out").length : thisMonth.filter((e) => e.type === t).length;
       const segments = (["expense", "income", "transfer"] as const).map((t, i) => ({
         label: t === "expense" ? "Expense" : t === "income" ? "Income" : "Transfer",
-        value: thisMonth.filter((e) => e.type === t).length,
-        displayValue: String(thisMonth.filter((e) => e.type === t).length),
+        value: countOf(t),
+        displayValue: String(countOf(t)),
         colorClassName: accentTextClasses(colorFor(i)),
       }));
       return <DonutChartWidget title="Transaction mix" segments={segments} />;
@@ -657,8 +666,26 @@ export default function DashboardWidgetContent({
       if (!wallet) return <StatWidget label="Wallet ticker" value="—" sublabel="No wallets yet" />;
       const points = Array.from({ length: 14 }, (_, i) => {
         const key = daysAgoKey(13 - i);
-        const spentAfter = sum(expenses.filter((e) => e.type === "expense" && e.walletName === wallet.name && e.date > key));
-        const earnedAfter = sum(expenses.filter((e) => e.type === "income" && e.walletName === wallet.name && e.date > key));
+        // A transfer leg moves this wallet's balance exactly like an
+        // expense (direction "out") or income (direction "in") would —
+        // omitting it here understated/flattened the reconstructed history
+        // for any wallet that had a transfer in the last 14 days.
+        const spentAfter = sum(
+          expenses.filter(
+            (e) =>
+              e.walletName === wallet.name &&
+              e.date > key &&
+              (e.type === "expense" || (e.type === "transfer" && e.direction === "out")),
+          ),
+        );
+        const earnedAfter = sum(
+          expenses.filter(
+            (e) =>
+              e.walletName === wallet.name &&
+              e.date > key &&
+              (e.type === "income" || (e.type === "transfer" && e.direction === "in")),
+          ),
+        );
         return wallet.balance - earnedAfter + spentAfter;
       });
       const first = points[0] ?? wallet.balance;

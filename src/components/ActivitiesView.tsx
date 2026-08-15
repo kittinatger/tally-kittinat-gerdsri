@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import type { Expense } from "@/types/expense";
 import type { CategoryOption } from "@/types/category";
 import type { WalletOption } from "@/types/wallet";
@@ -11,11 +12,15 @@ import { useMediaQuery, DESKTOP_QUERY } from "@/lib/use-media-query";
 import PullToRefresh from "./PullToRefresh";
 import ExpenseList, { type TypeFilter } from "./ExpenseList";
 import ActivitiesBalanceCard from "./ActivitiesBalanceCard";
-import AddExpenseModal from "./AddExpenseModal";
-import EditExpenseModal from "./EditExpenseModal";
-import ExpenseDetailModal from "./ExpenseDetailModal";
 import ExpenseDetailContent from "./ExpenseDetailContent";
 import AppHeader from "./AppHeader";
+
+// None of these three are ever mounted on first paint (they all require a
+// row click or the Add button first) — loading them on demand keeps them
+// out of Activities' initial JS bundle.
+const AddExpenseModal = dynamic(() => import("./AddExpenseModal"), { ssr: false });
+const EditExpenseModal = dynamic(() => import("./EditExpenseModal"), { ssr: false });
+const ExpenseDetailModal = dynamic(() => import("./ExpenseDetailModal"), { ssr: false });
 
 function sortByDateDesc(a: Expense, b: Expense): number {
   if (a.date !== b.date) return a.date < b.date ? 1 : -1;
@@ -55,11 +60,17 @@ export default function ActivitiesView({
   function handleUpdated(expense: Expense) {
     setExpenses((prev) => prev.map((e) => (e.id === expense.id ? expense : e)).sort(sortByDateDesc));
     setEditing(null);
+    // Keep the desktop detail pane in sync — without this it would keep
+    // showing the pre-edit amount/category/notes until the row is reselected.
+    setViewing((prev) => (prev && prev.id === expense.id ? expense : prev));
   }
 
   function handleDeleted(id: number) {
     setExpenses((prev) => prev.filter((e) => e.id !== id));
     setEditing(null);
+    // The detail pane must not keep showing (and offering to edit) a
+    // transaction that no longer exists.
+    setViewing((prev) => (prev && prev.id === id ? null : prev));
   }
 
   function handleEditFromDetail() {
@@ -70,11 +81,13 @@ export default function ActivitiesView({
   function handleBulkDeleted(ids: number[]) {
     const idSet = new Set(ids);
     setExpenses((prev) => prev.filter((e) => !idSet.has(e.id)));
+    setViewing((prev) => (prev && idSet.has(prev.id) ? null : prev));
   }
 
   function handleBulkUpdated(updated: Expense[]) {
     const byId = new Map(updated.map((e) => [e.id, e]));
     setExpenses((prev) => prev.map((e) => byId.get(e.id) ?? e));
+    setViewing((prev) => (prev ? (byId.get(prev.id) ?? prev) : prev));
   }
 
   return (
