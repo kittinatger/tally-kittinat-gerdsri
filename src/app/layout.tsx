@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Radley, Arimo } from "next/font/google";
+import { Radley, Arimo, Noto_Sans_Thai, Noto_Sans_Arabic, Noto_Sans_Devanagari, Noto_Sans_Bengali } from "next/font/google";
 import ThemeSync from "@/components/ThemeSync";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { LanguageProvider } from "@/lib/language-context";
@@ -15,6 +15,34 @@ const radley = Radley({
 const arimo = Arimo({
   variable: "--font-arimo",
   subsets: ["latin"],
+});
+
+// Arimo/Radley only cover Latin (plus Arimo covers Cyrillic + Vietnamese) —
+// these fill in the scripts they don't, so every supported language renders
+// in a deliberately-matched humanist sans instead of falling back to
+// whatever default font each OS happens to pick. See globals.css's
+// --font-sans/--font-display stacks for how they're chained in. Chinese and
+// Japanese are deliberately left out here — Google's CJK subsets are huge
+// (many MB) and can't be self-hosted piecemeal via next/font, so those two
+// fall back to native OS UI fonts declared directly in globals.css instead.
+const notoSansThai = Noto_Sans_Thai({
+  variable: "--font-noto-thai",
+  subsets: ["thai"],
+});
+
+const notoSansArabic = Noto_Sans_Arabic({
+  variable: "--font-noto-arabic",
+  subsets: ["arabic"],
+});
+
+const notoSansDevanagari = Noto_Sans_Devanagari({
+  variable: "--font-noto-devanagari",
+  subsets: ["devanagari"],
+});
+
+const notoSansBengali = Noto_Sans_Bengali({
+  variable: "--font-noto-bengali",
+  subsets: ["bengali"],
 });
 
 export const metadata: Metadata = {
@@ -54,7 +82,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${radley.variable} ${arimo.variable} h-full antialiased`}
+      className={`${radley.variable} ${arimo.variable} ${notoSansThai.variable} ${notoSansArabic.variable} ${notoSansDevanagari.variable} ${notoSansBengali.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

@@ -93,8 +93,18 @@
   --color-surface-accent-dark: var(--surface-accent-dark);
   --color-line: var(--line);
   --color-nav-hover: var(--nav-hover-bg);
-  --font-sans: var(--font-arimo);
-  --font-display: var(--font-radley);
+  /* Arimo/Radley only cover Latin (Arimo also covers Cyrillic + Vietnamese).
+     The Noto Sans fallbacks fill in Thai/Arabic/Urdu/Hindi/Bengali with a
+     visually matching humanist sans instead of each OS's arbitrary default;
+     Chinese/Japanese fall back to native OS UI fonts (see layout.tsx for why
+     they can't be self-hosted the same way) so those two still render in a
+     clean, deliberately-picked font instead of a generic system default. */
+  --font-sans: var(--font-arimo), var(--font-noto-thai), var(--font-noto-arabic), var(--font-noto-devanagari),
+    var(--font-noto-bengali), "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Hiragino Sans", "Yu Gothic",
+    "Meiryo", sans-serif;
+  --font-display: var(--font-radley), var(--font-noto-thai), var(--font-noto-arabic), var(--font-noto-devanagari),
+    var(--font-noto-bengali), "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Hiragino Sans", "Yu Gothic",
+    "Meiryo", sans-serif;
   --radius-card: 18px;
   --shadow-soft: var(--shadow-soft-value);
 }
