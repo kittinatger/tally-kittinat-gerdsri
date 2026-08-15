@@ -1,5 +1,6 @@
 import { getUserById } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
+import { GearIcon } from "@/lib/icons";
 import SettingsSubpageLayout from "@/components/SettingsSubpageLayout";
 import SupportScreenshot from "@/components/SupportScreenshot";
 
@@ -75,15 +76,6 @@ function ActivitiesIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
       <path d="M4 6h12M4 10h12M4 14h7" />
-    </svg>
-  );
-}
-
-function SettingsIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <circle cx="10" cy="10" r="2.5" />
-      <path d="M10 2.5v1.7m0 11.6v1.7M17.5 10h-1.7M4.2 10H2.5m12.7-5.2-1.2 1.2M6 14 4.8 15.2M15.2 15.2 14 14M6 6 4.8 4.8" />
     </svg>
   );
 }
@@ -258,7 +250,7 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
   {
     id: "settings",
     title: "Settings",
-    icon: <SettingsIcon />,
+    icon: <GearIcon className="h-4.5 w-4.5" />,
     body: (
       <>
         <p>
