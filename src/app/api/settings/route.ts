@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   getAutoConvertCurrency,
   getCurrency,
+  getLanguage,
   getRemaining,
   getConvertWalletBalances,
   getNotifyRecurringEmail,
@@ -9,6 +10,7 @@ import {
   getRequireSplitConfirmation,
   setAutoConvertCurrency,
   setCurrency,
+  setLanguage,
   setRemaining,
   setConvertWalletBalances,
   setNotifyRecurringEmail,
@@ -23,6 +25,7 @@ export async function GET() {
   const [
     remaining,
     currency,
+    language,
     autoConvertCurrency,
     convertWalletBalances,
     notifyRecurringEmail,
@@ -31,6 +34,7 @@ export async function GET() {
   ] = await Promise.all([
     getRemaining(userId),
     getCurrency(userId),
+    getLanguage(userId),
     getAutoConvertCurrency(userId),
     getConvertWalletBalances(userId),
     getNotifyRecurringEmail(userId),
@@ -40,6 +44,7 @@ export async function GET() {
   return NextResponse.json({
     remaining,
     currency,
+    language,
     autoConvertCurrency,
     convertWalletBalances,
     notifyRecurringEmail,
@@ -58,6 +63,7 @@ export async function PATCH(req: NextRequest) {
   const [
     remaining,
     currency,
+    language,
     autoConvertCurrency,
     convertWalletBalances,
     notifyRecurringEmail,
@@ -66,6 +72,7 @@ export async function PATCH(req: NextRequest) {
   ] = await Promise.all([
     parsed.data.remaining !== undefined ? setRemaining(userId, parsed.data.remaining) : getRemaining(userId),
     parsed.data.currency !== undefined ? setCurrency(userId, parsed.data.currency) : getCurrency(userId),
+    parsed.data.language !== undefined ? setLanguage(userId, parsed.data.language) : getLanguage(userId),
     parsed.data.autoConvertCurrency !== undefined
       ? setAutoConvertCurrency(userId, parsed.data.autoConvertCurrency)
       : getAutoConvertCurrency(userId),
@@ -85,6 +92,7 @@ export async function PATCH(req: NextRequest) {
   return NextResponse.json({
     remaining,
     currency,
+    language,
     autoConvertCurrency,
     convertWalletBalances,
     notifyRecurringEmail,

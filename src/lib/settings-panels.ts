@@ -13,6 +13,7 @@ export const PANEL_VALUES = [
   "challenges",
   "splitBills",
   "currency",
+  "language",
   "calendar",
   "dashboardWidgets",
   "recurring",

@@ -19,6 +19,7 @@ import SettingsNavList from "./SettingsNavList";
 // visit meaningfully shrinks its initial JS.
 const AccountPanel = dynamic(() => import("./AccountPanel"), { ssr: false });
 const CurrencySettings = dynamic(() => import("./CurrencySettings"), { ssr: false });
+const LanguageSettings = dynamic(() => import("./LanguageSettings"), { ssr: false });
 const CalendarSettings = dynamic(() => import("./CalendarSettings"), { ssr: false });
 const DashboardWidgetsSettings = dynamic(() => import("./DashboardWidgetsSettings"), { ssr: false });
 const PermissionsSettings = dynamic(() => import("./PermissionsSettings"), { ssr: false });
@@ -45,6 +46,7 @@ const PANEL_TITLES: Record<Panel, string> = {
   challenges: "Challenges",
   splitBills: "Split bills",
   currency: "Currency",
+  language: "Language",
   calendar: "Calendar settings",
   dashboardWidgets: "Customize dashboard",
   recurring: "Recurring transactions",
@@ -122,7 +124,7 @@ export default function SettingsView({
           Settings
         </button>
       )}
-      {(panel === "currency" || panel === "tags" || panel === "calendar" || panel === "friends" || panel === "challenges" || panel === "splitBills") && (
+      {(panel === "currency" || panel === "language" || panel === "tags" || panel === "calendar" || panel === "friends" || panel === "challenges" || panel === "splitBills") && (
         <h2 className="mb-5 font-display text-2xl text-foreground">{PANEL_TITLES[panel]}</h2>
       )}
 
@@ -144,6 +146,7 @@ export default function SettingsView({
       {panel === "challenges" && <ChallengesManager />}
       {panel === "splitBills" && <SplitBillManager />}
       {panel === "currency" && <CurrencySettings />}
+      {panel === "language" && <LanguageSettings />}
       {panel === "calendar" && <CalendarSettings />}
       {panel === "recurring" && <RecurringManager />}
       {panel === "budgets" && <BudgetManager />}

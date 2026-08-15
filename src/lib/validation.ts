@@ -11,6 +11,7 @@ import {
 import { CHALLENGE_TYPES, CHALLENGE_MODES } from "@/lib/challenges";
 import { SPLIT_METHODS, SPLIT_PAYMENT_METHODS } from "@/lib/splits";
 import { CATEGORY_ICON_KEYS } from "@/lib/category-icons";
+import { isLanguageCode } from "@/lib/languages";
 
 export const forgotPasswordInputSchema = z.object({
   email: z.string().trim().email().max(255),
@@ -71,6 +72,7 @@ export const settingsInputSchema = z
     notifyRecurringEmail: z.boolean().optional(),
     notifyBudgetEmail: z.boolean().optional(),
     requireSplitConfirmation: z.boolean().optional(),
+    language: z.string().refine(isLanguageCode, { message: "Unsupported language" }).optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
     message: "Provide at least one setting to update",

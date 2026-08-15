@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 12;
+const CURRENT_SCHEMA_VERSION = 13;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -240,6 +240,11 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS starting_balance_set_at TIMESTAMPTZ NOT NULL DEFAULT now();`;
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS currency TEXT NOT NULL DEFAULT 'USD';`;
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS auto_convert_currency BOOLEAN NOT NULL DEFAULT false;`;
+      // Preferred display language — see src/lib/languages.ts for the
+      // selectable list. The app's UI strings are translated incrementally,
+      // not all at once, so this only affects surfaces that have been
+      // translated so far.
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS language TEXT NOT NULL DEFAULT 'en';`;
 
       // convert_wallet_balances: when a wallet's own currency differs from
       // the app's default, convert it before summing into the Dashboard's
@@ -1224,6 +1229,18 @@ export async function getCurrency(userId: number): Promise<string> {
 export async function setCurrency(userId: number, code: string): Promise<string> {
   await ensureSchema();
   await sql`UPDATE app_settings SET currency = ${code} WHERE user_id = ${userId};`;
+  return code;
+}
+
+export async function getLanguage(userId: number): Promise<string> {
+  await ensureSchema();
+  const { rows } = await sql<{ language: string }>`SELECT language FROM app_settings WHERE user_id = ${userId};`;
+  return rows[0]?.language ?? "en";
+}
+
+export async function setLanguage(userId: number, code: string): Promise<string> {
+  await ensureSchema();
+  await sql`UPDATE app_settings SET language = ${code} WHERE user_id = ${userId};`;
   return code;
 }
 

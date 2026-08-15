@@ -116,6 +116,15 @@ function CoinIcon() {
   );
 }
 
+function GlobeIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <circle cx="10" cy="10" r="7.25" />
+      <path d="M2.75 10h14.5M10 2.75c2 2 3 4.7 3 7.25s-1 5.25-3 7.25c-2-2-3-4.7-3-7.25s1-5.25 3-7.25Z" />
+    </svg>
+  );
+}
+
 function BookIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
@@ -359,6 +368,7 @@ export default function SettingsNavList({
         <SettingsListItem icon={<DashboardWidgetsIcon />} label="Customize dashboard" accent="fuchsia" {...panelItemProps("dashboardWidgets")} />
         <SettingsListItem icon={<CalendarIcon />} label="Calendar settings" accent="blue" {...panelItemProps("calendar")} />
         <SettingsListItem icon={<CoinIcon />} label="Currency" accent="green" {...panelItemProps("currency")} />
+        <SettingsListItem icon={<GlobeIcon />} label="Language" accent="sky" {...panelItemProps("language")} />
       </SettingsSection>
 
       <SettingsSection title="Support">
