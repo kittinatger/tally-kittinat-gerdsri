@@ -1,6 +1,7 @@
 import { getUserById } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import SettingsSubpageLayout from "@/components/SettingsSubpageLayout";
+import SupportScreenshot from "@/components/SupportScreenshot";
 
 export const dynamic = "force-dynamic";
 
@@ -102,13 +103,16 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
     title: "Signing in",
     icon: <SignInIcon />,
     body: (
-      <p>
-        Sign up with a username and password, or use{" "}
-        <span className="font-semibold text-foreground">Continue with GitHub</span> on the sign-in/sign-up screen.
-        Already have a username/password account? Link GitHub to it (or unlink it later) from{" "}
-        <span className="font-semibold text-foreground">Settings &gt; Account &gt; Connected accounts</span> —
-        unlinking is blocked if the account has no password set, so you&apos;re never left with no way back in.
-      </p>
+      <>
+        <p>
+          Sign up with a username and password, or use{" "}
+          <span className="font-semibold text-foreground">Continue with GitHub</span> on the sign-in/sign-up screen.
+          Already have a username/password account? Link GitHub to it (or unlink it later) from{" "}
+          <span className="font-semibold text-foreground">Settings &gt; Account &gt; Connected accounts</span> —
+          unlinking is blocked if the account has no password set, so you&apos;re never left with no way back in.
+        </p>
+        <SupportScreenshot src="signing-in.jpg" alt="Tally's sign-in screen" />
+      </>
     ),
   },
   {
@@ -138,6 +142,7 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
             extracted the same way.
           </li>
         </ul>
+        <SupportScreenshot src="add-transaction.jpg" alt="Add transaction modal, manual entry" />
       </>
     ),
   },
@@ -146,14 +151,17 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
     title: "Automatic receipt import",
     icon: <AutoImportIcon />,
     body: (
-      <p>
-        For receipts you&apos;d rather not scan by hand one at a time: create a personal access token in{" "}
-        <span className="font-semibold text-foreground">Settings &gt; Automatic import</span>, then set up an iOS
-        Shortcut (fully automatic when a photo lands in a chosen album, or a one-tap Share Sheet variant) or the
-        Android share sheet, following the setup steps shown there. Imported transactions are tagged{" "}
-        <span className="font-semibold text-foreground">auto-import</span> and keep the original photo attached, so
-        you can filter by that tag in Activities to spot-check anything misread.
-      </p>
+      <>
+        <p>
+          For receipts you&apos;d rather not scan by hand one at a time: create a personal access token in{" "}
+          <span className="font-semibold text-foreground">Settings &gt; Automatic import</span>, then set up an iOS
+          Shortcut (fully automatic when a photo lands in a chosen album, or a one-tap Share Sheet variant) or the
+          Android share sheet, following the setup steps shown there. Imported transactions are tagged{" "}
+          <span className="font-semibold text-foreground">auto-import</span> and keep the original photo attached, so
+          you can filter by that tag in Activities to spot-check anything misread.
+        </p>
+        <SupportScreenshot src="automatic-import.jpg" alt="Settings > Automatic import, access tokens and setup steps" />
+      </>
     ),
   },
   {
@@ -161,15 +169,18 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
     title: "Wallets",
     icon: <WalletIcon />,
     body: (
-      <p>
-        Track balances across multiple cash/bank/e-wallet pools from{" "}
-        <span className="font-semibold text-foreground">Settings &gt; Wallets</span>. Transfer money between your own
-        wallets (doesn&apos;t count as income or spending), set a default wallet for new transactions, archive ones
-        you no longer use without losing their history, and label each with its own currency. You can also set a{" "}
-        <span className="font-semibold text-foreground">default wallet for Activities</span> — which wallet its
-        balance card and transaction list are scoped to when the page opens, separate from the default used for new
-        transactions.
-      </p>
+      <>
+        <p>
+          Track balances across multiple cash/bank/e-wallet pools from{" "}
+          <span className="font-semibold text-foreground">Settings &gt; Wallets</span>. Transfer money between your
+          own wallets (doesn&apos;t count as income or spending), set a default wallet for new transactions, archive
+          ones you no longer use without losing their history, and label each with its own currency. You can also
+          set a <span className="font-semibold text-foreground">default wallet for Activities</span> — which wallet
+          its balance card and transaction list are scoped to when the page opens, separate from the default used
+          for new transactions.
+        </p>
+        <SupportScreenshot src="wallets.jpg" alt="Settings > Wallets panel" />
+      </>
     ),
   },
   {
@@ -177,13 +188,16 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
     title: "Recurring transactions, budgets & savings goals",
     icon: <BudgetIcon />,
     body: (
-      <p>
-        All under <span className="font-semibold text-foreground">Settings &gt; Budgeting</span>. Recurring rules
-        auto-log rent, subscriptions, or salary on a weekly/monthly/yearly schedule — pause, edit, skip a single
-        upcoming occurrence, or reorder them. Budgets set a monthly spending limit per category, with an optional
-        rollover of unused budget into the next month and a Dashboard alert when you&apos;re near or over. Savings
-        goals track progress toward something you&apos;re saving for, with manual contribute/withdraw.
-      </p>
+      <>
+        <p>
+          All under <span className="font-semibold text-foreground">Settings &gt; Budgeting</span>. Recurring rules
+          auto-log rent, subscriptions, or salary on a weekly/monthly/yearly schedule — pause, edit, skip a single
+          upcoming occurrence, or reorder them. Budgets set a monthly spending limit per category, with an optional
+          rollover of unused budget into the next month and a Dashboard alert when you&apos;re near or over. Savings
+          goals track progress toward something you&apos;re saving for, with manual contribute/withdraw.
+        </p>
+        <SupportScreenshot src="budgeting.jpg" alt="Settings > Budgets panel" />
+      </>
     ),
   },
   {
@@ -191,11 +205,17 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
     title: "Split transactions",
     icon: <SplitIcon />,
     body: (
-      <p>
-        From <span className="font-semibold text-foreground">Add &gt; Manual entry</span>, split one receipt across
-        multiple categories in a single entry — it shows up as one grouped card in Activities, with each line still
-        individually editable or deletable.
-      </p>
+      <>
+        <p>
+          From <span className="font-semibold text-foreground">Add &gt; Manual entry</span>, split one receipt
+          across multiple categories in a single entry — it shows up as one grouped card in Activities, with each
+          line still individually editable or deletable.
+        </p>
+        <SupportScreenshot
+          src="add-transaction.jpg"
+          alt="Manual entry form with the Split into multiple categories checkbox"
+        />
+      </>
     ),
   },
   {
@@ -203,12 +223,15 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
     title: "Dashboard",
     icon: <DashboardIcon />,
     body: (
-      <p>
-        Fully customizable — tap the paintbrush icon to enter the live editor, then add, remove, resize, or reorder
-        any of 50+ widgets (stat cards, trend charts, progress rings, donut charts, heatmaps, leaderboards, and more)
-        to build your own layout. Widgets you haven&apos;t customized are updated with new sensible defaults over
-        time; once you&apos;ve arranged your own, it&apos;s yours to keep.
-      </p>
+      <>
+        <p>
+          Fully customizable — tap the paintbrush icon to enter the live editor, then add, remove, resize, or
+          reorder any of 50+ widgets (stat cards, trend charts, progress rings, donut charts, heatmaps,
+          leaderboards, and more) to build your own layout. Widgets you haven&apos;t customized are updated with new
+          sensible defaults over time; once you&apos;ve arranged your own, it&apos;s yours to keep.
+        </p>
+        <SupportScreenshot src="dashboard-editor.jpg" alt="Customize dashboard live editor" />
+      </>
     ),
   },
   {
@@ -216,16 +239,20 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
     title: "Activities",
     icon: <ActivitiesIcon />,
     body: (
-      <p>
-        Your full transaction log. The balance card up top shows your wallet balance, with Expense/Income/Transfer
-        buttons that filter the list below and a wallet-scope picker to view one wallet instead of all of them. The
-        filter icon next to search opens Category, Tag, Wallet, and Date range filters, and you can export the
-        currently filtered list as a CSV. Tap any transaction to open a read-only detail view — its category, wallet,
-        tags, notes, and attached receipt — with an{" "}
-        <span className="font-semibold text-foreground">Edit transaction</span> button if you actually want to change
-        it, so a stray tap can&apos;t put you into editing by accident. Select multiple transactions to bulk-delete
-        or bulk-tag them at once, or on mobile, swipe a transaction left or right for quick delete/share.
-      </p>
+      <>
+        <p>
+          Your full transaction log. The balance card up top shows your wallet balance, with
+          Expense/Income/Transfer buttons that filter the list below and a wallet-scope picker to view one wallet
+          instead of all of them. The filter icon next to search opens Category, Tag, Wallet, and Date range
+          filters, and you can export the currently filtered list as a CSV. Tap any transaction to open a read-only
+          detail view — its category, wallet, tags, notes, and attached receipt — with an{" "}
+          <span className="font-semibold text-foreground">Edit transaction</span> button if you actually want to
+          change it, so a stray tap can&apos;t put you into editing by accident. Select multiple transactions to
+          bulk-delete or bulk-tag them at once, or on mobile, swipe a transaction left or right for quick
+          delete/share.
+        </p>
+        <SupportScreenshot src="activities.jpg" alt="Activities with a transaction's detail pane open" />
+      </>
     ),
   },
   {
@@ -233,13 +260,16 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
     title: "Settings",
     icon: <SettingsIcon />,
     body: (
-      <p>
-        Manage your account (username, password, email, connected GitHub account, account deletion, sign out of all
-        devices), grant microphone/camera/photos permissions and manage email notifications, customize your expense
-        and income categories and tags, switch light/dark theme, import/export CSV data, set your default currency
-        (with optional automatic conversion for scanned, spoken, or Dashboard amounts in a different currency), and
-        check the Error log if Tally has shown you an error message you want to report.
-      </p>
+      <>
+        <p>
+          Manage your account (username, password, email, connected GitHub account, account deletion, sign out of
+          all devices), grant microphone/camera/photos permissions and manage email notifications, customize your
+          expense and income categories and tags, switch light/dark theme, import/export CSV data, set your default
+          currency (with optional automatic conversion for scanned, spoken, or Dashboard amounts in a different
+          currency), and check the Error log if Tally has shown you an error message you want to report.
+        </p>
+        <SupportScreenshot src="account.jpg" alt="Settings > Account panel" />
+      </>
     ),
   },
   {
@@ -247,11 +277,14 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
     title: "Install & use offline",
     icon: <OfflineIcon />,
     body: (
-      <p>
-        Tally is an installable app — add it to your home screen from your browser&apos;s share/install menu. Once
-        installed, it opens instantly, and if you open it with no connection you&apos;ll see a graceful offline page
-        instead of an error (viewing existing data offline isn&apos;t supported yet).
-      </p>
+      <>
+        <p>
+          Tally is an installable app — add it to your home screen from your browser&apos;s share/install menu. Once
+          installed, it opens instantly, and if you open it with no connection you&apos;ll see a graceful offline
+          page instead of an error (viewing existing data offline isn&apos;t supported yet).
+        </p>
+        <SupportScreenshot src="offline.jpg" alt="Tally's offline page" />
+      </>
     ),
   },
 ];
