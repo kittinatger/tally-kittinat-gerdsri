@@ -3,6 +3,7 @@
 import { describeFetchError } from "@/lib/fetch-error";
 import { logAppError } from "@/lib/error-log";
 import { useRef, useState } from "react";
+import { useT } from "@/lib/language-context";
 import Modal from "./Modal";
 import ReceiptLightbox from "./ReceiptLightbox";
 import ExpenseForm, { type ExpenseFormValues } from "./ExpenseForm";
@@ -49,6 +50,7 @@ export default function EditExpenseModal({
   onDeleted: (id: number) => void;
   onDuplicated?: (expense: Expense) => void;
 }) {
+  const t = useT();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -212,7 +214,7 @@ export default function EditExpenseModal({
   }
 
   return (
-    <Modal onClose={onClose} title="Edit transaction" wide>
+    <Modal onClose={onClose} title={t("modal.editTransaction")} wide>
       {expense.hasReceipt && (
         <button
           type="button"
@@ -223,7 +225,7 @@ export default function EditExpenseModal({
           <img src={receiptUrl} alt="Receipt" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
           <span className="flex items-center gap-1.5 text-sm font-semibold text-surface-foreground">
             <ReceiptIcon />
-            View original receipt
+            {t("activities.viewReceipt")}
           </span>
         </button>
       )}
@@ -255,7 +257,7 @@ export default function EditExpenseModal({
       )}
       <ExpenseForm
         initialValues={initialValues}
-        submitLabel="Save changes"
+        submitLabel={t("form.saveChanges")}
         onSubmit={handleSubmit}
         onCancel={onClose}
         submitting={submitting}
@@ -285,7 +287,7 @@ export default function EditExpenseModal({
             >
               <TrashIcon />
               <span className={confirmingDelete ? "inline" : "hidden sm:inline"}>
-                {deleting ? "Deleting..." : confirmingDelete ? "Confirm delete" : "Delete"}
+                {deleting ? t("common.deleting") : confirmingDelete ? t("common.confirmDelete") : t("common.delete")}
               </span>
             </button>
           </div>

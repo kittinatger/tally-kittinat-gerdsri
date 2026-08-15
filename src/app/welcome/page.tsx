@@ -1,5 +1,6 @@
 import Link from "next/link";
 import SettingsMenu from "@/components/SettingsMenu";
+import T from "@/components/T";
 
 export default async function WelcomePage({
   searchParams,
@@ -31,21 +32,20 @@ export default async function WelcomePage({
 
       <div className="relative flex flex-1 flex-col items-center justify-end gap-6 pb-2">
         <p className="text-center text-sm text-ink-soft">
-          A private, personal expense tracker — add expenses manually or snap a photo of a receipt and let it read
-          the details for you.
+          <T k="auth.welcomeTagline" />
         </p>
         <div className="w-full max-w-sm space-y-3">
           <Link
             href={loginHref}
             className="flex w-full items-center justify-center rounded-full bg-navy px-4 py-3 font-semibold text-white shadow-soft transition hover:bg-navy-dark"
           >
-            Sign in
+            <T k="auth.signIn" />
           </Link>
           <Link
             href="/register"
             className="flex w-full items-center justify-center rounded-full border border-navy px-4 py-3 font-semibold text-navy transition hover:bg-navy/10"
           >
-            Create account
+            <T k="auth.createAccount" />
           </Link>
         </div>
       </div>

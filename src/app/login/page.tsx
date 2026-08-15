@@ -1,5 +1,6 @@
 import LoginForm from "@/components/LoginForm";
 import SettingsMenu from "@/components/SettingsMenu";
+import T from "@/components/T";
 import { APP_VERSION } from "@/lib/version";
 
 export default async function LoginPage({
@@ -31,14 +32,18 @@ export default async function LoginPage({
       <div className="hidden overflow-hidden rounded-card border border-line bg-surface shadow-soft lg:flex lg:w-full lg:max-w-3xl">
         <div className="lg:flex lg:w-1/2 lg:flex-col lg:justify-center lg:gap-4 lg:bg-gradient-to-br lg:from-navy lg:via-navy-dark lg:to-navy-darker lg:p-10">
           <img src="/favicon-dark.svg" alt="" className="h-10 w-10" />
-          <h2 className="font-display text-3xl leading-tight text-white">Welcome back to Tally</h2>
+          <h2 className="font-display text-3xl leading-tight text-white">
+            <T k="auth.welcomeBackTitle" />
+          </h2>
           <p className="text-sm text-white/80">
-            Sign in to pick up right where you left off — your wallets, budgets, and activity are all waiting.
+            <T k="auth.welcomeBackDesc" />
           </p>
         </div>
 
         <div className="lg:flex lg:w-1/2 lg:flex-col lg:justify-center lg:p-10">
-          <h1 className="mb-6 font-display text-2xl text-foreground">Sign in</h1>
+          <h1 className="mb-6 font-display text-2xl text-foreground">
+            <T k="auth.signIn" />
+          </h1>
           <LoginForm next={next ?? "/"} oauthError={error} />
         </div>
       </div>

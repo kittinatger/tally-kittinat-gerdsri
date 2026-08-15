@@ -1,4 +1,5 @@
 import { dotClasses } from "@/lib/category-styles";
+import { useT } from "@/lib/language-context";
 
 // The large "hero" balance card — its own blue accent, matching
 // BalanceStatCard's total-balance color language (distinct from income/
@@ -16,10 +17,11 @@ export default function BalanceHeroWidget({
   onAddIncome: () => void;
   onAddExpense: () => void;
 }) {
+  const t = useT();
   return (
     <div className="relative overflow-hidden rounded-card border border-surface-line bg-gradient-to-br from-blue-500 to-blue-700 p-5 text-white shadow-sm">
       <div className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
-      <p className="relative text-xs font-semibold uppercase tracking-wide text-white/70">Your balance</p>
+      <p className="relative text-xs font-semibold uppercase tracking-wide text-white/70">{t("activities.yourBalance")}</p>
       <p className="relative mt-1.5 truncate font-display text-3xl">{balance}</p>
 
       {wallets.length > 0 && (
@@ -39,7 +41,7 @@ export default function BalanceHeroWidget({
       {lastTransaction && (
         <div className="relative mt-4 flex items-center justify-between gap-2 rounded-2xl bg-white/10 px-3.5 py-2.5">
           <div className="min-w-0">
-            <p className="truncate text-xs text-white/60">Last transaction</p>
+            <p className="truncate text-xs text-white/60">{t("activities.lastTransaction")}</p>
             <p className="truncate text-sm font-semibold">{lastTransaction.label}</p>
           </div>
           <p className="shrink-0 text-sm font-bold">{lastTransaction.value}</p>
@@ -51,13 +53,13 @@ export default function BalanceHeroWidget({
           onClick={onAddIncome}
           className="flex-1 rounded-full bg-white/15 py-2.5 text-sm font-semibold transition hover:bg-white/25"
         >
-          + Income
+          + {t("common.income")}
         </button>
         <button
           onClick={onAddExpense}
           className="flex-1 rounded-full bg-white py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-white/90"
         >
-          + Expense
+          + {t("common.expense")}
         </button>
       </div>
     </div>

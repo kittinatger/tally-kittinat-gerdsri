@@ -9,6 +9,7 @@ import { CategoriesProvider } from "@/lib/categories-context";
 import { CurrencyProvider } from "@/lib/currency-context";
 import { WalletsProvider } from "@/lib/wallets-context";
 import { useMediaQuery, DESKTOP_QUERY } from "@/lib/use-media-query";
+import { useT } from "@/lib/language-context";
 import PullToRefresh from "./PullToRefresh";
 import ExpenseList, { type TypeFilter } from "./ExpenseList";
 import ActivitiesBalanceCard from "./ActivitiesBalanceCard";
@@ -43,6 +44,7 @@ export default function ActivitiesView({
    * wallet. */
   initialWalletFilter?: string;
 }) {
+  const t = useT();
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [addOpen, setAddOpen] = useState(false);
   const [viewing, setViewing] = useState<Expense | null>(null);
@@ -132,8 +134,8 @@ export default function ActivitiesView({
                   </div>
                 ) : (
                   <div className="flex h-64 flex-col items-center justify-center gap-1 rounded-card border border-dashed border-surface-line px-6 text-center">
-                    <p className="text-sm font-medium text-foreground">No transaction selected</p>
-                    <p className="text-xs text-ink-soft">Pick one from the list to see its details here.</p>
+                    <p className="text-sm font-medium text-foreground">{t("activities.noTransactionSelected")}</p>
+                    <p className="text-xs text-ink-soft">{t("activities.noTransactionSelectedDesc")}</p>
                   </div>
                 )}
               </div>

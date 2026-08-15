@@ -8,6 +8,7 @@ import { useAllCategories } from "@/lib/categories-context";
 import { useWallets } from "@/lib/wallets-context";
 import { useCurrency } from "@/lib/currency-context";
 import { badgeClasses } from "@/lib/category-styles";
+import { useT, useLanguage } from "@/lib/language-context";
 import ExpenseRow from "./ExpenseRow";
 import SplitExpenseGroup from "./SplitExpenseGroup";
 import FilterDropdown from "./FilterDropdown";
@@ -82,6 +83,8 @@ export default function ExpenseList({
   walletFilter: string;
   onWalletFilterChange: (wallet: string) => void;
 }) {
+  const t = useT();
+  const language = useLanguage();
   const allCategories = useAllCategories();
   const wallets = useWallets();
   const currency = useCurrency();
@@ -306,8 +309,8 @@ export default function ExpenseList({
           <path d="M5 2.5h10v15l-2-1.3-1.5 1.3-1.5-1.3-1.5 1.3-1.5-1.3-2 1.3v-15Z" />
           <path d="M7.5 6.5h5M7.5 9.5h5M7.5 12.5h3" />
         </svg>
-        <p className="font-display text-lg text-foreground">No transactions yet</p>
-        <p className="text-sm text-ink-soft">Add an expense or income entry, or scan a document, to get started.</p>
+        <p className="font-display text-lg text-foreground">{t("activities.noTransactionsYet")}</p>
+        <p className="text-sm text-ink-soft">{t("activities.noTransactionsDesc")}</p>
       </div>
     );
   }
@@ -334,7 +337,7 @@ export default function ExpenseList({
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search merchant, notes, or tags..."
+            placeholder={t("activities.searchPlaceholder")}
             className="w-full rounded-full border border-line bg-surface py-2.5 pl-9 pr-3 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
         </div>
@@ -342,7 +345,7 @@ export default function ExpenseList({
         <button
           type="button"
           onClick={() => setFilterOpen(true)}
-          aria-label="Filters"
+          aria-label={t("modal.filters")}
           className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition ${
             activeFilterCount > 0
               ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
@@ -361,13 +364,13 @@ export default function ExpenseList({
       </div>
 
       {filterOpen && (
-        <Modal onClose={() => setFilterOpen(false)} title="Filters">
+        <Modal onClose={() => setFilterOpen(false)} title={t("modal.filters")}>
           <div className="space-y-4">
             <div>
-              <p className="mb-1.5 text-sm font-semibold text-surface-foreground-soft">Category</p>
+              <p className="mb-1.5 text-sm font-semibold text-surface-foreground-soft">{t("common.category")}</p>
               <FilterDropdown
                 value={effectiveCategoryFilter}
-                allLabel="All categories"
+                allLabel={t("activities.allCategories")}
                 options={categoryOptions}
                 onChange={setCategoryFilter}
               />
@@ -375,17 +378,17 @@ export default function ExpenseList({
 
             {tagOptions.length > 0 && (
               <div>
-                <p className="mb-1.5 text-sm font-semibold text-surface-foreground-soft">Tag</p>
-                <FilterDropdown value={tagFilter} allLabel="All tags" options={tagOptions} onChange={setTagFilter} />
+                <p className="mb-1.5 text-sm font-semibold text-surface-foreground-soft">{t("activities.tag")}</p>
+                <FilterDropdown value={tagFilter} allLabel={t("activities.allTags")} options={tagOptions} onChange={setTagFilter} />
               </div>
             )}
 
             {wallets.length > 1 && (
               <div>
-                <p className="mb-1.5 text-sm font-semibold text-surface-foreground-soft">Wallet</p>
+                <p className="mb-1.5 text-sm font-semibold text-surface-foreground-soft">{t("common.wallet")}</p>
                 <FilterDropdown
                   value={walletFilter}
-                  allLabel="All wallets"
+                  allLabel={t("activities.allWallets")}
                   options={wallets.map((w) => w.name)}
                   onChange={onWalletFilterChange}
                 />
@@ -393,7 +396,7 @@ export default function ExpenseList({
             )}
 
             <div>
-              <p className="mb-1.5 text-sm font-semibold text-surface-foreground-soft">Date range</p>
+              <p className="mb-1.5 text-sm font-semibold text-surface-foreground-soft">{t("activities.dateRange")}</p>
               <DateRangeFilter
                 from={dateFrom}
                 to={dateTo}
@@ -410,7 +413,7 @@ export default function ExpenseList({
                 onClick={clearAllFilters}
                 className="w-full rounded-full px-4 py-2.5 text-sm font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
               >
-                Clear all filters
+                {t("activities.clearAllFilters")}
               </button>
             )}
           </div>
@@ -420,7 +423,8 @@ export default function ExpenseList({
       <div className="mb-4 flex items-center justify-between gap-3 rounded-card border border-surface-line bg-surface px-4 py-3.5">
         <div className="min-w-0">
           <p className="text-xs font-medium text-surface-foreground-soft">
-            {filtered.length} transaction{filtered.length === 1 ? "" : "s"}
+            {filtered.length} {t("activities.transaction")}
+            {language === "en" && filtered.length !== 1 ? "s" : ""}
           </p>
           <p
             className={`text-lg font-bold tabular-nums ${
@@ -435,22 +439,22 @@ export default function ExpenseList({
           <button
             onClick={exportCsv}
             disabled={filtered.length === 0}
-            aria-label="Export CSV"
+            aria-label={t("activities.export")}
             className="flex items-center gap-1.5 rounded-full border border-line px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-bg-soft disabled:opacity-40"
           >
             <DownloadIcon />
-            <span className="hidden sm:inline">Export</span>
+            <span className="hidden sm:inline">{t("activities.export")}</span>
           </button>
           <button
             onClick={toggleSelectMode}
             disabled={filtered.length === 0}
-            aria-label={selectMode ? "Cancel selection" : "Select transactions"}
+            aria-label={selectMode ? t("common.cancel") : t("activities.select")}
             className={`flex items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-semibold transition disabled:opacity-40 ${
               selectMode ? "border-surface-accent bg-surface-accent/10 text-surface-accent" : "border-line text-foreground hover:bg-bg-soft"
             }`}
           >
             <SelectCheckIcon />
-            {selectMode ? "Cancel" : "Select"}
+            {selectMode ? t("common.cancel") : t("activities.select")}
           </button>
         </div>
       </div>
@@ -465,7 +469,7 @@ export default function ExpenseList({
               type="text"
               value={bulkTagInput}
               onChange={(e) => setBulkTagInput(e.target.value)}
-              placeholder="Add tag to selected..."
+              placeholder={t("activities.addTagPlaceholder")}
               disabled={selectedIds.size === 0}
               className="min-w-0 flex-1 rounded-full border border-surface-line bg-surface-soft px-3 py-1.5 text-sm text-surface-foreground outline-none transition focus:border-surface-accent focus:ring-2 focus:ring-surface-accent/20 disabled:opacity-50"
             />
@@ -474,7 +478,7 @@ export default function ExpenseList({
               disabled={bulkBusy || selectedIds.size === 0 || !bulkTagInput.trim()}
               className="shrink-0 rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-bg-soft disabled:opacity-40"
             >
-              Add tag
+              {t("activities.addTag")}
             </button>
             <button
               onClick={handleBulkDelete}
@@ -485,7 +489,7 @@ export default function ExpenseList({
                   : "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
               }`}
             >
-              {bulkBusy ? "Working..." : confirmBulkDelete ? "Confirm delete" : "Delete"}
+              {bulkBusy ? t("common.saving") : confirmBulkDelete ? t("common.confirmDelete") : t("common.delete")}
             </button>
           </div>
           {bulkError && <p className="w-full text-xs text-red-600 dark:text-red-400">{bulkError}</p>}
@@ -498,8 +502,8 @@ export default function ExpenseList({
             <circle cx="8.7" cy="8.7" r="5.5" />
             <path d="M16.5 16.5l-3.6-3.6" />
           </svg>
-          <p className="font-display text-lg text-foreground">No matching transactions</p>
-          <p className="text-sm text-ink-soft">Try a different search term or clear the filters.</p>
+          <p className="font-display text-lg text-foreground">{t("activities.noMatchingTransactions")}</p>
+          <p className="text-sm text-ink-soft">{t("activities.noMatchingDesc")}</p>
         </div>
       ) : (
         <div className="space-y-6">

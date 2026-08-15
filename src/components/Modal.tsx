@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { CloseIcon } from "@/lib/icons";
+import { useT } from "@/lib/language-context";
 
 export default function Modal({
   onClose,
@@ -19,6 +20,7 @@ export default function Modal({
   wide?: boolean;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const t = useT();
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -81,7 +83,7 @@ export default function Modal({
           <h2 className="font-display text-xl text-surface-foreground">{title}</h2>
           <button
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t("common.close")}
             className="rounded-full p-1.5 text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
           >
             <CloseIcon className="h-3.5 w-3.5" />

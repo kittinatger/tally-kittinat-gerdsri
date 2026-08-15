@@ -8,6 +8,7 @@ import { useCategoryColor, useCategoryIcon } from "@/lib/categories-context";
 import { useCurrency } from "@/lib/currency-context";
 import { isCategoryIconKey } from "@/lib/category-icons";
 import { CategoryIcon, EditIcon } from "@/lib/icons";
+import { useT } from "@/lib/language-context";
 import ReceiptLightbox from "./ReceiptLightbox";
 
 function CalendarIcon() {
@@ -44,6 +45,7 @@ function ReceiptIcon() {
  * component means both surfaces always show the same transaction detail.
  */
 export default function ExpenseDetailContent({ expense, onEdit }: { expense: Expense; onEdit: () => void }) {
+  const t = useT();
   const color = useCategoryColor(expense.type, expense.category);
   const icon = useCategoryIcon(expense.type, expense.category);
   const currency = useCurrency();
@@ -101,7 +103,7 @@ export default function ExpenseDetailContent({ expense, onEdit }: { expense: Exp
             <CalendarIcon />
           </span>
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-surface-foreground-soft">Date</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-surface-foreground-soft">{t("common.date")}</p>
             <p className="truncate text-sm font-medium text-surface-foreground">{formatDateLong(expense.date)}</p>
           </div>
         </div>
@@ -111,7 +113,7 @@ export default function ExpenseDetailContent({ expense, onEdit }: { expense: Exp
               <WalletIcon />
             </span>
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-surface-foreground-soft">Wallet</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-surface-foreground-soft">{t("common.wallet")}</p>
               <p className="truncate text-sm font-medium text-surface-foreground">{expense.walletName}</p>
             </div>
           </div>
@@ -133,7 +135,7 @@ export default function ExpenseDetailContent({ expense, onEdit }: { expense: Exp
 
       {expense.notes && (
         <div className="mt-2.5 rounded-card border border-surface-line bg-surface-soft px-3.5 py-3">
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-surface-foreground-soft">Notes</p>
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-surface-foreground-soft">{t("common.notes")}</p>
           <p className="whitespace-pre-wrap text-sm text-surface-foreground">{expense.notes}</p>
         </div>
       )}
@@ -148,7 +150,7 @@ export default function ExpenseDetailContent({ expense, onEdit }: { expense: Exp
           <img src={receiptUrl} alt="Receipt" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
           <span className="flex items-center gap-1.5 text-sm font-semibold text-surface-foreground">
             <ReceiptIcon />
-            View original receipt
+            {t("activities.viewReceipt")}
           </span>
         </button>
       )}
@@ -161,7 +163,7 @@ export default function ExpenseDetailContent({ expense, onEdit }: { expense: Exp
         className={`mt-5 flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition ${editButtonClass}`}
       >
         <EditIcon />
-        Edit transaction
+        {t("modal.editTransaction")}
       </button>
     </div>
   );

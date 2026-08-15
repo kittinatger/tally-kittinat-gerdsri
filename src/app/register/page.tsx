@@ -1,12 +1,14 @@
 import Link from "next/link";
 import RegisterForm from "@/components/RegisterForm";
 import SettingsMenu from "@/components/SettingsMenu";
+import T from "@/components/T";
 import { ChevronLeftIcon } from "@/lib/icons";
+import type { MessageKey } from "@/lib/i18n/messages";
 
-const STEPS = [
-  { label: "Create your account", active: true },
-  { label: "Set up a wallet" },
-  { label: "Log your first expense" },
+const STEPS: { key: MessageKey; active?: boolean }[] = [
+  { key: "auth.stepCreateAccount", active: true },
+  { key: "auth.stepSetupWallet" },
+  { key: "auth.stepLogExpense" },
 ];
 
 export default function RegisterPage() {
@@ -26,7 +28,9 @@ export default function RegisterPage() {
           >
             <ChevronLeftIcon className="h-5 w-5" />
           </Link>
-          <h1 className="font-display text-2xl text-foreground">Create account</h1>
+          <h1 className="font-display text-2xl text-foreground">
+            <T k="auth.createAccount" />
+          </h1>
         </div>
         <RegisterForm />
       </div>
@@ -36,13 +40,17 @@ export default function RegisterPage() {
         <div className="lg:flex lg:w-1/2 lg:flex-col lg:justify-between lg:bg-gradient-to-br lg:from-navy lg:via-navy-dark lg:to-navy-darker lg:p-10">
           <div className="flex flex-col gap-4">
             <img src="/favicon-dark.svg" alt="" className="h-10 w-10" />
-            <h2 className="font-display text-3xl leading-tight text-white">Get started with Tally</h2>
-            <p className="text-sm text-white/80">Complete these easy steps to start tracking your money.</p>
+            <h2 className="font-display text-3xl leading-tight text-white">
+              <T k="auth.getStarted" />
+            </h2>
+            <p className="text-sm text-white/80">
+              <T k="auth.completeSteps" />
+            </p>
           </div>
           <div className="flex flex-col gap-2.5">
             {STEPS.map((step, i) => (
               <div
-                key={step.label}
+                key={step.key}
                 className={`flex items-center gap-3 rounded-card p-3 ${
                   step.active ? "bg-white text-navy-darker" : "bg-white/10 text-white/70"
                 }`}
@@ -54,14 +62,18 @@ export default function RegisterPage() {
                 >
                   {i + 1}
                 </span>
-                <span className="text-sm font-semibold">{step.label}</span>
+                <span className="text-sm font-semibold">
+                  <T k={step.key} />
+                </span>
               </div>
             ))}
           </div>
         </div>
 
         <div className="lg:flex lg:w-1/2 lg:flex-col lg:justify-center lg:p-10">
-          <h1 className="mb-6 font-display text-2xl text-foreground">Sign up</h1>
+          <h1 className="mb-6 font-display text-2xl text-foreground">
+            <T k="auth.signUp" />
+          </h1>
           <RegisterForm />
         </div>
       </div>

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { formatCurrency } from "@/lib/format";
 import { dotClasses } from "@/lib/category-styles";
 import { GearIcon } from "@/lib/icons";
+import { useT } from "@/lib/language-context";
 import type { TypeFilter } from "./ExpenseList";
 
 function IncomeIcon() {
@@ -30,12 +31,6 @@ function TransferIcon() {
   );
 }
 
-const FILTER_BUTTONS: { type: Exclude<TypeFilter, "all">; label: string; icon: () => React.ReactNode }[] = [
-  { type: "expense", label: "Expense", icon: ExpenseIcon },
-  { type: "income", label: "Income", icon: IncomeIcon },
-  { type: "transfer", label: "Transfer", icon: TransferIcon },
-];
-
 export default function ActivitiesBalanceCard({
   wallets,
   currency,
@@ -51,6 +46,12 @@ export default function ActivitiesBalanceCard({
   walletFilter: string;
   onWalletFilterChange: (wallet: string) => void;
 }) {
+  const t = useT();
+  const FILTER_BUTTONS: { type: Exclude<TypeFilter, "all">; label: string; icon: () => React.ReactNode }[] = [
+    { type: "expense", label: t("common.expense"), icon: ExpenseIcon },
+    { type: "income", label: t("common.income"), icon: IncomeIcon },
+    { type: "transfer", label: t("common.transfer"), icon: TransferIcon },
+  ];
   const [scopeOpen, setScopeOpen] = useState(false);
   const scopeRef = useRef<HTMLDivElement>(null);
 
@@ -90,7 +91,7 @@ export default function ActivitiesBalanceCard({
           <button
             type="button"
             onClick={() => setScopeOpen((o) => !o)}
-            aria-label="Choose wallet"
+            aria-label={t("activities.chooseWallet")}
             aria-expanded={scopeOpen}
             aria-haspopup="listbox"
             className="flex h-8 w-8 items-center justify-center rounded-full text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
@@ -113,7 +114,7 @@ export default function ActivitiesBalanceCard({
                     : "text-surface-foreground-soft hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
                 }`}
               >
-                All wallets
+                {t("activities.allWallets")}
               </button>
               {wallets.map((w) => (
                 <button
@@ -139,7 +140,7 @@ export default function ActivitiesBalanceCard({
 
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">
-          {walletFilter === "all" ? "Your balance" : walletFilter}
+          {walletFilter === "all" ? t("activities.yourBalance") : walletFilter}
         </p>
         <p className="mt-1.5 truncate font-display text-3xl">{formatCurrency(balance, currency)}</p>
 

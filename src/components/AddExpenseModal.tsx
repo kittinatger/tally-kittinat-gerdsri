@@ -14,6 +14,7 @@ import { formatCurrency } from "@/lib/format";
 import { downscaleImage } from "@/lib/image-downscale";
 import { describeFetchError } from "@/lib/fetch-error";
 import { logAppError } from "@/lib/error-log";
+import { useT } from "@/lib/language-context";
 
 type Tab = "manual" | "scan" | "voice";
 type ScanStatus = "idle" | "analyzing" | "review" | "error";
@@ -56,6 +57,7 @@ export default function AddExpenseModal({
   const allCategories = useAllCategories();
   const wallets = useWallets();
   const currency = useCurrency();
+  const t = useT();
   const [tab, setTab] = useState<Tab>("manual");
   const [queue, setQueue] = useState<File[]>([]);
   const [queueIndex, setQueueIndex] = useState(0);
@@ -320,7 +322,7 @@ export default function AddExpenseModal({
   }
 
   return (
-    <Modal onClose={onClose} title="Add transaction" wide={tab === "manual"}>
+    <Modal onClose={onClose} title={t("form.addTransaction")} wide={tab === "manual"}>
       {/* Three tappable method tiles instead of a thin pill row — each
           carries its own accent (matching the amber/violet used on the
           scan/voice review cards below) so which entry method you're on
@@ -341,7 +343,7 @@ export default function AddExpenseModal({
           >
             <PencilTabIcon />
           </span>
-          Manual
+          {t("modal.manual")}
         </button>
         <button
           onClick={() => setTab("scan")}
@@ -358,7 +360,7 @@ export default function AddExpenseModal({
           >
             <ScanTabIcon />
           </span>
-          Scan
+          {t("modal.scan")}
         </button>
         <button
           onClick={() => setTab("voice")}
@@ -375,14 +377,14 @@ export default function AddExpenseModal({
           >
             <MicTabIcon />
           </span>
-          Speak
+          {t("modal.speak")}
         </button>
       </div>
 
       {tab === "manual" && (
         <ExpenseForm
           initialValues={{ ...emptyExpenseFormValues, type: initialType }}
-          submitLabel="Add transaction"
+          submitLabel={t("form.addTransaction")}
           onSubmit={handleManualSubmit}
           submitting={submitting}
           error={submitError}

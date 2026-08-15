@@ -2,6 +2,7 @@
 
 import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
+import { useT } from "@/lib/language-context";
 import Modal from "./Modal";
 
 export default function EditBalanceModal({
@@ -13,6 +14,7 @@ export default function EditBalanceModal({
   onClose: () => void;
   onSaved: (value: number) => void;
 }) {
+  const t = useT();
   const [value, setValue] = useState(String(currentValue));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,11 +48,11 @@ export default function EditBalanceModal({
   }
 
   return (
-    <Modal onClose={onClose} title="Remaining balance">
+    <Modal onClose={onClose} title={t("modal.remainingBalance")}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="remaining" className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">
-            Set remaining balance to
+            {t("modal.setRemainingTo")}
           </label>
           <input
             id="remaining"
@@ -76,14 +78,14 @@ export default function EditBalanceModal({
             onClick={onClose}
             className="rounded-full px-4 py-2.5 text-sm font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="submit"
             disabled={submitting}
             className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
           >
-            {submitting ? "Saving..." : "Save"}
+            {submitting ? t("common.saving") : t("common.save")}
           </button>
         </div>
       </form>

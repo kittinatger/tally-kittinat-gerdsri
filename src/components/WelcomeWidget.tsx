@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency } from "@/lib/format";
+import { useT } from "@/lib/language-context";
 
 export default function WelcomeWidget({
   username,
   remaining,
-  balanceLabel = "All Accounts • Total Balance",
+  balanceLabel,
   onAddExpense,
   onAddIncome,
   onAddTransfer,
@@ -22,6 +23,8 @@ export default function WelcomeWidget({
   onAddTransfer?: () => void;
 }) {
   const currency = useCurrency();
+  const t = useT();
+  const resolvedBalanceLabel = balanceLabel ?? t("welcome.allAccountsBalance");
   const [pictureUrl, setPictureUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -57,14 +60,17 @@ export default function WelcomeWidget({
             </div>
           )}
           <div className="min-w-0">
-            <p className="truncate font-display text-lg text-foreground">Hey, {username}</p>
-            <p className="text-xs text-surface-foreground-soft">Welcome back</p>
+            <p className="truncate font-display text-lg text-foreground">
+              {t("welcome.greeting")}
+              {username}
+            </p>
+            <p className="text-xs text-surface-foreground-soft">{t("welcome.welcomeBack")}</p>
           </div>
         </div>
       </div>
 
       <div className={`relative ${onAddExpense || onAddIncome || onAddTransfer ? "mb-5 space-y-1" : "space-y-1"}`}>
-        <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">{balanceLabel}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">{resolvedBalanceLabel}</p>
         <p className="font-display text-3xl text-foreground">{formatCurrency(remaining, currency)}</p>
       </div>
 
@@ -75,7 +81,7 @@ export default function WelcomeWidget({
               onClick={onAddExpense}
               className="flex-1 rounded-2xl bg-gradient-to-br from-rose-400 to-rose-600 px-3 py-2.5 text-center text-sm font-semibold text-white shadow-sm transition hover:brightness-110"
             >
-              Expense
+              {t("common.expense")}
             </button>
           )}
           {onAddIncome && (
@@ -83,7 +89,7 @@ export default function WelcomeWidget({
               onClick={onAddIncome}
               className="flex-1 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 px-3 py-2.5 text-center text-sm font-semibold text-white shadow-sm transition hover:brightness-110"
             >
-              Income
+              {t("common.income")}
             </button>
           )}
           {onAddTransfer && (
@@ -91,7 +97,7 @@ export default function WelcomeWidget({
               onClick={onAddTransfer}
               className="flex-1 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 px-3 py-2.5 text-center text-sm font-semibold text-white shadow-sm transition hover:brightness-110"
             >
-              Transfer
+              {t("common.transfer")}
             </button>
           )}
         </div>

@@ -4,6 +4,7 @@ import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useT } from "@/lib/language-context";
 
 function EyeIcon({ open }: { open: boolean }) {
   if (open) {
@@ -35,6 +36,7 @@ function GithubIcon() {
 
 export default function RegisterForm() {
   const router = useRouter();
+  const t = useT();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -76,7 +78,7 @@ export default function RegisterForm() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="username" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-            Username
+            {t("auth.username")}
           </label>
           <input
             id="username"
@@ -87,12 +89,12 @@ export default function RegisterForm() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             className="w-full rounded-card border border-line bg-bg-soft px-4 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-            placeholder="3-32 characters: letters, numbers, . _ -"
+            placeholder={t("auth.usernameHint")}
           />
         </div>
         <div>
           <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-            Password
+            {t("auth.password")}
           </label>
           <div className="relative">
             <input
@@ -104,7 +106,7 @@ export default function RegisterForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-card border border-line bg-bg-soft px-4 py-2.5 pr-11 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-              placeholder="At least 8 characters"
+              placeholder={t("auth.passwordHint8")}
             />
             <button
               type="button"
@@ -119,7 +121,7 @@ export default function RegisterForm() {
         </div>
         <div>
           <label htmlFor="confirmPassword" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-            Confirm password
+            {t("auth.confirmPassword")}
           </label>
           <input
             id="confirmPassword"
@@ -130,7 +132,7 @@ export default function RegisterForm() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             className="w-full rounded-card border border-line bg-bg-soft px-4 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-            placeholder="Re-enter your password"
+            placeholder={t("auth.reenterPassword")}
           />
         </div>
         <label className="flex items-start gap-2.5 text-sm text-ink-soft">
@@ -142,13 +144,13 @@ export default function RegisterForm() {
             className="mt-0.5 h-4 w-4 shrink-0 rounded border-line text-navy focus:ring-navy/20"
           />
           <span>
-            I agree to the{" "}
+            {t("auth.agreeToThe")}{" "}
             <Link href="/terms" className="font-semibold text-navy hover:underline">
-              Terms &amp; Conditions
+              {t("auth.termsAndConditions")}
             </Link>{" "}
-            and{" "}
+            {t("auth.and")}{" "}
             <Link href="/privacy" className="font-semibold text-navy hover:underline">
-              Privacy Policy
+              {t("auth.privacyPolicy")}
             </Link>
           </span>
         </label>
@@ -162,7 +164,7 @@ export default function RegisterForm() {
           disabled={loading || !agreed}
           className="w-full rounded-full bg-navy px-4 py-2.5 font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
         >
-          {loading ? "Creating account..." : "Create account"}
+          {loading ? t("auth.creatingAccount") : t("auth.createAccount")}
         </button>
       </form>
 
@@ -177,13 +179,13 @@ export default function RegisterForm() {
         className="flex w-full items-center justify-center gap-2 rounded-full border border-line bg-bg-soft px-4 py-2.5 font-semibold text-foreground shadow-soft transition hover:bg-[var(--nav-hover-bg)]"
       >
         <GithubIcon />
-        Continue with GitHub
+        {t("auth.continueWithGithub")}
       </a>
 
       <p className="mt-6 text-center text-sm text-ink-soft">
-        Already have an account?{" "}
+        {t("auth.alreadyHaveAccount")}{" "}
         <Link href="/login" className="font-semibold text-navy hover:underline">
-          Sign in
+          {t("auth.signIn")}
         </Link>
       </p>
     </div>

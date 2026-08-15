@@ -7,6 +7,7 @@ import { useWallets } from "@/lib/wallets-context";
 import { todayInputValue } from "@/lib/format";
 import { dotClasses } from "@/lib/category-styles";
 import { ChevronIcon } from "@/lib/icons";
+import { useT } from "@/lib/language-context";
 import TagInput from "./TagInput";
 import DatePicker from "./DatePicker";
 import SelectDropdown from "./SelectDropdown";
@@ -74,6 +75,7 @@ export default function ExpenseForm({
   /** Shows a "Split this bill with friends" toggle for expense entries — see AddExpenseModal. */
   allowFriendSplit?: boolean;
 }) {
+  const t = useT();
   const [values, setValues] = useState<ExpenseFormValues>(initialValues);
   const [splitMode, setSplitMode] = useState(false);
   const [splitLines, setSplitLines] = useState<{ category: string; amount: string }[]>([
@@ -107,7 +109,8 @@ export default function ExpenseForm({
   const defaultWallet = wallets.find((w) => w.isDefault) ?? wallets[0];
   const selectedWalletId = values.walletId ?? defaultWallet?.id ?? null;
   const selectedWalletName = wallets.find((w) => w.id === selectedWalletId)?.name ?? "";
-  const sourceLabel = values.type === "income" ? "Source" : values.type === "transfer" ? "Description" : "Merchant";
+  const sourceLabel =
+    values.type === "income" ? t("form.source") : values.type === "transfer" ? t("form.description") : t("form.merchant");
   // Collapsed by default to keep the common case short — expanded upfront if
   // there's already something in one of these fields (e.g. editing an
   // existing entry) so nothing looks silently hidden.
@@ -229,7 +232,7 @@ export default function ExpenseForm({
                 values.type === "expense" ? chipActiveClass + " shadow-sm" : "text-white/75 hover:text-white"
               }`}
             >
-              Expense
+              {t("common.expense")}
             </button>
             <button
               type="button"
@@ -238,7 +241,7 @@ export default function ExpenseForm({
                 values.type === "income" ? chipActiveClass + " shadow-sm" : "text-white/75 hover:text-white"
               }`}
             >
-              Income
+              {t("common.income")}
             </button>
             <button
               type="button"
@@ -247,7 +250,7 @@ export default function ExpenseForm({
                 values.type === "transfer" ? chipActiveClass + " shadow-sm" : "text-white/75 hover:text-white"
               }`}
             >
-              Transfer
+              {t("common.transfer")}
             </button>
           </div>
 
@@ -261,7 +264,7 @@ export default function ExpenseForm({
                     values.direction === "out" ? "bg-white text-sky-700 shadow-sm" : "text-white/75 hover:text-white"
                   }`}
                 >
-                  Money out
+                  {t("form.moneyOut")}
                 </button>
                 <button
                   type="button"
@@ -270,18 +273,16 @@ export default function ExpenseForm({
                     values.direction === "in" ? "bg-white text-sky-700 shadow-sm" : "text-white/75 hover:text-white"
                   }`}
                 >
-                  Money in
+                  {t("form.moneyIn")}
                 </button>
               </div>
-              <p className="mt-1.5 text-xs text-white/70">
-                Transfers aren&apos;t counted as income or spending, but still move your Remaining balance.
-              </p>
+              <p className="mt-1.5 text-xs text-white/70">{t("form.transferNote")}</p>
             </div>
           )}
 
           <div className="mt-4 text-center sm:text-left">
             <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-white/70" htmlFor="amount">
-              Amount
+              {t("form.amount")}
             </label>
             {splitMode ? (
               <div className="py-1 text-4xl font-bold tabular-nums sm:text-3xl">{splitTotal.toFixed(2)}</div>
@@ -315,7 +316,11 @@ export default function ExpenseForm({
           value={values.merchant}
           onChange={(e) => update("merchant", e.target.value)}
           placeholder={
-            values.type === "income" ? "e.g. Acme Corp" : values.type === "transfer" ? "e.g. E-wallet top-up" : "e.g. Whole Foods"
+            values.type === "income"
+              ? t("form.merchantPlaceholderIncome")
+              : values.type === "transfer"
+                ? t("form.merchantPlaceholderTransfer")
+                : t("form.merchantPlaceholderExpense")
           }
           className={inputClass}
         />
@@ -329,13 +334,13 @@ export default function ExpenseForm({
             onChange={(e) => setSplitMode(e.target.checked)}
             className="h-4 w-4 rounded border-surface-line accent-surface-accent"
           />
-          Split into multiple categories
+          {t("form.splitIntoCategories")}
         </label>
       )}
 
       {splitMode ? (
         <div className="space-y-2.5 sm:order-4 sm:col-span-2">
-          <label className={labelClass}>Categories &amp; amounts</label>
+          <label className={labelClass}>{t("form.categoriesAndAmounts")}</label>
           {splitLines.map((line, i) => (
             <div key={i} className="flex items-center gap-2">
               <div className="flex-1">
@@ -374,12 +379,12 @@ export default function ExpenseForm({
             onClick={addSplitLine}
             className="text-sm font-semibold text-surface-accent hover:underline"
           >
-            + Add another category
+            {t("form.addAnotherCategory")}
           </button>
         </div>
       ) : (
         <div className="sm:order-4 sm:col-span-2">
-          <label className={labelClass}>Category</label>
+          <label className={labelClass}>{t("common.category")}</label>
           {/* A horizontal chip strip instead of a dropdown — every category
               is a single tap away and its own color rides along, instead of
               being hidden a menu open away. */}
@@ -408,7 +413,7 @@ export default function ExpenseForm({
 
       <div className="sm:order-5">
         <label className={labelClass} htmlFor="date">
-          Date
+          {t("common.date")}
         </label>
         <DatePicker id="date" value={values.date} onChange={(date) => update("date", date)} required />
       </div>
@@ -416,7 +421,7 @@ export default function ExpenseForm({
       {wallets.length > 0 && (
         <div className="sm:order-6">
           <label className={labelClass} htmlFor="wallet">
-            Wallet
+            {t("common.wallet")}
           </label>
           <SelectDropdown
             id="wallet"
@@ -541,27 +546,27 @@ export default function ExpenseForm({
           aria-expanded={moreOpen}
           className="flex w-full items-center justify-between gap-2 px-3.5 py-2.5 text-left text-sm font-semibold text-surface-foreground-soft sm:hidden"
         >
-          Tags &amp; notes
+          {t("form.tagsAndNotes")}
           <ChevronIcon className={`h-3 w-3 shrink-0 transition-transform ${moreOpen ? "rotate-180" : ""}`} />
         </button>
         <div
           className={`${moreOpen ? "block" : "hidden"} space-y-4 border-t border-surface-line p-3.5 sm:grid sm:grid-cols-2 sm:gap-x-5 sm:gap-y-4 sm:space-y-0 sm:border-0 sm:p-0`}
         >
           <div>
-            <label className={labelClass}>Tags</label>
+            <label className={labelClass}>{t("common.tags")}</label>
             <TagInput tags={values.tags} onChange={(tags) => update("tags", tags)} />
           </div>
 
           <div>
             <label className={labelClass} htmlFor="notes">
-              Notes
+              {t("common.notes")}
             </label>
             <textarea
               id="notes"
               rows={2}
               value={values.notes}
               onChange={(e) => update("notes", e.target.value)}
-              placeholder="Add a note..."
+              placeholder={t("form.notesPlaceholder")}
               className={`${inputClass} resize-none`}
             />
           </div>
@@ -585,7 +590,7 @@ export default function ExpenseForm({
               onClick={onCancel}
               className="rounded-full px-4 py-2.5 text-sm font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           )}
           <button
@@ -593,7 +598,7 @@ export default function ExpenseForm({
             disabled={submitting}
             className={`rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition disabled:opacity-60 ${submitButtonClass}`}
           >
-            {submitting ? "Saving..." : submitLabel}
+            {submitting ? t("common.saving") : submitLabel}
           </button>
         </div>
       </div>

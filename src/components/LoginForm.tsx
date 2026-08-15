@@ -4,6 +4,7 @@ import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useT } from "@/lib/language-context";
 
 const OAUTH_ERROR_MESSAGES: Record<string, string> = {
   github_failed: "GitHub sign-in didn't complete. Please try again.",
@@ -40,6 +41,7 @@ function GithubIcon() {
 
 export default function LoginForm({ next, oauthError }: { next: string; oauthError?: string }) {
   const router = useRouter();
+  const t = useT();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -77,7 +79,7 @@ export default function LoginForm({ next, oauthError }: { next: string; oauthErr
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="username" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-            Username
+            {t("auth.username")}
           </label>
           <input
             id="username"
@@ -88,12 +90,12 @@ export default function LoginForm({ next, oauthError }: { next: string; oauthErr
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             className="w-full rounded-card border border-line bg-bg-soft px-4 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-            placeholder="Enter username"
+            placeholder={t("auth.enterUsername")}
           />
         </div>
         <div>
           <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-            Password
+            {t("auth.password")}
           </label>
           <div className="relative">
             <input
@@ -104,7 +106,7 @@ export default function LoginForm({ next, oauthError }: { next: string; oauthErr
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-card border border-line bg-bg-soft px-4 py-2.5 pr-11 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-              placeholder="Enter password"
+              placeholder={t("auth.enterPassword")}
             />
             <button
               type="button"
@@ -127,13 +129,13 @@ export default function LoginForm({ next, oauthError }: { next: string; oauthErr
           disabled={loading}
           className="w-full rounded-full bg-navy px-4 py-2.5 font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
         >
-          {loading ? "Signing in..." : "Sign in"}
+          {loading ? t("auth.signingIn") : t("auth.signIn")}
         </button>
       </form>
 
       <p className="mt-3 text-center text-sm">
         <Link href="/forgot-password" className="font-semibold text-navy hover:underline">
-          Forgot password?
+          {t("auth.forgotPassword")}
         </Link>
       </p>
 
@@ -148,13 +150,13 @@ export default function LoginForm({ next, oauthError }: { next: string; oauthErr
         className="flex w-full items-center justify-center gap-2 rounded-full border border-line bg-bg-soft px-4 py-2.5 font-semibold text-foreground shadow-soft transition hover:bg-[var(--nav-hover-bg)]"
       >
         <GithubIcon />
-        Continue with GitHub
+        {t("auth.continueWithGithub")}
       </a>
 
       <p className="mt-6 text-center text-sm text-ink-soft">
-        Don&apos;t have an account?{" "}
+        {t("auth.dontHaveAccount")}{" "}
         <Link href="/register" className="font-semibold text-navy hover:underline">
-          Sign up
+          {t("auth.signUp")}
         </Link>
       </p>
     </div>
