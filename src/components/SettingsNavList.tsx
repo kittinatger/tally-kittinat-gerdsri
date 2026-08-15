@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { SunMoonIcon } from "@/lib/icons";
 import { type Panel } from "@/lib/settings-panels";
+import { useT } from "@/lib/language-context";
 import SettingsSection from "./SettingsSection";
 import SettingsListItem from "./SettingsListItem";
 import ExportDataButton from "./ExportDataButton";
@@ -319,6 +320,7 @@ export default function SettingsNavList({
   ...panelProps
 }: { username: string; email: string | null } & PanelItemProps) {
   const pathname = usePathname();
+  const t = useT();
 
   function panelItemProps(panel: Panel) {
     if (panelProps.mode === "panel") {
@@ -338,47 +340,47 @@ export default function SettingsNavList({
         <ThemeToggleButton />
       </div>
 
-      <SettingsSection title="App settings">
-        <SettingsListItem icon={<AccountIcon />} label="Account" accent="slate" {...panelItemProps("account")} />
-        <SettingsListItem icon={<ShieldIcon />} label="Permissions" accent="slate" {...panelItemProps("permissions")} />
+      <SettingsSection title={t("settings.section.appSettings")}>
+        <SettingsListItem icon={<AccountIcon />} label={t("settings.account")} accent="slate" {...panelItemProps("account")} />
+        <SettingsListItem icon={<ShieldIcon />} label={t("settings.permissions")} accent="slate" {...panelItemProps("permissions")} />
       </SettingsSection>
 
-      <SettingsSection title="Records">
-        <SettingsListItem icon={<GridIcon />} label="Manage categories" accent="indigo" {...panelItemProps("categories")} />
-        <SettingsListItem icon={<HashIcon />} label="Manage tags" accent="indigo" {...panelItemProps("tags")} />
-        <SettingsListItem icon={<WalletIcon />} label="Wallets" accent="sky" {...panelItemProps("wallets")} />
+      <SettingsSection title={t("settings.section.records")}>
+        <SettingsListItem icon={<GridIcon />} label={t("settings.manageCategories")} accent="indigo" {...panelItemProps("categories")} />
+        <SettingsListItem icon={<HashIcon />} label={t("settings.manageTags")} accent="indigo" {...panelItemProps("tags")} />
+        <SettingsListItem icon={<WalletIcon />} label={t("settings.wallets")} accent="sky" {...panelItemProps("wallets")} />
         <ExportDataButton />
         <ImportDataButton />
       </SettingsSection>
 
-      <SettingsSection title="Social">
-        <SettingsListItem icon={<FriendsIcon />} label="Friends & Family" accent="pink" {...panelItemProps("friends")} />
-        <SettingsListItem icon={<TrophyNavIcon />} label="Challenges" accent="violet" {...panelItemProps("challenges")} />
-        <SettingsListItem icon={<ReceiptNavIcon />} label="Split bills" accent="amber" {...panelItemProps("splitBills")} />
+      <SettingsSection title={t("settings.section.social")}>
+        <SettingsListItem icon={<FriendsIcon />} label={t("settings.friends")} accent="pink" {...panelItemProps("friends")} />
+        <SettingsListItem icon={<TrophyNavIcon />} label={t("settings.challenges")} accent="violet" {...panelItemProps("challenges")} />
+        <SettingsListItem icon={<ReceiptNavIcon />} label={t("settings.splitBills")} accent="amber" {...panelItemProps("splitBills")} />
       </SettingsSection>
 
-      <SettingsSection title="Budgeting">
-        <SettingsListItem icon={<RecurringIcon />} label="Recurring transactions" accent="teal" {...panelItemProps("recurring")} />
-        <SettingsListItem icon={<BudgetIcon />} label="Budgets" accent="orange" {...panelItemProps("budgets")} />
-        <SettingsListItem icon={<GoalIcon />} label="Savings goals" accent="emerald" {...panelItemProps("savingsGoals")} />
-        <SettingsListItem icon={<AutoImportIcon />} label="Automatic import" accent="cyan" {...panelItemProps("autoImport")} />
+      <SettingsSection title={t("settings.section.budgeting")}>
+        <SettingsListItem icon={<RecurringIcon />} label={t("settings.recurring")} accent="teal" {...panelItemProps("recurring")} />
+        <SettingsListItem icon={<BudgetIcon />} label={t("settings.budgets")} accent="orange" {...panelItemProps("budgets")} />
+        <SettingsListItem icon={<GoalIcon />} label={t("settings.savingsGoals")} accent="emerald" {...panelItemProps("savingsGoals")} />
+        <SettingsListItem icon={<AutoImportIcon />} label={t("settings.autoImport")} accent="cyan" {...panelItemProps("autoImport")} />
       </SettingsSection>
 
-      <SettingsSection title="Display">
-        <SettingsListItem icon={<DashboardWidgetsIcon />} label="Customize dashboard" accent="fuchsia" {...panelItemProps("dashboardWidgets")} />
-        <SettingsListItem icon={<CalendarIcon />} label="Calendar settings" accent="blue" {...panelItemProps("calendar")} />
-        <SettingsListItem icon={<CoinIcon />} label="Currency" accent="green" {...panelItemProps("currency")} />
-        <SettingsListItem icon={<GlobeIcon />} label="Language" accent="sky" {...panelItemProps("language")} />
+      <SettingsSection title={t("settings.section.display")}>
+        <SettingsListItem icon={<DashboardWidgetsIcon />} label={t("settings.dashboardWidgets")} accent="fuchsia" {...panelItemProps("dashboardWidgets")} />
+        <SettingsListItem icon={<CalendarIcon />} label={t("settings.calendar")} accent="blue" {...panelItemProps("calendar")} />
+        <SettingsListItem icon={<CoinIcon />} label={t("settings.currency")} accent="green" {...panelItemProps("currency")} />
+        <SettingsListItem icon={<GlobeIcon />} label={t("settings.language")} accent="sky" {...panelItemProps("language")} />
       </SettingsSection>
 
-      <SettingsSection title="Support">
-        <SettingsListItem icon={<BookIcon />} label="Usage guide" href="/usage-guide" selected={pathname === "/usage-guide"} />
-        <SettingsListItem icon={<QuestionIcon />} label="FAQs" href="/faq" selected={pathname === "/faq"} />
-        <SettingsListItem icon={<WrenchIcon />} label="Troubleshooting" href="/troubleshooting" selected={pathname === "/troubleshooting"} />
-        <SettingsListItem icon={<WarningIcon />} label="Error log" {...panelItemProps("errorReports")} />
-        <SettingsListItem icon={<MailIcon />} label="Contact" href="/contact" selected={pathname === "/contact"} />
-        <SettingsListItem icon={<FlagIcon />} label="Report an issue" href="/report-issue" selected={pathname === "/report-issue"} />
-        <SettingsListItem icon={<ClockIcon />} label="Changelog" href="/changelog" selected={pathname === "/changelog"} />
+      <SettingsSection title={t("settings.section.support")}>
+        <SettingsListItem icon={<BookIcon />} label={t("settings.usageGuide")} href="/usage-guide" selected={pathname === "/usage-guide"} />
+        <SettingsListItem icon={<QuestionIcon />} label={t("settings.faqs")} href="/faq" selected={pathname === "/faq"} />
+        <SettingsListItem icon={<WrenchIcon />} label={t("settings.troubleshooting")} href="/troubleshooting" selected={pathname === "/troubleshooting"} />
+        <SettingsListItem icon={<WarningIcon />} label={t("settings.errorLog")} {...panelItemProps("errorReports")} />
+        <SettingsListItem icon={<MailIcon />} label={t("settings.contact")} href="/contact" selected={pathname === "/contact"} />
+        <SettingsListItem icon={<FlagIcon />} label={t("settings.reportIssue")} href="/report-issue" selected={pathname === "/report-issue"} />
+        <SettingsListItem icon={<ClockIcon />} label={t("settings.changelog")} href="/changelog" selected={pathname === "/changelog"} />
       </SettingsSection>
     </div>
   );

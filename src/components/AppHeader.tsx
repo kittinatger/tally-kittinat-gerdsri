@@ -3,18 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { HomeIcon, ListIcon, GearIcon, PlusIcon } from "@/lib/icons";
-
-const NAV_LINKS = [
-  { href: "/", label: "Dashboard" },
-  { href: "/activities", label: "Activities" },
-  { href: "/settings", label: "Settings" },
-];
-
-const BOTTOM_NAV_LINKS = [
-  { href: "/", label: "Home", icon: <HomeIcon className="h-5 w-5 shrink-0" /> },
-  { href: "/activities", label: "Activities", icon: <ListIcon className="h-5 w-5 shrink-0" /> },
-  { href: "/settings", label: "Settings", icon: <GearIcon className="h-5 w-5 shrink-0" /> },
-];
+import { useT } from "@/lib/language-context";
 
 function AddIcon() {
   return <PlusIcon className="h-4 w-4 shrink-0" />;
@@ -38,6 +27,13 @@ export function BottomNav({
   showAdd?: boolean;
   onAddClick?: () => void;
 }) {
+  const t = useT();
+  const bottomNavLinks = [
+    { href: "/", label: t("nav.home"), icon: <HomeIcon className="h-5 w-5 shrink-0" /> },
+    { href: "/activities", label: t("nav.activities"), icon: <ListIcon className="h-5 w-5 shrink-0" /> },
+    { href: "/settings", label: t("nav.settings"), icon: <GearIcon className="h-5 w-5 shrink-0" /> },
+  ];
+
   return (
     <div className="fixed inset-x-3 bottom-3 z-20 flex items-center gap-2 sm:hidden">
       <div
@@ -48,7 +44,7 @@ export function BottomNav({
         <img src="/favicon-dark.svg" alt="" className="hidden h-6 w-6 shrink-0 dark:block" />
       </div>
       <nav className="flex flex-1 items-center gap-1 rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-1.5 shadow-soft backdrop-blur-xl">
-        {BOTTOM_NAV_LINKS.map((link) => {
+        {bottomNavLinks.map((link) => {
           const active = pathname === link.href;
           return (
             <Link
@@ -79,6 +75,12 @@ export function BottomNav({
 
 export default function AppHeader({ onAddClick }: { onAddClick?: () => void }) {
   const pathname = usePathname();
+  const t = useT();
+  const navLinks = [
+    { href: "/", label: t("nav.dashboard") },
+    { href: "/activities", label: t("nav.activities") },
+    { href: "/settings", label: t("nav.settings") },
+  ];
 
   return (
     <>
@@ -90,7 +92,7 @@ export default function AppHeader({ onAddClick }: { onAddClick?: () => void }) {
         </div>
 
         <nav className="hidden items-center gap-1 rounded-full bg-bg-soft p-1 sm:flex">
-          {NAV_LINKS.map((link) => {
+          {navLinks.map((link) => {
             const active = pathname === link.href;
             return (
               <Link
@@ -113,7 +115,7 @@ export default function AppHeader({ onAddClick }: { onAddClick?: () => void }) {
               className="hidden items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark hover:-translate-y-0.5 sm:flex"
             >
               <AddIcon />
-              Add
+              {t("nav.add")}
             </button>
           )}
         </div>

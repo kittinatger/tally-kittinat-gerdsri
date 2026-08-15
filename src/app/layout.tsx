@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Radley, Arimo } from "next/font/google";
 import ThemeSync from "@/components/ThemeSync";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import { LanguageProvider } from "@/lib/language-context";
 import "./globals.css";
 
 const radley = Radley({
@@ -67,7 +68,7 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
         <ThemeSync />
         <ServiceWorkerRegister />
-        {children}
+        <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
   );
