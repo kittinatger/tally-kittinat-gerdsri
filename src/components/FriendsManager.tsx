@@ -4,6 +4,7 @@ import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useRef, useState } from "react";
 import { badgeClasses } from "@/lib/category-styles";
 import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
+import { useT } from "@/lib/language-context";
 
 type Friend = { id: number; username: string; is_family: boolean };
 type FriendRequest = { id: number; username: string; created_at: string };
@@ -80,6 +81,7 @@ function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
 }
 
 export default function FriendsManager() {
+  const t = useT();
   const [data, setData] = useState<FriendsData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("friends");
@@ -99,11 +101,12 @@ export default function FriendsManager() {
         setData(json);
       })
       .catch(() => {
-        if (!cancelled) setLoadError("Could not load friends.");
+        if (!cancelled) setLoadError(t("friends.couldNotLoad"));
       });
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetch once on mount; t() re-runs on every render regardless
   }, []);
 
   function scheduleSearch(q: string) {
@@ -228,16 +231,16 @@ export default function FriendsManager() {
   }
 
   if (!data) {
-    return <p className="text-sm text-ink-soft">Loading…</p>;
+    return <p className="text-sm text-ink-soft">{t("common.loading")}</p>;
   }
 
   const friendIds = new Set(data.friends.map((f) => f.id));
   const requestCount = data.incoming.length + data.outgoing.length;
 
   const TABS: { id: Tab; label: string; count: number }[] = [
-    { id: "friends", label: "Friends", count: data.friends.length },
-    { id: "family", label: "Family", count: data.family.length },
-    { id: "requests", label: "Requests", count: requestCount },
+    { id: "friends", label: t("friends.friendsTab"), count: data.friends.length },
+    { id: "family", label: t("friends.familyTab"), count: data.family.length },
+    { id: "requests", label: t("friends.requestsTab"), count: requestCount },
   ];
 
   return (
@@ -256,16 +259,16 @@ export default function FriendsManager() {
             setQuery(value);
             scheduleSearch(value.trim());
           }}
-          placeholder="Search by username or email"
+          placeholder={t("friends.searchPlaceholder")}
           className="w-full rounded-card border border-line bg-bg-soft py-2.5 pl-10 pr-3.5 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
         />
 
         {query.trim() && (
           <div className="mt-2 overflow-hidden rounded-card border border-line bg-surface">
             {searching ? (
-              <p className="px-4 py-3 text-sm text-ink-soft">Searching…</p>
+              <p className="px-4 py-3 text-sm text-ink-soft">{t("friends.searching")}</p>
             ) : results && results.length === 0 ? (
-              <p className="px-4 py-3 text-sm text-ink-soft">No one found.</p>
+              <p className="px-4 py-3 text-sm text-ink-soft">{t("friends.noOneFound")}</p>
             ) : (
               results?.map((r, i) => {
                 const alreadyFriend = friendIds.has(r.id);
@@ -279,11 +282,11 @@ export default function FriendsManager() {
                     <Avatar username={r.username} />
                     <p className="min-w-0 flex-1 truncate font-medium text-foreground">{r.username}</p>
                     {alreadyFriend ? (
-                      <span className="shrink-0 text-xs text-ink-soft">Friends</span>
+                      <span className="shrink-0 text-xs text-ink-soft">{t("friends.friendsStatus")}</span>
                     ) : pendingOutgoing ? (
-                      <span className="shrink-0 text-xs text-ink-soft">Request sent</span>
+                      <span className="shrink-0 text-xs text-ink-soft">{t("friends.requestSent")}</span>
                     ) : pendingIncoming ? (
-                      <span className="shrink-0 text-xs text-ink-soft">Respond in Requests</span>
+                      <span className="shrink-0 text-xs text-ink-soft">{t("friends.respondInRequests")}</span>
                     ) : (
                       <button
                         type="button"
@@ -292,7 +295,7 @@ export default function FriendsManager() {
                         className="flex shrink-0 items-center gap-1.5 rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-60"
                       >
                         <PersonPlusIcon />
-                        Add
+                        {t("common.add")}
                       </button>
                     )}
                   </div>
@@ -304,23 +307,23 @@ export default function FriendsManager() {
       </div>
 
       <div className="flex gap-1 rounded-full bg-bg-soft p-1">
-        {TABS.map((t) => (
+        {TABS.map((tabDef) => (
           <button
-            key={t.id}
+            key={tabDef.id}
             type="button"
-            onClick={() => setTab(t.id)}
+            onClick={() => setTab(tabDef.id)}
             className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-1.5 text-sm font-semibold transition ${
-              tab === t.id ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+              tab === tabDef.id ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
             }`}
           >
-            {t.label}
-            {t.count > 0 && (
+            {tabDef.label}
+            {tabDef.count > 0 && (
               <span
                 className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                  tab === t.id ? "bg-navy/10 text-navy dark:text-blue-300" : "bg-[var(--nav-hover-bg)] text-ink-soft"
+                  tab === tabDef.id ? "bg-navy/10 text-navy dark:text-blue-300" : "bg-[var(--nav-hover-bg)] text-ink-soft"
                 }`}
               >
-                {t.count}
+                {tabDef.count}
               </span>
             )}
           </button>
@@ -329,7 +332,7 @@ export default function FriendsManager() {
 
       {tab === "friends" &&
         (data.friends.length === 0 ? (
-          <EmptyState icon={<PersonPlusIcon />} text="No friends yet — search above to find people already using Tally." />
+          <EmptyState icon={<PersonPlusIcon />} text={t("friends.noFriendsYet")} />
         ) : (
           <div className="overflow-hidden rounded-card border border-line bg-surface">
             {data.friends.map((f, i) => (
@@ -349,7 +352,7 @@ export default function FriendsManager() {
                     }`}
                   >
                     <HomeHeartIcon />
-                    {f.is_family ? "Family" : "Add to Family"}
+                    {f.is_family ? t("friends.familyTab") : t("friends.addToFamily")}
                   </button>
                   <button
                     type="button"
@@ -368,7 +371,7 @@ export default function FriendsManager() {
 
       {tab === "family" &&
         (data.family.length === 0 ? (
-          <EmptyState icon={<HomeHeartIcon />} text="No one in your Family list yet — add a friend from the Friends tab to include them here." />
+          <EmptyState icon={<HomeHeartIcon />} text={t("friends.noFamilyYet")} />
         ) : (
           <div className="overflow-hidden rounded-card border border-line bg-surface">
             {data.family.map((f, i) => (
@@ -391,12 +394,12 @@ export default function FriendsManager() {
 
       {tab === "requests" &&
         (requestCount === 0 ? (
-          <EmptyState icon={<SearchIcon />} text="No pending requests — search above to add someone." />
+          <EmptyState icon={<SearchIcon />} text={t("friends.noPendingRequests")} />
         ) : (
           <div className="space-y-5">
             {data.incoming.length > 0 && (
               <div>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">Received</h3>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">{t("friends.received")}</h3>
                 <div className="overflow-hidden rounded-card border border-line bg-surface">
                   {data.incoming.map((req, i) => (
                     <div key={req.id} className={`flex items-center gap-3 px-4 py-3 ${i === 0 ? "" : "border-t border-line"}`}>
@@ -409,7 +412,7 @@ export default function FriendsManager() {
                           disabled={busyId === `accept-${req.id}`}
                           className="rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-60"
                         >
-                          Accept
+                          {t("friends.accept")}
                         </button>
                         <button
                           type="button"
@@ -417,7 +420,7 @@ export default function FriendsManager() {
                           disabled={busyId === `decline-${req.id}`}
                           className="rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-60"
                         >
-                          Decline
+                          {t("friends.decline")}
                         </button>
                       </div>
                     </div>
@@ -428,7 +431,7 @@ export default function FriendsManager() {
 
             {data.outgoing.length > 0 && (
               <div>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">Sent</h3>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">{t("friends.sent")}</h3>
                 <div className="overflow-hidden rounded-card border border-line bg-surface">
                   {data.outgoing.map((req, i) => (
                     <div key={req.id} className={`flex items-center gap-3 px-4 py-3 ${i === 0 ? "" : "border-t border-line"}`}>
@@ -440,7 +443,7 @@ export default function FriendsManager() {
                         disabled={busyId === `decline-${req.id}`}
                         className="shrink-0 rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-60"
                       >
-                        Cancel
+                        {t("common.cancel")}
                       </button>
                     </div>
                   ))}
