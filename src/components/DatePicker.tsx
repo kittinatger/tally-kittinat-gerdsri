@@ -5,8 +5,12 @@ import { createPortal } from "react-dom";
 import { formatDateShort, todayInputValue } from "@/lib/format";
 import { useCalendarSettings } from "@/lib/use-calendar-settings";
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from "@/lib/icons";
+import { useLanguage, useT } from "@/lib/language-context";
 
-const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+// Reference week (an arbitrary Sunday) used purely to derive locale-correct
+// short weekday abbreviations via Intl — the actual dates are irrelevant,
+// only their day-of-week position matters.
+const REFERENCE_SUNDAY = new Date(Date.UTC(2023, 0, 1));
 
 function toKey(y: number, m: number, d: number): string {
   return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
@@ -37,6 +41,8 @@ export default function DatePicker({
   onChange: (value: string) => void;
   required?: boolean;
 }) {
+  const t = useT();
+  const language = useLanguage();
   const [open, setOpen] = useState(false);
   const anchor = value || todayInputValue();
   const [viewYear, setViewYear] = useState(() => parseKey(anchor).y);
@@ -45,10 +51,15 @@ export default function DatePicker({
   const panelRef = useRef<HTMLDivElement>(null);
   const [panelPos, setPanelPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const { weekStartDay, showWeekNumbers } = useCalendarSettings();
-  const weekdayLabels = useMemo(
-    () => WEEKDAYS.slice(weekStartDay).concat(WEEKDAYS.slice(0, weekStartDay)),
-    [weekStartDay],
-  );
+  const weekdayLabels = useMemo(() => {
+    const formatter = new Intl.DateTimeFormat(language, { weekday: "short", timeZone: "UTC" });
+    const all = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(REFERENCE_SUNDAY);
+      d.setUTCDate(d.getUTCDate() + i);
+      return formatter.format(d);
+    });
+    return all.slice(weekStartDay).concat(all.slice(0, weekStartDay));
+  }, [weekStartDay, language]);
 
   useEffect(() => {
     function onPointerDown(e: MouseEvent) {
@@ -152,7 +163,7 @@ export default function DatePicker({
     setOpen(false);
   }
 
-  const monthLabel = new Date(viewYear, viewMonth, 1).toLocaleDateString(undefined, {
+  const monthLabel = new Date(viewYear, viewMonth, 1).toLocaleDateString(language, {
     month: "long",
     year: "numeric",
   });
@@ -176,7 +187,7 @@ export default function DatePicker({
         aria-haspopup="dialog"
         className="flex w-full items-center justify-between gap-1.5 rounded-card border border-surface-line bg-surface-soft px-3.5 py-2.5 text-left text-base text-surface-foreground outline-none transition focus:border-surface-accent focus:ring-2 focus:ring-surface-accent/20"
       >
-        <span>{value ? formatDateShort(value) : "Select date"}</span>
+        <span>{value ? formatDateShort(value) : t("datePicker.selectDate")}</span>
         <CalendarIcon className="h-4 w-4 shrink-0 text-surface-foreground-soft" />
       </button>
 
@@ -186,7 +197,7 @@ export default function DatePicker({
           <div
             ref={panelRef}
             role="dialog"
-            aria-label="Select date"
+            aria-label={t("datePicker.selectDate")}
             style={{ top: panelPos.top, left: panelPos.left, width: panelPos.width }}
             className="fixed z-[60] rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-3.5 shadow-[var(--panel-shadow)] backdrop-blur-xl"
           >
@@ -194,7 +205,7 @@ export default function DatePicker({
             <button
               type="button"
               onClick={() => changeMonth(-1)}
-              aria-label="Previous month"
+              aria-label={t("calendar.prevMonth")}
               className="rounded-full p-1.5 text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
             >
               <ChevronLeftIcon className="h-4 w-4" />
@@ -203,7 +214,7 @@ export default function DatePicker({
             <button
               type="button"
               onClick={() => changeMonth(1)}
-              aria-label="Next month"
+              aria-label={t("calendar.nextMonth")}
               className="rounded-full p-1.5 text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
             >
               <ChevronRightIcon className="h-4 w-4" />
@@ -211,7 +222,7 @@ export default function DatePicker({
           </div>
 
           <div className={`grid gap-y-0.5 text-center ${showWeekNumbers ? "grid-cols-8" : "grid-cols-7"}`}>
-            {showWeekNumbers && <span className="py-1 text-[11px] font-semibold text-surface-foreground-soft/60">Wk</span>}
+            {showWeekNumbers && <span className="py-1 text-[11px] font-semibold text-surface-foreground-soft/60">{t("calendar.weekAbbrev")}</span>}
             {weekdayLabels.map((w) => (
               <span key={w} className="py-1 text-[11px] font-semibold text-surface-foreground-soft">
                 {w}
@@ -256,7 +267,7 @@ export default function DatePicker({
               onClick={goToday}
               className="rounded-full px-3 py-1.5 text-xs font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
             >
-              Today
+              {t("datePicker.today")}
             </button>
           </div>
         </div>,

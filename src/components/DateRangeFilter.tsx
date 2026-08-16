@@ -5,8 +5,12 @@ import { createPortal } from "react-dom";
 import { formatDateShort, todayInputValue } from "@/lib/format";
 import { useCalendarSettings } from "@/lib/use-calendar-settings";
 import { CalendarIcon, ChevronIcon, ChevronLeftIcon, ChevronRightIcon } from "@/lib/icons";
+import { useLanguage, useT } from "@/lib/language-context";
 
-const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+// Reference week (an arbitrary Sunday) used purely to derive locale-correct
+// short weekday abbreviations via Intl — the actual dates are irrelevant,
+// only their day-of-week position matters.
+const REFERENCE_SUNDAY = new Date(Date.UTC(2023, 0, 1));
 const PANEL_WIDTH = 288;
 const VIEWPORT_MARGIN = 8;
 
@@ -37,6 +41,8 @@ export default function DateRangeFilter({
   to: string;
   onChange: (from: string, to: string) => void;
 }) {
+  const t = useT();
+  const language = useLanguage();
   const [open, setOpen] = useState(false);
   const [draftFrom, setDraftFrom] = useState(from);
   const [draftTo, setDraftTo] = useState(to);
@@ -47,10 +53,15 @@ export default function DateRangeFilter({
   const containerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const { weekStartDay, showWeekNumbers } = useCalendarSettings();
-  const weekdayLabels = useMemo(
-    () => WEEKDAYS.slice(weekStartDay).concat(WEEKDAYS.slice(0, weekStartDay)),
-    [weekStartDay],
-  );
+  const weekdayLabels = useMemo(() => {
+    const formatter = new Intl.DateTimeFormat(language, { weekday: "short", timeZone: "UTC" });
+    const all = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(REFERENCE_SUNDAY);
+      d.setUTCDate(d.getUTCDate() + i);
+      return formatter.format(d);
+    });
+    return all.slice(weekStartDay).concat(all.slice(0, weekStartDay));
+  }, [weekStartDay, language]);
 
   useEffect(() => {
     function onPointerDown(e: MouseEvent) {
@@ -115,12 +126,12 @@ export default function DateRangeFilter({
 
   const active = Boolean(from || to);
   const summary = !active
-    ? "All dates"
+    ? t("dateRange.allDates")
     : from && to
       ? `${formatDateShort(from)} – ${formatDateShort(to)}`
       : from
-        ? `From ${formatDateShort(from)}`
-        : `Until ${formatDateShort(to)}`;
+        ? `${t("dateRange.from")} ${formatDateShort(from)}`
+        : `${t("dateRange.until")} ${formatDateShort(to)}`;
 
   const days = useMemo(() => {
     const firstOfMonth = new Date(viewYear, viewMonth, 1);
@@ -197,7 +208,7 @@ export default function DateRangeFilter({
     setOpen(false);
   }
 
-  const monthLabel = new Date(viewYear, viewMonth, 1).toLocaleDateString(undefined, {
+  const monthLabel = new Date(viewYear, viewMonth, 1).toLocaleDateString(language, {
     month: "long",
     year: "numeric",
   });
@@ -237,21 +248,21 @@ export default function DateRangeFilter({
           <div
             ref={panelRef}
             role="dialog"
-            aria-label="Filter by date range"
+            aria-label={t("dateRange.filterByDateRange")}
             style={{ top: panelPos.top, left: panelPos.left, width: PANEL_WIDTH }}
             className="fixed z-[60] rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-3.5 shadow-[var(--panel-shadow)] backdrop-blur-xl"
           >
             <div className="mb-2 flex items-center justify-between gap-2 rounded-xl bg-bg-soft px-2.5 py-1.5 text-xs font-medium text-ink-soft">
-              <span>{draftFrom ? formatDateShort(draftFrom) : "Start date"}</span>
+              <span>{draftFrom ? formatDateShort(draftFrom) : t("dateRange.startDate")}</span>
               <span>–</span>
-              <span>{draftTo ? formatDateShort(draftTo) : "End date"}</span>
+              <span>{draftTo ? formatDateShort(draftTo) : t("dateRange.endDate")}</span>
             </div>
 
             <div className="mb-2 flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => changeMonth(-1)}
-                aria-label="Previous month"
+                aria-label={t("calendar.prevMonth")}
                 className="rounded-full p-1.5 text-ink-soft transition hover:bg-bg-soft hover:text-foreground"
               >
                 <ChevronLeftIcon className="h-4 w-4" />
@@ -260,7 +271,7 @@ export default function DateRangeFilter({
               <button
                 type="button"
                 onClick={() => changeMonth(1)}
-                aria-label="Next month"
+                aria-label={t("calendar.nextMonth")}
                 className="rounded-full p-1.5 text-ink-soft transition hover:bg-bg-soft hover:text-foreground"
               >
                 <ChevronRightIcon className="h-4 w-4" />
@@ -268,7 +279,7 @@ export default function DateRangeFilter({
             </div>
 
             <div className={`grid gap-y-0.5 text-center ${showWeekNumbers ? "grid-cols-8" : "grid-cols-7"}`}>
-              {showWeekNumbers && <span className="py-1 text-[11px] font-semibold text-ink-soft/60">Wk</span>}
+              {showWeekNumbers && <span className="py-1 text-[11px] font-semibold text-ink-soft/60">{t("calendar.weekAbbrev")}</span>}
               {weekdayLabels.map((w) => (
                 <span key={w} className="py-1 text-[11px] font-semibold text-ink-soft">
                   {w}
@@ -317,7 +328,7 @@ export default function DateRangeFilter({
                 onClick={clear}
                 className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-bg-soft hover:text-foreground"
               >
-                Clear
+                {t("common.clear")}
               </button>
               <button
                 type="button"
@@ -325,7 +336,7 @@ export default function DateRangeFilter({
                 disabled={!draftFrom}
                 className="rounded-full bg-navy px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-40"
               >
-                Apply
+                {t("common.apply")}
               </button>
             </div>
           </div>,
