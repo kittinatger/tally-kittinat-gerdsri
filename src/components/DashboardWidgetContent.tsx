@@ -626,9 +626,14 @@ export default function DashboardWidgetContent({
       return <WalletRankedWidget title={t("widget.walletDistributionTitle")} items={items} />;
     }
     case "expensesByWallet": {
-      const items = [...groupSum(monthExpenses, (e) => e.walletName ?? t("dashboardWidgetContent.unassigned")).entries()]
+      const items = [...groupSum(monthExpenses, (e) => (e.walletId != null ? String(e.walletId) : "unassigned")).entries()]
         .sort((a, b) => b[1] - a[1])
-        .map(([label, value], i) => ({ label, value, displayValue: formatCurrency(value, currency), colorClassName: accentBgClasses(colorFor(i)) }));
+        .map(([walletId, value], i) => ({
+          label: walletId === "unassigned" ? t("dashboardWidgetContent.unassigned") : (wallets.find((w) => w.id === Number(walletId))?.name ?? t("dashboardWidgetContent.unassigned")),
+          value,
+          displayValue: formatCurrency(value, currency),
+          colorClassName: accentBgClasses(colorFor(i)),
+        }));
       return <WalletRankedWidget title={t("widget.expensesByWalletTitle")} items={items} />;
     }
 
@@ -691,7 +696,7 @@ export default function DashboardWidgetContent({
         const spentAfter = sum(
           expenses.filter(
             (e) =>
-              e.walletName === wallet.name &&
+              e.walletId === wallet.id &&
               e.date > key &&
               (e.type === "expense" || (e.type === "transfer" && e.direction === "out")),
           ),
@@ -699,7 +704,7 @@ export default function DashboardWidgetContent({
         const earnedAfter = sum(
           expenses.filter(
             (e) =>
-              e.walletName === wallet.name &&
+              e.walletId === wallet.id &&
               e.date > key &&
               (e.type === "income" || (e.type === "transfer" && e.direction === "in")),
           ),
