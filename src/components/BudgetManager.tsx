@@ -10,6 +10,7 @@ import { isCategoryIconKey } from "@/lib/category-icons";
 import { CategoryIcon, TrashIcon } from "@/lib/icons";
 import SelectDropdown from "./SelectDropdown";
 import CsvManagerButtons from "./CsvManagerButtons";
+import { useT } from "@/lib/language-context";
 
 type Budget = { id: number; category: string; monthly_limit: string; rollover: boolean };
 
@@ -33,6 +34,7 @@ function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
 }
 
 export default function BudgetManager() {
+  const t = useT();
   const allCategories = useAllCategories();
   const currency = useCurrency();
   const expenseCategories = allCategories.filter((c) => c.type === "expense");
@@ -106,17 +108,16 @@ export default function BudgetManager() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-display text-xl text-foreground">Budgets</h3>
+        <h3 className="font-display text-xl text-foreground">{t("budget.title")}</h3>
         <button
           onClick={() => setAdding((v) => !v)}
           className="flex items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark"
         >
-          {adding ? "Cancel" : "Set a budget"}
+          {adding ? t("common.cancel") : t("budget.setABudget")}
         </button>
       </div>
       <p className="mt-2 text-[11px] leading-snug text-ink-soft">
-        Set a monthly spending limit per category. Add the &quot;Budgets&quot; widget to your dashboard to see
-        progress at a glance.
+        {t("budget.desc")}
       </p>
 
       <div className="mt-3">
@@ -127,11 +128,11 @@ export default function BudgetManager() {
         <form onSubmit={handleAdd} className="mt-4 space-y-3 rounded-card border border-line bg-surface p-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">Category</label>
+              <label className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">{t("common.category")}</label>
               <SelectDropdown value={category} options={expenseCategories.map((c) => c.name)} onChange={setCategory} />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">Monthly limit</label>
+              <label className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">{t("budget.monthlyLimit")}</label>
               <input
                 type="number"
                 inputMode="decimal"
@@ -160,7 +161,7 @@ export default function BudgetManager() {
                 }`}
               />
             </span>
-            Roll over unused budget into next month
+            {t("budget.rolloverToggle")}
           </button>
 
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
@@ -171,7 +172,7 @@ export default function BudgetManager() {
               disabled={submitting}
               className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
             >
-              {submitting ? "Saving..." : "Save budget"}
+              {submitting ? t("common.saving") : t("budget.saveBudget")}
             </button>
           </div>
         </form>
@@ -180,9 +181,9 @@ export default function BudgetManager() {
       {loadError && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{loadError}</p>}
 
       {budgets === null ? (
-        <p className="mt-4 text-sm text-ink-soft">Loading…</p>
+        <p className="mt-4 text-sm text-ink-soft">{t("common.loading")}</p>
       ) : budgets.length === 0 ? (
-        <EmptyState icon={<BudgetGlyphIcon />} text="No budgets set yet — add one above to track spending per category." />
+        <EmptyState icon={<BudgetGlyphIcon />} text={t("budget.noBudgetsYet")} />
       ) : (
         <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
           {budgets.map((b, i) => {
@@ -206,11 +207,11 @@ export default function BudgetManager() {
                     <p className="truncate font-medium text-foreground">{b.category}</p>
                     {b.rollover && (
                       <span className="shrink-0 rounded-full bg-navy/10 px-1.5 py-0.5 text-[10px] font-semibold text-navy dark:text-blue-300">
-                        Rollover
+                        {t("budget.rollover")}
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-ink-soft">{formatCurrency(Number(b.monthly_limit), currency)} / month</p>
+                  <p className="text-xs text-ink-soft">{formatCurrency(Number(b.monthly_limit), currency)} {t("budget.perMonth")}</p>
                 </div>
 
                 {confirming ? (
@@ -220,14 +221,14 @@ export default function BudgetManager() {
                       disabled={busyId === b.id}
                       className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
                     >
-                      Cancel
+                      {t("common.cancel")}
                     </button>
                     <button
                       onClick={() => handleDelete(b.id)}
                       disabled={busyId === b.id}
                       className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
                     >
-                      {busyId === b.id ? "Deleting..." : "Confirm delete"}
+                      {busyId === b.id ? t("common.deleting") : t("common.confirmDelete")}
                     </button>
                   </div>
                 ) : (
