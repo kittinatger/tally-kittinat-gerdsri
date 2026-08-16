@@ -1,5 +1,6 @@
 import AppHeader from "@/components/AppHeader";
 import BackToSettingsLink from "@/components/BackToSettingsLink";
+import T from "@/components/T";
 
 export default function PrivacyPage() {
   return (
@@ -8,33 +9,35 @@ export default function PrivacyPage() {
 
       <main className="flex-1 px-1 py-6 sm:px-2">
         <BackToSettingsLink />
-        <h2 className="mb-5 font-display text-2xl text-foreground">Privacy Policy</h2>
+        <h2 className="mb-5 font-display text-2xl text-foreground">
+          <T k="privacy.title" />
+        </h2>
 
         <div className="space-y-6 rounded-card border border-line bg-surface p-5 text-sm leading-relaxed text-ink-soft">
           <section>
-            <h3 className="mb-1.5 font-semibold text-foreground">What&apos;s stored</h3>
+            <h3 className="mb-1.5 font-semibold text-foreground">
+              <T k="privacy.storedHeading" />
+            </h3>
             <p>
-              Tally stores the expenses and income you log (date, amount, merchant, category, notes, tags), any
-              receipt images you attach, your wallets, recurring rules, budgets, and savings goals, your category
-              customizations, your currency and display preferences, and your account credentials (your password is
-              stored as a salted hash, never in plain text). If you add an email for password reset or notifications,
-              it&apos;s stored alongside your account. If you create a personal access token for automatic receipt
-              import, only its hash is stored — the raw token is shown to you once and can&apos;t be recovered.
+              <T k="privacy.storedBody" />
             </p>
           </section>
 
           <section>
-            <h3 className="mb-1.5 font-semibold text-foreground">Your data is private to your account</h3>
+            <h3 className="mb-1.5 font-semibold text-foreground">
+              <T k="privacy.isolationHeading" />
+            </h3>
             <p>
-              Tally supports multiple accounts on a single deployment. Every account&apos;s expenses, categories, and
-              settings are isolated — no other account on the same deployment can see or modify your data.
+              <T k="privacy.isolationBody" />
             </p>
           </section>
 
           <section>
-            <h3 className="mb-1.5 font-semibold text-foreground">Third parties</h3>
+            <h3 className="mb-1.5 font-semibold text-foreground">
+              <T k="privacy.thirdPartiesHeading" />
+            </h3>
             <p>
-              When you scan a receipt or record a voice memo, the image or audio is sent to{" "}
+              <T k="privacy.thirdPartiesBefore" />{" "}
               <a
                 href="https://ai.google.dev/"
                 target="_blank"
@@ -43,8 +46,7 @@ export default function PrivacyPage() {
               >
                 Google Gemini
               </a>{" "}
-              to extract the transaction details. If automatic currency conversion is enabled, detected amounts are
-              converted using exchange rates from{" "}
+              <T k="privacy.thirdPartiesMiddle1" />{" "}
               <a
                 href="https://frankfurter.app"
                 target="_blank"
@@ -53,8 +55,7 @@ export default function PrivacyPage() {
               >
                 Frankfurter
               </a>
-              , a free ECB-rate API. If you set an email on your account, password reset links and any opted-in
-              recurring/budget notification emails are sent via{" "}
+              <T k="privacy.thirdPartiesMiddle2" />{" "}
               <a
                 href="https://resend.com"
                 target="_blank"
@@ -63,16 +64,16 @@ export default function PrivacyPage() {
               >
                 Resend
               </a>
-              . No other third parties receive your data.
+              <T k="privacy.thirdPartiesAfter" />
             </p>
           </section>
 
           <section>
-            <h3 className="mb-1.5 font-semibold text-foreground">Self-hosted</h3>
+            <h3 className="mb-1.5 font-semibold text-foreground">
+              <T k="privacy.selfHostedHeading" />
+            </h3>
             <p>
-              Tally is open-source, self-hosted software. Whoever deploys a given instance controls the actual
-              database and infrastructure it runs on — this policy describes how the application itself handles
-              data, not any particular deployment&apos;s operational practices.
+              <T k="privacy.selfHostedBody" />
             </p>
           </section>
         </div>

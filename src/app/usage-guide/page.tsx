@@ -3,6 +3,8 @@ import { getUserId } from "@/lib/auth";
 import { GearIcon } from "@/lib/icons";
 import SettingsSubpageLayout from "@/components/SettingsSubpageLayout";
 import SupportScreenshot from "@/components/SupportScreenshot";
+import T from "@/components/T";
+import type { MessageKey } from "@/lib/i18n/messages";
 
 export const dynamic = "force-dynamic";
 
@@ -89,19 +91,23 @@ function OfflineIcon() {
   );
 }
 
-const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.ReactNode }[] = [
+const SECTIONS: { id: string; title: MessageKey; icon: React.ReactNode; body: React.ReactNode }[] = [
   {
     id: "signing-in",
-    title: "Signing in",
+    title: "usageGuide.s1Title",
     icon: <SignInIcon />,
     body: (
       <>
         <p>
-          Sign up with a username and password, or use{" "}
-          <span className="font-semibold text-foreground">Continue with GitHub</span> on the sign-in/sign-up screen.
-          Already have a username/password account? Link GitHub to it (or unlink it later) from{" "}
-          <span className="font-semibold text-foreground">Settings &gt; Account &gt; Connected accounts</span> —
-          unlinking is blocked if the account has no password set, so you&apos;re never left with no way back in.
+          <T k="usageGuide.s1Part1" />{" "}
+          <span className="font-semibold text-foreground">
+            <T k="auth.continueWithGithub" />
+          </span>{" "}
+          <T k="usageGuide.s1Part2" />{" "}
+          <span className="font-semibold text-foreground">
+            <T k="nav.settings" /> &gt; <T k="settings.account" /> &gt; <T k="account.connectedAccounts" />
+          </span>{" "}
+          <T k="usageGuide.s1Part3" />
         </p>
         <SupportScreenshot src="signing-in.jpg" alt="Tally's sign-in screen" />
       </>
@@ -109,29 +115,35 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
   },
   {
     id: "adding-a-transaction",
-    title: "Adding a transaction",
+    title: "usageGuide.s2Title",
     icon: <AddIcon />,
     body: (
       <>
         <p>
-          Tap <span className="font-semibold text-foreground">Add</span> from the Dashboard or Activities page — or
-          tap the Income/Expenses card on the Dashboard to jump straight to Add with that type pre-selected. You have
-          three ways to log a transaction:
+          <T k="usageGuide.s2Part1" />{" "}
+          <span className="font-semibold text-foreground">
+            <T k="nav.add" />
+          </span>{" "}
+          <T k="usageGuide.s2Part2" />
         </p>
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>
-            <span className="font-semibold text-foreground">Manual entry</span> — fill in date, amount, merchant,
-            category, tags, and notes yourself.
+            <span className="font-semibold text-foreground">
+              <T k="usageGuide.s2Li1Label" />
+            </span>{" "}
+            — <T k="usageGuide.s2Li1Body" />
           </li>
           <li>
-            <span className="font-semibold text-foreground">Scan a document</span> — take a photo or upload an image
-            of a receipt, payslip, or invoice; Gemini reads the details and pre-fills the form for you to review
-            before saving. Select multiple images to batch-scan them one after another.
+            <span className="font-semibold text-foreground">
+              <T k="usageGuide.s2Li2Label" />
+            </span>{" "}
+            — <T k="usageGuide.s2Li2Body" />
           </li>
           <li>
-            <span className="font-semibold text-foreground">Speak</span> — tap the mic and describe the transaction
-            out loud (e.g. &quot;spent 12 dollars on coffee at Starbucks today&quot;); it&apos;s transcribed and
-            extracted the same way.
+            <span className="font-semibold text-foreground">
+              <T k="usageGuide.s2Li3Label" />
+            </span>{" "}
+            — <T k="usageGuide.s2Li3Body" />
           </li>
         </ul>
         <SupportScreenshot src="add-transaction.jpg" alt="Add transaction modal, manual entry" />
@@ -140,17 +152,17 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
   },
   {
     id: "automatic-import",
-    title: "Automatic receipt import",
+    title: "usageGuide.s3Title",
     icon: <AutoImportIcon />,
     body: (
       <>
         <p>
-          For receipts you&apos;d rather not scan by hand one at a time: create a personal access token in{" "}
-          <span className="font-semibold text-foreground">Settings &gt; Automatic import</span>, then set up an iOS
-          Shortcut (fully automatic when a photo lands in a chosen album, or a one-tap Share Sheet variant) or the
-          Android share sheet, following the setup steps shown there. Imported transactions are tagged{" "}
-          <span className="font-semibold text-foreground">auto-import</span> and keep the original photo attached, so
-          you can filter by that tag in Activities to spot-check anything misread.
+          <T k="usageGuide.s3Part1" />{" "}
+          <span className="font-semibold text-foreground">
+            <T k="nav.settings" /> &gt; <T k="settings.autoImport" />
+          </span>
+          <T k="usageGuide.s3Part2" />{" "}
+          <span className="font-semibold text-foreground">auto-import</span> <T k="usageGuide.s3Part3" />
         </p>
         <SupportScreenshot src="automatic-import.jpg" alt="Settings > Automatic import, access tokens and setup steps" />
       </>
@@ -158,18 +170,20 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
   },
   {
     id: "wallets",
-    title: "Wallets",
+    title: "usageGuide.s4Title",
     icon: <WalletIcon />,
     body: (
       <>
         <p>
-          Track balances across multiple cash/bank/e-wallet pools from{" "}
-          <span className="font-semibold text-foreground">Settings &gt; Wallets</span>. Transfer money between your
-          own wallets (doesn&apos;t count as income or spending), set a default wallet for new transactions, archive
-          ones you no longer use without losing their history, and label each with its own currency. You can also
-          set a <span className="font-semibold text-foreground">default wallet for Activities</span> — which wallet
-          its balance card and transaction list are scoped to when the page opens, separate from the default used
-          for new transactions.
+          <T k="usageGuide.s4Part1" />{" "}
+          <span className="font-semibold text-foreground">
+            <T k="nav.settings" /> &gt; <T k="settings.wallets" />
+          </span>
+          <T k="usageGuide.s4Part2" />{" "}
+          <span className="font-semibold text-foreground">
+            <T k="usageGuide.s4Span" />
+          </span>{" "}
+          <T k="usageGuide.s4Part3" />
         </p>
         <SupportScreenshot src="wallets.jpg" alt="Settings > Wallets panel" />
       </>
@@ -177,16 +191,16 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
   },
   {
     id: "budgeting",
-    title: "Recurring transactions, budgets & savings goals",
+    title: "usageGuide.s5Title",
     icon: <BudgetIcon />,
     body: (
       <>
         <p>
-          All under <span className="font-semibold text-foreground">Settings &gt; Budgeting</span>. Recurring rules
-          auto-log rent, subscriptions, or salary on a weekly/monthly/yearly schedule — pause, edit, skip a single
-          upcoming occurrence, or reorder them. Budgets set a monthly spending limit per category, with an optional
-          rollover of unused budget into the next month and a Dashboard alert when you&apos;re near or over. Savings
-          goals track progress toward something you&apos;re saving for, with manual contribute/withdraw.
+          <T k="usageGuide.s5Part1" />{" "}
+          <span className="font-semibold text-foreground">
+            <T k="nav.settings" /> &gt; <T k="settings.section.budgeting" />
+          </span>{" "}
+          <T k="usageGuide.s5Part2" />
         </p>
         <SupportScreenshot src="budgeting.jpg" alt="Settings > Budgets panel" />
       </>
@@ -194,14 +208,16 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
   },
   {
     id: "split-transactions",
-    title: "Split transactions",
+    title: "usageGuide.s6Title",
     icon: <SplitIcon />,
     body: (
       <>
         <p>
-          From <span className="font-semibold text-foreground">Add &gt; Manual entry</span>, split one receipt
-          across multiple categories in a single entry — it shows up as one grouped card in Activities, with each
-          line still individually editable or deletable.
+          <T k="usageGuide.s6Part1" />{" "}
+          <span className="font-semibold text-foreground">
+            <T k="nav.add" /> &gt; <T k="usageGuide.s2Li1Label" />
+          </span>
+          , <T k="usageGuide.s6Part2" />
         </p>
         <SupportScreenshot
           src="add-transaction.jpg"
@@ -212,15 +228,12 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
   },
   {
     id: "dashboard",
-    title: "Dashboard",
+    title: "usageGuide.s7Title",
     icon: <DashboardIcon />,
     body: (
       <>
         <p>
-          Fully customizable — tap the paintbrush icon to enter the live editor, then add, remove, resize, or
-          reorder any of 50+ widgets (stat cards, trend charts, progress rings, donut charts, heatmaps,
-          leaderboards, and more) to build your own layout. Widgets you haven&apos;t customized are updated with new
-          sensible defaults over time; once you&apos;ve arranged your own, it&apos;s yours to keep.
+          <T k="usageGuide.s7Body" />
         </p>
         <SupportScreenshot src="dashboard-editor.jpg" alt="Customize dashboard live editor" />
       </>
@@ -228,20 +241,16 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
   },
   {
     id: "activities",
-    title: "Activities",
+    title: "usageGuide.s8Title",
     icon: <ActivitiesIcon />,
     body: (
       <>
         <p>
-          Your full transaction log. The balance card up top shows your wallet balance, with
-          Expense/Income/Transfer buttons that filter the list below and a wallet-scope picker to view one wallet
-          instead of all of them. The filter icon next to search opens Category, Tag, Wallet, and Date range
-          filters, and you can export the currently filtered list as a CSV. Tap any transaction to open a read-only
-          detail view — its category, wallet, tags, notes, and attached receipt — with an{" "}
-          <span className="font-semibold text-foreground">Edit transaction</span> button if you actually want to
-          change it, so a stray tap can&apos;t put you into editing by accident. Select multiple transactions to
-          bulk-delete or bulk-tag them at once, or on mobile, swipe a transaction left or right for quick
-          delete/share.
+          <T k="usageGuide.s8Part1" />{" "}
+          <span className="font-semibold text-foreground">
+            <T k="usageGuide.s8Span" />
+          </span>{" "}
+          <T k="usageGuide.s8Part2" />
         </p>
         <SupportScreenshot src="activities.jpg" alt="Activities with a transaction's detail pane open" />
       </>
@@ -249,16 +258,12 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
   },
   {
     id: "settings",
-    title: "Settings",
+    title: "usageGuide.s9Title",
     icon: <GearIcon className="h-4.5 w-4.5" />,
     body: (
       <>
         <p>
-          Manage your account (username, password, email, connected GitHub account, account deletion, sign out of
-          all devices), grant microphone/camera/photos permissions and manage email notifications, customize your
-          expense and income categories and tags, switch light/dark theme, import/export CSV data, set your default
-          currency (with optional automatic conversion for scanned, spoken, or Dashboard amounts in a different
-          currency), and check the Error log if Tally has shown you an error message you want to report.
+          <T k="usageGuide.s9Body" />
         </p>
         <SupportScreenshot src="account.jpg" alt="Settings > Account panel" />
       </>
@@ -266,14 +271,12 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; body: React.
   },
   {
     id: "offline",
-    title: "Install & use offline",
+    title: "usageGuide.s10Title",
     icon: <OfflineIcon />,
     body: (
       <>
         <p>
-          Tally is an installable app — add it to your home screen from your browser&apos;s share/install menu. Once
-          installed, it opens instantly, and if you open it with no connection you&apos;ll see a graceful offline
-          page instead of an error (viewing existing data offline isn&apos;t supported yet).
+          <T k="usageGuide.s10Body" />
         </p>
         <SupportScreenshot src="offline.jpg" alt="Tally's offline page" />
       </>
@@ -286,8 +289,10 @@ export default async function UsageGuidePage() {
   const user = await getUserById(userId);
 
   return (
-    <SettingsSubpageLayout username={user?.username ?? ""} email={user?.email ?? null} title="Usage Guide">
-        <p className="-mt-3 mb-5 text-sm text-ink-soft">Everything Tally can do, in one place.</p>
+    <SettingsSubpageLayout username={user?.username ?? ""} email={user?.email ?? null} title={<T k="usageGuide.title" />}>
+        <p className="-mt-3 mb-5 text-sm text-ink-soft">
+          <T k="usageGuide.subtitle" />
+        </p>
 
         <div className="mb-6 flex flex-wrap gap-1.5">
           {SECTIONS.map((s) => (
@@ -296,7 +301,7 @@ export default async function UsageGuidePage() {
               href={`#${s.id}`}
               className="rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:border-navy hover:text-foreground"
             >
-              {s.title}
+              <T k={s.title} />
             </a>
           ))}
         </div>
@@ -308,7 +313,9 @@ export default async function UsageGuidePage() {
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-navy/10 text-navy dark:text-blue-300">
                   {s.icon}
                 </span>
-                <h3 className="font-display text-lg text-foreground">{s.title}</h3>
+                <h3 className="font-display text-lg text-foreground">
+                  <T k={s.title} />
+                </h3>
               </div>
               <div className="text-sm leading-relaxed text-ink-soft">{s.body}</div>
             </section>
