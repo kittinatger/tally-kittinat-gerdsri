@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getAppErrors, removeAppError, clearAppErrors, type LoggedError } from "@/lib/error-log";
 import { APP_VERSION } from "@/lib/version";
+import { useT } from "@/lib/language-context";
 
 const ISSUE_URL = "https://github.com/kittinatger/tally-kittinat-gerdsri/issues/new";
 
@@ -26,6 +27,7 @@ function reportUrl(entry: LoggedError): string {
 }
 
 export default function ErrorReportsPanel() {
+  const t = useT();
   const [errors, setErrors] = useState<LoggedError[] | null>(null);
 
   useEffect(() => {
@@ -49,34 +51,32 @@ export default function ErrorReportsPanel() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-display text-xl text-foreground">Error log</h3>
+        <h3 className="font-display text-xl text-foreground">{t("settings.errorLog")}</h3>
         {errors && errors.length > 0 && (
           <button
             onClick={handleClearAll}
             className="rounded-full border border-line px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
           >
-            Clear all
+            {t("errors.clearAll")}
           </button>
         )}
       </div>
       <p className="mt-2 text-[11px] leading-snug text-ink-soft">
-        A local record of error messages Tally has shown you recently — nothing here leaves your device unless you
-        tap Report on an entry, which opens a pre-filled GitHub issue. See also{" "}
+        {t("errors.descPart1")}{" "}
         <a href="/troubleshooting" className="text-navy underline hover:no-underline dark:text-blue-300">
-          Troubleshooting
+          {t("settings.troubleshooting")}
         </a>{" "}
-        for common causes and fixes, or{" "}
+        {t("errors.descPart2")}{" "}
         <a href="/report-issue" className="text-navy underline hover:no-underline dark:text-blue-300">
-          Report an issue
+          {t("settings.reportIssue")}
         </a>{" "}
-        if what you&apos;re reporting isn&apos;t a specific error shown here (a feature request, or something that
-        didn&apos;t surface an error message at all).
+        {t("errors.descPart3")}
       </p>
 
       {errors === null ? (
-        <p className="mt-4 text-sm text-ink-soft">Loading…</p>
+        <p className="mt-4 text-sm text-ink-soft">{t("common.loading")}</p>
       ) : errors.length === 0 ? (
-        <p className="mt-4 text-sm text-ink-soft">No errors logged yet.</p>
+        <p className="mt-4 text-sm text-ink-soft">{t("errors.noErrorsYet")}</p>
       ) : (
         <div className="mt-4 space-y-2.5">
           {errors.map((entry) => (
@@ -89,7 +89,7 @@ export default function ErrorReportsPanel() {
                 </div>
                 <button
                   onClick={() => handleDismiss(entry.id)}
-                  aria-label="Dismiss"
+                  aria-label={t("errors.dismiss")}
                   className="shrink-0 rounded-full p-1.5 text-ink-soft transition hover:bg-bg-soft hover:text-foreground"
                 >
                   <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-3.5 w-3.5">
@@ -103,7 +103,7 @@ export default function ErrorReportsPanel() {
                 rel="noreferrer"
                 className="mt-2.5 inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
               >
-                Report this error
+                {t("errors.reportThisError")}
               </a>
             </div>
           ))}

@@ -388,7 +388,14 @@ export type MessageKey =
   | "tokens.lastUsedPrefix"
   | "tokens.neverUsed"
   | "tokens.revoking"
-  | "tokens.confirmRevoke";
+  | "tokens.confirmRevoke"
+  | "errors.clearAll"
+  | "errors.descPart1"
+  | "errors.descPart2"
+  | "errors.descPart3"
+  | "errors.noErrorsYet"
+  | "errors.dismiss"
+  | "errors.reportThisError";
 
 // Languages that read right-to-left — used to set <html dir> so at least
 // text direction is correct even before full RTL layout mirroring exists.
@@ -780,6 +787,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tokens.neverUsed": "Never used",
     "tokens.revoking": "Revoking...",
     "tokens.confirmRevoke": "Confirm revoke",
+    "errors.clearAll": "Clear all",
+    "errors.descPart1": "A local record of error messages Tally has shown you recently — nothing here leaves your device unless you tap Report on an entry, which opens a pre-filled GitHub issue. See also",
+    "errors.descPart2": "for common causes and fixes, or",
+    "errors.descPart3": "if what you're reporting isn't a specific error shown here (a feature request, or something that didn't surface an error message at all).",
+    "errors.noErrorsYet": "No errors logged yet.",
+    "errors.dismiss": "Dismiss",
+    "errors.reportThisError": "Report this error",
   },
   zh: {
     "nav.dashboard": "仪表盘",
@@ -1166,6 +1180,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tokens.neverUsed": "从未使用",
     "tokens.revoking": "正在撤销…",
     "tokens.confirmRevoke": "确认撤销",
+    "errors.clearAll": "全部清除",
+    "errors.descPart1": "这是 Tally 最近向你显示的错误消息的本地记录——除非你点击某条记录的“报告”，否则不会离开你的设备；点击后会打开一个预填内容的 GitHub issue。另请参阅",
+    "errors.descPart2": "了解常见原因和解决方法，或",
+    "errors.descPart3": "如果你要反馈的不是这里显示的具体错误（例如功能建议，或某个根本没有显示错误消息的问题）。",
+    "errors.noErrorsYet": "还没有记录任何错误。",
+    "errors.dismiss": "关闭",
+    "errors.reportThisError": "报告此错误",
   },
   hi: {
     "nav.dashboard": "डैशबोर्ड",
@@ -1552,6 +1573,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tokens.neverUsed": "कभी उपयोग नहीं हुआ",
     "tokens.revoking": "रद्द किया जा रहा है...",
     "tokens.confirmRevoke": "रद्द करने की पुष्टि करें",
+    "errors.clearAll": "सभी साफ़ करें",
+    "errors.descPart1": "हाल ही में Tally ने आपको जो त्रुटि संदेश दिखाए हैं, उनका एक स्थानीय रिकॉर्ड — जब तक आप किसी प्रविष्टि पर रिपोर्ट टैप नहीं करते, यह आपके डिवाइस से बाहर नहीं जाता, जो एक पहले से भरा हुआ GitHub इशू खोलता है। यह भी देखें",
+    "errors.descPart2": "सामान्य कारणों और समाधानों के लिए, या",
+    "errors.descPart3": "यदि आप जो रिपोर्ट कर रहे हैं वह यहां दिखाई गई कोई विशिष्ट त्रुटि नहीं है (कोई फीचर अनुरोध, या कुछ ऐसा जिसने कोई त्रुटि संदेश ही नहीं दिखाया)।",
+    "errors.noErrorsYet": "अभी तक कोई त्रुटि दर्ज नहीं हुई।",
+    "errors.dismiss": "खारिज करें",
+    "errors.reportThisError": "इस त्रुटि की रिपोर्ट करें",
   },
   es: {
     "nav.dashboard": "Panel",
@@ -1938,6 +1966,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tokens.neverUsed": "Nunca usado",
     "tokens.revoking": "Revocando...",
     "tokens.confirmRevoke": "Confirmar revocación",
+    "errors.clearAll": "Borrar todo",
+    "errors.descPart1": "Un registro local de los mensajes de error que Tally te ha mostrado recientemente — nada de esto sale de tu dispositivo a menos que toques Reportar en una entrada, lo que abre un issue de GitHub prellenado. Consulta también",
+    "errors.descPart2": "para causas y soluciones comunes, o",
+    "errors.descPart3": "si lo que quieres reportar no es un error específico mostrado aquí (una solicitud de función, o algo que no mostró ningún mensaje de error).",
+    "errors.noErrorsYet": "Aún no hay errores registrados.",
+    "errors.dismiss": "Descartar",
+    "errors.reportThisError": "Reportar este error",
   },
   fr: {
     "nav.dashboard": "Tableau de bord",
@@ -2324,6 +2359,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tokens.neverUsed": "Jamais utilisé",
     "tokens.revoking": "Révocation...",
     "tokens.confirmRevoke": "Confirmer la révocation",
+    "errors.clearAll": "Tout effacer",
+    "errors.descPart1": "Un journal local des messages d'erreur que Tally vous a récemment montrés — rien ne quitte votre appareil sauf si vous appuyez sur Signaler sur une entrée, ce qui ouvre une issue GitHub pré-remplie. Voir aussi",
+    "errors.descPart2": "pour les causes et solutions courantes, ou",
+    "errors.descPart3": "si ce que vous signalez n'est pas une erreur spécifique affichée ici (une demande de fonctionnalité, ou quelque chose qui n'a pas affiché de message d'erreur du tout).",
+    "errors.noErrorsYet": "Aucune erreur enregistrée pour l'instant.",
+    "errors.dismiss": "Ignorer",
+    "errors.reportThisError": "Signaler cette erreur",
   },
   ar: {
     "nav.dashboard": "لوحة التحكم",
@@ -2710,6 +2752,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tokens.neverUsed": "لم يُستخدم أبدًا",
     "tokens.revoking": "جارٍ الإلغاء...",
     "tokens.confirmRevoke": "تأكيد الإلغاء",
+    "errors.clearAll": "مسح الكل",
+    "errors.descPart1": "سجل محلي لرسائل الخطأ التي عرضها عليك Tally مؤخرًا — لا يغادر شيء من هذا جهازك ما لم تنقر على \"إبلاغ\" على أحد العناصر، والذي يفتح مشكلة GitHub معبأة مسبقًا. راجع أيضًا",
+    "errors.descPart2": "للأسباب والحلول الشائعة، أو",
+    "errors.descPart3": "إذا لم يكن ما تبلغ عنه خطأ محددًا معروضًا هنا (طلب ميزة، أو شيء لم يُظهر رسالة خطأ على الإطلاق).",
+    "errors.noErrorsYet": "لم يتم تسجيل أي أخطاء بعد.",
+    "errors.dismiss": "تجاهل",
+    "errors.reportThisError": "الإبلاغ عن هذا الخطأ",
   },
   bn: {
     "nav.dashboard": "ড্যাশবোর্ড",
@@ -3096,6 +3145,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tokens.neverUsed": "কখনো ব্যবহার হয়নি",
     "tokens.revoking": "বাতিল হচ্ছে...",
     "tokens.confirmRevoke": "বাতিলের নিশ্চিতকরণ",
+    "errors.clearAll": "সব সাফ করুন",
+    "errors.descPart1": "সম্প্রতি Tally আপনাকে দেখানো ত্রুটি বার্তাগুলোর একটি স্থানীয় রেকর্ড — আপনি কোনো এন্ট্রিতে রিপোর্ট ট্যাপ না করলে এটি আপনার ডিভাইস ছেড়ে যায় না, যা একটি পূর্ব-পূরণকৃত GitHub ইস্যু খোলে। আরও দেখুন",
+    "errors.descPart2": "সাধারণ কারণ ও সমাধানের জন্য, অথবা",
+    "errors.descPart3": "যদি আপনি যা রিপোর্ট করছেন তা এখানে দেখানো কোনো নির্দিষ্ট ত্রুটি না হয় (একটি ফিচার অনুরোধ, বা এমন কিছু যা কোনো ত্রুটি বার্তা দেখায়নি)।",
+    "errors.noErrorsYet": "এখনো কোনো ত্রুটি লগ করা হয়নি।",
+    "errors.dismiss": "খারিজ করুন",
+    "errors.reportThisError": "এই ত্রুটি রিপোর্ট করুন",
   },
   pt: {
     "nav.dashboard": "Painel",
@@ -3482,6 +3538,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tokens.neverUsed": "Nunca usado",
     "tokens.revoking": "Revogando...",
     "tokens.confirmRevoke": "Confirmar revogação",
+    "errors.clearAll": "Limpar tudo",
+    "errors.descPart1": "Um registro local das mensagens de erro que o Tally mostrou recentemente — nada daqui sai do seu dispositivo, a menos que você toque em Reportar em uma entrada, o que abre uma issue do GitHub pré-preenchida. Veja também",
+    "errors.descPart2": "para causas e soluções comuns, ou",
+    "errors.descPart3": "se o que você está reportando não for um erro específico mostrado aqui (uma solicitação de recurso, ou algo que não exibiu nenhuma mensagem de erro).",
+    "errors.noErrorsYet": "Nenhum erro registrado ainda.",
+    "errors.dismiss": "Dispensar",
+    "errors.reportThisError": "Reportar este erro",
   },
   ru: {
     "nav.dashboard": "Панель",
@@ -3868,6 +3931,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tokens.neverUsed": "Никогда не использовался",
     "tokens.revoking": "Отзыв...",
     "tokens.confirmRevoke": "Подтвердить отзыв",
+    "errors.clearAll": "Очистить всё",
+    "errors.descPart1": "Локальная запись сообщений об ошибках, которые Tally недавно вам показывал — ничто отсюда не покидает ваше устройство, если вы не нажмёте «Сообщить» на записи, что откроет предзаполненный issue на GitHub. См. также",
+    "errors.descPart2": "для распространённых причин и решений, или",
+    "errors.descPart3": "если то, о чём вы сообщаете, не является конкретной ошибкой, показанной здесь (запрос функции или что-то, что вообще не показало сообщение об ошибке).",
+    "errors.noErrorsYet": "Пока не зарегистрировано ни одной ошибки.",
+    "errors.dismiss": "Скрыть",
+    "errors.reportThisError": "Сообщить об этой ошибке",
   },
   ur: {
     "nav.dashboard": "ڈیش بورڈ",
@@ -4254,6 +4324,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tokens.neverUsed": "کبھی استعمال نہیں ہوا",
     "tokens.revoking": "منسوخ ہو رہا ہے...",
     "tokens.confirmRevoke": "منسوخی کی تصدیق کریں",
+    "errors.clearAll": "سب صاف کریں",
+    "errors.descPart1": "خرابی کے پیغامات کا مقامی ریکارڈ جو Tally نے حال ہی میں آپ کو دکھایا — یہاں سے کچھ بھی آپ کے آلے سے باہر نہیں جاتا جب تک آپ کسی اندراج پر رپورٹ نہ دبائیں، جو ایک پہلے سے بھرا ہوا GitHub ایشو کھولتا ہے۔ یہ بھی دیکھیں",
+    "errors.descPart2": "عام وجوہات اور حل کے لیے، یا",
+    "errors.descPart3": "اگر آپ جو رپورٹ کر رہے ہیں وہ یہاں دکھائی گئی کوئی مخصوص خرابی نہیں ہے (کوئی فیچر کی درخواست، یا کچھ ایسا جس نے کوئی خرابی کا پیغام ظاہر ہی نہیں کیا)۔",
+    "errors.noErrorsYet": "ابھی تک کوئی خرابی درج نہیں ہوئی۔",
+    "errors.dismiss": "مسترد کریں",
+    "errors.reportThisError": "اس خرابی کی اطلاع دیں",
   },
   id: {
     "nav.dashboard": "Dasbor",
@@ -4640,6 +4717,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tokens.neverUsed": "Belum pernah digunakan",
     "tokens.revoking": "Mencabut...",
     "tokens.confirmRevoke": "Konfirmasi pencabutan",
+    "errors.clearAll": "Hapus semua",
+    "errors.descPart1": "Catatan lokal pesan kesalahan yang baru-baru ini ditampilkan Tally kepada Anda — tidak ada yang meninggalkan perangkat Anda kecuali Anda mengetuk Laporkan pada suatu entri, yang membuka isu GitHub yang sudah terisi. Lihat juga",
+    "errors.descPart2": "untuk penyebab dan solusi umum, atau",
+    "errors.descPart3": "jika yang Anda laporkan bukan kesalahan spesifik yang ditampilkan di sini (permintaan fitur, atau sesuatu yang sama sekali tidak menampilkan pesan kesalahan).",
+    "errors.noErrorsYet": "Belum ada kesalahan yang dicatat.",
+    "errors.dismiss": "Tutup",
+    "errors.reportThisError": "Laporkan kesalahan ini",
   },
   de: {
     "nav.dashboard": "Übersicht",
@@ -5026,6 +5110,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tokens.neverUsed": "Nie verwendet",
     "tokens.revoking": "Wird widerrufen...",
     "tokens.confirmRevoke": "Widerruf bestätigen",
+    "errors.clearAll": "Alle löschen",
+    "errors.descPart1": "Eine lokale Aufzeichnung von Fehlermeldungen, die Tally dir kürzlich angezeigt hat — nichts davon verlässt dein Gerät, es sei denn, du tippst bei einem Eintrag auf Melden, wodurch ein vorausgefülltes GitHub-Issue geöffnet wird. Siehe auch",
+    "errors.descPart2": "für häufige Ursachen und Lösungen, oder",
+    "errors.descPart3": "wenn das, was du meldest, kein hier angezeigter spezifischer Fehler ist (eine Funktionsanfrage oder etwas, das überhaupt keine Fehlermeldung angezeigt hat).",
+    "errors.noErrorsYet": "Noch keine Fehler protokolliert.",
+    "errors.dismiss": "Verwerfen",
+    "errors.reportThisError": "Diesen Fehler melden",
   },
   ja: {
     "nav.dashboard": "ダッシュボード",
@@ -5412,6 +5503,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tokens.neverUsed": "未使用",
     "tokens.revoking": "取り消し中...",
     "tokens.confirmRevoke": "取り消しを確認",
+    "errors.clearAll": "すべて消去",
+    "errors.descPart1": "Tallyが最近表示したエラーメッセージのローカル記録です — 項目の「報告」をタップしない限り、この情報が端末の外に出ることはありません。タップすると、あらかじめ内容が入力されたGitHub issueが開きます。関連情報として",
+    "errors.descPart2": "でよくある原因と対処法を確認するか、",
+    "errors.descPart3": "ここに表示されている特定のエラーではない内容（機能要望や、エラーメッセージが一切表示されなかった問題など）を報告したい場合はこちらをご覧ください。",
+    "errors.noErrorsYet": "まだエラーは記録されていません。",
+    "errors.dismiss": "閉じる",
+    "errors.reportThisError": "このエラーを報告",
   },
   vi: {
     "nav.dashboard": "Bảng điều khiển",
@@ -5798,6 +5896,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tokens.neverUsed": "Chưa từng dùng",
     "tokens.revoking": "Đang thu hồi...",
     "tokens.confirmRevoke": "Xác nhận thu hồi",
+    "errors.clearAll": "Xóa tất cả",
+    "errors.descPart1": "Bản ghi cục bộ các thông báo lỗi mà Tally đã hiển thị cho bạn gần đây — không có gì ở đây rời khỏi thiết bị của bạn trừ khi bạn nhấn Báo cáo trên một mục, thao tác này sẽ mở một issue GitHub đã điền sẵn. Xem thêm",
+    "errors.descPart2": "để biết nguyên nhân và cách khắc phục phổ biến, hoặc",
+    "errors.descPart3": "nếu điều bạn đang báo cáo không phải là lỗi cụ thể được hiển thị ở đây (yêu cầu tính năng, hoặc điều gì đó không hiển thị thông báo lỗi nào cả).",
+    "errors.noErrorsYet": "Chưa có lỗi nào được ghi lại.",
+    "errors.dismiss": "Bỏ qua",
+    "errors.reportThisError": "Báo cáo lỗi này",
   },
   tr: {
     "nav.dashboard": "Pano",
@@ -6184,6 +6289,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tokens.neverUsed": "Hiç kullanılmadı",
     "tokens.revoking": "İptal ediliyor...",
     "tokens.confirmRevoke": "İptali onayla",
+    "errors.clearAll": "Tümünü temizle",
+    "errors.descPart1": "Tally'nin size son zamanlarda gösterdiği hata mesajlarının yerel bir kaydı — bir girişte Bildir'e dokunmadıkça hiçbir şey cihazınızdan çıkmaz; bu, önceden doldurulmuş bir GitHub sorunu açar. Ayrıca bakınız",
+    "errors.descPart2": "yaygın nedenler ve çözümler için veya",
+    "errors.descPart3": "bildirdiğiniz şey burada gösterilen belirli bir hata değilse (bir özellik isteği veya hiç hata mesajı göstermeyen bir şey).",
+    "errors.noErrorsYet": "Henüz kaydedilmiş hata yok.",
+    "errors.dismiss": "Kapat",
+    "errors.reportThisError": "Bu hatayı bildir",
   },
   th: {
     "nav.dashboard": "แดชบอร์ด",
@@ -6570,5 +6682,12 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tokens.neverUsed": "ไม่เคยใช้",
     "tokens.revoking": "กำลังเพิกถอน...",
     "tokens.confirmRevoke": "ยืนยันการเพิกถอน",
+    "errors.clearAll": "ล้างทั้งหมด",
+    "errors.descPart1": "บันทึกข้อความข้อผิดพลาดในเครื่องที่ Tally แสดงให้คุณเห็นเมื่อเร็ว ๆ นี้ — ไม่มีสิ่งใดออกจากอุปกรณ์ของคุณ เว้นแต่คุณจะแตะรายงานในรายการ ซึ่งจะเปิดปัญหา GitHub ที่กรอกข้อมูลไว้ล่วงหน้า ดูเพิ่มเติมที่",
+    "errors.descPart2": "สำหรับสาเหตุและวิธีแก้ไขทั่วไป หรือ",
+    "errors.descPart3": "หากสิ่งที่คุณกำลังรายงานไม่ใช่ข้อผิดพลาดเฉพาะที่แสดงที่นี่ (คำขอฟีเจอร์ หรือสิ่งที่ไม่ได้แสดงข้อความข้อผิดพลาดเลย)",
+    "errors.noErrorsYet": "ยังไม่มีการบันทึกข้อผิดพลาด",
+    "errors.dismiss": "ปิด",
+    "errors.reportThisError": "รายงานข้อผิดพลาดนี้",
   },
 };
