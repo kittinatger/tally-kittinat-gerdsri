@@ -3,10 +3,13 @@
 import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useState } from "react";
 import { EditIcon } from "@/lib/icons";
+import { useT, useLanguage } from "@/lib/language-context";
 
 type TagCount = { name: string; count: number };
 
 export default function TagManager() {
+  const t = useT();
+  const language = useLanguage();
   const [tags, setTags] = useState<TagCount[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
@@ -24,11 +27,12 @@ export default function TagManager() {
         setTags(Array.isArray(data.tags) ? data.tags : []);
       })
       .catch(() => {
-        if (!cancelled) setLoadError("Could not load tags.");
+        if (!cancelled) setLoadError(t("tag.couldNotLoad"));
       });
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetch once on mount; t() re-runs on every render regardless
   }, []);
 
   function startEdit(tag: TagCount) {
@@ -110,14 +114,13 @@ export default function TagManager() {
   }
 
   if (!tags) {
-    return <p className="text-sm text-ink-soft">Loading tags…</p>;
+    return <p className="text-sm text-ink-soft">{t("tag.loading")}</p>;
   }
 
   if (tags.length === 0) {
     return (
       <p className="text-sm text-ink-soft">
-        No tags yet — add tags to a transaction (in Manual entry, or when reviewing a scan/recording) and they&apos;ll
-        show up here.
+        {t("tag.noTagsYet")}
       </p>
     );
   }
@@ -151,14 +154,14 @@ export default function TagManager() {
                     onClick={() => setEditing(null)}
                     className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)]"
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </button>
                   <button
                     onClick={() => saveRename(tag.name)}
                     disabled={busy}
                     className="rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-60"
                   >
-                    Save
+                    {t("common.save")}
                   </button>
                 </div>
               </>
@@ -167,7 +170,7 @@ export default function TagManager() {
                 <div className="flex min-w-0 items-center gap-2">
                   <span className="truncate font-medium text-foreground">{tag.name}</span>
                   <span className="shrink-0 text-xs text-ink-soft">
-                    {tag.count} transaction{tag.count === 1 ? "" : "s"}
+                    {tag.count} {t("tag.transaction")}{language === "en" && tag.count !== 1 ? "s" : ""}
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
@@ -187,7 +190,7 @@ export default function TagManager() {
                         : "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
                     }`}
                   >
-                    {confirmDelete === tag.name ? "Confirm" : "Delete"}
+                    {confirmDelete === tag.name ? t("tag.confirm") : t("common.delete")}
                   </button>
                 </div>
               </>

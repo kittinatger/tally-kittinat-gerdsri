@@ -11,6 +11,7 @@ import { EditIcon, TrashIcon, PlusIcon } from "@/lib/icons";
 import WalletModal from "./WalletModal";
 import WalletTransferModal from "./WalletTransferModal";
 import FilterDropdown from "./FilterDropdown";
+import { useT } from "@/lib/language-context";
 
 function WalletGlyphIcon() {
   return (
@@ -40,6 +41,7 @@ export default function WalletManager({
   initialActivitiesDefaultWalletId: number | null;
 }) {
   const router = useRouter();
+  const t = useT();
   const currency = useCurrency();
   const [modal, setModal] = useState<{ mode: "add" } | { mode: "edit"; wallet: WalletOption } | null>(null);
   const [transferOpen, setTransferOpen] = useState(false);
@@ -201,12 +203,12 @@ export default function WalletManager({
             <p className="truncate font-medium text-foreground">{w.name}</p>
             {w.isDefault && (
               <span className="shrink-0 rounded-full bg-navy/10 px-1.5 py-0.5 text-[10px] font-semibold text-navy dark:text-blue-300">
-                Default
+                {t("wallet.default")}
               </span>
             )}
           </div>
           <p className="text-xs text-ink-soft">
-            {w.kind === "digital" ? "Digital" : "Cash"} · {formatCurrency(w.balance, w.currency ?? currency)}
+            {w.kind === "digital" ? t("wallet.digital") : t("wallet.cash")} · {formatCurrency(w.balance, w.currency ?? currency)}
             {w.currency ? ` (${w.currency})` : ""}
           </p>
         </div>
@@ -218,14 +220,14 @@ export default function WalletManager({
               disabled={deleting}
               className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               onClick={() => handleDelete(w.id)}
               disabled={deleting}
               className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
             >
-              {deleting ? "Deleting..." : "Confirm delete"}
+              {deleting ? t("common.deleting") : t("common.confirmDelete")}
             </button>
           </div>
         ) : (
@@ -236,7 +238,7 @@ export default function WalletManager({
                 disabled={busyId === w.id}
                 className="rounded-full px-2.5 py-1.5 text-[11px] font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
               >
-                Make default
+                {t("wallet.makeDefault")}
               </button>
             )}
             <button
@@ -273,10 +275,9 @@ export default function WalletManager({
     <div>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="font-display text-xl text-foreground">Wallets</h3>
+          <h3 className="font-display text-xl text-foreground">{t("wallet.wallets")}</h3>
           <p className="mt-0.5 text-sm text-ink-soft">
-            Each transaction can be assigned to a wallet; the default is used when none is chosen. Archiving hides a
-            wallet from pickers and totals without deleting its history.
+            {t("wallet.walletsDesc")}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -288,12 +289,12 @@ export default function WalletManager({
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 shrink-0">
                 <path d="M7 7h13l-3.5-3.5M17 17H4l3.5 3.5" />
               </svg>
-              Transfer
+              {t("common.transfer")}
             </button>
           )}
           <button
             onClick={() => setModal({ mode: "add" })}
-            aria-label="Add wallet"
+            aria-label={t("wallet.addWallet")}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark"
           >
             <PlusIcon className="h-3.5 w-3.5 shrink-0" />
@@ -305,19 +306,19 @@ export default function WalletManager({
 
       {activeWallets.length > 1 && (
         <div className="mt-4 rounded-card border border-line bg-surface p-4">
-          <p className="text-sm font-semibold text-foreground">Default wallet for Activities</p>
+          <p className="text-sm font-semibold text-foreground">{t("wallet.defaultForActivities")}</p>
           <p className="mt-0.5 text-xs text-ink-soft">
-            Which wallet the Activities page&apos;s balance card is scoped to when it opens.
+            {t("wallet.defaultForActivitiesDesc")}
           </p>
           <div className="mt-2.5">
             <FilterDropdown
               value={activeWallets.find((w) => w.id === activitiesDefaultWalletId)?.name ?? "all"}
-              allLabel="All wallets"
+              allLabel={t("activities.allWallets")}
               options={activeWallets.map((w) => w.name)}
               onChange={handleActivitiesDefaultChange}
             />
           </div>
-          {savingActivitiesDefault && <p className="mt-1.5 text-xs text-ink-soft">Saving...</p>}
+          {savingActivitiesDefault && <p className="mt-1.5 text-xs text-ink-soft">{t("common.saving")}</p>}
           {activitiesDefaultError && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{activitiesDefaultError}</p>}
         </div>
       )}
@@ -328,7 +329,7 @@ export default function WalletManager({
 
       {archivedWallets.length > 0 && (
         <div className="mt-4">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">Archived</p>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">{t("wallet.archived")}</p>
           <div className="overflow-hidden rounded-card border border-line bg-surface">
             {archivedWallets.map((w, i) => renderWallet(w, i, archivedWallets.length))}
           </div>
