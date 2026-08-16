@@ -2,8 +2,10 @@
 
 import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useState } from "react";
+import { useT } from "@/lib/language-context";
 
 export default function NotificationSettings({ hasEmail }: { hasEmail: boolean }) {
+  const t = useT();
   const [notifyRecurring, setNotifyRecurring] = useState(false);
   const [notifyBudget, setNotifyBudget] = useState(false);
   const [savingRecurring, setSavingRecurring] = useState(false);
@@ -53,24 +55,23 @@ export default function NotificationSettings({ hasEmail }: { hasEmail: boolean }
 
   return (
     <div>
-      <p className="mb-3.5 text-sm font-medium text-foreground">Email notifications</p>
+      <p className="mb-3.5 text-sm font-medium text-foreground">{t("notifications.emailTitle")}</p>
       {!hasEmail ? (
         <p className="text-[11px] leading-snug text-ink-soft">
-          Add an email in Account first to enable email notifications.
+          {t("notifications.addEmailFirst")}
         </p>
       ) : (
         <>
           <p className="mb-3.5 text-[11px] leading-snug text-ink-soft">
-            There&apos;s no background worker in this app — notifications send the next time you open Tally after
-            the triggering event, not the instant it happens.
+            {t("notifications.noBackgroundWorker")}
           </p>
 
           <div className="border-t border-[var(--glass-border)] pt-3.5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">Recurring transactions logged</p>
+                <p className="text-sm font-medium text-foreground">{t("notifications.recurringLoggedTitle")}</p>
                 <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">
-                  Email me a summary whenever a recurring rule auto-logs a transaction.
+                  {t("notifications.recurringLoggedDesc")}
                 </p>
               </div>
               <button
@@ -79,7 +80,7 @@ export default function NotificationSettings({ hasEmail }: { hasEmail: boolean }
                 disabled={savingRecurring}
                 role="switch"
                 aria-checked={notifyRecurring}
-                aria-label="Toggle recurring transaction email notifications"
+                aria-label={t("notifications.recurringLoggedTitle")}
                 className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-60 ${
                   notifyRecurring ? "bg-navy" : "bg-bg-soft"
                 }`}
@@ -96,9 +97,9 @@ export default function NotificationSettings({ hasEmail }: { hasEmail: boolean }
           <div className="mt-3.5 border-t border-[var(--glass-border)] pt-3.5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">Over budget</p>
+                <p className="text-sm font-medium text-foreground">{t("notifications.overBudgetTitle")}</p>
                 <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">
-                  Email me once per month the first time a category goes over its budget.
+                  {t("notifications.overBudgetDesc")}
                 </p>
               </div>
               <button
@@ -107,7 +108,7 @@ export default function NotificationSettings({ hasEmail }: { hasEmail: boolean }
                 disabled={savingBudget}
                 role="switch"
                 aria-checked={notifyBudget}
-                aria-label="Toggle over-budget email notifications"
+                aria-label={t("notifications.overBudgetTitle")}
                 className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-60 ${
                   notifyBudget ? "bg-navy" : "bg-bg-soft"
                 }`}

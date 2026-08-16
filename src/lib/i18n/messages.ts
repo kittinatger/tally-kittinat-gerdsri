@@ -395,7 +395,14 @@ export type MessageKey =
   | "errors.descPart3"
   | "errors.noErrorsYet"
   | "errors.dismiss"
-  | "errors.reportThisError";
+  | "errors.reportThisError"
+  | "notifications.emailTitle"
+  | "notifications.addEmailFirst"
+  | "notifications.noBackgroundWorker"
+  | "notifications.recurringLoggedTitle"
+  | "notifications.recurringLoggedDesc"
+  | "notifications.overBudgetTitle"
+  | "notifications.overBudgetDesc";
 
 // Languages that read right-to-left — used to set <html dir> so at least
 // text direction is correct even before full RTL layout mirroring exists.
@@ -794,6 +801,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "errors.noErrorsYet": "No errors logged yet.",
     "errors.dismiss": "Dismiss",
     "errors.reportThisError": "Report this error",
+    "notifications.emailTitle": "Email notifications",
+    "notifications.addEmailFirst": "Add an email in Account first to enable email notifications.",
+    "notifications.noBackgroundWorker": "There's no background worker in this app — notifications send the next time you open Tally after the triggering event, not the instant it happens.",
+    "notifications.recurringLoggedTitle": "Recurring transactions logged",
+    "notifications.recurringLoggedDesc": "Email me a summary whenever a recurring rule auto-logs a transaction.",
+    "notifications.overBudgetTitle": "Over budget",
+    "notifications.overBudgetDesc": "Email me once per month the first time a category goes over its budget.",
   },
   zh: {
     "nav.dashboard": "仪表盘",
@@ -1187,6 +1201,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "errors.noErrorsYet": "还没有记录任何错误。",
     "errors.dismiss": "关闭",
     "errors.reportThisError": "报告此错误",
+    "notifications.emailTitle": "邮件通知",
+    "notifications.addEmailFirst": "请先在“账户”中添加邮箱以启用邮件通知。",
+    "notifications.noBackgroundWorker": "此应用没有后台任务——通知会在触发事件之后，你下次打开 Tally 时发送，而不是在事件发生的瞬间发送。",
+    "notifications.recurringLoggedTitle": "已记录的定期交易",
+    "notifications.recurringLoggedDesc": "每当定期规则自动记录一笔交易时，通过邮件向我发送摘要。",
+    "notifications.overBudgetTitle": "超出预算",
+    "notifications.overBudgetDesc": "当某个分类首次超出预算时，每月通过邮件通知我一次。",
   },
   hi: {
     "nav.dashboard": "डैशबोर्ड",
@@ -1580,6 +1601,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "errors.noErrorsYet": "अभी तक कोई त्रुटि दर्ज नहीं हुई।",
     "errors.dismiss": "खारिज करें",
     "errors.reportThisError": "इस त्रुटि की रिपोर्ट करें",
+    "notifications.emailTitle": "ईमेल सूचनाएं",
+    "notifications.addEmailFirst": "ईमेल सूचनाएं सक्षम करने के लिए पहले खाते में एक ईमेल जोड़ें।",
+    "notifications.noBackgroundWorker": "इस ऐप में कोई बैकग्राउंड वर्कर नहीं है — सूचनाएं ट्रिगर करने वाली घटना के बाद अगली बार जब आप Tally खोलते हैं तब भेजी जाती हैं, घटना होते ही नहीं।",
+    "notifications.recurringLoggedTitle": "आवर्ती लेन-देन दर्ज हुआ",
+    "notifications.recurringLoggedDesc": "जब भी कोई आवर्ती नियम स्वतः किसी लेन-देन को दर्ज करे तो मुझे सारांश ईमेल करें।",
+    "notifications.overBudgetTitle": "बजट से अधिक",
+    "notifications.overBudgetDesc": "जब कोई श्रेणी पहली बार अपने बजट से अधिक हो जाए, तो मुझे महीने में एक बार ईमेल करें।",
   },
   es: {
     "nav.dashboard": "Panel",
@@ -1973,6 +2001,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "errors.noErrorsYet": "Aún no hay errores registrados.",
     "errors.dismiss": "Descartar",
     "errors.reportThisError": "Reportar este error",
+    "notifications.emailTitle": "Notificaciones por correo",
+    "notifications.addEmailFirst": "Añade un correo en Cuenta primero para habilitar las notificaciones por correo.",
+    "notifications.noBackgroundWorker": "Esta app no tiene un proceso en segundo plano — las notificaciones se envían la próxima vez que abras Tally después del evento que las desencadena, no en el instante en que ocurre.",
+    "notifications.recurringLoggedTitle": "Transacciones recurrentes registradas",
+    "notifications.recurringLoggedDesc": "Envíame un resumen por correo cada vez que una regla recurrente registre automáticamente una transacción.",
+    "notifications.overBudgetTitle": "Sobre el presupuesto",
+    "notifications.overBudgetDesc": "Envíame un correo una vez al mes la primera vez que una categoría supere su presupuesto.",
   },
   fr: {
     "nav.dashboard": "Tableau de bord",
@@ -2366,6 +2401,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "errors.noErrorsYet": "Aucune erreur enregistrée pour l'instant.",
     "errors.dismiss": "Ignorer",
     "errors.reportThisError": "Signaler cette erreur",
+    "notifications.emailTitle": "Notifications par e-mail",
+    "notifications.addEmailFirst": "Ajoutez d'abord un e-mail dans Compte pour activer les notifications par e-mail.",
+    "notifications.noBackgroundWorker": "Cette app n'a pas de tâche en arrière-plan — les notifications sont envoyées la prochaine fois que vous ouvrez Tally après l'événement déclencheur, pas à l'instant où il se produit.",
+    "notifications.recurringLoggedTitle": "Transactions récurrentes enregistrées",
+    "notifications.recurringLoggedDesc": "Envoyez-moi un résumé par e-mail chaque fois qu'une règle récurrente enregistre automatiquement une transaction.",
+    "notifications.overBudgetTitle": "Dépassement de budget",
+    "notifications.overBudgetDesc": "Envoyez-moi un e-mail une fois par mois la première fois qu'une catégorie dépasse son budget.",
   },
   ar: {
     "nav.dashboard": "لوحة التحكم",
@@ -2759,6 +2801,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "errors.noErrorsYet": "لم يتم تسجيل أي أخطاء بعد.",
     "errors.dismiss": "تجاهل",
     "errors.reportThisError": "الإبلاغ عن هذا الخطأ",
+    "notifications.emailTitle": "إشعارات البريد الإلكتروني",
+    "notifications.addEmailFirst": "أضف بريدًا إلكترونيًا في الحساب أولاً لتفعيل إشعارات البريد الإلكتروني.",
+    "notifications.noBackgroundWorker": "لا توجد عملية خلفية في هذا التطبيق — تُرسل الإشعارات في المرة التالية التي تفتح فيها Tally بعد وقوع الحدث المُحفِّز، وليس فور حدوثه.",
+    "notifications.recurringLoggedTitle": "تم تسجيل معاملات متكررة",
+    "notifications.recurringLoggedDesc": "أرسل لي ملخصًا عبر البريد الإلكتروني كلما سجّلت قاعدة متكررة معاملة تلقائيًا.",
+    "notifications.overBudgetTitle": "تجاوز الميزانية",
+    "notifications.overBudgetDesc": "أرسل لي بريدًا إلكترونيًا مرة واحدة شهريًا عند تجاوز فئة ما لميزانيتها لأول مرة.",
   },
   bn: {
     "nav.dashboard": "ড্যাশবোর্ড",
@@ -3152,6 +3201,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "errors.noErrorsYet": "এখনো কোনো ত্রুটি লগ করা হয়নি।",
     "errors.dismiss": "খারিজ করুন",
     "errors.reportThisError": "এই ত্রুটি রিপোর্ট করুন",
+    "notifications.emailTitle": "ইমেইল বিজ্ঞপ্তি",
+    "notifications.addEmailFirst": "ইমেইল বিজ্ঞপ্তি সক্ষম করতে প্রথমে অ্যাকাউন্টে একটি ইমেইল যোগ করুন।",
+    "notifications.noBackgroundWorker": "এই অ্যাপে কোনো ব্যাকগ্রাউন্ড ওয়ার্কার নেই — ট্রিগারিং ইভেন্টের পরে আপনি পরের বার Tally খুললে বিজ্ঞপ্তি পাঠানো হয়, ঘটনার সাথে সাথে নয়।",
+    "notifications.recurringLoggedTitle": "পুনরাবৃত্ত লেনদেন লগ হয়েছে",
+    "notifications.recurringLoggedDesc": "যখনই কোনো পুনরাবৃত্ত নিয়ম স্বয়ংক্রিয়ভাবে একটি লেনদেন লগ করে, তখন আমাকে একটি সারাংশ ইমেইল করুন।",
+    "notifications.overBudgetTitle": "বাজেট অতিক্রম",
+    "notifications.overBudgetDesc": "কোনো বিভাগ প্রথমবার তার বাজেট অতিক্রম করলে মাসে একবার আমাকে ইমেইল করুন।",
   },
   pt: {
     "nav.dashboard": "Painel",
@@ -3545,6 +3601,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "errors.noErrorsYet": "Nenhum erro registrado ainda.",
     "errors.dismiss": "Dispensar",
     "errors.reportThisError": "Reportar este erro",
+    "notifications.emailTitle": "Notificações por e-mail",
+    "notifications.addEmailFirst": "Adicione um e-mail em Conta primeiro para ativar as notificações por e-mail.",
+    "notifications.noBackgroundWorker": "Não há um processo em segundo plano neste app — as notificações são enviadas na próxima vez que você abrir o Tally após o evento que as dispara, não no instante em que ele acontece.",
+    "notifications.recurringLoggedTitle": "Transações recorrentes registradas",
+    "notifications.recurringLoggedDesc": "Envie-me um resumo por e-mail sempre que uma regra recorrente registrar automaticamente uma transação.",
+    "notifications.overBudgetTitle": "Acima do orçamento",
+    "notifications.overBudgetDesc": "Envie-me um e-mail uma vez por mês na primeira vez que uma categoria ultrapassar seu orçamento.",
   },
   ru: {
     "nav.dashboard": "Панель",
@@ -3938,6 +4001,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "errors.noErrorsYet": "Пока не зарегистрировано ни одной ошибки.",
     "errors.dismiss": "Скрыть",
     "errors.reportThisError": "Сообщить об этой ошибке",
+    "notifications.emailTitle": "Уведомления по email",
+    "notifications.addEmailFirst": "Сначала добавьте email в разделе «Аккаунт», чтобы включить уведомления по почте.",
+    "notifications.noBackgroundWorker": "В этом приложении нет фоновой службы — уведомления отправляются при следующем открытии Tally после triggering-события, а не в момент его наступления.",
+    "notifications.recurringLoggedTitle": "Записаны повторяющиеся операции",
+    "notifications.recurringLoggedDesc": "Присылать мне сводку по email каждый раз, когда повторяющееся правило автоматически записывает операцию.",
+    "notifications.overBudgetTitle": "Превышение бюджета",
+    "notifications.overBudgetDesc": "Присылать мне email раз в месяц при первом превышении бюджета категорией.",
   },
   ur: {
     "nav.dashboard": "ڈیش بورڈ",
@@ -4331,6 +4401,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "errors.noErrorsYet": "ابھی تک کوئی خرابی درج نہیں ہوئی۔",
     "errors.dismiss": "مسترد کریں",
     "errors.reportThisError": "اس خرابی کی اطلاع دیں",
+    "notifications.emailTitle": "ای میل اطلاعات",
+    "notifications.addEmailFirst": "ای میل اطلاعات فعال کرنے کے لیے پہلے اکاؤنٹ میں ای میل شامل کریں۔",
+    "notifications.noBackgroundWorker": "اس ایپ میں کوئی بیک گراؤنڈ ورکر نہیں ہے — اطلاعات محرک واقعے کے بعد اگلی بار جب آپ Tally کھولیں تب بھیجی جاتی ہیں، واقعہ ہوتے ہی نہیں۔",
+    "notifications.recurringLoggedTitle": "بار بار ہونے والے لین دین درج ہوئے",
+    "notifications.recurringLoggedDesc": "جب بھی کوئی بار بار ہونے والا قاعدہ خودکار طور پر کوئی لین دین درج کرے تو مجھے خلاصہ ای میل کریں۔",
+    "notifications.overBudgetTitle": "بجٹ سے زیادہ",
+    "notifications.overBudgetDesc": "جب کوئی زمرہ پہلی بار اپنے بجٹ سے تجاوز کرے تو مجھے ماہ میں ایک بار ای میل کریں۔",
   },
   id: {
     "nav.dashboard": "Dasbor",
@@ -4724,6 +4801,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "errors.noErrorsYet": "Belum ada kesalahan yang dicatat.",
     "errors.dismiss": "Tutup",
     "errors.reportThisError": "Laporkan kesalahan ini",
+    "notifications.emailTitle": "Notifikasi email",
+    "notifications.addEmailFirst": "Tambahkan email di Akun terlebih dahulu untuk mengaktifkan notifikasi email.",
+    "notifications.noBackgroundWorker": "Tidak ada proses latar belakang di aplikasi ini — notifikasi dikirim saat berikutnya Anda membuka Tally setelah peristiwa pemicunya, bukan pada saat peristiwa itu terjadi.",
+    "notifications.recurringLoggedTitle": "Transaksi berulang dicatat",
+    "notifications.recurringLoggedDesc": "Kirimi saya ringkasan email setiap kali aturan berulang mencatat transaksi secara otomatis.",
+    "notifications.overBudgetTitle": "Melebihi anggaran",
+    "notifications.overBudgetDesc": "Kirimi saya email sekali sebulan saat pertama kali kategori melebihi anggarannya.",
   },
   de: {
     "nav.dashboard": "Übersicht",
@@ -5117,6 +5201,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "errors.noErrorsYet": "Noch keine Fehler protokolliert.",
     "errors.dismiss": "Verwerfen",
     "errors.reportThisError": "Diesen Fehler melden",
+    "notifications.emailTitle": "E-Mail-Benachrichtigungen",
+    "notifications.addEmailFirst": "Füge zuerst eine E-Mail-Adresse unter Konto hinzu, um E-Mail-Benachrichtigungen zu aktivieren.",
+    "notifications.noBackgroundWorker": "Diese App hat keinen Hintergrunddienst — Benachrichtigungen werden gesendet, wenn du Tally das nächste Mal nach dem auslösenden Ereignis öffnest, nicht in dem Moment, in dem es passiert.",
+    "notifications.recurringLoggedTitle": "Wiederkehrende Transaktion erfasst",
+    "notifications.recurringLoggedDesc": "Sende mir eine E-Mail-Zusammenfassung, wann immer eine wiederkehrende Regel automatisch eine Transaktion erfasst.",
+    "notifications.overBudgetTitle": "Budget überschritten",
+    "notifications.overBudgetDesc": "Sende mir einmal im Monat eine E-Mail, wenn eine Kategorie zum ersten Mal ihr Budget überschreitet.",
   },
   ja: {
     "nav.dashboard": "ダッシュボード",
@@ -5510,6 +5601,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "errors.noErrorsYet": "まだエラーは記録されていません。",
     "errors.dismiss": "閉じる",
     "errors.reportThisError": "このエラーを報告",
+    "notifications.emailTitle": "メール通知",
+    "notifications.addEmailFirst": "メール通知を有効にするには、まずアカウントにメールアドレスを追加してください。",
+    "notifications.noBackgroundWorker": "このアプリにはバックグラウンド処理がありません — 通知はトリガーとなる出来事が起きた瞬間ではなく、その後に次にTallyを開いたときに送信されます。",
+    "notifications.recurringLoggedTitle": "定期取引の記録",
+    "notifications.recurringLoggedDesc": "定期ルールが取引を自動記録するたびに、要約をメールで送信します。",
+    "notifications.overBudgetTitle": "予算超過",
+    "notifications.overBudgetDesc": "カテゴリが初めて予算を超えたとき、月に一度メールでお知らせします。",
   },
   vi: {
     "nav.dashboard": "Bảng điều khiển",
@@ -5903,6 +6001,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "errors.noErrorsYet": "Chưa có lỗi nào được ghi lại.",
     "errors.dismiss": "Bỏ qua",
     "errors.reportThisError": "Báo cáo lỗi này",
+    "notifications.emailTitle": "Thông báo qua email",
+    "notifications.addEmailFirst": "Thêm email trong mục Tài khoản trước để bật thông báo qua email.",
+    "notifications.noBackgroundWorker": "Ứng dụng này không có tiến trình chạy nền — thông báo được gửi vào lần tiếp theo bạn mở Tally sau sự kiện kích hoạt, không phải ngay lúc sự kiện xảy ra.",
+    "notifications.recurringLoggedTitle": "Đã ghi giao dịch định kỳ",
+    "notifications.recurringLoggedDesc": "Gửi email tóm tắt cho tôi mỗi khi một quy tắc định kỳ tự động ghi một giao dịch.",
+    "notifications.overBudgetTitle": "Vượt ngân sách",
+    "notifications.overBudgetDesc": "Gửi email cho tôi một lần mỗi tháng khi một danh mục vượt ngân sách lần đầu.",
   },
   tr: {
     "nav.dashboard": "Pano",
@@ -6296,6 +6401,13 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "errors.noErrorsYet": "Henüz kaydedilmiş hata yok.",
     "errors.dismiss": "Kapat",
     "errors.reportThisError": "Bu hatayı bildir",
+    "notifications.emailTitle": "E-posta bildirimleri",
+    "notifications.addEmailFirst": "E-posta bildirimlerini etkinleştirmek için önce Hesap'a bir e-posta ekleyin.",
+    "notifications.noBackgroundWorker": "Bu uygulamada arka plan işlemi yoktur — bildirimler, tetikleyen olaydan sonra Tally'yi bir sonraki açışınızda gönderilir, olayın gerçekleştiği anda değil.",
+    "notifications.recurringLoggedTitle": "Tekrarlayan işlem kaydedildi",
+    "notifications.recurringLoggedDesc": "Tekrarlayan bir kural bir işlemi otomatik olarak kaydettiğinde bana e-posta ile özet gönder.",
+    "notifications.overBudgetTitle": "Bütçe aşımı",
+    "notifications.overBudgetDesc": "Bir kategori bütçesini ilk kez aştığında ayda bir kez bana e-posta gönder.",
   },
   th: {
     "nav.dashboard": "แดชบอร์ด",
@@ -6689,5 +6801,12 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "errors.noErrorsYet": "ยังไม่มีการบันทึกข้อผิดพลาด",
     "errors.dismiss": "ปิด",
     "errors.reportThisError": "รายงานข้อผิดพลาดนี้",
+    "notifications.emailTitle": "การแจ้งเตือนทางอีเมล",
+    "notifications.addEmailFirst": "เพิ่มอีเมลในบัญชีก่อนเพื่อเปิดใช้งานการแจ้งเตือนทางอีเมล",
+    "notifications.noBackgroundWorker": "แอปนี้ไม่มีการทำงานเบื้องหลัง — การแจ้งเตือนจะถูกส่งในครั้งถัดไปที่คุณเปิด Tally หลังจากเหตุการณ์ที่กระตุ้น ไม่ใช่ทันทีที่เกิดขึ้น",
+    "notifications.recurringLoggedTitle": "บันทึกธุรกรรมที่เกิดซ้ำแล้ว",
+    "notifications.recurringLoggedDesc": "ส่งสรุปทางอีเมลให้ฉันทุกครั้งที่กฎที่เกิดซ้ำบันทึกธุรกรรมโดยอัตโนมัติ",
+    "notifications.overBudgetTitle": "เกินงบประมาณ",
+    "notifications.overBudgetDesc": "ส่งอีเมลให้ฉันเดือนละครั้งเมื่อหมวดหมู่เกินงบประมาณเป็นครั้งแรก",
   },
 };
