@@ -6,6 +6,7 @@ import type { Budget } from "@/types/budget";
 import type { SavingsGoal } from "@/types/savings-goal";
 import type { DashboardWidgetInstance } from "@/lib/dashboard-widgets";
 import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
+import { useT } from "@/lib/language-context";
 import { computeEffectiveBudgetLimit } from "@/lib/budget-rollover";
 import { formatCurrency, monthKey, todayInputValue } from "@/lib/format";
 import { accentTextClasses, accentBgClasses, heroGradientClasses } from "@/lib/category-styles";
@@ -152,6 +153,7 @@ export default function DashboardWidgetContent({
 }) {
   const currency = useCurrency();
   const wallets = useWallets();
+  const t = useT();
 
   const today = todayInputValue();
   const currentMonthKey = monthKey(today);
@@ -176,9 +178,9 @@ export default function DashboardWidgetContent({
       const scopedWallet = widget.walletId != null ? wallets.find((w) => w.id === widget.walletId) : undefined;
       return (
         <WelcomeWidget
-          username={username ?? "there"}
+          username={username ?? t("dashboardWidgetContent.there")}
           remaining={scopedWallet ? scopedWallet.balance : remaining}
-          balanceLabel={scopedWallet ? scopedWallet.name : "All Accounts • Total Balance"}
+          balanceLabel={scopedWallet ? scopedWallet.name : t("dashboardWidgetContent.allAccountsTotalBalance")}
           onAddExpense={widget.hideAction ? undefined : (onAddExpense ?? noop)}
           onAddIncome={widget.hideAction ? undefined : (onAddIncome ?? noop)}
           onAddTransfer={widget.hideAction ? undefined : (onAddTransfer ?? noop)}
@@ -206,7 +208,7 @@ export default function DashboardWidgetContent({
     case "incomeCard":
       return (
         <IncomeStatCard
-          label="Income"
+          label={t("summaryCard.income")}
           value={formatCurrency(monthIncome, currency)}
           currencyCode={currency}
           onClick={widget.hideAction ? undefined : (onAddIncome ?? noop)}
@@ -215,7 +217,7 @@ export default function DashboardWidgetContent({
     case "expensesCard":
       return (
         <ExpenseStatCard
-          label="Expenses"
+          label={t("summaryCard.expenses")}
           value={formatCurrency(monthSpent, currency)}
           currencyCode={currency}
           onClick={widget.hideAction ? undefined : (onAddExpense ?? noop)}
@@ -224,7 +226,7 @@ export default function DashboardWidgetContent({
     case "remainingCard":
       return (
         <BalanceStatCard
-          label="Remaining"
+          label={t("summaryCard.remaining")}
           value={`${remaining < 0 ? "-" : ""}${formatCurrency(Math.abs(remaining), currency)}`}
           currencyCode={currency}
           negative={remaining < 0}
@@ -234,42 +236,48 @@ export default function DashboardWidgetContent({
 
     // ---- Big numbers ----
     case "todaySpending":
-      return <ExpenseStatCard label="Today's spending" value={formatCurrency(sum(expenses.filter((e) => e.type === "expense" && e.date === today)), currency)} />;
+      return <ExpenseStatCard label={t("widget.todaySpendingTitle")} value={formatCurrency(sum(expenses.filter((e) => e.type === "expense" && e.date === today)), currency)} />;
     case "yesterdaySpending": {
       const y = daysAgoKey(1);
-      return <ExpenseStatCard label="Yesterday's spending" value={formatCurrency(sum(expenses.filter((e) => e.type === "expense" && e.date === y)), currency)} />;
+      return <ExpenseStatCard label={t("widget.yesterdaySpendingTitle")} value={formatCurrency(sum(expenses.filter((e) => e.type === "expense" && e.date === y)), currency)} />;
     }
     case "weekSpending":
-      return <ExpenseStatCard label="This week's spending" value={formatCurrency(sum(expenses.filter((e) => e.type === "expense" && e.date >= weekStart)), currency)} />;
+      return <ExpenseStatCard label={t("widget.weekSpendingTitle")} value={formatCurrency(sum(expenses.filter((e) => e.type === "expense" && e.date >= weekStart)), currency)} />;
     case "monthSpending":
-      return <ExpenseStatCard label="This month's spending" value={formatCurrency(monthSpent, currency)} />;
+      return <ExpenseStatCard label={t("widget.monthSpendingTitle")} value={formatCurrency(monthSpent, currency)} />;
     case "yearSpending":
       return (
         <ExpenseStatCard
-          label="This year's spending"
+          label={t("widget.yearSpendingTitle")}
           value={formatCurrency(sum(expenses.filter((e) => e.type === "expense" && e.date.startsWith(thisYear))), currency)}
         />
       );
     case "todayIncome":
-      return <IncomeStatCard label="Today's income" value={formatCurrency(sum(expenses.filter((e) => e.type === "income" && e.date === today)), currency)} />;
+      return <IncomeStatCard label={t("widget.todayIncomeTitle")} value={formatCurrency(sum(expenses.filter((e) => e.type === "income" && e.date === today)), currency)} />;
     case "monthIncome":
-      return <IncomeStatCard label="This month's income" value={formatCurrency(monthIncome, currency)} />;
+      return <IncomeStatCard label={t("widget.monthIncomeTitle")} value={formatCurrency(monthIncome, currency)} />;
     case "yearIncome":
       return (
         <IncomeStatCard
-          label="This year's income"
+          label={t("widget.yearIncomeTitle")}
           value={formatCurrency(sum(expenses.filter((e) => e.type === "income" && e.date.startsWith(thisYear))), currency)}
         />
       );
     case "netWorth":
-      return <WalletStatCard label="Net worth" value={formatCurrency(convertedNetWorth ?? remaining, currency)} sublabel="All wallets combined" />;
+      return (
+        <WalletStatCard
+          label={t("widget.netWorthTitle")}
+          value={formatCurrency(convertedNetWorth ?? remaining, currency)}
+          sublabel={t("dashboardWidgetContent.allWalletsCombined")}
+        />
+      );
     case "totalBalance": {
       const total = wallets.reduce((s, w) => s + w.balance, 0);
       return (
         <WalletStatCard
-          label="Total balance"
+          label={t("widget.totalBalanceTitle")}
           value={formatCurrency(total, currency)}
-          sublabel={`Across ${wallets.length} active wallet${wallets.length === 1 ? "" : "s"}`}
+          sublabel={`${t("dashboardWidgetContent.across")} ${wallets.length} ${wallets.length === 1 ? t("dashboardWidgetContent.activeWallet") : t("dashboardWidgetContent.activeWallets")}`}
         />
       );
     }
@@ -277,35 +285,35 @@ export default function DashboardWidgetContent({
       const dayOfMonth = Number(today.slice(8, 10));
       return (
         <ExpenseStatCard
-          label="Average daily spending"
+          label={t("widget.avgDailySpendingTitle")}
           value={formatCurrency(monthSpent / Math.max(1, dayOfMonth), currency)}
-          sublabel="This month"
+          sublabel={t("dashboardWidgetContent.thisMonth")}
         />
       );
     }
     case "avgTransactionAmount":
       return (
         <ExpenseStatCard
-          label="Average transaction"
+          label={t("widget.avgTransactionAmountTitle")}
           value={formatCurrency(monthExpenses.length > 0 ? monthSpent / monthExpenses.length : 0, currency)}
-          sublabel="This month"
+          sublabel={t("dashboardWidgetContent.thisMonth")}
         />
       );
     case "avgIncomeAmount":
       return (
         <IncomeStatCard
-          label="Average income"
+          label={t("widget.avgIncomeAmountTitle")}
           value={formatCurrency(monthIncomeItems.length > 0 ? monthIncome / monthIncomeItems.length : 0, currency)}
-          sublabel="This month"
+          sublabel={t("dashboardWidgetContent.thisMonth")}
         />
       );
     case "biggestExpense": {
       const biggest = monthExpenses.reduce<Expense | null>((max, e) => (!max || e.amount > max.amount ? e : max), null);
       return (
         <ExpenseStatCard
-          label="Biggest expense"
+          label={t("widget.biggestExpenseTitle")}
           value={biggest ? formatCurrency(biggest.amount, currency) : "—"}
-          sublabel={biggest ? biggest.merchant : "No expenses this month"}
+          sublabel={biggest ? biggest.merchant : t("dashboardWidgetContent.noExpensesThisMonth")}
         />
       );
     }
@@ -313,35 +321,35 @@ export default function DashboardWidgetContent({
       const biggest = monthIncomeItems.reduce<Expense | null>((max, e) => (!max || e.amount > max.amount ? e : max), null);
       return (
         <IncomeStatCard
-          label="Biggest income"
+          label={t("widget.biggestIncomeTitle")}
           value={biggest ? formatCurrency(biggest.amount, currency) : "—"}
-          sublabel={biggest ? biggest.merchant : "No income this month"}
+          sublabel={biggest ? biggest.merchant : t("dashboardWidgetContent.noIncomeThisMonth")}
         />
       );
     }
     case "transactionCount":
-      return <StatWidget label="Transaction count" value={String(thisMonth.length)} sublabel="This month" valueClassName={accentText} />;
+      return <StatWidget label={t("widget.transactionCountTitle")} value={String(thisMonth.length)} sublabel={t("dashboardWidgetContent.thisMonth")} valueClassName={accentText} />;
     case "transfersTotal":
       return (
         <StatWidget
-          label="Transfers total"
+          label={t("widget.transfersTotalTitle")}
           // Every transfer is stored as two rows (an "out" leg on the source
           // wallet and an "in" leg on the destination) — counting only one
           // side avoids double-counting the amount actually moved.
           value={formatCurrency(sum(thisMonth.filter((e) => e.type === "transfer" && e.direction === "out")), currency)}
-          sublabel="This month"
+          sublabel={t("dashboardWidgetContent.thisMonth")}
           valueClassName={accentText}
         />
       );
     case "walletCount":
-      return <StatWidget label="Wallet count" value={String(wallets.length)} sublabel="Active wallets" valueClassName={accentText} />;
+      return <StatWidget label={t("widget.walletCountTitle")} value={String(wallets.length)} sublabel={t("dashboardWidgetContent.activeWalletsLabel")} valueClassName={accentText} />;
     case "categoryCount": {
       const distinct = new Set(thisMonth.map((e) => e.category));
-      return <StatWidget label="Categories used" value={String(distinct.size)} sublabel="This month" valueClassName={accentText} />;
+      return <StatWidget label={t("widget.categoryCountTitle")} value={String(distinct.size)} sublabel={t("dashboardWidgetContent.thisMonth")} valueClassName={accentText} />;
     }
     case "tagCount": {
       const distinct = new Set(thisMonth.flatMap((e) => e.tags));
-      return <StatWidget label="Tags used" value={String(distinct.size)} sublabel="This month" valueClassName={accentText} />;
+      return <StatWidget label={t("widget.tagCountTitle")} value={String(distinct.size)} sublabel={t("dashboardWidgetContent.thisMonth")} valueClassName={accentText} />;
     }
 
     // ---- Trend arrows ----
@@ -350,9 +358,9 @@ export default function DashboardWidgetContent({
       const pct = lastMonthSpent > 0 ? ((monthSpent - lastMonthSpent) / lastMonthSpent) * 100 : 0;
       return (
         <ExpenseStatCard
-          label="Month vs last month"
+          label={t("widget.monthComparisonTitle")}
           value={formatCurrency(monthSpent, currency)}
-          sublabel={`vs ${formatCurrency(lastMonthSpent, currency)} last month`}
+          sublabel={`${t("dashboardWidgetContent.vs")} ${formatCurrency(lastMonthSpent, currency)} ${t("dashboardWidgetContent.lastMonth")}`}
           trend={{ label: `${pct >= 0 ? "+" : ""}${pct.toFixed(0)}%`, positive: pct > 1 }}
         />
       );
@@ -362,9 +370,9 @@ export default function DashboardWidgetContent({
       const pct = lastMonthIncome > 0 ? ((monthIncome - lastMonthIncome) / lastMonthIncome) * 100 : 0;
       return (
         <IncomeStatCard
-          label="Income vs last month"
+          label={t("widget.incomeComparisonTitle")}
           value={formatCurrency(monthIncome, currency)}
-          sublabel={`vs ${formatCurrency(lastMonthIncome, currency)} last month`}
+          sublabel={`${t("dashboardWidgetContent.vs")} ${formatCurrency(lastMonthIncome, currency)} ${t("dashboardWidgetContent.lastMonth")}`}
           trend={{ label: `${pct >= 0 ? "+" : ""}${pct.toFixed(0)}%`, positive: pct >= 0 }}
         />
       );
@@ -375,9 +383,9 @@ export default function DashboardWidgetContent({
       const pct = lastWeekSpent > 0 ? ((thisWeekSpent - lastWeekSpent) / lastWeekSpent) * 100 : 0;
       return (
         <ExpenseStatCard
-          label="Week vs last week"
+          label={t("widget.weekComparisonTitle")}
           value={formatCurrency(thisWeekSpent, currency)}
-          sublabel={`vs ${formatCurrency(lastWeekSpent, currency)} last week`}
+          sublabel={`${t("dashboardWidgetContent.vs")} ${formatCurrency(lastWeekSpent, currency)} ${t("dashboardWidgetContent.lastWeek")}`}
           trend={{ label: `${pct >= 0 ? "+" : ""}${pct.toFixed(0)}%`, positive: pct > 1 }}
         />
       );
@@ -388,9 +396,9 @@ export default function DashboardWidgetContent({
       const pct = lastYearSpent > 0 ? ((thisYearSpent - lastYearSpent) / lastYearSpent) * 100 : 0;
       return (
         <ExpenseStatCard
-          label="Year over year"
+          label={t("widget.yearOverYearTitle")}
           value={formatCurrency(thisYearSpent, currency)}
-          sublabel={`vs ${formatCurrency(lastYearSpent, currency)} last year`}
+          sublabel={`${t("dashboardWidgetContent.vs")} ${formatCurrency(lastYearSpent, currency)} ${t("dashboardWidgetContent.lastYear")}`}
           trend={{ label: `${pct >= 0 ? "+" : ""}${pct.toFixed(0)}%`, positive: pct > 1 }}
         />
       );
@@ -401,10 +409,10 @@ export default function DashboardWidgetContent({
       const rate = monthIncome > 0 ? ((monthIncome - monthSpent) / monthIncome) * 100 : 0;
       return (
         <ProgressRingWidget
-          label="Savings rate"
+          label={t("widget.savingsRateTitle")}
           percent={rate}
           centerValue={monthIncome > 0 ? `${rate.toFixed(0)}%` : "—"}
-          sublabel="This month"
+          sublabel={t("dashboardWidgetContent.thisMonth")}
           ringClassName={widget.accent ? accentText : rate >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}
         />
       );
@@ -415,10 +423,10 @@ export default function DashboardWidgetContent({
       const pct = (dayOfMonth / daysInMonth) * 100;
       return (
         <ProgressRingWidget
-          label="Month progress"
+          label={t("widget.monthProgressTitle")}
           percent={pct}
-          centerValue={`Day ${dayOfMonth}`}
-          sublabel={`of ${daysInMonth}`}
+          centerValue={`${t("dashboardWidgetContent.day")} ${dayOfMonth}`}
+          sublabel={`${t("dashboardWidgetContent.of")} ${daysInMonth}`}
           ringClassName={accentText}
         />
       );
@@ -430,7 +438,7 @@ export default function DashboardWidgetContent({
       const dayOfYear = Math.floor((now.getTime() - start.getTime()) / 86400000) + 1;
       const totalDays = Math.round((end.getTime() - start.getTime()) / 86400000);
       const pct = (dayOfYear / totalDays) * 100;
-      return <ProgressRingWidget label="Year progress" percent={pct} centerValue={`${pct.toFixed(0)}%`} sublabel={thisYear} ringClassName={accentText} />;
+      return <ProgressRingWidget label={t("widget.yearProgressTitle")} percent={pct} centerValue={`${pct.toFixed(0)}%`} sublabel={thisYear} ringClassName={accentText} />;
     }
     case "spendPace": {
       const dayOfMonth = Number(today.slice(8, 10));
@@ -440,21 +448,27 @@ export default function DashboardWidgetContent({
       const pacePct = lastMonthSpent > 0 ? (monthSpent / lastMonthSpent) * 100 : expectedPct;
       return (
         <GaugeWidget
-          label="Spending pace"
+          label={t("widget.spendPaceTitle")}
           percent={pacePct}
-          sublabel={pacePct > expectedPct + 5 ? "Ahead of last month's pace" : pacePct < expectedPct - 5 ? "Behind last month's pace" : "On pace"}
+          sublabel={
+            pacePct > expectedPct + 5
+              ? t("dashboardWidgetContent.aheadOfPace")
+              : pacePct < expectedPct - 5
+                ? t("dashboardWidgetContent.behindPace")
+                : t("dashboardWidgetContent.onPace")
+          }
           needleClassName={widget.accent ? accentText : "text-rose-500 dark:text-rose-400"}
         />
       );
     }
     case "walletUsage": {
       const wallet = wallets.find((w) => w.isDefault) ?? wallets[0];
-      if (!wallet) return <StatWidget label="Wallet usage" value="—" sublabel="No wallets yet" />;
+      if (!wallet) return <StatWidget label={t("widget.walletUsageTitle")} value="—" sublabel={t("dashboardWidgetContent.noWalletsYet")} />;
       const totalBalance = wallets.reduce((s, w) => s + Math.max(w.balance, 0), 0);
       const share = totalBalance > 0 ? (Math.max(wallet.balance, 0) / totalBalance) * 100 : 0;
       return (
         <GaugeWidget
-          label={`${wallet.name} share`}
+          label={`${wallet.name} ${t("dashboardWidgetContent.share")}`}
           percent={share}
           sublabel={formatCurrency(wallet.balance, currency)}
           needleClassName={widget.accent ? accentText : "text-sky-500 dark:text-sky-400"}
@@ -465,18 +479,18 @@ export default function DashboardWidgetContent({
     // ---- Sparklines ----
     case "last14DaysSpark": {
       const points = Array.from({ length: 14 }, (_, i) => sum(expenses.filter((e) => e.type === "expense" && e.date === daysAgoKey(13 - i))));
-      return <ExpenseAreaSparkWidget label="14-day spending trend" value={formatCurrency(points.reduce((a, b) => a + b, 0), currency)} points={points} />;
+      return <ExpenseAreaSparkWidget label={t("widget.last14DaysSparkTitle")} value={formatCurrency(points.reduce((a, b) => a + b, 0), currency)} points={points} />;
     }
     case "last14DaysIncomeSpark": {
       const points = Array.from({ length: 14 }, (_, i) => sum(expenses.filter((e) => e.type === "income" && e.date === daysAgoKey(13 - i))));
-      return <IncomeAreaSparkWidget label="14-day income trend" value={formatCurrency(points.reduce((a, b) => a + b, 0), currency)} points={points} />;
+      return <IncomeAreaSparkWidget label={t("widget.last14DaysIncomeSparkTitle")} value={formatCurrency(points.reduce((a, b) => a + b, 0), currency)} points={points} />;
     }
     case "last6MonthsSpark": {
       const points = Array.from({ length: 6 }, (_, i) => {
         const mk = monthsAgoKey(5 - i);
         return sum(expenses.filter((e) => e.type === "expense" && monthKey(e.date) === mk));
       });
-      return <ExpenseAreaSparkWidget label="6-month spending trend" value={formatCurrency(monthSpent, currency)} points={points} />;
+      return <ExpenseAreaSparkWidget label={t("widget.last6MonthsSparkTitle")} value={formatCurrency(monthSpent, currency)} points={points} />;
     }
 
     // ---- Donuts ----
@@ -488,22 +502,22 @@ export default function DashboardWidgetContent({
         displayValue: formatCurrency(value, currency),
         colorClassName: accentTextClasses(colorFor(i)),
       }));
-      return <DonutChartWidget title="Category split" segments={segments} />;
+      return <DonutChartWidget title={t("widget.categoryDonutTitle")} segments={segments} />;
     }
     case "typeDonut": {
       // Each transfer is stored as two rows (out leg + in leg) — counting
       // both would make "Transfer" look twice as common as it actually is
       // relative to Expense/Income, which each have exactly one row per
       // transaction.
-      const countOf = (t: "expense" | "income" | "transfer") =>
-        t === "transfer" ? thisMonth.filter((e) => e.type === t && e.direction === "out").length : thisMonth.filter((e) => e.type === t).length;
-      const segments = (["expense", "income", "transfer"] as const).map((t, i) => ({
-        label: t === "expense" ? "Expense" : t === "income" ? "Income" : "Transfer",
-        value: countOf(t),
-        displayValue: String(countOf(t)),
+      const countOf = (ty: "expense" | "income" | "transfer") =>
+        ty === "transfer" ? thisMonth.filter((e) => e.type === ty && e.direction === "out").length : thisMonth.filter((e) => e.type === ty).length;
+      const segments = (["expense", "income", "transfer"] as const).map((ty, i) => ({
+        label: ty === "expense" ? t("dashboardWidgetContent.expenseType") : ty === "income" ? t("dashboardWidgetContent.incomeType") : t("dashboardWidgetContent.transferType"),
+        value: countOf(ty),
+        displayValue: String(countOf(ty)),
         colorClassName: accentTextClasses(colorFor(i)),
       }));
-      return <DonutChartWidget title="Transaction mix" segments={segments} />;
+      return <DonutChartWidget title={t("widget.typeDonutTitle")} segments={segments} />;
     }
     case "walletDonut": {
       const segments = wallets.map((w, i) => ({
@@ -512,7 +526,7 @@ export default function DashboardWidgetContent({
         displayValue: formatCurrency(w.balance, currency),
         colorClassName: accentTextClasses(colorFor(i)),
       }));
-      return <DonutChartWidget title="Balance split" segments={segments} />;
+      return <DonutChartWidget title={t("widget.walletDonutTitle")} segments={segments} />;
     }
 
     // ---- Heatmaps ----
@@ -520,13 +534,13 @@ export default function DashboardWidgetContent({
       const values = Array.from({ length: 30 }, (_, i) => sum(expenses.filter((e) => e.type === "expense" && e.date === daysAgoKey(29 - i))));
       const max = Math.max(...values, 1);
       const cells = values.map((v, i) => ({ date: daysAgoKey(29 - i), intensity: v / max }));
-      return <HeatmapWidget title="30-day activity" cells={cells} colorClassName={widget.accent ? accentBg : "bg-rose-500"} />;
+      return <HeatmapWidget title={t("widget.last30DaysHeatmapTitle")} cells={cells} colorClassName={widget.accent ? accentBg : "bg-rose-500"} />;
     }
     case "last90DaysHeatmap": {
       const values = Array.from({ length: 90 }, (_, i) => sum(expenses.filter((e) => e.type === "expense" && e.date === daysAgoKey(89 - i))));
       const max = Math.max(...values, 1);
       const cells = values.map((v, i) => ({ date: daysAgoKey(89 - i), intensity: v / max }));
-      return <HeatmapWidget title="90-day activity" cells={cells} colorClassName={widget.accent ? accentBg : "bg-rose-500"} />;
+      return <HeatmapWidget title={t("widget.last90DaysHeatmapTitle")} cells={cells} colorClassName={widget.accent ? accentBg : "bg-rose-500"} />;
     }
 
     // ---- Stacked bars ----
@@ -538,7 +552,11 @@ export default function DashboardWidgetContent({
         displayValue: formatCurrency(w.balance, currency),
         colorClassName: accentBgClasses(colorFor(i)),
       }));
-      return total > 0 ? <StackedBarWidget title="Wallet share" segments={segments} /> : <StackedBarWidget title="Wallet share" segments={[]} />;
+      return total > 0 ? (
+        <StackedBarWidget title={t("dashboardWidgetContent.walletShareTitle")} segments={segments} />
+      ) : (
+        <StackedBarWidget title={t("dashboardWidgetContent.walletShareTitle")} segments={[]} />
+      );
     }
     case "categoryShareBar": {
       const entries = [...groupSum(monthExpenses, (e) => e.category).entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
@@ -548,16 +566,16 @@ export default function DashboardWidgetContent({
         displayValue: formatCurrency(value, currency),
         colorClassName: accentBgClasses(colorFor(i)),
       }));
-      return <StackedBarWidget title="Category share" segments={segments} />;
+      return <StackedBarWidget title={t("dashboardWidgetContent.categoryShareTitle")} segments={segments} />;
     }
 
     // ---- Comparison bars ----
     case "incomeVsExpenseBars":
       return (
         <ComparisonBarsWidget
-          title="Income vs expenses"
-          barA={{ label: "Income", value: monthIncome, displayValue: formatCurrency(monthIncome, currency), colorClassName: "bg-emerald-500" }}
-          barB={{ label: "Expenses", value: monthSpent, displayValue: formatCurrency(monthSpent, currency), colorClassName: "bg-red-500" }}
+          title={t("widget.incomeVsExpenseBarsTitle")}
+          barA={{ label: t("summaryCard.income"), value: monthIncome, displayValue: formatCurrency(monthIncome, currency), colorClassName: "bg-emerald-500" }}
+          barB={{ label: t("summaryCard.expenses"), value: monthSpent, displayValue: formatCurrency(monthSpent, currency), colorClassName: "bg-red-500" }}
         />
       );
     case "cashVsDigitalBars": {
@@ -565,9 +583,9 @@ export default function DashboardWidgetContent({
       const digital = wallets.filter((w) => w.kind === "digital").reduce((s, w) => s + w.balance, 0);
       return (
         <ComparisonBarsWidget
-          title="Cash vs digital"
-          barA={{ label: "Cash", value: Math.max(cash, 0), displayValue: formatCurrency(cash, currency), colorClassName: "bg-amber-500" }}
-          barB={{ label: "Digital", value: Math.max(digital, 0), displayValue: formatCurrency(digital, currency), colorClassName: "bg-sky-500" }}
+          title={t("widget.cashVsDigitalBarsTitle")}
+          barA={{ label: t("dashboardWidgetContent.cash"), value: Math.max(cash, 0), displayValue: formatCurrency(cash, currency), colorClassName: "bg-amber-500" }}
+          barB={{ label: t("dashboardWidgetContent.digital"), value: Math.max(digital, 0), displayValue: formatCurrency(digital, currency), colorClassName: "bg-sky-500" }}
         />
       );
     }
@@ -578,14 +596,14 @@ export default function DashboardWidgetContent({
         .sort((a, b) => b[1] - a[1])
         .slice(0, widget.limit ?? 5)
         .map(([label, value], i) => ({ label, value, displayValue: formatCurrency(value, currency), colorClassName: accentBgClasses(colorFor(i)) }));
-      return <ExpenseRankedWidget title="Top categories" items={items} />;
+      return <ExpenseRankedWidget title={t("widget.topCategoriesTitle")} items={items} />;
     }
     case "topMerchants": {
       const items = [...groupSum(monthExpenses, (e) => e.merchant).entries()]
         .sort((a, b) => b[1] - a[1])
         .slice(0, widget.limit ?? 5)
         .map(([label, value], i) => ({ label, value, displayValue: formatCurrency(value, currency), colorClassName: accentBgClasses(colorFor(i)) }));
-      return <ExpenseRankedWidget title="Top merchants" items={items} />;
+      return <ExpenseRankedWidget title={t("widget.topMerchantsTitle")} items={items} />;
     }
     case "topTags": {
       const counts = new Map<string, number>();
@@ -594,24 +612,24 @@ export default function DashboardWidgetContent({
         .sort((a, b) => b[1] - a[1])
         .slice(0, widget.limit ?? 5)
         .map(([label, value], i) => ({ label: `#${label}`, value, displayValue: String(value), colorClassName: accentBgClasses(colorFor(i)) }));
-      return <ExpenseRankedWidget title="Top tags" items={items} />;
+      return <ExpenseRankedWidget title={t("widget.topTagsTitle")} items={items} />;
     }
     case "topIncomeSources": {
       const items = [...groupSum(monthIncomeItems, (e) => e.category).entries()]
         .sort((a, b) => b[1] - a[1])
         .slice(0, widget.limit ?? 5)
         .map(([label, value], i) => ({ label, value, displayValue: formatCurrency(value, currency), colorClassName: accentBgClasses(colorFor(i)) }));
-      return <IncomeSourcesRankedWidget title="Top income sources" items={items} />;
+      return <IncomeSourcesRankedWidget title={t("widget.topIncomeSourcesTitle")} items={items} />;
     }
     case "walletDistribution": {
       const items = wallets.map((w, i) => ({ label: w.name, value: Math.max(w.balance, 0), displayValue: formatCurrency(w.balance, currency), colorClassName: accentBgClasses(colorFor(i)) }));
-      return <WalletRankedWidget title="Wallet distribution" items={items} />;
+      return <WalletRankedWidget title={t("widget.walletDistributionTitle")} items={items} />;
     }
     case "expensesByWallet": {
-      const items = [...groupSum(monthExpenses, (e) => e.walletName ?? "Unassigned").entries()]
+      const items = [...groupSum(monthExpenses, (e) => e.walletName ?? t("dashboardWidgetContent.unassigned")).entries()]
         .sort((a, b) => b[1] - a[1])
         .map(([label, value], i) => ({ label, value, displayValue: formatCurrency(value, currency), colorClassName: accentBgClasses(colorFor(i)) }));
-      return <WalletRankedWidget title="Spending by wallet" items={items} />;
+      return <WalletRankedWidget title={t("widget.expensesByWalletTitle")} items={items} />;
     }
 
     // ---- Leaderboards ----
@@ -620,14 +638,14 @@ export default function DashboardWidgetContent({
         .sort((a, b) => b[1] - a[1])
         .slice(0, widget.limit ?? 3)
         .map(([label, value]) => ({ label, displayValue: formatCurrency(value, currency) }));
-      return <ExpenseLeaderboardWidget title="Merchant leaderboard" items={items} />;
+      return <ExpenseLeaderboardWidget title={t("widget.topMerchantsLeaderboardTitle")} items={items} />;
     }
     case "topCategoriesLeaderboard": {
       const items = [...groupSum(monthExpenses, (e) => e.category).entries()]
         .sort((a, b) => b[1] - a[1])
         .slice(0, widget.limit ?? 3)
         .map(([label, value]) => ({ label, displayValue: formatCurrency(value, currency) }));
-      return <ExpenseLeaderboardWidget title="Category leaderboard" items={items} />;
+      return <ExpenseLeaderboardWidget title={t("widget.topCategoriesLeaderboardTitle")} items={items} />;
     }
 
     // ---- Bar chart ----
@@ -636,7 +654,7 @@ export default function DashboardWidgetContent({
         const key = daysAgoKey(6 - i);
         return { label: weekdayLabel(key), value: sum(expenses.filter((e) => e.type === "expense" && e.date === key)) };
       });
-      return <MiniBarChartWidget title="Last 7 days" bars={bars} barClassName={widget.accent ? accentBg : "bg-rose-500"} />;
+      return <MiniBarChartWidget title={t("widget.last7DaysTitle")} bars={bars} barClassName={widget.accent ? accentBg : "bg-rose-500"} />;
     }
 
     // ---- Creative widgets ----
@@ -652,7 +670,7 @@ export default function DashboardWidgetContent({
       return (
         <TickerCardWidget
           icon={<TickerIcon />}
-          name="Net worth"
+          name={t("widget.netWorthTitle")}
           value={formatCurrency(remaining, currency)}
           deltaLabel={`${deltaPct >= 0 ? "+" : ""}${deltaPct.toFixed(1)}%`}
           deltaPositive={deltaPct >= 0}
@@ -663,7 +681,7 @@ export default function DashboardWidgetContent({
     }
     case "walletTicker": {
       const wallet = wallets.find((w) => w.isDefault) ?? wallets[0];
-      if (!wallet) return <StatWidget label="Wallet ticker" value="—" sublabel="No wallets yet" />;
+      if (!wallet) return <StatWidget label={t("widget.walletTickerTitle")} value="—" sublabel={t("dashboardWidgetContent.noWalletsYet")} />;
       const points = Array.from({ length: 14 }, (_, i) => {
         const key = daysAgoKey(13 - i);
         // A transfer leg moves this wallet's balance exactly like an
@@ -706,7 +724,7 @@ export default function DashboardWidgetContent({
       return (
         <PillStatWidget
           icon={<PillIcon />}
-          label="Today's spending"
+          label={t("widget.todaySpendingTitle")}
           value={formatCurrency(sum(expenses.filter((e) => e.type === "expense" && e.date === today)), currency)}
           iconBgClassName={`${widget.accent ? accentBg : "bg-rose-500"} text-white`}
         />
@@ -720,8 +738,14 @@ export default function DashboardWidgetContent({
       return (
         <AlertPillWidget
           icon={<PillIcon />}
-          title="Spending pace"
-          subtitle={pacePct > expectedPct + 5 ? "Ahead of last month" : pacePct < expectedPct - 5 ? "Behind last month" : "On pace"}
+          title={t("widget.spendPaceTitle")}
+          subtitle={
+            pacePct > expectedPct + 5
+              ? t("dashboardWidgetContent.aheadLastMonth")
+              : pacePct < expectedPct - 5
+                ? t("dashboardWidgetContent.behindLastMonth")
+                : t("dashboardWidgetContent.onPace")
+          }
           percent={pacePct}
           ringClassName={pacePct > expectedPct + 5 ? "text-red-400" : "text-emerald-400"}
         />
@@ -737,7 +761,7 @@ export default function DashboardWidgetContent({
       return (
         <WeekdayTrackerWidget
           value={`${count}/7`}
-          label="No-spend days this week"
+          label={t("dashboardWidgetContent.noSpendDaysThisWeek")}
           days={days}
           cardClassName={`${heroGradient} text-white`}
         />
@@ -770,9 +794,9 @@ export default function DashboardWidgetContent({
       const activeIndex = pct < 33 ? 0 : pct < 66 ? 1 : 2;
       return (
         <StepperProgressWidget
-          title="Month progress"
-          subtitle={`Day ${dayOfMonth} of ${daysInMonth}`}
-          stages={["Start", "Mid-month", "End"]}
+          title={t("widget.monthProgressTitle")}
+          subtitle={`${t("dashboardWidgetContent.day")} ${dayOfMonth} ${t("dashboardWidgetContent.of")} ${daysInMonth}`}
+          stages={[t("dashboardWidgetContent.stageStart"), t("dashboardWidgetContent.stageMidMonth"), t("dashboardWidgetContent.stageEnd")]}
           activeIndex={activeIndex}
           progressPercent={pct}
           accentClassName={widget.accent ? accentBg : "bg-surface-accent"}
@@ -791,7 +815,7 @@ export default function DashboardWidgetContent({
       return (
         <CornerArrowStatWidget
           value={`${streak} days`}
-          label="Under-average spending this week"
+          label={t("dashboardWidgetContent.underAverageSpendingThisWeek")}
           bars={days}
           cardClassName={`${heroGradient} text-white`}
         />
