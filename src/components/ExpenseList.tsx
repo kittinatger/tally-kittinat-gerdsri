@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { signedAmount, type Expense } from "@/types/expense";
 import type { TransactionType } from "@/lib/categories";
-import { monthKey, monthLabel, formatCurrency, todayInputValue } from "@/lib/format";
+import { monthKey, monthLabel, formatCurrency, formatAmountRaw, todayInputValue } from "@/lib/format";
 import { useAllCategories } from "@/lib/categories-context";
 import { useWallets } from "@/lib/wallets-context";
 import { useCurrency } from "@/lib/currency-context";
@@ -278,7 +278,7 @@ export default function ExpenseList({
           escape(e.merchant),
           escape(e.category),
           escape(e.tags.join("; ")),
-          signedAmount(e).toFixed(2),
+          formatAmountRaw(signedAmount(e), currency),
           escape(e.notes ?? ""),
         ].join(","),
       );

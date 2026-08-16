@@ -10,7 +10,7 @@ import { isTransactionType, isTransferDirection, type TransactionType } from "@/
 import { useAllCategories } from "@/lib/categories-context";
 import { useWallets } from "@/lib/wallets-context";
 import { useCurrency } from "@/lib/currency-context";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, todayInputValue } from "@/lib/format";
 import { downscaleImage } from "@/lib/image-downscale";
 import { describeFetchError } from "@/lib/fetch-error";
 import { logAppError } from "@/lib/error-log";
@@ -86,6 +86,7 @@ export default function AddExpenseModal({
     const uploadFile = await downscaleImage(file);
     const formData = new FormData();
     formData.append("image", uploadFile);
+    formData.append("fallbackDate", todayInputValue());
 
     try {
       const res = await fetch("/api/extract-receipt", { method: "POST", body: formData });
@@ -148,6 +149,7 @@ export default function AddExpenseModal({
 
     const formData = new FormData();
     formData.append("audio", blob, `recording.${mimeType.split("/")[1]?.split(";")[0] ?? "webm"}`);
+    formData.append("fallbackDate", todayInputValue());
 
     try {
       const res = await fetch("/api/extract-voice", { method: "POST", body: formData });

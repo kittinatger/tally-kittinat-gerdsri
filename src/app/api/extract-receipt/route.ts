@@ -45,6 +45,13 @@ export async function POST(req: NextRequest) {
   const buffer = Buffer.from(await file.arrayBuffer());
   const base64 = buffer.toString("base64");
 
+  // The client's own local "today" (see todayInputValue in lib/format.ts) —
+  // used only as a fallback when Gemini can't extract a date, so a scan near
+  // midnight lands on the user's calendar day, not the server's UTC one.
+  const fallbackDateRaw = formData?.get("fallbackDate");
+  const fallbackDate =
+    typeof fallbackDateRaw === "string" && /^\d{4}-\d{2}-\d{2}$/.test(fallbackDateRaw) ? fallbackDateRaw : undefined;
+
   try {
     await recordGeminiUsage(userId);
     const [categoryRows, defaultCurrency, autoConvertEnabled, walletRows] = await Promise.all([
@@ -58,7 +65,13 @@ export async function POST(req: NextRequest) {
       income: categoryRows.filter((c) => c.type === "income").map((c) => c.name),
       transfer: categoryRows.filter((c) => c.type === "transfer").map((c) => c.name),
     };
-    const extraction = await extractTransaction(base64, file.type, categories, walletRows.map((w) => w.name));
+    const extraction = await extractTransaction(
+      base64,
+      file.type,
+      categories,
+      walletRows.map((w) => w.name),
+      fallbackDate,
+    );
     const result = await maybeAutoConvert(extraction, defaultCurrency, autoConvertEnabled);
     return NextResponse.json({ extraction: result });
   } catch (err) {

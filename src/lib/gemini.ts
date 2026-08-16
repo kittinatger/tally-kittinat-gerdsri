@@ -152,7 +152,12 @@ function arrayResponseSchema(allCategories: string[], walletNames: string[]) {
   };
 }
 
-function parseOne(record: Record<string, unknown>, categories: CategoriesByType, walletNames: string[]): TransactionExtraction {
+function parseOne(
+  record: Record<string, unknown>,
+  categories: CategoriesByType,
+  walletNames: string[],
+  fallbackDate: string,
+): TransactionExtraction {
   const typeRaw = typeof record.type === "string" ? record.type.trim().toLowerCase() : "";
   const type: TransactionType = isTransactionType(typeRaw) ? typeRaw : "expense";
   const directionRaw = typeof record.direction === "string" ? record.direction.trim().toLowerCase() : "";
@@ -162,7 +167,7 @@ function parseOne(record: Record<string, unknown>, categories: CategoriesByType,
     typeof record.merchant === "string" && record.merchant.trim() ? record.merchant.trim() : "Unknown";
   const amount = typeof record.amount === "number" && Number.isFinite(record.amount) ? Math.abs(record.amount) : 0;
   const dateRaw = typeof record.date === "string" ? record.date.trim() : "";
-  const date = /^\d{4}-\d{2}-\d{2}$/.test(dateRaw) ? dateRaw : new Date().toISOString().slice(0, 10);
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(dateRaw) ? dateRaw : fallbackDate;
   const categoryRaw = typeof record.category === "string" ? record.category.trim() : "";
   const validNames = type === "income" ? categories.income : type === "transfer" ? categories.transfer : categories.expense;
   const category = validNames.includes(categoryRaw) ? categoryRaw : (validNames.includes("Other") ? "Other" : (validNames[0] ?? "Other"));
@@ -175,7 +180,12 @@ function parseOne(record: Record<string, unknown>, categories: CategoriesByType,
   return { type, direction, merchant, amount, date, category, notes: notes || undefined, currency, wallet };
 }
 
-function parseExtraction(text: string, categories: CategoriesByType, walletNames: string[]): TransactionExtraction {
+function parseExtraction(
+  text: string,
+  categories: CategoriesByType,
+  walletNames: string[],
+  fallbackDate: string,
+): TransactionExtraction {
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
@@ -185,10 +195,15 @@ function parseExtraction(text: string, categories: CategoriesByType, walletNames
   if (typeof parsed !== "object" || parsed === null) {
     throw new Error("Unexpected response shape from the model.");
   }
-  return parseOne(parsed as Record<string, unknown>, categories, walletNames);
+  return parseOne(parsed as Record<string, unknown>, categories, walletNames, fallbackDate);
 }
 
-function parseExtractions(text: string, categories: CategoriesByType, walletNames: string[]): TransactionExtraction[] {
+function parseExtractions(
+  text: string,
+  categories: CategoriesByType,
+  walletNames: string[],
+  fallbackDate: string,
+): TransactionExtraction[] {
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
@@ -200,11 +215,17 @@ function parseExtractions(text: string, categories: CategoriesByType, walletName
   const items = Array.isArray(parsed) ? parsed : [parsed];
   const results = items
     .filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null)
-    .map((item) => parseOne(item, categories, walletNames));
+    .map((item) => parseOne(item, categories, walletNames, fallbackDate));
   if (results.length === 0) {
     throw new Error("Unexpected response shape from the model.");
   }
   return results;
+}
+
+// Server time zone won't match the user's — used only when the client didn't
+// supply its own local "today" as fallbackDate.
+function serverTodayIso(): string {
+  return new Date().toISOString().slice(0, 10);
 }
 
 export async function extractTransaction(
@@ -212,6 +233,7 @@ export async function extractTransaction(
   mimeType: string,
   categories: CategoriesByType,
   walletNames: string[] = [],
+  fallbackDate: string = serverTodayIso(),
 ): Promise<TransactionExtraction> {
   const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
   const ai = getClient();
@@ -235,7 +257,7 @@ export async function extractTransaction(
     throw new Error("The vision model returned an empty response.");
   }
 
-  return parseExtraction(text, categories, walletNames);
+  return parseExtraction(text, categories, walletNames, fallbackDate);
 }
 
 // Voice entry supports logging several transactions in one recording (e.g.
@@ -246,6 +268,7 @@ export async function extractTransactionsFromAudio(
   mimeType: string,
   categories: CategoriesByType,
   walletNames: string[] = [],
+  fallbackDate: string = serverTodayIso(),
 ): Promise<TransactionExtraction[]> {
   const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
   const ai = getClient();
@@ -269,5 +292,5 @@ export async function extractTransactionsFromAudio(
     throw new Error("The model returned an empty response. Try recording again with a clearer description.");
   }
 
-  return parseExtractions(text, categories, walletNames);
+  return parseExtractions(text, categories, walletNames, fallbackDate);
 }

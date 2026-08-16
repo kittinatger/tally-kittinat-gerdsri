@@ -6,6 +6,15 @@ export function formatCurrency(amount: number, currency: string = "USD"): string
   }).format(amount);
 }
 
+// Plain numeric string (no symbol/grouping) rounded to the currency's own
+// decimal precision — e.g. 2 for USD, 0 for JPY, 3 for BHD — for contexts
+// like CSV export where a hardcoded .toFixed(2) would truncate or pad
+// incorrectly for non-2-decimal currencies.
+export function formatAmountRaw(amount: number, currency: string = "USD"): string {
+  const { minimumFractionDigits } = new Intl.NumberFormat(undefined, { style: "currency", currency }).resolvedOptions();
+  return amount.toFixed(minimumFractionDigits);
+}
+
 export function formatDateLong(dateStr: string): string {
   const d = new Date(`${dateStr}T00:00:00`);
   return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" });

@@ -3,8 +3,9 @@
 import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
 import { normalizeExpenseType, normalizeDirection, signedAmount } from "@/types/expense";
-import { todayInputValue } from "@/lib/format";
+import { todayInputValue, formatAmountRaw } from "@/lib/format";
 import { DownloadIcon } from "@/lib/icons";
+import { useCurrency } from "@/lib/currency-context";
 
 type ApiExpense = {
   id: number;
@@ -19,6 +20,7 @@ type ApiExpense = {
 };
 
 export default function ExportDataButton() {
+  const currency = useCurrency();
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,7 +62,7 @@ export default function ExportDataButton() {
             escape(e.merchant),
             escape(e.category),
             escape(e.tags.join("; ")),
-            amount.toFixed(2),
+            formatAmountRaw(amount, currency),
             escape(e.notes ?? ""),
           ].join(","),
         );
