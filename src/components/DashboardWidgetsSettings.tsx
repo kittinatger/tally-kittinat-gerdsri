@@ -7,12 +7,13 @@ import type { CategoryOption } from "@/types/category";
 import type { WalletOption } from "@/types/wallet";
 import {
   DASHBOARD_WIDGET_TYPES,
-  DASHBOARD_WIDGET_INFO,
+  DASHBOARD_WIDGET_INFO_KEYS,
   DEFAULT_DASHBOARD_WIDGETS,
   SUMMARY_CARDS,
-  SUMMARY_CARD_LABELS,
+  SUMMARY_CARD_LABEL_KEYS,
   WIDGET_ACCENTS,
   WIDGET_WIDTH_COLSPAN,
+  WIDGET_WIDTH_LABEL_KEYS,
   SUPPORTED_WIDTHS,
   LIMIT_OPTIONS,
   ACCENT_CAPABLE_TYPES,
@@ -20,7 +21,7 @@ import {
   ACTION_HIDABLE_TYPES,
   WALLET_CAPABLE_TYPES,
   WIDGET_CATEGORIES,
-  WIDGET_CATEGORY_LABELS,
+  WIDGET_CATEGORY_LABEL_KEYS,
   WIDGET_CATEGORY_OF,
   newWidgetInstance,
   type DashboardWidgetInstance,
@@ -29,6 +30,7 @@ import {
   type WidgetCategory,
 } from "@/lib/dashboard-widgets";
 import { dotClasses } from "@/lib/category-styles";
+import { useT } from "@/lib/language-context";
 import DashboardWidgetContent from "./DashboardWidgetContent";
 import Modal from "./Modal";
 
@@ -136,6 +138,7 @@ export default function DashboardWidgetsSettings({
   wallets: WalletOption[];
   onDone: () => void;
 }) {
+  const t = useT();
   const [widgets, setWidgets] = useState<DashboardWidgetInstance[]>(() => DEFAULT_DASHBOARD_WIDGETS());
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
@@ -303,7 +306,7 @@ export default function DashboardWidgetsSettings({
         <button
           type="button"
           onClick={() => setAddSheetOpen(true)}
-          aria-label="Add widget"
+          aria-label={t("dashboardWidgets.addWidgetAria")}
           className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-surface text-foreground shadow-soft transition hover:border-navy"
         >
           <PaintbrushIcon />
@@ -311,7 +314,7 @@ export default function DashboardWidgetsSettings({
         <button
           type="button"
           onClick={onDone}
-          aria-label="Done"
+          aria-label={t("dashboardWidgets.doneAria")}
           className="flex h-10 w-10 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark"
         >
           <CheckIcon />
@@ -319,15 +322,14 @@ export default function DashboardWidgetsSettings({
       </div>
 
       <p className="mb-4 text-[11px] leading-snug text-ink-soft">
-        This is your Dashboard — drag a tile to reorder it, tap the size badge to resize, or the gear to configure
-        it. Tap the paintbrush to add more widgets.
+        {t("dashboardWidgets.intro")}
       </p>
 
       {error && <p className="mb-3 text-xs text-red-600 dark:text-red-400">{error}</p>}
 
       {widgets.length === 0 ? (
         <p className="rounded-card border border-dashed border-line px-4 py-10 text-center text-sm text-ink-soft">
-          Your dashboard is empty. Tap the paintbrush above to add a widget.
+          {t("dashboardWidgets.emptyState")}
         </p>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -379,7 +381,7 @@ export default function DashboardWidgetsSettings({
                     WebkitUserSelect: "none",
                     WebkitTouchCallout: "none",
                   }}
-                  aria-label={`Reorder ${DASHBOARD_WIDGET_INFO[w.type].title}`}
+                  aria-label={`${t("dashboardWidgets.reorderPrefix")} ${t(DASHBOARD_WIDGET_INFO_KEYS[w.type].titleKey)}`}
                   className="absolute -bottom-2 left-1/2 z-10 flex h-7 w-11 -translate-x-1/2 cursor-grab items-center justify-center rounded-full bg-bg-soft text-ink-soft shadow ring-2 ring-surface transition hover:text-foreground active:cursor-grabbing"
                 >
                   <GripIcon />
@@ -389,7 +391,7 @@ export default function DashboardWidgetsSettings({
                   type="button"
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={() => removeWidget(i)}
-                  aria-label={`Remove ${DASHBOARD_WIDGET_INFO[w.type].title}`}
+                  aria-label={`${t("dashboardWidgets.removePrefix")} ${t(DASHBOARD_WIDGET_INFO_KEYS[w.type].titleKey)}`}
                   className="absolute -left-1.5 -top-1.5 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow ring-2 ring-surface transition hover:bg-red-600"
                 >
                   <MinusIcon />
@@ -401,7 +403,7 @@ export default function DashboardWidgetsSettings({
                       type="button"
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={() => setExpandedId(expanded ? null : w.id)}
-                      aria-label={`Configure ${DASHBOARD_WIDGET_INFO[w.type].title}`}
+                      aria-label={`${t("dashboardWidgets.configurePrefix")} ${t(DASHBOARD_WIDGET_INFO_KEYS[w.type].titleKey)}`}
                       className={`flex h-5 w-5 items-center justify-center rounded-full shadow ring-2 ring-surface transition ${
                         expanded ? "bg-navy text-white" : "bg-bg-soft text-ink-soft hover:text-foreground"
                       }`}
@@ -414,7 +416,7 @@ export default function DashboardWidgetsSettings({
                       type="button"
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={() => cycleWidth(i)}
-                      title={`Size: ${w.width}`}
+                      title={`${t("dashboardWidgets.sizePrefix")}: ${t(WIDGET_WIDTH_LABEL_KEYS[w.width])}`}
                       className="flex h-5 w-5 items-center justify-center rounded-full bg-navy text-[9px] font-bold text-white shadow ring-2 ring-surface"
                     >
                       {WIDTH_LETTER[w.width]}
@@ -440,7 +442,7 @@ export default function DashboardWidgetsSettings({
                                 included ? "bg-navy text-white" : "bg-bg-soft text-ink-soft hover:text-foreground"
                               }`}
                             >
-                              {SUMMARY_CARD_LABELS[card]}
+                              {t(SUMMARY_CARD_LABEL_KEYS[card])}
                             </button>
                           );
                         })}
@@ -449,7 +451,7 @@ export default function DashboardWidgetsSettings({
 
                     {LIMIT_CAPABLE_TYPES.includes(w.type) && (
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-[11px] font-semibold text-ink-soft">Show</span>
+                        <span className="text-[11px] font-semibold text-ink-soft">{t("dashboardWidgets.show")}</span>
                         {LIMIT_OPTIONS.map((n) => (
                           <button
                             key={n}
@@ -467,7 +469,7 @@ export default function DashboardWidgetsSettings({
 
                     {ACCENT_CAPABLE_TYPES.includes(w.type) && (
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-[11px] font-semibold text-ink-soft">Color</span>
+                        <span className="text-[11px] font-semibold text-ink-soft">{t("dashboardWidgets.color")}</span>
                         {WIDGET_ACCENTS.map((accent) => (
                           <button
                             key={accent}
@@ -484,7 +486,7 @@ export default function DashboardWidgetsSettings({
 
                     {WALLET_CAPABLE_TYPES.includes(w.type) && wallets.length > 0 && (
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-[11px] font-semibold text-ink-soft">Wallet</span>
+                        <span className="text-[11px] font-semibold text-ink-soft">{t("dashboardWidgets.wallet")}</span>
                         <button
                           type="button"
                           onClick={() => setWidgetWalletId(i, null)}
@@ -492,7 +494,7 @@ export default function DashboardWidgetsSettings({
                             w.walletId == null ? "bg-navy text-white" : "bg-bg-soft text-ink-soft hover:text-foreground"
                           }`}
                         >
-                          All wallets
+                          {t("dashboardWidgets.allWallets")}
                         </button>
                         {wallets.map((wallet) => (
                           <button
@@ -511,7 +513,7 @@ export default function DashboardWidgetsSettings({
 
                     {ACTION_HIDABLE_TYPES.includes(w.type) && (
                       <label className="flex items-center justify-between gap-2">
-                        <span className="text-[11px] font-semibold text-ink-soft">Quick action button</span>
+                        <span className="text-[11px] font-semibold text-ink-soft">{t("dashboardWidgets.quickActionButton")}</span>
                         <button
                           type="button"
                           role="switch"
@@ -543,7 +545,7 @@ export default function DashboardWidgetsSettings({
             setAddSheetOpen(false);
             setAddCategory(null);
           }}
-          title={addCategory ? WIDGET_CATEGORY_LABELS[addCategory] : "Add a widget"}
+          title={addCategory ? t(WIDGET_CATEGORY_LABEL_KEYS[addCategory]) : t("dashboardWidgets.addAWidgetTitle")}
         >
           {addCategory === null ? (
             <div className="space-y-1.5">
@@ -558,10 +560,10 @@ export default function DashboardWidgetsSettings({
                   >
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold text-surface-foreground">
-                        {WIDGET_CATEGORY_LABELS[cat]}
+                        {t(WIDGET_CATEGORY_LABEL_KEYS[cat])}
                       </span>
                       <span className="block truncate text-xs text-surface-foreground-soft">
-                        {count} widget{count === 1 ? "" : "s"}
+                        {count} {count === 1 ? t("dashboardWidgets.widgetSingular") : t("dashboardWidgets.widgetPlural")}
                       </span>
                     </span>
                     <ChevronRightIcon />
@@ -577,7 +579,7 @@ export default function DashboardWidgetsSettings({
                 className="mb-3 flex items-center gap-1 text-xs font-semibold text-ink-soft transition hover:text-foreground"
               >
                 <BackIcon />
-                Categories
+                {t("dashboardWidgets.categoriesBack")}
               </button>
               <div className="space-y-1.5">
                 {DASHBOARD_WIDGET_TYPES.filter((type) => WIDGET_CATEGORY_OF[type] === addCategory).map((type) => (
@@ -590,10 +592,10 @@ export default function DashboardWidgetsSettings({
                     <WidgetThumbnail type={type} expenses={expenses} categories={categories} remaining={remaining} />
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold text-surface-foreground">
-                        {DASHBOARD_WIDGET_INFO[type].title}
+                        {t(DASHBOARD_WIDGET_INFO_KEYS[type].titleKey)}
                       </span>
                       <span className="block truncate text-xs text-surface-foreground-soft">
-                        {DASHBOARD_WIDGET_INFO[type].description}
+                        {t(DASHBOARD_WIDGET_INFO_KEYS[type].descKey)}
                       </span>
                     </span>
                   </button>

@@ -1,6 +1,8 @@
+import type { MessageKey } from "@/lib/i18n/messages";
+
 // Four core, richly-interactive building blocks (own add-transaction
 // buttons, its own chart-type controls, etc.) plus 50 small single-purpose
-// visual widgets — see DASHBOARD_WIDGET_INFO for the full catalog and
+// visual widgets — see DASHBOARD_WIDGET_INFO_KEYS for the full catalog and
 // DashboardWidgetContent.tsx for what each one actually renders.
 export const DASHBOARD_WIDGET_TYPES = [
   "welcome",
@@ -105,10 +107,10 @@ export function isWidgetWidth(value: string): value is WidgetWidth {
   return (WIDGET_WIDTHS as readonly string[]).includes(value);
 }
 
-export const WIDGET_WIDTH_LABELS: Record<WidgetWidth, string> = {
-  small: "Small",
-  medium: "Medium",
-  large: "Large",
+export const WIDGET_WIDTH_LABEL_KEYS: Record<WidgetWidth, MessageKey> = {
+  small: "widgetWidth.small",
+  medium: "widgetWidth.medium",
+  large: "widgetWidth.large",
 };
 
 // "large" must stay full-width at both column counts — a flat "col-span-4"
@@ -134,10 +136,10 @@ export function isSummaryCardId(value: string): value is SummaryCardId {
   return (SUMMARY_CARDS as readonly string[]).includes(value);
 }
 
-export const SUMMARY_CARD_LABELS: Record<SummaryCardId, string> = {
-  income: "Income",
-  expenses: "Expenses",
-  remaining: "Remaining",
+export const SUMMARY_CARD_LABEL_KEYS: Record<SummaryCardId, MessageKey> = {
+  income: "summaryCard.income",
+  expenses: "summaryCard.expenses",
+  remaining: "summaryCard.remaining",
 };
 
 // Reuses the same 15-color palette categories/wallets already use (see
@@ -327,89 +329,89 @@ export type DashboardWidgetInstance = {
   walletId?: number | null;
 };
 
-export const DASHBOARD_WIDGET_INFO: Record<DashboardWidgetType, { title: string; description: string }> = {
-  summary: { title: "Summary cards", description: "This month's income, expenses, and your remaining balance" },
-  categoryOverview: { title: "Category breakdown", description: "Spending trend chart and category totals" },
-  wallets: { title: "Wallets", description: "Each wallet's balance at a glance" },
-  recentTransactions: { title: "Recent transactions", description: "Your latest transactions, as a timeline" },
-  incomeCard: { title: "Income card", description: "This month's income — tap to add income" },
-  expensesCard: { title: "Expenses card", description: "This month's expenses — tap to add an expense" },
-  remainingCard: { title: "Remaining card", description: "Your remaining balance — tap to edit it" },
+export const DASHBOARD_WIDGET_INFO_KEYS: Record<DashboardWidgetType, { titleKey: MessageKey; descKey: MessageKey }> = {
+  summary: { titleKey: "widget.summaryTitle", descKey: "widget.summaryDesc" },
+  categoryOverview: { titleKey: "widget.categoryOverviewTitle", descKey: "widget.categoryOverviewDesc" },
+  wallets: { titleKey: "widget.walletsTitle", descKey: "widget.walletsDesc" },
+  recentTransactions: { titleKey: "widget.recentTransactionsTitle", descKey: "widget.recentTransactionsDesc" },
+  incomeCard: { titleKey: "widget.incomeCardTitle", descKey: "widget.incomeCardDesc" },
+  expensesCard: { titleKey: "widget.expensesCardTitle", descKey: "widget.expensesCardDesc" },
+  remainingCard: { titleKey: "widget.remainingCardTitle", descKey: "widget.remainingCardDesc" },
 
-  todaySpending: { title: "Today's spending", description: "Total spent so far today" },
-  yesterdaySpending: { title: "Yesterday's spending", description: "Total spent yesterday" },
-  weekSpending: { title: "This week's spending", description: "Total spent since the start of the week" },
-  monthSpending: { title: "This month's spending", description: "Total spent so far this month" },
-  yearSpending: { title: "This year's spending", description: "Total spent so far this year" },
-  todayIncome: { title: "Today's income", description: "Total received so far today" },
-  monthIncome: { title: "This month's income", description: "Total received so far this month" },
-  yearIncome: { title: "This year's income", description: "Total received so far this year" },
-  netWorth: { title: "Net worth", description: "Combined balance across every wallet" },
-  totalBalance: { title: "Total balance", description: "Sum of every active wallet's balance" },
-  avgDailySpending: { title: "Average daily spending", description: "This month's spending divided by days elapsed" },
-  avgTransactionAmount: { title: "Average transaction", description: "Average expense amount this month" },
-  avgIncomeAmount: { title: "Average income", description: "Average income amount this month" },
-  biggestExpense: { title: "Biggest expense", description: "Your largest single expense this month" },
-  biggestIncome: { title: "Biggest income", description: "Your largest single income this month" },
-  transactionCount: { title: "Transaction count", description: "Number of transactions logged this month" },
-  transfersTotal: { title: "Transfers total", description: "Total moved via transfers this month" },
-  walletCount: { title: "Wallet count", description: "Number of active wallets" },
-  categoryCount: { title: "Categories used", description: "Distinct categories used this month" },
-  tagCount: { title: "Tags used", description: "Distinct tags used this month" },
+  todaySpending: { titleKey: "widget.todaySpendingTitle", descKey: "widget.todaySpendingDesc" },
+  yesterdaySpending: { titleKey: "widget.yesterdaySpendingTitle", descKey: "widget.yesterdaySpendingDesc" },
+  weekSpending: { titleKey: "widget.weekSpendingTitle", descKey: "widget.weekSpendingDesc" },
+  monthSpending: { titleKey: "widget.monthSpendingTitle", descKey: "widget.monthSpendingDesc" },
+  yearSpending: { titleKey: "widget.yearSpendingTitle", descKey: "widget.yearSpendingDesc" },
+  todayIncome: { titleKey: "widget.todayIncomeTitle", descKey: "widget.todayIncomeDesc" },
+  monthIncome: { titleKey: "widget.monthIncomeTitle", descKey: "widget.monthIncomeDesc" },
+  yearIncome: { titleKey: "widget.yearIncomeTitle", descKey: "widget.yearIncomeDesc" },
+  netWorth: { titleKey: "widget.netWorthTitle", descKey: "widget.netWorthDesc" },
+  totalBalance: { titleKey: "widget.totalBalanceTitle", descKey: "widget.totalBalanceDesc" },
+  avgDailySpending: { titleKey: "widget.avgDailySpendingTitle", descKey: "widget.avgDailySpendingDesc" },
+  avgTransactionAmount: { titleKey: "widget.avgTransactionAmountTitle", descKey: "widget.avgTransactionAmountDesc" },
+  avgIncomeAmount: { titleKey: "widget.avgIncomeAmountTitle", descKey: "widget.avgIncomeAmountDesc" },
+  biggestExpense: { titleKey: "widget.biggestExpenseTitle", descKey: "widget.biggestExpenseDesc" },
+  biggestIncome: { titleKey: "widget.biggestIncomeTitle", descKey: "widget.biggestIncomeDesc" },
+  transactionCount: { titleKey: "widget.transactionCountTitle", descKey: "widget.transactionCountDesc" },
+  transfersTotal: { titleKey: "widget.transfersTotalTitle", descKey: "widget.transfersTotalDesc" },
+  walletCount: { titleKey: "widget.walletCountTitle", descKey: "widget.walletCountDesc" },
+  categoryCount: { titleKey: "widget.categoryCountTitle", descKey: "widget.categoryCountDesc" },
+  tagCount: { titleKey: "widget.tagCountTitle", descKey: "widget.tagCountDesc" },
 
-  monthComparison: { title: "Month vs last month", description: "How this month's spending compares to last month's" },
-  incomeComparison: { title: "Income vs last month", description: "How this month's income compares to last month's" },
-  weekComparison: { title: "Week vs last week", description: "How this week's spending compares to last week's" },
-  yearOverYear: { title: "Year over year", description: "How this year's spending compares to last year's" },
+  monthComparison: { titleKey: "widget.monthComparisonTitle", descKey: "widget.monthComparisonDesc" },
+  incomeComparison: { titleKey: "widget.incomeComparisonTitle", descKey: "widget.incomeComparisonDesc" },
+  weekComparison: { titleKey: "widget.weekComparisonTitle", descKey: "widget.weekComparisonDesc" },
+  yearOverYear: { titleKey: "widget.yearOverYearTitle", descKey: "widget.yearOverYearDesc" },
 
-  savingsRate: { title: "Savings rate", description: "Share of this month's income you kept" },
-  monthProgress: { title: "Month progress", description: "How far through the current month you are" },
-  yearProgress: { title: "Year progress", description: "How far through the current year you are" },
-  spendPace: { title: "Spending pace", description: "This month's spend vs. an even day-by-day pace" },
-  walletUsage: { title: "Wallet usage", description: "Your default wallet's share of your total balance" },
+  savingsRate: { titleKey: "widget.savingsRateTitle", descKey: "widget.savingsRateDesc" },
+  monthProgress: { titleKey: "widget.monthProgressTitle", descKey: "widget.monthProgressDesc" },
+  yearProgress: { titleKey: "widget.yearProgressTitle", descKey: "widget.yearProgressDesc" },
+  spendPace: { titleKey: "widget.spendPaceTitle", descKey: "widget.spendPaceDesc" },
+  walletUsage: { titleKey: "widget.walletUsageTitle", descKey: "widget.walletUsageDesc" },
 
-  last14DaysSpark: { title: "14-day spending trend", description: "A quick line of the last two weeks' spending" },
-  last14DaysIncomeSpark: { title: "14-day income trend", description: "A quick line of the last two weeks' income" },
-  last6MonthsSpark: { title: "6-month spending trend", description: "A quick line of the last six months' spending" },
+  last14DaysSpark: { titleKey: "widget.last14DaysSparkTitle", descKey: "widget.last14DaysSparkDesc" },
+  last14DaysIncomeSpark: { titleKey: "widget.last14DaysIncomeSparkTitle", descKey: "widget.last14DaysIncomeSparkDesc" },
+  last6MonthsSpark: { titleKey: "widget.last6MonthsSparkTitle", descKey: "widget.last6MonthsSparkDesc" },
 
-  categoryDonut: { title: "Category split", description: "This month's spending by category, as a donut" },
-  typeDonut: { title: "Transaction mix", description: "Share of expense/income/transfer transactions this month" },
-  walletDonut: { title: "Balance split", description: "Share of your total balance held in each wallet" },
+  categoryDonut: { titleKey: "widget.categoryDonutTitle", descKey: "widget.categoryDonutDesc" },
+  typeDonut: { titleKey: "widget.typeDonutTitle", descKey: "widget.typeDonutDesc" },
+  walletDonut: { titleKey: "widget.walletDonutTitle", descKey: "widget.walletDonutDesc" },
 
-  last30DaysHeatmap: { title: "30-day activity", description: "A calendar heatmap of the last 30 days' spending" },
-  last90DaysHeatmap: { title: "90-day activity", description: "A calendar heatmap of the last 90 days' spending" },
+  last30DaysHeatmap: { titleKey: "widget.last30DaysHeatmapTitle", descKey: "widget.last30DaysHeatmapDesc" },
+  last90DaysHeatmap: { titleKey: "widget.last90DaysHeatmapTitle", descKey: "widget.last90DaysHeatmapDesc" },
 
-  walletShareBar: { title: "Wallet share bar", description: "Every wallet's share of your total balance, as one bar" },
-  categoryShareBar: { title: "Category share bar", description: "This month's top categories, as one segmented bar" },
+  walletShareBar: { titleKey: "widget.walletShareBarTitle", descKey: "widget.walletShareBarDesc" },
+  categoryShareBar: { titleKey: "widget.categoryShareBarTitle", descKey: "widget.categoryShareBarDesc" },
 
-  incomeVsExpenseBars: { title: "Income vs expenses", description: "This month's income and spending side by side" },
-  cashVsDigitalBars: { title: "Cash vs digital", description: "Balance held in cash wallets vs digital wallets" },
+  incomeVsExpenseBars: { titleKey: "widget.incomeVsExpenseBarsTitle", descKey: "widget.incomeVsExpenseBarsDesc" },
+  cashVsDigitalBars: { titleKey: "widget.cashVsDigitalBarsTitle", descKey: "widget.cashVsDigitalBarsDesc" },
 
-  topCategories: { title: "Top categories", description: "Your top spending categories this month" },
-  topMerchants: { title: "Top merchants", description: "Merchants you've spent the most with this month" },
-  topTags: { title: "Top tags", description: "Your most-used tags" },
-  topIncomeSources: { title: "Top income sources", description: "Your highest-earning income categories this month" },
-  walletDistribution: { title: "Wallet distribution", description: "Balance breakdown across your wallets" },
-  expensesByWallet: { title: "Spending by wallet", description: "This month's spending broken down by wallet" },
+  topCategories: { titleKey: "widget.topCategoriesTitle", descKey: "widget.topCategoriesDesc" },
+  topMerchants: { titleKey: "widget.topMerchantsTitle", descKey: "widget.topMerchantsDesc" },
+  topTags: { titleKey: "widget.topTagsTitle", descKey: "widget.topTagsDesc" },
+  topIncomeSources: { titleKey: "widget.topIncomeSourcesTitle", descKey: "widget.topIncomeSourcesDesc" },
+  walletDistribution: { titleKey: "widget.walletDistributionTitle", descKey: "widget.walletDistributionDesc" },
+  expensesByWallet: { titleKey: "widget.expensesByWalletTitle", descKey: "widget.expensesByWalletDesc" },
 
-  topMerchantsLeaderboard: { title: "Merchant leaderboard", description: "Your top merchants this month, ranked" },
-  topCategoriesLeaderboard: { title: "Category leaderboard", description: "Your top categories this month, ranked" },
+  topMerchantsLeaderboard: { titleKey: "widget.topMerchantsLeaderboardTitle", descKey: "widget.topMerchantsLeaderboardDesc" },
+  topCategoriesLeaderboard: { titleKey: "widget.topCategoriesLeaderboardTitle", descKey: "widget.topCategoriesLeaderboardDesc" },
 
-  last7Days: { title: "Last 7 days", description: "Daily spending for the past week, as bars" },
+  last7Days: { titleKey: "widget.last7DaysTitle", descKey: "widget.last7DaysDesc" },
 
-  netWorthTicker: { title: "Net worth ticker", description: "Your combined balance as a stock-style ticker card" },
-  walletTicker: { title: "Wallet ticker", description: "Your default wallet's balance as a stock-style ticker card" },
-  todayPill: { title: "Today pill", description: "Today's spending, as a compact pill" },
-  pacePill: { title: "Spending pace pill", description: "This month's spend pace vs. last month, with a progress ring" },
-  noSpendDays: { title: "No-spend streak", description: "Which days this week you didn't spend anything" },
-  balanceHero: { title: "Balance hero", description: "A big balance card with your wallets and quick add buttons" },
-  payPeriodStepper: { title: "Month progress stepper", description: "Where you are in the current month, as a stepper" },
-  spendingStreak: { title: "Under-budget streak", description: "Days this week you spent less than your daily average" },
+  netWorthTicker: { titleKey: "widget.netWorthTickerTitle", descKey: "widget.netWorthTickerDesc" },
+  walletTicker: { titleKey: "widget.walletTickerTitle", descKey: "widget.walletTickerDesc" },
+  todayPill: { titleKey: "widget.todayPillTitle", descKey: "widget.todayPillDesc" },
+  pacePill: { titleKey: "widget.pacePillTitle", descKey: "widget.pacePillDesc" },
+  noSpendDays: { titleKey: "widget.noSpendDaysTitle", descKey: "widget.noSpendDaysDesc" },
+  balanceHero: { titleKey: "widget.balanceHeroTitle", descKey: "widget.balanceHeroDesc" },
+  payPeriodStepper: { titleKey: "widget.payPeriodStepperTitle", descKey: "widget.payPeriodStepperDesc" },
+  spendingStreak: { titleKey: "widget.spendingStreakTitle", descKey: "widget.spendingStreakDesc" },
 
-  budgetOverview: { title: "Budgets", description: "This month's spending against each category's budget" },
-  savingsGoals: { title: "Savings goals", description: "Progress toward each of your savings goals" },
+  budgetOverview: { titleKey: "widget.budgetOverviewTitle", descKey: "widget.budgetOverviewDesc" },
+  savingsGoals: { titleKey: "widget.savingsGoalsWidgetTitle", descKey: "widget.savingsGoalsWidgetDesc" },
 
-  welcome: { title: "Welcome card", description: "Your profile picture, greeting, total balance, and quick add buttons" },
+  welcome: { titleKey: "widget.welcomeTitle", descKey: "widget.welcomeDesc" },
 };
 
 // Groups the catalog above for the "Add a widget" picker, so a list of 60+
@@ -419,14 +421,14 @@ export const DASHBOARD_WIDGET_INFO: Record<DashboardWidgetType, { title: string;
 export const WIDGET_CATEGORIES = ["overview", "income", "expense", "wallet", "chart", "budget", "goals"] as const;
 export type WidgetCategory = (typeof WIDGET_CATEGORIES)[number];
 
-export const WIDGET_CATEGORY_LABELS: Record<WidgetCategory, string> = {
-  overview: "Overview",
-  income: "Income",
-  expense: "Expense",
-  wallet: "Wallet",
-  chart: "Charts",
-  budget: "Budget",
-  goals: "Goals",
+export const WIDGET_CATEGORY_LABEL_KEYS: Record<WidgetCategory, MessageKey> = {
+  overview: "widgetCategory.overview",
+  income: "summaryCard.income",
+  expense: "summaryCard.expenses",
+  wallet: "dashboardWidgets.wallet",
+  chart: "widgetCategory.chart",
+  budget: "widgetCategory.budget",
+  goals: "widgetCategory.goals",
 };
 
 export const WIDGET_CATEGORY_OF: Record<DashboardWidgetType, WidgetCategory> = {
