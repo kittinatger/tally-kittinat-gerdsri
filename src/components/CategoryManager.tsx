@@ -9,15 +9,18 @@ import type { CategoryOption } from "@/types/category";
 import { isCategoryIconKey } from "@/lib/category-icons";
 import { CategoryIcon, EditIcon, TrashIcon, PlusIcon } from "@/lib/icons";
 import CategoryModal from "./CategoryModal";
+import { useT } from "@/lib/language-context";
+import type { MessageKey } from "@/lib/i18n/messages";
 
-const TYPE_TABS: { value: TransactionType; label: string }[] = [
-  { value: "expense", label: "Expense" },
-  { value: "income", label: "Income" },
-  { value: "transfer", label: "Transfer" },
+const TYPE_TABS: { value: TransactionType; key: MessageKey }[] = [
+  { value: "expense", key: "common.expense" },
+  { value: "income", key: "common.income" },
+  { value: "transfer", key: "common.transfer" },
 ];
 
 export default function CategoryManager({ categories }: { categories: CategoryOption[] }) {
   const router = useRouter();
+  const t = useT();
   const [type, setType] = useState<TransactionType>("expense");
   const [modal, setModal] = useState<{ mode: "add" } | { mode: "edit"; category: CategoryOption } | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
@@ -68,12 +71,12 @@ export default function CategoryManager({ categories }: { categories: CategoryOp
     <div>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="font-display text-xl text-foreground">Manage categories</h3>
-          <p className="mt-0.5 text-sm text-ink-soft">Colors and icons used across the app.</p>
+          <h3 className="font-display text-xl text-foreground">{t("settings.manageCategories")}</h3>
+          <p className="mt-0.5 text-sm text-ink-soft">{t("category.colorsIconsDesc")}</p>
         </div>
         <button
           onClick={() => setModal({ mode: "add" })}
-          aria-label="Add category"
+          aria-label={t("category.addCategory")}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark"
         >
           <PlusIcon className="h-3.5 w-3.5 shrink-0" />
@@ -92,7 +95,7 @@ export default function CategoryManager({ categories }: { categories: CategoryOp
               type === tab.value ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
             }`}
           >
-            {tab.label}
+            {t(tab.key)}
           </button>
         ))}
       </div>
@@ -101,7 +104,9 @@ export default function CategoryManager({ categories }: { categories: CategoryOp
 
       <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
         {categoriesForType.length === 0 ? (
-          <p className="px-4 py-6 text-center text-sm text-ink-soft">No {type} categories yet.</p>
+          <p className="px-4 py-6 text-center text-sm text-ink-soft">
+            {t("category.noCategoriesPrefix")} {t(TYPE_TABS.find((tab) => tab.value === type)!.key)} {t("category.noCategoriesSuffix")}
+          </p>
         ) : (
           categoriesForType.map((c, i) => (
             <div
@@ -128,14 +133,14 @@ export default function CategoryManager({ categories }: { categories: CategoryOp
                     disabled={deleting}
                     className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </button>
                   <button
                     onClick={() => handleDelete(c.id)}
                     disabled={deleting}
                     className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
                   >
-                    {deleting ? "Deleting..." : "Confirm delete"}
+                    {deleting ? t("common.deleting") : t("common.confirmDelete")}
                   </button>
                 </div>
               ) : (

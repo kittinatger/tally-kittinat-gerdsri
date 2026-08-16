@@ -269,7 +269,11 @@ export type MessageKey =
   | "tag.loading"
   | "tag.noTagsYet"
   | "tag.transaction"
-  | "tag.confirm";
+  | "tag.confirm"
+  | "category.colorsIconsDesc"
+  | "category.addCategory"
+  | "category.noCategoriesPrefix"
+  | "category.noCategoriesSuffix";
 
 // Languages that read right-to-left — used to set <html dir> so at least
 // text direction is correct even before full RTL layout mirroring exists.
@@ -542,6 +546,10 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tag.noTagsYet": "No tags yet — add tags to a transaction (in Manual entry, or when reviewing a scan/recording) and they'll show up here.",
     "tag.transaction": "transaction",
     "tag.confirm": "Confirm",
+    "category.colorsIconsDesc": "Colors and icons used across the app.",
+    "category.addCategory": "Add category",
+    "category.noCategoriesPrefix": "No",
+    "category.noCategoriesSuffix": "categories yet.",
   },
   zh: {
     "nav.dashboard": "仪表盘",
@@ -809,6 +817,10 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tag.noTagsYet": "还没有标签——在交易中添加标签（手动录入，或在查看扫描/录音结果时），标签就会显示在这里。",
     "tag.transaction": "笔交易",
     "tag.confirm": "确认",
+    "category.colorsIconsDesc": "整个应用中使用的颜色和图标。",
+    "category.addCategory": "添加分类",
+    "category.noCategoriesPrefix": "暂无",
+    "category.noCategoriesSuffix": "分类。",
   },
   hi: {
     "nav.dashboard": "डैशबोर्ड",
@@ -1076,6 +1088,10 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tag.noTagsYet": "अभी तक कोई टैग नहीं — किसी लेन-देन में टैग जोड़ें (मैनुअल एंट्री में, या स्कैन/रिकॉर्डिंग की समीक्षा करते समय) और वे यहां दिखाई देंगे।",
     "tag.transaction": "लेन-देन",
     "tag.confirm": "पुष्टि करें",
+    "category.colorsIconsDesc": "पूरे ऐप में उपयोग होने वाले रंग और आइकन।",
+    "category.addCategory": "श्रेणी जोड़ें",
+    "category.noCategoriesPrefix": "अभी तक कोई",
+    "category.noCategoriesSuffix": "श्रेणी नहीं है।",
   },
   es: {
     "nav.dashboard": "Panel",
@@ -1343,6 +1359,10 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tag.noTagsYet": "Aún no hay etiquetas — añade etiquetas a una transacción (en la entrada manual, o al revisar un escaneo/grabación) y aparecerán aquí.",
     "tag.transaction": "transacción",
     "tag.confirm": "Confirmar",
+    "category.colorsIconsDesc": "Colores e iconos usados en toda la app.",
+    "category.addCategory": "Añadir categoría",
+    "category.noCategoriesPrefix": "Aún no hay categorías de",
+    "category.noCategoriesSuffix": ".",
   },
   fr: {
     "nav.dashboard": "Tableau de bord",
@@ -1610,6 +1630,10 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tag.noTagsYet": "Pas encore d'étiquettes — ajoutez des étiquettes à une transaction (en saisie manuelle, ou lors de la révision d'un scan/enregistrement) et elles apparaîtront ici.",
     "tag.transaction": "transaction",
     "tag.confirm": "Confirmer",
+    "category.colorsIconsDesc": "Couleurs et icônes utilisées dans toute l'app.",
+    "category.addCategory": "Ajouter une catégorie",
+    "category.noCategoriesPrefix": "Pas encore de catégories de",
+    "category.noCategoriesSuffix": ".",
   },
   ar: {
     "nav.dashboard": "لوحة التحكم",
@@ -1877,6 +1901,10 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tag.noTagsYet": "لا توجد وسوم بعد — أضف وسومًا إلى معاملة (في الإدخال اليدوي، أو عند مراجعة مسح/تسجيل) وستظهر هنا.",
     "tag.transaction": "معاملة",
     "tag.confirm": "تأكيد",
+    "category.colorsIconsDesc": "الألوان والأيقونات المستخدمة في التطبيق بأكمله.",
+    "category.addCategory": "إضافة فئة",
+    "category.noCategoriesPrefix": "لا توجد فئات",
+    "category.noCategoriesSuffix": "بعد.",
   },
   bn: {
     "nav.dashboard": "ড্যাশবোর্ড",
@@ -2144,6 +2172,10 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tag.noTagsYet": "এখনো কোনো ট্যাগ নেই — কোনো লেনদেনে ট্যাগ যোগ করুন (ম্যানুয়াল এন্ট্রিতে, বা স্ক্যান/রেকর্ডিং পর্যালোচনা করার সময়) এবং সেগুলো এখানে দেখা যাবে।",
     "tag.transaction": "লেনদেন",
     "tag.confirm": "নিশ্চিত করুন",
+    "category.colorsIconsDesc": "পুরো অ্যাপে ব্যবহৃত রং ও আইকন।",
+    "category.addCategory": "বিভাগ যোগ করুন",
+    "category.noCategoriesPrefix": "এখনো কোনো",
+    "category.noCategoriesSuffix": "বিভাগ নেই।",
   },
   pt: {
     "nav.dashboard": "Painel",
@@ -2411,6 +2443,10 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tag.noTagsYet": "Ainda não há tags — adicione tags a uma transação (na entrada manual, ou ao revisar uma digitalização/gravação) e elas aparecerão aqui.",
     "tag.transaction": "transação",
     "tag.confirm": "Confirmar",
+    "category.colorsIconsDesc": "Cores e ícones usados em todo o app.",
+    "category.addCategory": "Adicionar categoria",
+    "category.noCategoriesPrefix": "Ainda não há categorias de",
+    "category.noCategoriesSuffix": ".",
   },
   ru: {
     "nav.dashboard": "Панель",
@@ -2678,6 +2714,10 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tag.noTagsYet": "Пока нет тегов — добавьте теги к транзакции (при ручном вводе или при проверке скана/записи), и они появятся здесь.",
     "tag.transaction": "транзакция",
     "tag.confirm": "Подтвердить",
+    "category.colorsIconsDesc": "Цвета и значки, используемые во всём приложении.",
+    "category.addCategory": "Добавить категорию",
+    "category.noCategoriesPrefix": "Пока нет категорий типа",
+    "category.noCategoriesSuffix": ".",
   },
   ur: {
     "nav.dashboard": "ڈیش بورڈ",
@@ -2945,6 +2985,10 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tag.noTagsYet": "ابھی تک کوئی ٹیگ نہیں — کسی لین دین میں ٹیگ شامل کریں (دستی اندراج میں، یا اسکین/ریکارڈنگ کا جائزہ لیتے وقت) اور وہ یہاں ظاہر ہوں گے۔",
     "tag.transaction": "لین دین",
     "tag.confirm": "تصدیق کریں",
+    "category.colorsIconsDesc": "پورے ایپ میں استعمال ہونے والے رنگ اور آئیکن۔",
+    "category.addCategory": "زمرہ شامل کریں",
+    "category.noCategoriesPrefix": "ابھی تک کوئی",
+    "category.noCategoriesSuffix": "زمرہ نہیں۔",
   },
   id: {
     "nav.dashboard": "Dasbor",
@@ -3212,6 +3256,10 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tag.noTagsYet": "Belum ada tag — tambahkan tag ke transaksi (di entri manual, atau saat meninjau pemindaian/rekaman) dan tag akan muncul di sini.",
     "tag.transaction": "transaksi",
     "tag.confirm": "Konfirmasi",
+    "category.colorsIconsDesc": "Warna dan ikon yang digunakan di seluruh aplikasi.",
+    "category.addCategory": "Tambah kategori",
+    "category.noCategoriesPrefix": "Belum ada kategori",
+    "category.noCategoriesSuffix": ".",
   },
   de: {
     "nav.dashboard": "Übersicht",
@@ -3479,6 +3527,10 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tag.noTagsYet": "Noch keine Tags — füge einer Transaktion Tags hinzu (bei manueller Eingabe oder beim Überprüfen eines Scans/einer Aufnahme), und sie werden hier angezeigt.",
     "tag.transaction": "Transaktion",
     "tag.confirm": "Bestätigen",
+    "category.colorsIconsDesc": "In der gesamten App verwendete Farben und Symbole.",
+    "category.addCategory": "Kategorie hinzufügen",
+    "category.noCategoriesPrefix": "Noch keine",
+    "category.noCategoriesSuffix": "-Kategorien.",
   },
   ja: {
     "nav.dashboard": "ダッシュボード",
@@ -3746,6 +3798,10 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tag.noTagsYet": "まだタグがありません — 取引にタグを追加すると（手動入力時、またはスキャン/録音の確認時）、ここに表示されます。",
     "tag.transaction": "件の取引",
     "tag.confirm": "確認",
+    "category.colorsIconsDesc": "アプリ全体で使われる色とアイコン。",
+    "category.addCategory": "カテゴリを追加",
+    "category.noCategoriesPrefix": "まだ",
+    "category.noCategoriesSuffix": "のカテゴリがありません。",
   },
   vi: {
     "nav.dashboard": "Bảng điều khiển",
@@ -4013,6 +4069,10 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tag.noTagsYet": "Chưa có thẻ nào — thêm thẻ vào một giao dịch (khi nhập thủ công, hoặc khi xem lại bản quét/ghi âm) và chúng sẽ hiển thị ở đây.",
     "tag.transaction": "giao dịch",
     "tag.confirm": "Xác nhận",
+    "category.colorsIconsDesc": "Màu sắc và biểu tượng dùng trong toàn bộ ứng dụng.",
+    "category.addCategory": "Thêm danh mục",
+    "category.noCategoriesPrefix": "Chưa có danh mục",
+    "category.noCategoriesSuffix": "nào.",
   },
   tr: {
     "nav.dashboard": "Pano",
@@ -4280,6 +4340,10 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tag.noTagsYet": "Henüz etiket yok — bir işleme etiket ekleyin (manuel girişte veya bir tarama/kayıt incelenirken) ve burada görünecekler.",
     "tag.transaction": "işlem",
     "tag.confirm": "Onayla",
+    "category.colorsIconsDesc": "Uygulama genelinde kullanılan renkler ve simgeler.",
+    "category.addCategory": "Kategori ekle",
+    "category.noCategoriesPrefix": "Henüz",
+    "category.noCategoriesSuffix": "kategorisi yok.",
   },
   th: {
     "nav.dashboard": "แดชบอร์ด",
@@ -4547,5 +4611,9 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "tag.noTagsYet": "ยังไม่มีแท็ก — เพิ่มแท็กในธุรกรรม (ในการป้อนข้อมูลด้วยตนเอง หรือขณะตรวจสอบการสแกน/บันทึก) แล้วแท็กจะแสดงที่นี่",
     "tag.transaction": "รายการ",
     "tag.confirm": "ยืนยัน",
+    "category.colorsIconsDesc": "สี และไอคอนที่ใช้ทั่วทั้งแอป",
+    "category.addCategory": "เพิ่มหมวดหมู่",
+    "category.noCategoriesPrefix": "ยังไม่มีหมวดหมู่",
+    "category.noCategoriesSuffix": "",
   },
 };
