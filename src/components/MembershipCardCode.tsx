@@ -22,7 +22,11 @@ export default function MembershipCardCode({
 }: {
   value: string;
   format: MembershipCodeFormat;
-  size?: "large" | "small";
+  /** "thumb" is a fixed-size square thumbnail for list rows — no barcode
+   * display value text, no error message (just renders blank on failure,
+   * since a full error explanation doesn't fit and the full code is always
+   * one tap away in the detail view). */
+  size?: "large" | "small" | "thumb";
 }) {
   const t = useT();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -40,8 +44,9 @@ export default function MembershipCardCode({
       if (format === "qr") {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        QRCode.toCanvas(canvas, value, { width: size === "large" ? 240 : 96, margin: 1 }).catch(() => {
-          if (!cancelled) setError(t("membership.codeRenderError"));
+        const width = size === "large" ? 240 : size === "small" ? 96 : 56;
+        QRCode.toCanvas(canvas, value, { width, margin: size === "thumb" ? 0 : 1 }).catch(() => {
+          if (!cancelled && size !== "thumb") setError(t("membership.codeRenderError"));
         });
         return;
       }
@@ -50,20 +55,32 @@ export default function MembershipCardCode({
       try {
         JsBarcode(svg, value, {
           format: BARCODE_SYMBOLOGY[format],
-          width: size === "large" ? 2.2 : 1.4,
-          height: size === "large" ? 90 : 40,
-          displayValue: true,
+          width: size === "large" ? 2.2 : size === "small" ? 1.4 : 1,
+          height: size === "large" ? 90 : size === "small" ? 40 : 28,
+          displayValue: size !== "thumb",
           fontSize: size === "large" ? 14 : 10,
-          margin: 8,
+          margin: size === "thumb" ? 2 : 8,
         });
       } catch {
-        setError(t("membership.codeRenderError"));
+        if (size !== "thumb") setError(t("membership.codeRenderError"));
       }
     });
     return () => {
       cancelled = true;
     };
   }, [value, format, size, t]);
+
+  if (size === "thumb") {
+    return (
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white p-1">
+        {format === "qr" ? (
+          <canvas ref={canvasRef} className="block" />
+        ) : (
+          <svg ref={svgRef} className="block w-full" />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="w-full rounded-2xl bg-white p-4">

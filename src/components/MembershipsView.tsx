@@ -10,6 +10,7 @@ import { CategoryIcon, PlusIcon } from "@/lib/icons";
 import { describeFetchError } from "@/lib/fetch-error";
 import AppHeader from "./AppHeader";
 import Modal from "./Modal";
+import MembershipCardCode from "./MembershipCardCode";
 import MembershipCardDetail from "./MembershipCardDetail";
 import type { MembershipCard } from "@/types/membership";
 import type { MembershipCodeFormat } from "@/lib/memberships";
@@ -136,6 +137,7 @@ export default function MembershipsView({ initialCards }: { initialCards: Member
                       <span className="block truncate font-semibold">{card.name}</span>
                       <span className="block truncate text-xs text-white/70">{t(FORMAT_LABEL_KEYS[card.codeFormat])}</span>
                     </span>
+                    <MembershipCardCode value={card.codeValue} format={card.codeFormat} size="thumb" />
                   </button>
                 );
               })}
