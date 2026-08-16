@@ -8,6 +8,7 @@ import { formatCurrency } from "@/lib/format";
 import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
 import { PlusIcon } from "@/lib/icons";
 import CsvManagerButtons from "./CsvManagerButtons";
+import { useT } from "@/lib/language-context";
 
 type SavingsGoal = { id: number; name: string; color: string; target_amount: string; current_amount: string };
 type Contribution = { id: number; delta: string; created_at: string };
@@ -49,6 +50,7 @@ function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
 }
 
 export default function SavingsGoalsManager() {
+  const t = useT();
   const currency = useCurrency();
 
   const [goals, setGoals] = useState<SavingsGoal[] | null>(null);
@@ -191,10 +193,10 @@ export default function SavingsGoalsManager() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-display text-xl text-foreground">Savings goals</h3>
+        <h3 className="font-display text-xl text-foreground">{t("savings.title")}</h3>
         <button
           onClick={() => setAdding((v) => !v)}
-          aria-label={adding ? "Cancel" : "Add goal"}
+          aria-label={adding ? t("common.cancel") : t("common.add")}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark"
         >
           {adding ? (
@@ -207,7 +209,7 @@ export default function SavingsGoalsManager() {
         </button>
       </div>
       <p className="mt-2 text-[11px] leading-snug text-ink-soft">
-        Track progress toward something you&apos;re saving for. Add contributions manually as you set money aside.
+        {t("savings.desc")}
       </p>
 
       <div className="mt-3">
@@ -217,18 +219,18 @@ export default function SavingsGoalsManager() {
       {adding && (
         <form onSubmit={handleAdd} className="mt-4 space-y-3 rounded-card border border-line bg-surface p-4">
           <div>
-            <label className="mb-1.5 block text-sm font-semibold text-foreground">Name</label>
+            <label className="mb-1.5 block text-sm font-semibold text-foreground">{t("savings.name")}</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. New laptop"
+              placeholder={t("savings.namePlaceholder")}
               className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-semibold text-foreground">Target amount</label>
+            <label className="mb-1.5 block text-sm font-semibold text-foreground">{t("savings.targetAmount")}</label>
             <input
               type="number"
               inputMode="decimal"
@@ -242,7 +244,7 @@ export default function SavingsGoalsManager() {
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-semibold text-foreground">Color</label>
+            <label className="mb-1.5 block text-sm font-semibold text-foreground">{t("savings.color")}</label>
             <div className="flex flex-wrap gap-2">
               {WIDGET_ACCENTS.map((c) => (
                 <button
@@ -264,7 +266,7 @@ export default function SavingsGoalsManager() {
               disabled={submitting}
               className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
             >
-              {submitting ? "Saving..." : "Save goal"}
+              {submitting ? t("common.saving") : t("savings.saveGoal")}
             </button>
           </div>
         </form>
@@ -273,10 +275,10 @@ export default function SavingsGoalsManager() {
       {loadError && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{loadError}</p>}
 
       {goals === null ? (
-        <p className="mt-4 text-sm text-ink-soft">Loading…</p>
+        <p className="mt-4 text-sm text-ink-soft">{t("common.loading")}</p>
       ) : goals.length === 0 ? (
         <div className="mt-4">
-          <EmptyState icon={<TargetIcon />} text="No savings goals yet — add one to start tracking your progress." />
+          <EmptyState icon={<TargetIcon />} text={t("savings.noGoalsYet")} />
         </div>
       ) : (
         <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
@@ -332,14 +334,14 @@ export default function SavingsGoalsManager() {
                         disabled={busyId === g.id}
                         className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
                       >
-                        Cancel
+                        {t("common.cancel")}
                       </button>
                       <button
                         onClick={() => handleDelete(g.id)}
                         disabled={busyId === g.id}
                         className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
                       >
-                        {busyId === g.id ? "Deleting..." : "Confirm delete"}
+                        {busyId === g.id ? t("common.deleting") : t("common.confirmDelete")}
                       </button>
                     </div>
                   ) : (
@@ -369,7 +371,7 @@ export default function SavingsGoalsManager() {
                     type="number"
                     inputMode="decimal"
                     step="0.01"
-                    placeholder="Amount"
+                    placeholder={t("form.amount")}
                     value={contributeAmount[g.id] ?? ""}
                     onChange={(e) => setContributeAmount((prev) => ({ ...prev, [g.id]: e.target.value }))}
                     className="w-28 rounded-card border border-line bg-bg-soft px-3 py-1.5 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
@@ -379,23 +381,23 @@ export default function SavingsGoalsManager() {
                     disabled={busyId === g.id || !contributeAmount[g.id]}
                     className="rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-60"
                   >
-                    Add
+                    {t("common.add")}
                   </button>
                   <button
                     onClick={() => handleContribute(g, -Number(contributeAmount[g.id] ?? 0))}
                     disabled={busyId === g.id || !contributeAmount[g.id]}
                     className="rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-60"
                   >
-                    Withdraw
+                    {t("savings.withdraw")}
                   </button>
                 </div>
 
                 {historyOpenId === g.id && (
                   <div className="mt-3 ml-[3.25rem] overflow-hidden rounded-card border border-line bg-bg-soft">
                     {historyByGoal[g.id] === undefined ? (
-                      <p className="px-3 py-3 text-xs text-ink-soft">Loading…</p>
+                      <p className="px-3 py-3 text-xs text-ink-soft">{t("common.loading")}</p>
                     ) : historyByGoal[g.id]!.length === 0 ? (
-                      <p className="px-3 py-3 text-xs text-ink-soft">No contributions yet.</p>
+                      <p className="px-3 py-3 text-xs text-ink-soft">{t("savings.noContributionsYet")}</p>
                     ) : (
                       historyByGoal[g.id]!.map((c, ci) => {
                         const delta = Number(c.delta);
