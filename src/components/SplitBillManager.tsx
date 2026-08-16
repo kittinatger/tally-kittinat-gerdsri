@@ -7,6 +7,8 @@ import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency, todayInputValue } from "@/lib/format";
 import { SPLIT_METHODS, SPLIT_PAYMENT_METHODS, type SplitMethod, type SplitPaymentMethod } from "@/lib/splits";
+import { useT } from "@/lib/language-context";
+import type { MessageKey } from "@/lib/i18n/messages";
 
 type Split = {
   id: number;
@@ -35,14 +37,14 @@ type Participant = {
 type SplitDetail = { split: Split; participants: Participant[] };
 type Friend = { id: number; username: string };
 
-const METHOD_LABELS: Record<SplitMethod, string> = {
-  equal: "Equal split",
-  custom: "Custom split",
+const METHOD_KEYS: Record<SplitMethod, MessageKey> = {
+  equal: "split.equalSplit",
+  custom: "split.customSplit",
 };
 
-const PAYMENT_LABELS: Record<SplitPaymentMethod, string> = {
-  single_payer: "I paid the whole bill",
-  itemized: "Track who paid what",
+const PAYMENT_KEYS: Record<SplitPaymentMethod, MessageKey> = {
+  single_payer: "split.iPaidWhole",
+  itemized: "split.trackWhoPaid",
 };
 
 function colorForUsername(username: string): string {
@@ -95,13 +97,31 @@ function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
   );
 }
 
-function netLabel(net: number, currency: string): { text: string; className: string } {
-  if (Math.abs(net) < 0.01) return { text: "Settled up", className: "text-ink-soft" };
-  if (net > 0) return { text: `You're owed ${formatCurrency(net, currency)}`, className: "text-emerald-600 dark:text-emerald-400" };
-  return { text: `You owe ${formatCurrency(-net, currency)}`, className: "text-rose-600 dark:text-rose-400" };
+function netLabel(
+  net: number,
+  currency: string,
+  t: (key: MessageKey) => string,
+): { text: string; className: string } {
+  if (Math.abs(net) < 0.01) return { text: t("split.settledUp"), className: "text-ink-soft" };
+  if (net > 0)
+    return {
+      text: `${t("split.youreOwedPrefix")} ${formatCurrency(net, currency)}`,
+      className: "text-emerald-600 dark:text-emerald-400",
+    };
+  return {
+    text: `${t("split.youOwePrefix")} ${formatCurrency(-net, currency)}`,
+    className: "text-rose-600 dark:text-rose-400",
+  };
 }
 
 export default function SplitBillManager() {
+  const t = useT();
+  const METHOD_LABELS: Record<SplitMethod, string> = Object.fromEntries(
+    Object.entries(METHOD_KEYS).map(([k, v]) => [k, t(v)]),
+  ) as Record<SplitMethod, string>;
+  const PAYMENT_LABELS: Record<SplitPaymentMethod, string> = Object.fromEntries(
+    Object.entries(PAYMENT_KEYS).map(([k, v]) => [k, t(v)]),
+  ) as Record<SplitPaymentMethod, string>;
   const currency = useCurrency();
   const [myId, setMyId] = useState<number | null>(null);
   const [splits, setSplits] = useState<Split[] | null>(null);
@@ -337,7 +357,7 @@ export default function SplitBillManager() {
   }
 
   if (!splits || !friends || requireConfirmation === null) {
-    return <p className="text-sm text-ink-soft">Loading…</p>;
+    return <p className="text-sm text-ink-soft">{t("common.loading")}</p>;
   }
 
   const active = splits.filter((s) => s.my_confirm_status !== "pending");
@@ -349,8 +369,8 @@ export default function SplitBillManager() {
 
       <label className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface px-4 py-3">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-foreground">Require confirmation</p>
-          <p className="text-xs text-ink-soft">Splits you create need the other person to accept before they count.</p>
+          <p className="text-sm font-medium text-foreground">{t("split.requireConfirmation")}</p>
+          <p className="text-xs text-ink-soft">{t("split.requireConfirmationDesc")}</p>
         </div>
         <button
           type="button"
@@ -371,26 +391,26 @@ export default function SplitBillManager() {
         <div className="flex gap-1 rounded-full bg-bg-soft p-1">
           {(
             [
-              { id: "active" as const, label: "Splits", count: active.length },
-              { id: "requests" as const, label: "Requests", count: requests.length },
+              { id: "active" as const, label: t("split.splitsTab"), count: active.length },
+              { id: "requests" as const, label: t("friends.requestsTab"), count: requests.length },
             ]
-          ).map((t) => (
+          ).map((tabDef) => (
             <button
-              key={t.id}
+              key={tabDef.id}
               type="button"
-              onClick={() => setTab(t.id)}
+              onClick={() => setTab(tabDef.id)}
               className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-                tab === t.id ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+                tab === tabDef.id ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
               }`}
             >
-              {t.label}
-              {t.count > 0 && (
+              {tabDef.label}
+              {tabDef.count > 0 && (
                 <span
                   className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                    tab === t.id ? "bg-navy/10 text-navy dark:text-blue-300" : "bg-[var(--nav-hover-bg)] text-ink-soft"
+                    tab === tabDef.id ? "bg-navy/10 text-navy dark:text-blue-300" : "bg-[var(--nav-hover-bg)] text-ink-soft"
                   }`}
                 >
-                  {t.count}
+                  {tabDef.count}
                 </span>
               )}
             </button>
@@ -402,7 +422,7 @@ export default function SplitBillManager() {
             setCreating((v) => !v);
             if (creating) resetForm();
           }}
-          aria-label="New split"
+          aria-label={t("split.newSplit")}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark"
         >
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-4 w-4">
@@ -418,7 +438,7 @@ export default function SplitBillManager() {
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="What's the bill for?"
+            placeholder={t("split.whatsTheBillFor")}
             className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
 
@@ -429,7 +449,7 @@ export default function SplitBillManager() {
               step="0.01"
               value={totalAmount}
               onChange={(e) => setTotalAmount(e.target.value)}
-              placeholder="Total amount"
+              placeholder={t("split.totalAmount")}
               className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
             />
             <input
@@ -442,7 +462,7 @@ export default function SplitBillManager() {
 
           {friends.length > 0 && (
             <div>
-              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">Split with</p>
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">{t("split.splitWith")}</p>
               <div className="flex flex-wrap gap-1.5">
                 {friends.map((f) => {
                   const selected = participantIds.includes(f.id);
@@ -491,12 +511,12 @@ export default function SplitBillManager() {
           {splitMethod === "custom" && participantIds.length > 0 && (
             <div className="space-y-1.5">
               <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                Who owes what {totalAmount && `(${owedSum.toFixed(2)} of ${Number(totalAmount).toFixed(2)} allocated)`}
+                {t("split.whoOwesWhat")} {totalAmount && `(${owedSum.toFixed(2)} / ${Number(totalAmount).toFixed(2)} ${t("split.allocated")})`}
               </p>
               {allSelectedIds.map((id) => (
                 <div key={id} className="flex items-center gap-2">
                   <span className="w-24 shrink-0 truncate text-sm text-foreground">
-                    {id === myId ? "You" : friends.find((f) => f.id === id)?.username}
+                    {id === myId ? t("split.you") : friends.find((f) => f.id === id)?.username}
                   </span>
                   <input
                     type="number"
@@ -514,12 +534,12 @@ export default function SplitBillManager() {
           {paymentMethod === "itemized" && participantIds.length > 0 && (
             <div className="space-y-1.5">
               <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                Who paid what {totalAmount && `(${paidSum.toFixed(2)} of ${Number(totalAmount).toFixed(2)} allocated)`}
+                {t("split.whoPaidWhat")} {totalAmount && `(${paidSum.toFixed(2)} / ${Number(totalAmount).toFixed(2)} ${t("split.allocated")})`}
               </p>
               {allSelectedIds.map((id) => (
                 <div key={id} className="flex items-center gap-2">
                   <span className="w-24 shrink-0 truncate text-sm text-foreground">
-                    {id === myId ? "You" : friends.find((f) => f.id === id)?.username}
+                    {id === myId ? t("split.you") : friends.find((f) => f.id === id)?.username}
                   </span>
                   <input
                     type="number"
@@ -539,20 +559,20 @@ export default function SplitBillManager() {
             disabled={submitting}
             className="w-full rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
           >
-            {submitting ? "Creating…" : "Create split"}
+            {submitting ? t("challenges.creating") : t("split.createSplit")}
           </button>
         </form>
       )}
 
       {tab === "active" &&
         (active.length === 0 ? (
-          <EmptyState icon={<ReceiptIcon />} text="No split bills yet — create one and split it with friends." />
+          <EmptyState icon={<ReceiptIcon />} text={t("split.noSplitsYet")} />
         ) : (
           <div className="space-y-2.5">
             {active.map((s) => {
               const expanded = expandedId === s.id;
               const net = Number(s.my_net);
-              const label = netLabel(net, currency);
+              const label = netLabel(net, currency, t);
               const isCreator = detail?.split.id === s.id && detail.split.creator_id === myId;
               return (
                 <div key={s.id} className="overflow-hidden rounded-card border border-line bg-surface">
@@ -576,7 +596,7 @@ export default function SplitBillManager() {
                   {expanded && (
                     <div className="border-t border-line px-4 py-3">
                       {!detail || detail.split.id !== s.id ? (
-                        <p className="text-sm text-ink-soft">Loading…</p>
+                        <p className="text-sm text-ink-soft">{t("common.loading")}</p>
                       ) : (
                         <div className="space-y-3">
                           <p className="text-xs text-ink-soft">
@@ -593,20 +613,20 @@ export default function SplitBillManager() {
                                     <div className="flex items-center justify-between gap-2 text-sm">
                                       <span className="truncate font-medium text-foreground">
                                         {p.username}
-                                        {p.is_me && <span className="text-ink-soft"> (you)</span>}
+                                        {p.is_me && <span className="text-ink-soft"> {t("challenges.you")}</span>}
                                         {p.confirm_status === "pending" && (
                                           <span className="ml-1.5 rounded-full bg-bg-soft px-1.5 py-0.5 text-[10px] font-bold text-ink-soft">
-                                            Pending
+                                            {t("split.pending")}
                                           </span>
                                         )}
                                         {p.confirm_status === "declined" && (
                                           <span className="ml-1.5 rounded-full bg-red-500/10 px-1.5 py-0.5 text-[10px] font-bold text-red-600 dark:text-red-400">
-                                            Declined
+                                            {t("split.declined")}
                                           </span>
                                         )}
                                       </span>
                                       <span className="shrink-0 text-ink-soft">
-                                        owes {formatCurrency(Number(p.owed_amount), currency)}, paid{" "}
+                                        {t("split.owesPrefix")} {formatCurrency(Number(p.owed_amount), currency)}, {t("split.paidPrefix")}{" "}
                                         {formatCurrency(Number(p.paid_amount), currency)}
                                       </span>
                                     </div>
@@ -624,7 +644,7 @@ export default function SplitBillManager() {
                                         disabled={busyId === `settle-${s.id}`}
                                         className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
                                       >
-                                        Mark settled
+                                        {t("split.markSettled")}
                                       </button>
                                     )
                                   )}
@@ -641,7 +661,7 @@ export default function SplitBillManager() {
                                 disabled={busyId === `leave-${s.id}`}
                                 className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
                               >
-                                Cancel
+                                {t("common.cancel")}
                               </button>
                               <button
                                 type="button"
@@ -649,7 +669,7 @@ export default function SplitBillManager() {
                                 disabled={busyId === `leave-${s.id}`}
                                 className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
                               >
-                                {busyId === `leave-${s.id}` ? "Removing…" : isCreator ? "Confirm delete" : "Confirm leave"}
+                                {busyId === `leave-${s.id}` ? t("challenges.removing") : isCreator ? t("challenges.confirmDelete") : t("challenges.confirmLeave")}
                               </button>
                             </div>
                           ) : (
@@ -657,7 +677,7 @@ export default function SplitBillManager() {
                               <button
                                 type="button"
                                 onClick={() => setConfirmDeleteId(s.id)}
-                                aria-label={isCreator ? "Delete split" : "Leave split"}
+                                aria-label={isCreator ? t("challenges.confirmDelete") : t("challenges.confirmLeave")}
                                 className="rounded-full p-2 text-ink-soft transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                               >
                                 <TrashIcon />
@@ -676,7 +696,7 @@ export default function SplitBillManager() {
 
       {tab === "requests" &&
         (requests.length === 0 ? (
-          <EmptyState icon={<ReceiptIcon />} text="No pending split requests." />
+          <EmptyState icon={<ReceiptIcon />} text={t("split.noPendingRequests")} />
         ) : (
           <div className="overflow-hidden rounded-card border border-line bg-surface">
             {requests.map((s, i) => (
@@ -687,7 +707,7 @@ export default function SplitBillManager() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium text-foreground">{s.title}</p>
                   <p className="text-xs text-ink-soft">
-                    {formatCurrency(Number(s.total_amount), currency)} total · {s.participant_count} people
+                    {formatCurrency(Number(s.total_amount), currency)} {t("split.total")} · {s.participant_count} {t("challenges.people")}
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-1.5">
@@ -697,7 +717,7 @@ export default function SplitBillManager() {
                     disabled={busyId === `respond-${s.id}`}
                     className="rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-60"
                   >
-                    Accept
+                    {t("friends.accept")}
                   </button>
                   <button
                     type="button"
@@ -705,7 +725,7 @@ export default function SplitBillManager() {
                     disabled={busyId === `respond-${s.id}`}
                     className="rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-60"
                   >
-                    Decline
+                    {t("friends.decline")}
                   </button>
                 </div>
               </div>
