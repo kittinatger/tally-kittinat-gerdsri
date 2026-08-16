@@ -11,6 +11,8 @@ import type { TransactionType, TransferDirection } from "@/lib/categories";
 import { EditIcon, TrashIcon } from "@/lib/icons";
 import SelectDropdown from "./SelectDropdown";
 import CsvManagerButtons from "./CsvManagerButtons";
+import { useT } from "@/lib/language-context";
+import type { MessageKey } from "@/lib/i18n/messages";
 
 type RecurringRule = {
   id: number;
@@ -26,7 +28,11 @@ type RecurringRule = {
   active: boolean;
 };
 
-const FREQUENCY_LABELS: Record<string, string> = { weekly: "Weekly", monthly: "Monthly", yearly: "Yearly" };
+const FREQUENCY_KEYS: Record<string, MessageKey> = {
+  weekly: "recurring.weekly",
+  monthly: "recurring.monthly",
+  yearly: "recurring.yearly",
+};
 
 function RepeatIcon() {
   return (
@@ -74,6 +80,10 @@ function EmptyState({ text }: { text: string }) {
 }
 
 export default function RecurringManager() {
+  const t = useT();
+  const FREQUENCY_LABELS: Record<string, string> = Object.fromEntries(
+    Object.entries(FREQUENCY_KEYS).map(([k, v]) => [k, t(v)]),
+  );
   const allCategories = useAllCategories();
   const wallets = useWallets();
   const currency = useCurrency();
@@ -254,17 +264,16 @@ export default function RecurringManager() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-display text-xl text-foreground">Recurring transactions</h3>
+        <h3 className="font-display text-xl text-foreground">{t("recurring.title")}</h3>
         <button
           onClick={() => (adding ? resetForm() : startAdd())}
           className="flex items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark"
         >
-          {adding ? "Cancel" : "Add rule"}
+          {adding ? t("common.cancel") : t("recurring.addRule")}
         </button>
       </div>
       <p className="mt-2 text-[11px] leading-snug text-ink-soft">
-        Rent, subscriptions, salary — logged automatically on the schedule you set, next time you open Tally on or
-        after the due date.
+        {t("recurring.desc")}
       </p>
 
       <div className="mt-3">
@@ -275,24 +284,24 @@ export default function RecurringManager() {
         <form onSubmit={handleSubmitForm} className="mt-4 space-y-3 rounded-card border border-line bg-surface p-4">
           {typeof formMode === "number" ? (
             <p className="text-sm font-semibold capitalize text-surface-foreground-soft">
-              Editing {type} rule — type can&apos;t be changed; delete and re-add to change it.
+              {t("recurring.editingRulePrefix")} {type === "expense" ? t("common.expense") : type === "income" ? t("common.income") : t("common.transfer")} {t("recurring.editingRuleSuffix")}
             </p>
           ) : (
             <div className="flex gap-1 rounded-full bg-bg-soft p-1">
-              {(["expense", "income", "transfer"] as TransactionType[]).map((t) => (
+              {(["expense", "income", "transfer"] as TransactionType[]).map((tt) => (
                 <button
-                  key={t}
+                  key={tt}
                   type="button"
                   onClick={() => {
-                    setType(t);
-                    const stillValid = allCategories.some((c) => c.type === t && c.name === category);
+                    setType(tt);
+                    const stillValid = allCategories.some((c) => c.type === tt && c.name === category);
                     if (!stillValid) setCategory("Other");
                   }}
                   className={`flex-1 rounded-full py-2 text-sm font-semibold capitalize transition ${
-                    type === t ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
+                    type === tt ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
                   }`}
                 >
-                  {t}
+                  {tt === "expense" ? t("common.expense") : tt === "income" ? t("common.income") : t("common.transfer")}
                 </button>
               ))}
             </div>
@@ -307,7 +316,7 @@ export default function RecurringManager() {
                   direction === "out" ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
                 }`}
               >
-                Money out
+                {t("form.moneyOut")}
               </button>
               <button
                 type="button"
@@ -316,14 +325,14 @@ export default function RecurringManager() {
                   direction === "in" ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
                 }`}
               >
-                Money in
+                {t("form.moneyIn")}
               </button>
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">Amount</label>
+              <label className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">{t("form.amount")}</label>
               <input
                 type="number"
                 inputMode="decimal"
@@ -337,7 +346,7 @@ export default function RecurringManager() {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">Frequency</label>
+              <label className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">{t("recurring.frequency")}</label>
               <SelectDropdown
                 value={FREQUENCY_LABELS[frequency]}
                 options={Object.values(FREQUENCY_LABELS)}
@@ -351,7 +360,7 @@ export default function RecurringManager() {
 
           <div>
             <label className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">
-              {type === "income" ? "Source" : type === "transfer" ? "Description" : "Merchant"}
+              {type === "income" ? t("form.source") : type === "transfer" ? t("form.description") : t("form.merchant")}
             </label>
             <input
               type="text"
@@ -365,12 +374,12 @@ export default function RecurringManager() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">Category</label>
+              <label className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">{t("common.category")}</label>
               <SelectDropdown value={category} options={categories.map((c) => c.name)} onChange={setCategory} />
             </div>
             {wallets.length > 0 && (
               <div>
-                <label className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">Wallet</label>
+                <label className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">{t("common.wallet")}</label>
                 <SelectDropdown
                   value={selectedWalletName}
                   options={wallets.map((w) => w.name)}
@@ -385,7 +394,7 @@ export default function RecurringManager() {
 
           {typeof formMode !== "number" && (
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">Starts on</label>
+              <label className="mb-1.5 block text-sm font-semibold text-surface-foreground-soft">{t("recurring.startsOn")}</label>
               <input
                 type="date"
                 required
@@ -404,7 +413,7 @@ export default function RecurringManager() {
               disabled={submitting}
               className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
             >
-              {submitting ? "Saving..." : typeof formMode === "number" ? "Save changes" : "Save rule"}
+              {submitting ? t("common.saving") : typeof formMode === "number" ? t("form.saveChanges") : t("recurring.saveRule")}
             </button>
           </div>
         </form>
@@ -413,9 +422,9 @@ export default function RecurringManager() {
       {loadError && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{loadError}</p>}
 
       {rules === null ? (
-        <p className="mt-4 text-sm text-ink-soft">Loading…</p>
+        <p className="mt-4 text-sm text-ink-soft">{t("common.loading")}</p>
       ) : rules.length === 0 ? (
-        <EmptyState text="No recurring transactions yet — add one above to have it logged automatically." />
+        <EmptyState text={t("recurring.noRulesYet")} />
       ) : (
         <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
           {rules.map((r, i) => {
@@ -457,7 +466,7 @@ export default function RecurringManager() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium text-foreground">{r.merchant}</p>
                   <p className="text-xs text-ink-soft">
-                    {formatCurrency(Number(r.amount), currency)} · {FREQUENCY_LABELS[r.frequency] ?? r.frequency} · next{" "}
+                    {formatCurrency(Number(r.amount), currency)} · {FREQUENCY_LABELS[r.frequency] ?? r.frequency} · {t("recurring.next")}{" "}
                     {r.next_run_date}
                   </p>
                 </div>
@@ -469,14 +478,14 @@ export default function RecurringManager() {
                       disabled={deleting}
                       className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
                     >
-                      Cancel
+                      {t("common.cancel")}
                     </button>
                     <button
                       onClick={() => handleDelete(r.id)}
                       disabled={deleting}
                       className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
                     >
-                      {deleting ? "Deleting..." : "Confirm delete"}
+                      {deleting ? t("common.deleting") : t("common.confirmDelete")}
                     </button>
                   </div>
                 ) : (
