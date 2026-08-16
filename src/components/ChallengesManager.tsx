@@ -7,6 +7,8 @@ import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency, todayInputValue } from "@/lib/format";
 import { CHALLENGE_TYPES, CHALLENGE_MODES, type ChallengeType, type ChallengeMode } from "@/lib/challenges";
+import { useT, useLanguage } from "@/lib/language-context";
+import type { MessageKey } from "@/lib/i18n/messages";
 
 type Challenge = {
   id: number;
@@ -36,15 +38,15 @@ type ChallengeDetail = { challenge: Challenge; participants: Participant[] };
 type RevealRequest = { id: number; challenge_id: number; challenge_title: string; requester_username: string };
 type Friend = { id: number; username: string };
 
-const TYPE_LABELS: Record<ChallengeType, string> = {
-  savings: "Savings race",
-  spending_limit: "Spending limit",
-  no_spend_days: "No-spend days",
+const TYPE_KEYS: Record<ChallengeType, MessageKey> = {
+  savings: "challenges.savingsRace",
+  spending_limit: "challenges.spendingLimit",
+  no_spend_days: "challenges.noSpendDays",
 };
 
-const MODE_LABELS: Record<ChallengeMode, string> = {
-  collaborative: "Together",
-  competitive: "Against each other",
+const MODE_KEYS: Record<ChallengeMode, MessageKey> = {
+  collaborative: "challenges.together",
+  competitive: "challenges.againstEachOther",
 };
 
 function colorForUsername(username: string): string {
@@ -99,8 +101,14 @@ function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
   );
 }
 
-function formatProgress(type: ChallengeType, amount: number, currency: string): string {
-  if (type === "no_spend_days") return `${amount} day${amount === 1 ? "" : "s"}`;
+function formatProgress(
+  type: ChallengeType,
+  amount: number,
+  currency: string,
+  t: (key: MessageKey) => string,
+  language: string,
+): string {
+  if (type === "no_spend_days") return `${amount} ${t("challenges.day")}${language === "en" && amount !== 1 ? "s" : ""}`;
   return formatCurrency(amount, currency);
 }
 
@@ -112,6 +120,14 @@ function rankParticipants(type: ChallengeType, participants: Participant[]): Par
 }
 
 export default function ChallengesManager() {
+  const t = useT();
+  const language = useLanguage();
+  const TYPE_LABELS: Record<ChallengeType, string> = Object.fromEntries(
+    Object.entries(TYPE_KEYS).map(([k, v]) => [k, t(v)]),
+  ) as Record<ChallengeType, string>;
+  const MODE_LABELS: Record<ChallengeMode, string> = Object.fromEntries(
+    Object.entries(MODE_KEYS).map(([k, v]) => [k, t(v)]),
+  ) as Record<ChallengeMode, string>;
   const currency = useCurrency();
   const [challenges, setChallenges] = useState<Challenge[] | null>(null);
   const [reveals, setReveals] = useState<RevealRequest[] | null>(null);
@@ -160,11 +176,12 @@ export default function ChallengesManager() {
         setFriends(Array.isArray(f.friends) ? f.friends : []);
       })
       .catch(() => {
-        if (!cancelled) setLoadError("Could not load challenges.");
+        if (!cancelled) setLoadError(t("friends.couldNotLoad"));
       });
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetch once on mount; t() re-runs on every render regardless
   }, []);
 
   async function loadDetail(id: number) {
@@ -365,7 +382,7 @@ export default function ChallengesManager() {
   }
 
   if (!challenges || !reveals || !friends) {
-    return <p className="text-sm text-ink-soft">Loading…</p>;
+    return <p className="text-sm text-ink-soft">{t("common.loading")}</p>;
   }
 
   const active = challenges.filter((c) => c.my_status === "accepted");
@@ -380,26 +397,26 @@ export default function ChallengesManager() {
         <div className="flex gap-1 rounded-full bg-bg-soft p-1">
           {(
             [
-              { id: "active" as const, label: "Challenges", count: active.length },
-              { id: "requests" as const, label: "Requests", count: requestCount },
+              { id: "active" as const, label: t("settings.challenges"), count: active.length },
+              { id: "requests" as const, label: t("friends.requestsTab"), count: requestCount },
             ]
-          ).map((t) => (
+          ).map((tabDef) => (
             <button
-              key={t.id}
+              key={tabDef.id}
               type="button"
-              onClick={() => setTab(t.id)}
+              onClick={() => setTab(tabDef.id)}
               className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-                tab === t.id ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+                tab === tabDef.id ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
               }`}
             >
-              {t.label}
-              {t.count > 0 && (
+              {tabDef.label}
+              {tabDef.count > 0 && (
                 <span
                   className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                    tab === t.id ? "bg-navy/10 text-navy dark:text-blue-300" : "bg-[var(--nav-hover-bg)] text-ink-soft"
+                    tab === tabDef.id ? "bg-navy/10 text-navy dark:text-blue-300" : "bg-[var(--nav-hover-bg)] text-ink-soft"
                   }`}
                 >
-                  {t.count}
+                  {tabDef.count}
                 </span>
               )}
             </button>
@@ -411,7 +428,7 @@ export default function ChallengesManager() {
             setCreating((v) => !v);
             if (creating) resetForm();
           }}
-          aria-label="New challenge"
+          aria-label={t("challenges.newChallenge")}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark"
         >
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-4 w-4">
@@ -427,7 +444,7 @@ export default function ChallengesManager() {
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Challenge name"
+            placeholder={t("challenges.challengeName")}
             className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
 
@@ -463,7 +480,7 @@ export default function ChallengesManager() {
               step="0.01"
               value={targetAmount}
               onChange={(e) => setTargetAmount(e.target.value)}
-              placeholder={type === "no_spend_days" ? "Target days" : "Target amount"}
+              placeholder={type === "no_spend_days" ? t("challenges.targetDays") : t("savings.targetAmount")}
               className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
             />
             {type === "spending_limit" ? (
@@ -471,7 +488,7 @@ export default function ChallengesManager() {
                 type="text"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                placeholder="Category (optional)"
+                placeholder={t("challenges.categoryOptional")}
                 className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
               />
             ) : (
@@ -496,7 +513,7 @@ export default function ChallengesManager() {
 
           {friends.length > 0 && (
             <div>
-              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">Invite</p>
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">{t("challenges.invite")}</p>
               <div className="flex flex-wrap gap-1.5">
                 {friends.map((f) => {
                   const selected = inviteeIds.includes(f.id);
@@ -524,14 +541,14 @@ export default function ChallengesManager() {
             disabled={submitting}
             className="w-full rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
           >
-            {submitting ? "Creating…" : "Create challenge"}
+            {submitting ? t("challenges.creating") : t("challenges.createChallenge")}
           </button>
         </form>
       )}
 
       {tab === "active" &&
         (active.length === 0 ? (
-          <EmptyState icon={<TrophyIcon />} text="No challenges yet — create one and invite friends or family." />
+          <EmptyState icon={<TrophyIcon />} text={t("challenges.noChallengesYet")} />
         ) : (
           <div className="space-y-2.5">
             {active.map((c) => {
@@ -550,7 +567,7 @@ export default function ChallengesManager() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium text-foreground">{c.title}</p>
                       <p className="text-xs text-ink-soft">
-                        {TYPE_LABELS[c.type]} · {MODE_LABELS[c.mode]} · {c.participant_count} people
+                        {TYPE_LABELS[c.type]} · {MODE_LABELS[c.mode]} · {c.participant_count} {t("challenges.people")}
                       </p>
                     </div>
                     <svg
@@ -569,7 +586,7 @@ export default function ChallengesManager() {
                   {expanded && (
                     <div className="border-t border-line px-4 py-3">
                       {!detail || detail.challenge.id !== c.id ? (
-                        <p className="text-sm text-ink-soft">Loading…</p>
+                        <p className="text-sm text-ink-soft">{t("common.loading")}</p>
                       ) : (
                         <div className="space-y-3">
                           <p className="text-xs text-ink-soft">
@@ -585,9 +602,9 @@ export default function ChallengesManager() {
                               return (
                                 <div className="rounded-card border border-line bg-bg-soft p-3">
                                   <div className="mb-1 flex items-center justify-between text-sm">
-                                    <span className="font-medium text-foreground">Combined progress</span>
+                                    <span className="font-medium text-foreground">{t("challenges.combinedProgress")}</span>
                                     <span className="text-ink-soft">
-                                      {formatProgress(detail.challenge.type, combined, currency)} / {formatProgress(detail.challenge.type, target, currency)}
+                                      {formatProgress(detail.challenge.type, combined, currency, t, language)} / {formatProgress(detail.challenge.type, target, currency, t, language)}
                                     </span>
                                   </div>
                                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface">
@@ -614,11 +631,11 @@ export default function ChallengesManager() {
                                     <div className="mb-1 flex items-center justify-between gap-2 text-sm">
                                       <span className="truncate font-medium text-foreground">
                                         {p.username}
-                                        {p.is_me && <span className="text-ink-soft"> (you)</span>}
+                                        {p.is_me && <span className="text-ink-soft"> {t("challenges.you")}</span>}
                                       </span>
                                       <span className="shrink-0 text-ink-soft">
                                         {p.is_me || p.revealed_to_me || detail.challenge.mode === "collaborative"
-                                          ? formatProgress(detail.challenge.type, amt, currency)
+                                          ? formatProgress(detail.challenge.type, amt, currency, t, language)
                                           : `${pct}%`}
                                       </span>
                                     </div>
@@ -651,7 +668,7 @@ export default function ChallengesManager() {
                                   step="0.01"
                                   value={contributionDrafts[c.id] ?? ""}
                                   onChange={(e) => setContributionDrafts((prev) => ({ ...prev, [c.id]: e.target.value }))}
-                                  placeholder="Add contribution"
+                                  placeholder={t("challenges.addContribution")}
                                   className="flex-1 rounded-card border border-line bg-bg-soft px-3 py-1.5 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
                                 />
                                 <button
@@ -660,7 +677,7 @@ export default function ChallengesManager() {
                                   disabled={busyId === `contribute-${c.id}`}
                                   className="rounded-full bg-navy px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-60"
                                 >
-                                  Add
+                                  {t("common.add")}
                                 </button>
                               </div>
                             )}
@@ -673,7 +690,7 @@ export default function ChallengesManager() {
                                 disabled={busyId === `leave-${c.id}`}
                                 className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
                               >
-                                Cancel
+                                {t("common.cancel")}
                               </button>
                               <button
                                 type="button"
@@ -681,7 +698,7 @@ export default function ChallengesManager() {
                                 disabled={busyId === `leave-${c.id}`}
                                 className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
                               >
-                                {busyId === `leave-${c.id}` ? "Removing…" : isCreator ? "Confirm delete" : "Confirm leave"}
+                                {busyId === `leave-${c.id}` ? t("challenges.removing") : isCreator ? t("challenges.confirmDelete") : t("challenges.confirmLeave")}
                               </button>
                             </div>
                           ) : (
@@ -689,7 +706,7 @@ export default function ChallengesManager() {
                               <button
                                 type="button"
                                 onClick={() => setConfirmDeleteId(c.id)}
-                                aria-label={isCreator ? "Delete challenge" : "Leave challenge"}
+                                aria-label={isCreator ? t("challenges.confirmDelete") : t("challenges.confirmLeave")}
                                 className="rounded-full p-2 text-ink-soft transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                               >
                                 <TrashIcon />
@@ -708,12 +725,12 @@ export default function ChallengesManager() {
 
       {tab === "requests" &&
         (requestCount === 0 ? (
-          <EmptyState icon={<TrophyIcon />} text="No pending invites or reveal requests." />
+          <EmptyState icon={<TrophyIcon />} text={t("challenges.noPendingInvites")} />
         ) : (
           <div className="space-y-5">
             {invites.length > 0 && (
               <div>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">Challenge invites</h3>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">{t("challenges.challengeInvites")}</h3>
                 <div className="overflow-hidden rounded-card border border-line bg-surface">
                   {invites.map((c, i) => (
                     <div key={c.id} className={`flex items-center gap-3 px-4 py-3 ${i === 0 ? "" : "border-t border-line"}`}>
@@ -733,7 +750,7 @@ export default function ChallengesManager() {
                           disabled={busyId === `invite-${c.id}`}
                           className="rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-60"
                         >
-                          Accept
+                          {t("friends.accept")}
                         </button>
                         <button
                           type="button"
@@ -741,7 +758,7 @@ export default function ChallengesManager() {
                           disabled={busyId === `invite-${c.id}`}
                           className="rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-60"
                         >
-                          Decline
+                          {t("friends.decline")}
                         </button>
                       </div>
                     </div>
@@ -752,7 +769,7 @@ export default function ChallengesManager() {
 
             {reveals.length > 0 && (
               <div>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">Wants to see your amount</h3>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">{t("challenges.wantsToSeeAmount")}</h3>
                 <div className="overflow-hidden rounded-card border border-line bg-surface">
                   {reveals.map((r, i) => (
                     <div key={r.id} className={`flex items-center gap-3 px-4 py-3 ${i === 0 ? "" : "border-t border-line"}`}>
@@ -768,7 +785,7 @@ export default function ChallengesManager() {
                           disabled={busyId === `reveal-resp-${r.id}`}
                           className="rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-60"
                         >
-                          Accept
+                          {t("friends.accept")}
                         </button>
                         <button
                           type="button"
@@ -776,7 +793,7 @@ export default function ChallengesManager() {
                           disabled={busyId === `reveal-resp-${r.id}`}
                           className="rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-60"
                         >
-                          Decline
+                          {t("friends.decline")}
                         </button>
                       </div>
                     </div>
