@@ -8,10 +8,9 @@ import { CATEGORY_PALETTE } from "@/lib/categories";
 import { dotClasses } from "@/lib/category-styles";
 import { useCurrency } from "@/lib/currency-context";
 import { CURRENCIES } from "@/lib/currencies";
+import { useT } from "@/lib/language-context";
 import type { WalletKind } from "@/lib/wallets";
 import type { WalletOption } from "@/types/wallet";
-
-const APP_DEFAULT_LABEL = "App default";
 
 export default function WalletModal({
   wallet,
@@ -22,6 +21,7 @@ export default function WalletModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const t = useT();
   const appCurrency = useCurrency();
   const isEdit = Boolean(wallet);
   const [name, setName] = useState(wallet?.name ?? "");
@@ -33,13 +33,14 @@ export default function WalletModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const currencyOptions = [`${APP_DEFAULT_LABEL} (${appCurrency})`, ...CURRENCIES.map((c) => `${c.code} — ${c.name}`)];
+  const appDefaultLabel = t("wallet.appDefault");
+  const currencyOptions = [`${appDefaultLabel} (${appCurrency})`, ...CURRENCIES.map((c) => `${c.code} — ${c.name}`)];
   const currencyValue = currency
     ? (CURRENCIES.find((c) => c.code === currency) ? `${currency} — ${CURRENCIES.find((c) => c.code === currency)!.name}` : currency)
-    : `${APP_DEFAULT_LABEL} (${appCurrency})`;
+    : `${appDefaultLabel} (${appCurrency})`;
 
   function handleCurrencyChange(label: string) {
-    if (label.startsWith(APP_DEFAULT_LABEL)) {
+    if (label.startsWith(appDefaultLabel)) {
       setCurrency(null);
       return;
     }
@@ -90,11 +91,11 @@ export default function WalletModal({
   }
 
   return (
-    <Modal onClose={onClose} title={isEdit ? "Edit wallet" : "Add wallet"}>
+    <Modal onClose={onClose} title={isEdit ? t("wallet.editTitle") : t("wallet.addWallet")}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="walletName" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-            Name
+            {t("wallet.nameLabel")}
           </label>
           <input
             id="walletName"
@@ -103,13 +104,13 @@ export default function WalletModal({
             autoFocus
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Cash, Bank, E-wallet"
+            placeholder={t("wallet.namePlaceholder")}
             className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">Type</label>
+          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("wallet.typeLabel")}</label>
           <div className="flex gap-1 rounded-full bg-bg-soft p-1">
             <button
               type="button"
@@ -118,7 +119,7 @@ export default function WalletModal({
                 kind === "cash" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
               }`}
             >
-              Cash
+              {t("wallet.cash")}
             </button>
             <button
               type="button"
@@ -127,13 +128,13 @@ export default function WalletModal({
                 kind === "digital" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
               }`}
             >
-              Digital
+              {t("wallet.digital")}
             </button>
           </div>
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">Color</label>
+          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("wallet.colorLabel")}</label>
           <div className="flex flex-wrap gap-2">
             {CATEGORY_PALETTE.map((c) => (
               <button
@@ -150,17 +151,17 @@ export default function WalletModal({
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">Currency</label>
+          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("wallet.currencyLabel")}</label>
           <SelectDropdown value={currencyValue} options={currencyOptions} onChange={handleCurrencyChange} />
           <p className="mt-1.5 text-xs text-ink-soft">
-            A display label only — amounts aren&apos;t converted between currencies.
+            {t("wallet.currencyNote")}
           </p>
         </div>
 
         {isEdit && (
           <div>
             <label htmlFor="walletBalance" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-              Balance ({currency ?? appCurrency})
+              {t("wallet.balanceLabel")} ({currency ?? appCurrency})
             </label>
             <input
               id="walletBalance"
@@ -172,7 +173,7 @@ export default function WalletModal({
               className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
             />
             <p className="mt-1.5 text-xs text-ink-soft">
-              Sets this wallet&apos;s current balance directly — only transactions logged after this point will move it.
+              {t("wallet.balanceNote")}
             </p>
           </div>
         )}
@@ -184,8 +185,8 @@ export default function WalletModal({
           className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition disabled:opacity-60"
         >
           <span>
-            <span className="block text-sm font-medium text-foreground">Default wallet</span>
-            <span className="block text-xs text-ink-soft">Used for new transactions unless you pick another.</span>
+            <span className="block text-sm font-medium text-foreground">{t("wallet.defaultWalletLabel")}</span>
+            <span className="block text-xs text-ink-soft">{t("wallet.defaultWalletDesc")}</span>
           </span>
           <span
             role="switch"
@@ -210,14 +211,14 @@ export default function WalletModal({
             onClick={onClose}
             className="rounded-full px-4 py-2.5 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="submit"
             disabled={submitting}
             className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
           >
-            {submitting ? "Saving..." : isEdit ? "Save changes" : "Add wallet"}
+            {submitting ? t("common.saving") : isEdit ? t("form.saveChanges") : t("wallet.addWallet")}
           </button>
         </div>
       </form>

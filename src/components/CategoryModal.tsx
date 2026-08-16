@@ -5,8 +5,9 @@ import { useState } from "react";
 import Modal from "./Modal";
 import { CATEGORY_PALETTE, type TransactionType } from "@/lib/categories";
 import { dotClasses } from "@/lib/category-styles";
-import { CATEGORY_ICON_KEYS, CATEGORY_ICON_LABELS } from "@/lib/category-icons";
+import { CATEGORY_ICON_KEYS, CATEGORY_ICON_LABEL_KEYS } from "@/lib/category-icons";
 import { CATEGORY_ICON_COMPONENTS } from "@/lib/icons";
+import { useT } from "@/lib/language-context";
 import type { CategoryOption } from "@/types/category";
 
 export default function CategoryModal({
@@ -20,6 +21,7 @@ export default function CategoryModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const t = useT();
   const isEdit = Boolean(category);
   const nameLocked = isEdit && category?.name === "Other";
   const [name, setName] = useState(category?.name ?? "");
@@ -27,6 +29,10 @@ export default function CategoryModal({
   const [icon, setIcon] = useState<string | null>(category?.icon ?? null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const categoryIconLabels = Object.fromEntries(
+    Object.entries(CATEGORY_ICON_LABEL_KEYS).map(([k, v]) => [k, t(v)]),
+  ) as Record<string, string>;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -58,11 +64,11 @@ export default function CategoryModal({
   }
 
   return (
-    <Modal onClose={onClose} title={isEdit ? "Edit category" : "Add category"}>
+    <Modal onClose={onClose} title={isEdit ? t("category.editTitle") : t("category.addCategory")}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="categoryName" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-            Name
+            {t("category.nameLabel")}
           </label>
           <input
             id="categoryName"
@@ -76,13 +82,13 @@ export default function CategoryModal({
           />
           {nameLocked && (
             <p className="mt-1.5 text-xs text-ink-soft">
-              &quot;Other&quot; can&apos;t be renamed — it&apos;s used as the fallback category.
+              {t("category.nameLockedNote")}
             </p>
           )}
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">Color</label>
+          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("category.colorLabel")}</label>
           <div className="flex flex-wrap gap-2">
             {CATEGORY_PALETTE.map((c) => (
               <button
@@ -99,7 +105,7 @@ export default function CategoryModal({
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">Icon (optional)</label>
+          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("category.iconLabel")}</label>
           <div className="flex flex-wrap gap-1.5">
             <button
               type="button"
@@ -108,7 +114,7 @@ export default function CategoryModal({
                 icon === null ? "border-navy bg-navy/10 text-navy dark:text-blue-300" : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
               }`}
             >
-              None
+              {t("category.none")}
             </button>
             {CATEGORY_ICON_KEYS.map((key) => {
               const Icon = CATEGORY_ICON_COMPONENTS[key];
@@ -117,7 +123,7 @@ export default function CategoryModal({
                   key={key}
                   type="button"
                   onClick={() => setIcon(key)}
-                  aria-label={CATEGORY_ICON_LABELS[key]}
+                  aria-label={categoryIconLabels[key]}
                   className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
                     icon === key
                       ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
@@ -139,14 +145,14 @@ export default function CategoryModal({
             onClick={onClose}
             className="rounded-full px-4 py-2.5 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="submit"
             disabled={submitting}
             className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
           >
-            {submitting ? "Saving..." : isEdit ? "Save changes" : "Add category"}
+            {submitting ? t("common.saving") : isEdit ? t("form.saveChanges") : t("category.addCategory")}
           </button>
         </div>
       </form>

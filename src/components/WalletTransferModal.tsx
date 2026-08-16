@@ -6,6 +6,7 @@ import Modal from "./Modal";
 import SelectDropdown from "./SelectDropdown";
 import DatePicker from "./DatePicker";
 import { todayInputValue } from "@/lib/format";
+import { useT } from "@/lib/language-context";
 import type { WalletOption } from "@/types/wallet";
 
 export default function WalletTransferModal({
@@ -17,6 +18,7 @@ export default function WalletTransferModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const t = useT();
   const [fromWalletId, setFromWalletId] = useState(wallets[0].id);
   const [toWalletId, setToWalletId] = useState(wallets.find((w) => w.id !== wallets[0].id)?.id ?? wallets[0].id);
   const [amount, setAmount] = useState("");
@@ -78,15 +80,15 @@ export default function WalletTransferModal({
   }
 
   return (
-    <Modal onClose={onClose} title="Transfer between wallets">
+    <Modal onClose={onClose} title={t("walletTransfer.title")}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1.5 block text-sm font-semibold text-ink-soft">From</label>
+            <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("walletTransfer.from")}</label>
             <SelectDropdown value={fromName} options={wallets.map((w) => w.name)} onChange={handleFromChange} />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-semibold text-ink-soft">To</label>
+            <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("walletTransfer.to")}</label>
             <SelectDropdown value={toName} options={wallets.map((w) => w.name)} onChange={handleToChange} />
           </div>
         </div>
@@ -94,13 +96,13 @@ export default function WalletTransferModal({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label htmlFor="transferDate" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-              Date
+              {t("common.date")}
             </label>
             <DatePicker id="transferDate" value={date} onChange={setDate} required />
           </div>
           <div>
             <label htmlFor="transferAmount" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-              Amount
+              {t("walletTransfer.amountLabel")}
             </label>
             <input
               id="transferAmount"
@@ -119,21 +121,20 @@ export default function WalletTransferModal({
 
         <div>
           <label htmlFor="transferNotes" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-            Notes (optional)
+            {t("walletTransfer.notesLabel")}
           </label>
           <textarea
             id="transferNotes"
             rows={2}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Add a note..."
+            placeholder={t("walletTransfer.notesPlaceholder")}
             className="w-full resize-none rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
         </div>
 
         <p className="text-xs text-ink-soft">
-          Moves {fromName || "—"} → {toName || "—"} without counting as income or spending — same as any other
-          transfer.
+          {t("walletTransfer.movesPrefix")} {fromName || "—"} → {toName || "—"} {t("walletTransfer.movesSuffix")}
         </p>
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
@@ -144,14 +145,14 @@ export default function WalletTransferModal({
             onClick={onClose}
             className="rounded-full px-4 py-2.5 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="submit"
             disabled={submitting || fromWalletId === toWalletId}
             className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
           >
-            {submitting ? "Transferring..." : "Transfer"}
+            {submitting ? t("walletTransfer.transferring") : t("common.transfer")}
           </button>
         </div>
       </form>
