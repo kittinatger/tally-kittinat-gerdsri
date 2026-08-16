@@ -11,6 +11,7 @@ import {
 import { CHALLENGE_TYPES, CHALLENGE_MODES } from "@/lib/challenges";
 import { SPLIT_METHODS, SPLIT_PAYMENT_METHODS } from "@/lib/splits";
 import { CATEGORY_ICON_KEYS } from "@/lib/category-icons";
+import { MEMBERSHIP_CODE_FORMATS } from "@/lib/memberships";
 import { isLanguageCode } from "@/lib/languages";
 
 export const forgotPasswordInputSchema = z.object({
@@ -268,6 +269,28 @@ export const categoryUpdateSchema = z.object({
   color: z.string().trim().min(1).max(30).optional(),
   icon: categoryIconSchema.optional(),
 });
+
+export const membershipInputSchema = z.object({
+  name: z.string().trim().min(1).max(60),
+  codeValue: z.string().trim().min(1).max(128),
+  codeFormat: z.enum(MEMBERSHIP_CODE_FORMATS).default("qr"),
+  color: z.string().trim().min(1).max(30),
+  icon: categoryIconSchema.optional(),
+  notes: z.string().trim().max(500).nullable().optional(),
+});
+
+export const membershipUpdateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(60).optional(),
+    codeValue: z.string().trim().min(1).max(128).optional(),
+    codeFormat: z.enum(MEMBERSHIP_CODE_FORMATS).optional(),
+    color: z.string().trim().min(1).max(30).optional(),
+    icon: categoryIconSchema.optional(),
+    notes: z.string().trim().max(500).nullable().optional(),
+  })
+  .refine((data) => Object.values(data).some((v) => v !== undefined), {
+    message: "Provide at least one field to update",
+  });
 
 export const userSearchQuerySchema = z.object({
   q: z.string().trim().min(1).max(100),

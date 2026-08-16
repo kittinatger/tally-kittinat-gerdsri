@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 13;
+const CURRENT_SCHEMA_VERSION = 14;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -781,6 +781,25 @@ function ensureSchema(): Promise<void> {
       // Per-user preference: whether a split you create needs the other
       // participants to accept before it counts, or is added immediately.
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS require_split_confirmation BOOLEAN NOT NULL DEFAULT false;`;
+
+      // Loyalty/membership cards for shops and restaurants — code_format is
+      // constrained (in validation.ts, not here) to exactly the symbologies
+      // both the client-side renderer (qrcode/jsbarcode) and the camera
+      // scanner (@zxing/browser) support: 'qr' | 'code128' | 'ean13' | 'upc'.
+      await sql`
+        CREATE TABLE IF NOT EXISTS membership_cards (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          name TEXT NOT NULL,
+          code_value TEXT NOT NULL,
+          code_format TEXT NOT NULL DEFAULT 'qr',
+          color TEXT NOT NULL DEFAULT 'slate',
+          icon TEXT,
+          notes TEXT,
+          sort_order INTEGER NOT NULL DEFAULT 0,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -3088,5 +3107,105 @@ export async function leaveOrDeleteSplit(userId: number, splitId: number): Promi
     await sql`DELETE FROM splits WHERE id = ${splitId};`;
   } else {
     await sql`DELETE FROM split_participants WHERE split_id = ${splitId} AND user_id = ${userId};`;
+  }
+}
+
+// ---- Membership cards -----------------------------------------------------
+
+export type MembershipCardRow = {
+  id: number;
+  name: string;
+  code_value: string;
+  code_format: string;
+  color: string;
+  icon: string | null;
+  notes: string | null;
+};
+
+export async function listMembershipCards(userId: number): Promise<MembershipCardRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<MembershipCardRow>`
+    SELECT id, name, code_value, code_format, color, icon, notes
+    FROM membership_cards
+    WHERE user_id = ${userId}
+    ORDER BY sort_order, id;
+  `;
+  return rows;
+}
+
+export async function createMembershipCard(
+  userId: number,
+  input: { name: string; codeValue: string; codeFormat: string; color: string; icon?: string | null; notes?: string | null },
+): Promise<MembershipCardRow> {
+  await ensureSchema();
+  const { rows: maxRows } = await sql<{ max: number | null }>`
+    SELECT MAX(sort_order) AS max FROM membership_cards WHERE user_id = ${userId};
+  `;
+  const nextSort = (maxRows[0]?.max ?? -1) + 1;
+  const { rows } = await sql<MembershipCardRow>`
+    INSERT INTO membership_cards (user_id, name, code_value, code_format, color, icon, notes, sort_order)
+    VALUES (${userId}, ${input.name}, ${input.codeValue}, ${input.codeFormat}, ${input.color}, ${input.icon ?? null}, ${input.notes ?? null}, ${nextSort})
+    RETURNING id, name, code_value, code_format, color, icon, notes;
+  `;
+  return rows[0];
+}
+
+export async function updateMembershipCard(
+  userId: number,
+  id: number,
+  input: { name?: string; codeValue?: string; codeFormat?: string; color?: string; icon?: string | null; notes?: string | null },
+): Promise<MembershipCardRow | null> {
+  await ensureSchema();
+  const { rows: existingRows } = await sql<MembershipCardRow>`
+    SELECT id, name, code_value, code_format, color, icon, notes FROM membership_cards WHERE id = ${id} AND user_id = ${userId};
+  `;
+  const existing = existingRows[0];
+  if (!existing) return null;
+
+  const newName = input.name?.trim() ?? existing.name;
+  const newCodeValue = input.codeValue?.trim() ?? existing.code_value;
+  const newCodeFormat = input.codeFormat ?? existing.code_format;
+  const newColor = input.color ?? existing.color;
+  const newIcon = input.icon !== undefined ? input.icon : existing.icon;
+  const newNotes = input.notes !== undefined ? input.notes : existing.notes;
+
+  const { rows } = await sql<MembershipCardRow>`
+    UPDATE membership_cards
+    SET name = ${newName}, code_value = ${newCodeValue}, code_format = ${newCodeFormat},
+        color = ${newColor}, icon = ${newIcon}, notes = ${newNotes}
+    WHERE id = ${id} AND user_id = ${userId}
+    RETURNING id, name, code_value, code_format, color, icon, notes;
+  `;
+  return rows[0];
+}
+
+export async function deleteMembershipCard(userId: number, id: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`DELETE FROM membership_cards WHERE id = ${id} AND user_id = ${userId};`;
+  return (rowCount ?? 0) > 0;
+}
+
+// Same adjacent-swap approach as moveWallet/moveRecurringRule/moveSavingsGoal.
+export async function moveMembershipCard(userId: number, id: number, direction: "up" | "down"): Promise<void> {
+  await ensureSchema();
+  const { rows } = await sql<{ id: number; sort_order: number }>`
+    SELECT id, sort_order FROM membership_cards WHERE user_id = ${userId} ORDER BY sort_order, id;
+  `;
+  const idx = rows.findIndex((r) => r.id === id);
+  const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+  if (idx === -1 || swapIdx < 0 || swapIdx >= rows.length) return;
+  const a = rows[idx];
+  const b = rows[swapIdx];
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    await client.sql`UPDATE membership_cards SET sort_order = ${b.sort_order} WHERE id = ${a.id} AND user_id = ${userId};`;
+    await client.sql`UPDATE membership_cards SET sort_order = ${a.sort_order} WHERE id = ${b.id} AND user_id = ${userId};`;
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
   }
 }

@@ -1,0 +1,115 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { BrowserMultiFormatReader, BarcodeFormat, type IScannerControls } from "@zxing/browser";
+import { describeMediaError } from "@/lib/media-error";
+import { CloseIcon } from "@/lib/icons";
+import { useT } from "@/lib/language-context";
+import type { MembershipCodeFormat } from "@/lib/memberships";
+
+// Anything the multi-format reader can decode that isn't one of our four
+// supported symbologies (Code 39, ITF, Codabar, EAN-8, UPC-E, ...) still
+// gets treated as a usable linear-barcode value — rendered back as
+// CODE128, which is the most broadly compatible fallback — rather than
+// rejecting a successful scan outright.
+function toMembershipFormat(format: BarcodeFormat): MembershipCodeFormat {
+  switch (format) {
+    case BarcodeFormat.QR_CODE:
+      return "qr";
+    case BarcodeFormat.EAN_13:
+      return "ean13";
+    case BarcodeFormat.UPC_A:
+      return "upc";
+    default:
+      return "code128";
+  }
+}
+
+export default function ScanCardModal({
+  onClose,
+  onScanned,
+}: {
+  onClose: () => void;
+  onScanned: (result: { value: string; format: MembershipCodeFormat }) => void;
+}) {
+  const t = useT();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const controlsRef = useRef<IScannerControls | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    // Deferred by a microtask so the unsupported-browser setError below
+    // doesn't run synchronously in the effect body (same pattern used
+    // elsewhere in this app to avoid the cascading-render lint rule).
+    Promise.resolve().then(() => {
+      if (cancelled) return;
+      if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+        setError(t("membership.scanUnsupported"));
+        return;
+      }
+      const reader = new BrowserMultiFormatReader();
+      reader
+        .decodeFromConstraints({ video: { facingMode: "environment" } }, videoRef.current ?? undefined, (result, err, controls) => {
+          controlsRef.current = controls;
+          if (cancelled || !result) return;
+          controls.stop();
+          onScanned({ value: result.getText(), format: toMembershipFormat(result.getBarcodeFormat()) });
+        })
+        .catch((err) => {
+          if (!cancelled) setError(describeMediaError(err, "camera"));
+        });
+    });
+    return () => {
+      cancelled = true;
+      controlsRef.current?.stop();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onScanned intentionally not re-run on every parent render
+  }, [t]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-black">
+      <div className="flex items-center justify-between px-4 py-3">
+        <p className="text-sm font-semibold text-white">{t("membership.scanTitle")}</p>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={t("common.cancel")}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+        >
+          <CloseIcon />
+        </button>
+      </div>
+
+      <div className="relative flex flex-1 items-center justify-center overflow-hidden">
+        {error ? (
+          <div className="max-w-xs px-6 text-center">
+            <p className="text-sm text-white">{error}</p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-4 rounded-full bg-white px-4 py-2 text-sm font-semibold text-black"
+            >
+              {t("membership.typeItInstead")}
+            </button>
+          </div>
+        ) : (
+          <>
+            <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />
+            <div className="pointer-events-none absolute inset-8 rounded-2xl border-2 border-white/70" />
+          </>
+        )}
+      </div>
+
+      {!error && (
+        <button
+          type="button"
+          onClick={onClose}
+          className="mx-4 mb-6 rounded-full border border-white/30 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
+        >
+          {t("membership.typeItInstead")}
+        </button>
+      )}
+    </div>
+  );
+}

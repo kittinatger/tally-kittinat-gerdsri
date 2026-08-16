@@ -119,6 +119,17 @@ export function ListIcon({ className }: IconProps) {
   );
 }
 
+// A ticket/pass shape (rounded card with a perforated tear line) — used for
+// the Memberships nav item and card-related UI, distinct from WalletIcon.
+export function MembershipCardIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <rect x="2.5" y="4.5" width="15" height="11" rx="2" />
+      <path d="M7.5 4.5v11" strokeDasharray="1.6 1.8" />
+    </svg>
+  );
+}
+
 export function GearIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
