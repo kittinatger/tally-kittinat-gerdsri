@@ -3,8 +3,10 @@
 import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
 import Link from "next/link";
+import { useT } from "@/lib/language-context";
 
 export default function ForgotPasswordForm() {
+  const t = useT();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +24,7 @@ export default function ForgotPasswordForm() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(typeof data.error === "string" ? data.error : "Something went wrong.");
+        setError(typeof data.error === "string" ? data.error : t("auth.somethingWentWrong"));
         return;
       }
       setSent(true);
@@ -37,11 +39,11 @@ export default function ForgotPasswordForm() {
     return (
       <div className="w-full max-w-sm space-y-4 text-center">
         <p className="text-sm text-foreground">
-          If <span className="font-semibold">{email}</span> has a Tally account, a password reset link is on its way.
+          {t("forgotPassword.sentPrefix")} <span className="font-semibold">{email}</span> {t("forgotPassword.sentSuffix")}
         </p>
-        <p className="text-sm text-ink-soft">Check your inbox — the link expires in 1 hour.</p>
+        <p className="text-sm text-ink-soft">{t("forgotPassword.checkInbox")}</p>
         <Link href="/login" className="inline-block text-sm font-semibold text-navy hover:underline">
-          Back to sign in
+          {t("forgotPassword.backToSignIn")}
         </Link>
       </div>
     );
@@ -51,7 +53,7 @@ export default function ForgotPasswordForm() {
     <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
       <div>
         <label htmlFor="email" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-          Email
+          {t("account.email")}
         </label>
         <input
           id="email"
@@ -62,10 +64,10 @@ export default function ForgotPasswordForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="w-full rounded-card border border-line bg-bg-soft px-4 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-          placeholder="you@example.com"
+          placeholder={t("forgotPassword.emailPlaceholder")}
         />
         <p className="mt-1.5 text-xs text-ink-soft">
-          The email on file for your account, set in Settings &gt; Account.
+          {t("forgotPassword.emailHint")}
         </p>
       </div>
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
@@ -74,11 +76,11 @@ export default function ForgotPasswordForm() {
         disabled={loading}
         className="w-full rounded-full bg-navy px-4 py-2.5 font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
       >
-        {loading ? "Sending..." : "Send reset link"}
+        {loading ? t("forgotPassword.sending") : t("forgotPassword.sendResetLink")}
       </button>
       <p className="text-center text-sm text-ink-soft">
         <Link href="/login" className="font-semibold text-navy hover:underline">
-          Back to sign in
+          {t("forgotPassword.backToSignIn")}
         </Link>
       </p>
     </form>

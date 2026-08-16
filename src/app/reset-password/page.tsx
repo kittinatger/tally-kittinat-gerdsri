@@ -1,5 +1,6 @@
 import ResetPasswordForm from "@/components/ResetPasswordForm";
 import SettingsMenu from "@/components/SettingsMenu";
+import T from "@/components/T";
 
 export default async function ResetPasswordPage({
   searchParams,
@@ -16,7 +17,9 @@ export default async function ResetPasswordPage({
       <div className="mb-8 flex flex-col items-center gap-3">
         <img src="/favicon-light.svg" alt="Tally" className="h-14 w-14 dark:hidden" />
         <img src="/favicon-dark.svg" alt="Tally" className="hidden h-14 w-14 dark:block" />
-        <h1 className="font-display text-2xl text-foreground">Choose a new password</h1>
+        <h1 className="font-display text-2xl text-foreground">
+          <T k="resetPassword.title" />
+        </h1>
       </div>
       <ResetPasswordForm token={token ?? ""} />
     </main>
