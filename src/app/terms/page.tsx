@@ -1,5 +1,6 @@
 import AppHeader from "@/components/AppHeader";
 import BackToSettingsLink from "@/components/BackToSettingsLink";
+import T from "@/components/T";
 
 export default function TermsPage() {
   return (
@@ -8,14 +9,17 @@ export default function TermsPage() {
 
       <main className="flex-1 px-1 py-6 sm:px-2">
         <BackToSettingsLink />
-        <h2 className="mb-5 font-display text-2xl text-foreground">Terms of Service</h2>
+        <h2 className="mb-5 font-display text-2xl text-foreground">
+          <T k="terms.title" />
+        </h2>
 
         <div className="space-y-6 rounded-card border border-line bg-surface p-5 text-sm leading-relaxed text-ink-soft">
           <section>
-            <h3 className="mb-1.5 font-semibold text-foreground">Open source, MIT licensed</h3>
+            <h3 className="mb-1.5 font-semibold text-foreground">
+              <T k="terms.licenseHeading" />
+            </h3>
             <p>
-              Tally is free, open-source software released under the MIT License. You&apos;re free to use, copy, modify,
-              and deploy it, subject to the terms of that license. See the{" "}
+              <T k="terms.licenseBefore" />{" "}
               <a
                 href="https://github.com/kittinatger/tally-kittinat-gerdsri/blob/master/LICENSE"
                 target="_blank"
@@ -24,24 +28,25 @@ export default function TermsPage() {
               >
                 LICENSE
               </a>{" "}
-              file for the full text.
+              <T k="terms.licenseAfter" />
             </p>
           </section>
 
           <section>
-            <h3 className="mb-1.5 font-semibold text-foreground">Provided as-is</h3>
+            <h3 className="mb-1.5 font-semibold text-foreground">
+              <T k="terms.asIsHeading" />
+            </h3>
             <p>
-              Tally is provided &quot;as is&quot;, without warranty of any kind. The software is offered for personal
-              expense tracking; you&apos;re responsible for keeping your own backups and for the accuracy of the data
-              you enter.
+              <T k="terms.asIsBody" />
             </p>
           </section>
 
           <section>
-            <h3 className="mb-1.5 font-semibold text-foreground">Self-hosted responsibility</h3>
+            <h3 className="mb-1.5 font-semibold text-foreground">
+              <T k="terms.selfHostHeading" />
+            </h3>
             <p>
-              Whoever deploys a given Tally instance is responsible for that deployment — its security, its
-              database, who they give access to, and how they handle the data stored there.
+              <T k="terms.selfHostBody" />
             </p>
           </section>
         </div>

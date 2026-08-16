@@ -20,7 +20,7 @@ export default function SettingsSubpageLayout({
 }: {
   username: string;
   email: string | null;
-  title: string;
+  title: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
