@@ -52,7 +52,9 @@ export default async function ActivitiesPage() {
     balance: Number(w.balance),
   }));
 
-  const initialWalletFilter = wallets.find((w) => w.id === activitiesDefaultWalletId && !w.archived)?.name ?? "all";
+  const initialWalletFilter = wallets.find((w) => w.id === activitiesDefaultWalletId && !w.archived)
+    ? String(activitiesDefaultWalletId)
+    : "all";
 
   return (
     <ActivitiesView

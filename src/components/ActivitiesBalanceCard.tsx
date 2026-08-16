@@ -70,17 +70,15 @@ export default function ActivitiesBalanceCard({
     };
   }, []);
 
-  const balance =
-    walletFilter === "all"
-      ? wallets.reduce((sum, w) => sum + w.balance, 0)
-      : (wallets.find((w) => w.name === walletFilter)?.balance ?? 0);
+  const selectedWallet = walletFilter === "all" ? null : wallets.find((w) => String(w.id) === walletFilter);
+  const balance = walletFilter === "all" ? wallets.reduce((sum, w) => sum + w.balance, 0) : (selectedWallet?.balance ?? 0);
 
   function toggleType(type: Exclude<TypeFilter, "all">) {
     onTypeFilterChange(typeFilter === type ? "all" : type);
   }
 
-  function selectWallet(name: string) {
-    onWalletFilterChange(name);
+  function selectWallet(id: string) {
+    onWalletFilterChange(id);
     setScopeOpen(false);
   }
 
@@ -121,10 +119,10 @@ export default function ActivitiesBalanceCard({
                   key={w.id}
                   type="button"
                   role="option"
-                  aria-selected={walletFilter === w.name}
-                  onClick={() => selectWallet(w.name)}
+                  aria-selected={walletFilter === String(w.id)}
+                  onClick={() => selectWallet(String(w.id))}
                   className={`flex w-full items-center gap-2 truncate rounded-xl px-3 py-2 text-left text-sm font-medium transition ${
-                    walletFilter === w.name
+                    walletFilter === String(w.id)
                       ? "bg-[var(--surface-nav-hover)] text-surface-foreground"
                       : "text-surface-foreground-soft hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
                   }`}
@@ -140,7 +138,7 @@ export default function ActivitiesBalanceCard({
 
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">
-          {walletFilter === "all" ? t("activities.yourBalance") : walletFilter}
+          {walletFilter === "all" ? t("activities.yourBalance") : (selectedWallet?.name ?? t("activities.yourBalance"))}
         </p>
         <p className="mt-1.5 truncate font-display text-3xl">{formatCurrency(balance, currency)}</p>
 

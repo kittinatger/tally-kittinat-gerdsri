@@ -255,7 +255,7 @@ export default function ExpenseList({
       if (typeFilter !== "all" && e.type !== typeFilter) return false;
       if (effectiveCategoryFilter !== "all" && e.category !== effectiveCategoryFilter) return false;
       if (tagFilter !== "all" && !e.tags.includes(tagFilter)) return false;
-      if (walletFilter !== "all" && e.walletName !== walletFilter) return false;
+      if (walletFilter !== "all" && String(e.walletId) !== walletFilter) return false;
       if (dateFrom && e.date < dateFrom) return false;
       if (dateTo && e.date > dateTo) return false;
       if (q) {
@@ -389,7 +389,7 @@ export default function ExpenseList({
                 <FilterDropdown
                   value={walletFilter}
                   allLabel={t("activities.allWallets")}
-                  options={wallets.map((w) => w.name)}
+                  options={wallets.map((w) => ({ value: String(w.id), label: w.name }))}
                   onChange={onWalletFilterChange}
                 />
               </div>

@@ -3073,7 +3073,7 @@ export async function toggleSplitSettled(userId: number, splitId: number): Promi
   await ensureSchema();
   const { rowCount } = await sql`
     UPDATE split_participants SET settled = NOT settled
-    WHERE split_id = ${splitId} AND user_id = ${userId};
+    WHERE split_id = ${splitId} AND user_id = ${userId} AND confirm_status = 'accepted';
   `;
   return (rowCount ?? 0) > 0;
 }
