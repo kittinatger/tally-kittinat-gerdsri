@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { describeFetchError } from "@/lib/fetch-error";
 import { badgeClasses } from "@/lib/category-styles";
+import { useT } from "@/lib/language-context";
 
 type ApiToken = { id: number; name: string; created_at: string; last_used_at: string | null };
 
@@ -33,6 +34,7 @@ function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
 }
 
 export default function ApiTokensManager() {
+  const t = useT();
   const [tokens, setTokens] = useState<ApiToken[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
@@ -99,23 +101,22 @@ export default function ApiTokensManager() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-display text-xl text-foreground">Access tokens</h3>
+        <h3 className="font-display text-xl text-foreground">{t("tokens.title")}</h3>
         <button
           onClick={() => setAdding((v) => !v)}
           className="flex items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark"
         >
-          {adding ? "Cancel" : "New token"}
+          {adding ? t("common.cancel") : t("tokens.newToken")}
         </button>
       </div>
       <p className="mt-2 text-[11px] leading-snug text-ink-soft">
-        A token lets an automation (like an iOS Shortcut) add transactions to your account without signing in.
-        Anyone with a token can add transactions on your behalf — treat it like a password.
+        {t("tokens.desc")}
       </p>
 
       {newToken && (
         <div className="mt-4 rounded-card border border-amber-200/70 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-950/30">
           <p className="mb-2 text-sm font-semibold text-foreground">
-            Copy this token now — you won&apos;t be able to see it again.
+            {t("tokens.copyNowWarning")}
           </p>
           <div className="flex items-center gap-2">
             <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded-card bg-bg-soft px-3 py-2 font-mono text-xs text-foreground">
@@ -131,7 +132,7 @@ export default function ApiTokensManager() {
               }}
               className="shrink-0 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-bg-soft"
             >
-              {copied ? "Copied!" : "Copy"}
+              {copied ? t("tokens.copied") : t("tokens.copy")}
             </button>
           </div>
           <button
@@ -139,7 +140,7 @@ export default function ApiTokensManager() {
             onClick={() => setNewToken(null)}
             className="mt-3 text-xs font-semibold text-ink-soft hover:text-foreground"
           >
-            Done
+            {t("common.done")}
           </button>
         </div>
       )}
@@ -148,14 +149,14 @@ export default function ApiTokensManager() {
         <form onSubmit={handleAdd} className="mt-4 space-y-3 rounded-card border border-line bg-surface p-4">
           <div>
             <label className="mb-1.5 block text-sm font-semibold text-foreground">
-              Name (so you remember what it&apos;s for)
+              {t("tokens.nameLabel")}
             </label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. iPhone Shortcut"
+              placeholder={t("tokens.namePlaceholder")}
               className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
             />
           </div>
@@ -166,7 +167,7 @@ export default function ApiTokensManager() {
               disabled={submitting}
               className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
             >
-              {submitting ? "Creating..." : "Create token"}
+              {submitting ? t("challenges.creating") : t("tokens.createToken")}
             </button>
           </div>
         </form>
@@ -175,48 +176,48 @@ export default function ApiTokensManager() {
       {loadError && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{loadError}</p>}
 
       {tokens === null ? (
-        <p className="mt-4 text-sm text-ink-soft">Loading…</p>
+        <p className="mt-4 text-sm text-ink-soft">{t("common.loading")}</p>
       ) : tokens.length === 0 ? (
         <div className="mt-4">
-          <EmptyState icon={<KeyIcon />} text="No tokens yet — create one to let an automation add transactions for you." />
+          <EmptyState icon={<KeyIcon />} text={t("tokens.noTokensYet")} />
         </div>
       ) : (
         <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
-          {tokens.map((t, i) => {
-            const confirming = confirmRevokeId === t.id;
+          {tokens.map((tok, i) => {
+            const confirming = confirmRevokeId === tok.id;
             return (
-              <div key={t.id} className={`flex items-center gap-3 px-4 py-3 ${i === 0 ? "" : "border-t border-line"}`}>
+              <div key={tok.id} className={`flex items-center gap-3 px-4 py-3 ${i === 0 ? "" : "border-t border-line"}`}>
                 <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses("slate")}`}>
                   <KeyIcon />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-foreground">{t.name}</p>
+                  <p className="truncate font-medium text-foreground">{tok.name}</p>
                   <p className="text-xs text-ink-soft">
-                    {t.last_used_at ? `Last used ${new Date(t.last_used_at).toLocaleDateString()}` : "Never used"}
+                    {tok.last_used_at ? `${t("tokens.lastUsedPrefix")} ${new Date(tok.last_used_at).toLocaleDateString()}` : t("tokens.neverUsed")}
                   </p>
                 </div>
                 {confirming ? (
                   <div className="flex shrink-0 items-center gap-1.5">
                     <button
                       onClick={() => setConfirmRevokeId(null)}
-                      disabled={busyId === t.id}
+                      disabled={busyId === tok.id}
                       className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
                     >
-                      Cancel
+                      {t("common.cancel")}
                     </button>
                     <button
-                      onClick={() => handleRevoke(t.id)}
-                      disabled={busyId === t.id}
+                      onClick={() => handleRevoke(tok.id)}
+                      disabled={busyId === tok.id}
                       className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
                     >
-                      {busyId === t.id ? "Revoking..." : "Confirm revoke"}
+                      {busyId === tok.id ? t("tokens.revoking") : t("tokens.confirmRevoke")}
                     </button>
                   </div>
                 ) : (
                   <button
-                    onClick={() => handleRevoke(t.id)}
-                    disabled={busyId === t.id}
-                    aria-label={`Revoke ${t.name}`}
+                    onClick={() => handleRevoke(tok.id)}
+                    disabled={busyId === tok.id}
+                    aria-label={`${t("tokens.confirmRevoke")} ${tok.name}`}
                     className="shrink-0 rounded-full p-2 text-ink-soft transition hover:bg-red-50 hover:text-red-600 disabled:opacity-60 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                   >
                     <TrashIcon />
