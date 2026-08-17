@@ -3,13 +3,21 @@
 import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
 import Modal from "./Modal";
-import MembershipCardCode from "./MembershipCardCode";
+import PassShape from "./PassShape";
 import { CATEGORY_PALETTE } from "@/lib/categories";
-import { dotClasses, heroGradientClasses } from "@/lib/category-styles";
-import { CATEGORY_ICON_KEYS, CATEGORY_ICON_LABEL_KEYS, isCategoryIconKey } from "@/lib/category-icons";
-import { CATEGORY_ICON_COMPONENTS, CategoryIcon } from "@/lib/icons";
+import { dotClasses } from "@/lib/category-styles";
+import { CATEGORY_ICON_KEYS, CATEGORY_ICON_LABEL_KEYS } from "@/lib/category-icons";
+import { CATEGORY_ICON_COMPONENTS } from "@/lib/icons";
 import { MEMBERSHIP_CODE_FORMATS, type MembershipCodeFormat } from "@/lib/memberships";
-import { defaultLayoutFor, type PassTemplate } from "@/lib/membership-templates";
+import {
+  PASS_TEMPLATES,
+  PASS_ZONES,
+  TEMPLATE_FIELDS,
+  TEMPLATE_LABEL_KEYS,
+  defaultLayoutFor,
+  type PassTemplate,
+  type PassZone,
+} from "@/lib/membership-templates";
 import { toMembershipCard, type MembershipCardApiRow } from "@/lib/membership-card-mapper";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -22,6 +30,13 @@ const FORMAT_LABEL_KEYS: Record<MembershipCodeFormat, MessageKey> = {
   upc: "membership.formatUpc",
   pdf417: "membership.formatPdf417",
   aztec: "membership.formatAztec",
+};
+
+const ZONE_LABEL_KEYS: Record<PassZone, MessageKey> = {
+  header: "membership.zoneHeader",
+  primary: "membership.zonePrimary",
+  secondary: "membership.zoneSecondary",
+  auxiliary: "membership.zoneAuxiliary",
 };
 
 export default function MembershipCardModal({
@@ -50,12 +65,40 @@ export default function MembershipCardModal({
   const [template, setTemplate] = useState<PassTemplate>(card?.template ?? "generic");
   const [fields, setFields] = useState<Record<string, string>>(card?.fields ?? {});
   const [layout, setLayout] = useState(card?.layout ?? defaultLayoutFor(template));
+  const [editorMode, setEditorMode] = useState<"guided" | "custom">("guided");
+  const [selectedFieldKey, setSelectedFieldKey] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const categoryIconLabels = Object.fromEntries(
     Object.entries(CATEGORY_ICON_LABEL_KEYS).map(([k, v]) => [k, t(v)]),
   ) as Record<string, string>;
+
+  const templateFieldDefs = TEMPLATE_FIELDS[template];
+  const fieldByKey = Object.fromEntries(templateFieldDefs.map((f) => [f.key, f]));
+  const placedKeys = new Set(Object.values(layout).flat().filter((k): k is string => Boolean(k)));
+  const unplacedKeys = templateFieldDefs.map((f) => f.key).filter((k) => !placedKeys.has(k));
+
+  function handleTemplateChange(next: PassTemplate) {
+    setTemplate(next);
+    setFields({});
+    setLayout(defaultLayoutFor(next));
+    setSelectedFieldKey(null);
+  }
+
+  function setFieldValue(key: string, value: string) {
+    setFields((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function placeField(zone: PassZone) {
+    if (!selectedFieldKey) return;
+    setLayout((prev) => ({ ...prev, [zone]: [...(prev[zone] ?? []), selectedFieldKey] }));
+    setSelectedFieldKey(null);
+  }
+
+  function unplaceField(zone: PassZone, key: string) {
+    setLayout((prev) => ({ ...prev, [zone]: (prev[zone] ?? []).filter((k) => k !== key) }));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -107,6 +150,26 @@ export default function MembershipCardModal({
         </div>
 
         <div>
+          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("membership.templateLabel")}</label>
+          <div className="flex flex-wrap gap-1.5">
+            {PASS_TEMPLATES.map((tpl) => (
+              <button
+                key={tpl}
+                type="button"
+                onClick={() => handleTemplateChange(tpl)}
+                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                  template === tpl
+                    ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                    : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                }`}
+              >
+                {t(TEMPLATE_LABEL_KEYS[tpl])}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
           <div className="mb-1.5 flex items-center justify-between gap-2">
             <label htmlFor="membershipCode" className="block text-sm font-semibold text-ink-soft">
               {t("membership.codeLabel")}
@@ -150,23 +213,149 @@ export default function MembershipCardModal({
           </div>
         </div>
 
+        {templateFieldDefs.length > 0 && (
+          <div>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <label className="block text-sm font-semibold text-ink-soft">{t(TEMPLATE_LABEL_KEYS[template])}</label>
+              <div className="flex gap-1 rounded-full bg-bg-soft p-1">
+                <button
+                  type="button"
+                  onClick={() => setEditorMode("guided")}
+                  className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${
+                    editorMode === "guided" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+                  }`}
+                >
+                  {t("membership.editorGuided")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditorMode("custom")}
+                  className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${
+                    editorMode === "custom" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+                  }`}
+                >
+                  {t("membership.editorCustom")}
+                </button>
+              </div>
+            </div>
+
+            {editorMode === "guided" ? (
+              <div className="space-y-3">
+                {templateFieldDefs.map((def) => (
+                  <div key={def.key}>
+                    <label className="mb-1 block text-xs font-semibold text-ink-soft">{t(def.labelKey)}</label>
+                    <input
+                      type="text"
+                      value={fields[def.key] ?? ""}
+                      onChange={(e) => setFieldValue(def.key, e.target.value)}
+                      placeholder={t(def.placeholderKey)}
+                      className="w-full rounded-card border border-line bg-bg-soft px-3 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3 rounded-card border border-line p-3">
+                {PASS_ZONES.map((zone) => {
+                  if (!templateFieldDefs.some((f) => f.zone === zone)) return null;
+                  const placed = (layout[zone] ?? []).filter((k): k is string => Boolean(k));
+                  return (
+                    <div key={zone}>
+                      <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-ink-soft">
+                        {t(ZONE_LABEL_KEYS[zone])}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {placed.map((key) => {
+                          const def = fieldByKey[key];
+                          return (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => unplaceField(zone, key)}
+                              className="rounded-full border border-navy bg-navy/10 px-3 py-1.5 text-xs font-semibold text-navy dark:text-blue-300"
+                            >
+                              {def ? t(def.labelKey) : key} ×
+                            </button>
+                          );
+                        })}
+                        <button
+                          type="button"
+                          onClick={() => placeField(zone)}
+                          disabled={!selectedFieldKey}
+                          aria-label={t("membership.addFieldHere")}
+                          className="flex h-8 w-8 items-center justify-center rounded-full border border-dashed border-line text-ink-soft transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-40"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {unplacedKeys.length > 0 && (
+                  <div className="border-t border-line pt-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">{t("membership.availableFields")}</p>
+                    <p className="mb-1.5 text-[11px] text-ink-soft">{t("membership.tapFieldHint")}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {unplacedKeys.map((key) => {
+                        const def = fieldByKey[key];
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => setSelectedFieldKey(key)}
+                            className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                              selectedFieldKey === key
+                                ? "border-navy bg-navy text-white"
+                                : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                            }`}
+                          >
+                            {def ? t(def.labelKey) : key}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {placedKeys.size > 0 && (
+                  <div className="space-y-2.5 border-t border-line pt-3">
+                    {templateFieldDefs
+                      .filter((def) => placedKeys.has(def.key))
+                      .map((def) => (
+                        <div key={def.key}>
+                          <label className="mb-1 block text-xs font-semibold text-ink-soft">{t(def.labelKey)}</label>
+                          <input
+                            type="text"
+                            value={fields[def.key] ?? ""}
+                            onChange={(e) => setFieldValue(def.key, e.target.value)}
+                            placeholder={t(def.placeholderKey)}
+                            className="w-full rounded-card border border-line bg-bg-soft px-3 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+                          />
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {codeValue && (
           <div>
             <p className="mb-1.5 text-sm font-semibold text-ink-soft">{t("membership.previewLabel")}</p>
-            <div className="pointer-events-none rounded-2xl border border-line p-3">
-              <div className={`flex items-center gap-2.5 rounded-xl p-3 text-white ${heroGradientClasses(color)}`}>
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20">
-                  {icon && isCategoryIconKey(icon) ? (
-                    <CategoryIcon iconKey={icon} className="h-4 w-4" />
-                  ) : (
-                    <span className="text-sm font-semibold">{(name || "?").charAt(0).toUpperCase()}</span>
-                  )}
-                </span>
-                <p className="min-w-0 truncate text-sm font-semibold">{name || t("membership.namePlaceholder")}</p>
-              </div>
-              <div className="mt-3">
-                <MembershipCardCode value={codeValue} format={codeFormat} size="small" />
-              </div>
+            <div className="pointer-events-none">
+              <PassShape
+                name={name || t("membership.namePlaceholder")}
+                color={color}
+                icon={icon}
+                template={template}
+                fields={fields}
+                layout={layout}
+                codeValue={codeValue}
+                codeFormat={codeFormat}
+                codeSize="small"
+              />
             </div>
           </div>
         )}
