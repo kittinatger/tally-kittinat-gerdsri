@@ -17,11 +17,12 @@ import type { MembershipCard } from "@/types/membership";
 import type { MembershipCodeFormat } from "@/lib/memberships";
 import type { MessageKey } from "@/lib/i18n/messages";
 
-// Neither is ever mounted on first paint (both require a tap first) —
-// loading on demand keeps them out of the initial bundle, same reasoning as
-// ActivitiesView's dynamic imports.
+// None of these three are ever mounted on first paint (all require a tap
+// first) — loading on demand keeps them out of the initial bundle, same
+// reasoning as ActivitiesView's dynamic imports.
 const MembershipCardModal = dynamic(() => import("./MembershipCardModal"), { ssr: false });
 const ScanCardModal = dynamic(() => import("./ScanCardModal"), { ssr: false });
+const AddCardEntryModal = dynamic(() => import("./AddCardEntryModal"), { ssr: false });
 
 export default function MembershipsView({ initialCards }: { initialCards: MembershipCard[] }) {
   const t = useT();
@@ -29,6 +30,7 @@ export default function MembershipsView({ initialCards }: { initialCards: Member
   const [cards, setCards] = useState<MembershipCard[]>(initialCards);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [modal, setModal] = useState<{ mode: "add" } | { mode: "edit"; card: MembershipCard } | null>(null);
+  const [entryOpen, setEntryOpen] = useState(false);
   const [scanOpen, setScanOpen] = useState(false);
   const [scannedValue, setScannedValue] = useState<{ value: string; format: MembershipCodeFormat } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -100,7 +102,7 @@ export default function MembershipsView({ initialCards }: { initialCards: Member
             </div>
             <button
               type="button"
-              onClick={openAdd}
+              onClick={() => setEntryOpen(true)}
               aria-label={t("membership.addCard")}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark"
             >
@@ -187,6 +189,24 @@ export default function MembershipsView({ initialCards }: { initialCards: Member
           onClose={() => setModal(null)}
           onSaved={handleSaved}
           onScanRequested={handleScanRequested}
+        />
+      )}
+
+      {entryOpen && (
+        <AddCardEntryModal
+          onClose={() => setEntryOpen(false)}
+          onNewPass={() => {
+            setEntryOpen(false);
+            openAdd();
+          }}
+          onScanRequested={() => {
+            setEntryOpen(false);
+            setScanOpen(true);
+          }}
+          onScanned={(result) => {
+            setEntryOpen(false);
+            handleScanned(result);
+          }}
         />
       )}
 

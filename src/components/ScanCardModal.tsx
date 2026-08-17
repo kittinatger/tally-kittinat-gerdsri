@@ -1,33 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BrowserMultiFormatReader, BarcodeFormat, type IScannerControls } from "@zxing/browser";
+import { BrowserMultiFormatReader, type IScannerControls } from "@zxing/browser";
 import { describeMediaError } from "@/lib/media-error";
+import { decodePassImage, toMembershipFormat } from "@/lib/decode-pass-image";
 import { CloseIcon, ImageIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 import type { MembershipCodeFormat } from "@/lib/memberships";
-
-// Anything the multi-format reader can decode that isn't one of our six
-// supported symbologies (Code 39, ITF, Codabar, EAN-8, UPC-E, ...) still
-// gets treated as a usable linear-barcode value — rendered back as
-// CODE128, which is the most broadly compatible fallback — rather than
-// rejecting a successful scan outright.
-function toMembershipFormat(format: BarcodeFormat): MembershipCodeFormat {
-  switch (format) {
-    case BarcodeFormat.QR_CODE:
-      return "qr";
-    case BarcodeFormat.EAN_13:
-      return "ean13";
-    case BarcodeFormat.UPC_A:
-      return "upc";
-    case BarcodeFormat.PDF_417:
-      return "pdf417";
-    case BarcodeFormat.AZTEC:
-      return "aztec";
-    default:
-      return "code128";
-  }
-}
 
 export default function ScanCardModal({
   onClose,
@@ -80,17 +59,13 @@ export default function ScanCardModal({
     if (!file) return;
     setPhotoError(null);
     setDecodingPhoto(true);
-    const url = URL.createObjectURL(file);
-    try {
-      const reader = new BrowserMultiFormatReader();
-      const result = await reader.decodeFromImageUrl(url);
-      onScanned({ value: result.getText(), format: toMembershipFormat(result.getBarcodeFormat()) });
-    } catch {
+    const result = await decodePassImage(file);
+    if (result) {
+      onScanned(result);
+    } else {
       setPhotoError(t("membership.scanPhotoError"));
-    } finally {
-      URL.revokeObjectURL(url);
-      setDecodingPhoto(false);
     }
+    setDecodingPhoto(false);
   }
 
   return (

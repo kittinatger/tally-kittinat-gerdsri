@@ -133,6 +133,26 @@ export function ImageIcon({ className }: IconProps) {
 
 // A ticket/pass shape (rounded card with a perforated tear line) — used for
 // the Memberships nav item and card-related UI, distinct from WalletIcon.
+// A camera body with a lens circle — used for the live-scan entry tile.
+export function CameraIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <path d="M3 7a1.5 1.5 0 0 1 1.5-1.5h1.4l.8-1.3a1 1 0 0 1 .85-.5h4.9a1 1 0 0 1 .85.5l.8 1.3h1.4A1.5 1.5 0 0 1 17 7v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 3 14Z" />
+      <circle cx="10" cy="10.5" r="3" />
+    </svg>
+  );
+}
+
+// A generic document/file shape — used for the "from file" entry tile.
+export function FileIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <path d="M5.5 2.5h6l3 3v11a1 1 0 0 1-1 1h-8a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1Z" />
+      <path d="M11.5 2.5v3h3" />
+    </svg>
+  );
+}
+
 export function MembershipCardIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
