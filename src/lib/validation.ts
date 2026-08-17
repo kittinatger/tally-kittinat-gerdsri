@@ -12,6 +12,7 @@ import { CHALLENGE_TYPES, CHALLENGE_MODES } from "@/lib/challenges";
 import { SPLIT_METHODS, SPLIT_PAYMENT_METHODS } from "@/lib/splits";
 import { CATEGORY_ICON_KEYS } from "@/lib/category-icons";
 import { MEMBERSHIP_CODE_FORMATS } from "@/lib/memberships";
+import { PASS_TEMPLATES, PASS_ZONES, type PassZone } from "@/lib/membership-templates";
 import { isLanguageCode } from "@/lib/languages";
 
 export const forgotPasswordInputSchema = z.object({
@@ -270,6 +271,10 @@ export const categoryUpdateSchema = z.object({
   icon: categoryIconSchema.optional(),
 });
 
+const passZoneSchema = z.enum(PASS_ZONES as [PassZone, ...PassZone[]]);
+const passFieldsSchema = z.record(z.string().max(40), z.string().max(80));
+const passLayoutSchema = z.record(passZoneSchema, z.array(z.string().nullable())).nullable();
+
 export const membershipInputSchema = z.object({
   name: z.string().trim().min(1).max(60),
   codeValue: z.string().trim().min(1).max(128),
@@ -277,6 +282,9 @@ export const membershipInputSchema = z.object({
   color: z.string().trim().min(1).max(30),
   icon: categoryIconSchema.optional(),
   notes: z.string().trim().max(500).nullable().optional(),
+  template: z.enum(PASS_TEMPLATES).default("generic"),
+  fields: passFieldsSchema.default({}),
+  layout: passLayoutSchema.optional(),
 });
 
 export const membershipUpdateSchema = z
@@ -287,6 +295,9 @@ export const membershipUpdateSchema = z
     color: z.string().trim().min(1).max(30).optional(),
     icon: categoryIconSchema.optional(),
     notes: z.string().trim().max(500).nullable().optional(),
+    template: z.enum(PASS_TEMPLATES).optional(),
+    fields: passFieldsSchema.optional(),
+    layout: passLayoutSchema.optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
     message: "Provide at least one field to update",

@@ -12,8 +12,10 @@ import AppHeader from "./AppHeader";
 import Modal from "./Modal";
 import MembershipCardCode from "./MembershipCardCode";
 import MembershipCardDetail from "./MembershipCardDetail";
+import { TEMPLATE_FIELDS, defaultLayoutFor } from "@/lib/membership-templates";
 import type { MembershipCard } from "@/types/membership";
 import type { MembershipCodeFormat } from "@/lib/memberships";
+import type { MessageKey } from "@/lib/i18n/messages";
 
 // Neither is ever mounted on first paint (both require a tap first) —
 // loading on demand keeps them out of the initial bundle, same reasoning as
@@ -135,7 +137,7 @@ export default function MembershipsView({ initialCards }: { initialCards: Member
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-semibold">{card.name}</span>
-                      <span className="block truncate text-xs text-white/70">{t(FORMAT_LABEL_KEYS[card.codeFormat])}</span>
+                      <span className="block truncate text-xs text-white/70">{cardSubtitle(card, t)}</span>
                     </span>
                     <MembershipCardCode value={card.codeValue} format={card.codeFormat} size="thumb" />
                   </button>
@@ -201,3 +203,21 @@ const FORMAT_LABEL_KEYS = {
   pdf417: "membership.formatPdf417",
   aztec: "membership.formatAztec",
 } as const;
+
+// The first field with a value, in the template's default zone order —
+// gives the compact list row a glance-able detail (a points balance, an
+// event date) instead of just the generic code-format label every card
+// used to share.
+function cardSubtitle(card: MembershipCard, t: (key: MessageKey) => string): string {
+  const layout = card.layout ?? defaultLayoutFor(card.template);
+  const fieldByKey = Object.fromEntries(TEMPLATE_FIELDS[card.template].map((f) => [f.key, f]));
+  for (const zone of ["header", "primary", "secondary", "auxiliary"] as const) {
+    for (const key of layout[zone] ?? []) {
+      if (!key) continue;
+      const def = fieldByKey[key];
+      const value = card.fields[key];
+      if (def && value) return `${t(def.labelKey)}: ${value}`;
+    }
+  }
+  return t(FORMAT_LABEL_KEYS[card.codeFormat]);
+}

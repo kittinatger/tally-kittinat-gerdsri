@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 14;
+const CURRENT_SCHEMA_VERSION = 15;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -800,6 +800,14 @@ function ensureSchema(): Promise<void> {
           created_at TIMESTAMPTZ NOT NULL DEFAULT now()
         );
       `;
+
+      // Pass template (visual shape + which extra fields apply) and the
+      // template-specific field values/custom zone layout, stored as JSON
+      // text — same convention as app_settings.dashboard_widgets, not
+      // JSONB, to match how every other semi-structured column here works.
+      await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS template TEXT NOT NULL DEFAULT 'generic';`;
+      await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS fields TEXT NOT NULL DEFAULT '{}';`;
+      await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS layout TEXT;`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -3120,12 +3128,18 @@ export type MembershipCardRow = {
   color: string;
   icon: string | null;
   notes: string | null;
+  template: string;
+  /** Raw JSON text — see normalizePassFields in membership-templates.ts. */
+  fields: string;
+  /** Raw JSON text, or null for "use the template's default layout" — see
+   * normalizePassLayout in membership-templates.ts. */
+  layout: string | null;
 };
 
 export async function listMembershipCards(userId: number): Promise<MembershipCardRow[]> {
   await ensureSchema();
   const { rows } = await sql<MembershipCardRow>`
-    SELECT id, name, code_value, code_format, color, icon, notes
+    SELECT id, name, code_value, code_format, color, icon, notes, template, fields, layout
     FROM membership_cards
     WHERE user_id = ${userId}
     ORDER BY sort_order, id;
@@ -3135,17 +3149,30 @@ export async function listMembershipCards(userId: number): Promise<MembershipCar
 
 export async function createMembershipCard(
   userId: number,
-  input: { name: string; codeValue: string; codeFormat: string; color: string; icon?: string | null; notes?: string | null },
+  input: {
+    name: string;
+    codeValue: string;
+    codeFormat: string;
+    color: string;
+    icon?: string | null;
+    notes?: string | null;
+    template?: string;
+    fields?: Record<string, string>;
+    layout?: unknown;
+  },
 ): Promise<MembershipCardRow> {
   await ensureSchema();
   const { rows: maxRows } = await sql<{ max: number | null }>`
     SELECT MAX(sort_order) AS max FROM membership_cards WHERE user_id = ${userId};
   `;
   const nextSort = (maxRows[0]?.max ?? -1) + 1;
+  const template = input.template ?? "generic";
+  const fields = JSON.stringify(input.fields ?? {});
+  const layout = input.layout ? JSON.stringify(input.layout) : null;
   const { rows } = await sql<MembershipCardRow>`
-    INSERT INTO membership_cards (user_id, name, code_value, code_format, color, icon, notes, sort_order)
-    VALUES (${userId}, ${input.name}, ${input.codeValue}, ${input.codeFormat}, ${input.color}, ${input.icon ?? null}, ${input.notes ?? null}, ${nextSort})
-    RETURNING id, name, code_value, code_format, color, icon, notes;
+    INSERT INTO membership_cards (user_id, name, code_value, code_format, color, icon, notes, sort_order, template, fields, layout)
+    VALUES (${userId}, ${input.name}, ${input.codeValue}, ${input.codeFormat}, ${input.color}, ${input.icon ?? null}, ${input.notes ?? null}, ${nextSort}, ${template}, ${fields}, ${layout})
+    RETURNING id, name, code_value, code_format, color, icon, notes, template, fields, layout;
   `;
   return rows[0];
 }
@@ -3153,11 +3180,22 @@ export async function createMembershipCard(
 export async function updateMembershipCard(
   userId: number,
   id: number,
-  input: { name?: string; codeValue?: string; codeFormat?: string; color?: string; icon?: string | null; notes?: string | null },
+  input: {
+    name?: string;
+    codeValue?: string;
+    codeFormat?: string;
+    color?: string;
+    icon?: string | null;
+    notes?: string | null;
+    template?: string;
+    fields?: Record<string, string>;
+    layout?: unknown;
+  },
 ): Promise<MembershipCardRow | null> {
   await ensureSchema();
   const { rows: existingRows } = await sql<MembershipCardRow>`
-    SELECT id, name, code_value, code_format, color, icon, notes FROM membership_cards WHERE id = ${id} AND user_id = ${userId};
+    SELECT id, name, code_value, code_format, color, icon, notes, template, fields, layout
+    FROM membership_cards WHERE id = ${id} AND user_id = ${userId};
   `;
   const existing = existingRows[0];
   if (!existing) return null;
@@ -3168,13 +3206,17 @@ export async function updateMembershipCard(
   const newColor = input.color ?? existing.color;
   const newIcon = input.icon !== undefined ? input.icon : existing.icon;
   const newNotes = input.notes !== undefined ? input.notes : existing.notes;
+  const newTemplate = input.template ?? existing.template;
+  const newFields = input.fields !== undefined ? JSON.stringify(input.fields) : existing.fields;
+  const newLayout = input.layout !== undefined ? (input.layout ? JSON.stringify(input.layout) : null) : existing.layout;
 
   const { rows } = await sql<MembershipCardRow>`
     UPDATE membership_cards
     SET name = ${newName}, code_value = ${newCodeValue}, code_format = ${newCodeFormat},
-        color = ${newColor}, icon = ${newIcon}, notes = ${newNotes}
+        color = ${newColor}, icon = ${newIcon}, notes = ${newNotes},
+        template = ${newTemplate}, fields = ${newFields}, layout = ${newLayout}
     WHERE id = ${id} AND user_id = ${userId}
-    RETURNING id, name, code_value, code_format, color, icon, notes;
+    RETURNING id, name, code_value, code_format, color, icon, notes, template, fields, layout;
   `;
   return rows[0];
 }

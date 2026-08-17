@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { heroGradientClasses } from "@/lib/category-styles";
-import { isCategoryIconKey } from "@/lib/category-icons";
-import { CategoryIcon, EditIcon, TrashIcon } from "@/lib/icons";
+import { EditIcon, TrashIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
-import MembershipCardCode from "./MembershipCardCode";
+import PassShape from "./PassShape";
 import type { MembershipCard } from "@/types/membership";
 
 // Rendered with key={card.id} by the caller (MembershipsView) so switching
@@ -35,20 +33,17 @@ export default function MembershipCardDetail({
   }
   return (
     <div>
-      <div className={`flex items-center gap-3 rounded-2xl p-5 text-white ${heroGradientClasses(card.color)}`}>
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/20">
-          {card.icon && isCategoryIconKey(card.icon) ? (
-            <CategoryIcon iconKey={card.icon} className="h-5 w-5" />
-          ) : (
-            <span className="text-lg font-semibold">{card.name.charAt(0).toUpperCase()}</span>
-          )}
-        </span>
-        <p className="min-w-0 truncate text-lg font-semibold">{card.name}</p>
-      </div>
-
-      <div className="mt-4">
-        <MembershipCardCode value={card.codeValue} format={card.codeFormat} size="large" />
-      </div>
+      <PassShape
+        name={card.name}
+        color={card.color}
+        icon={card.icon}
+        template={card.template}
+        fields={card.fields}
+        layout={card.layout}
+        codeValue={card.codeValue}
+        codeFormat={card.codeFormat}
+        codeSize="large"
+      />
 
       {card.notes && (
         <p className="mt-4 whitespace-pre-wrap rounded-card border border-line bg-surface p-3.5 text-sm text-ink-soft">

@@ -8,32 +8,12 @@ import { CATEGORY_PALETTE } from "@/lib/categories";
 import { dotClasses, heroGradientClasses } from "@/lib/category-styles";
 import { CATEGORY_ICON_KEYS, CATEGORY_ICON_LABEL_KEYS, isCategoryIconKey } from "@/lib/category-icons";
 import { CATEGORY_ICON_COMPONENTS, CategoryIcon } from "@/lib/icons";
-import { MEMBERSHIP_CODE_FORMATS, isMembershipCodeFormat, type MembershipCodeFormat } from "@/lib/memberships";
+import { MEMBERSHIP_CODE_FORMATS, type MembershipCodeFormat } from "@/lib/memberships";
+import { defaultLayoutFor, type PassTemplate } from "@/lib/membership-templates";
+import { toMembershipCard, type MembershipCardApiRow } from "@/lib/membership-card-mapper";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 import type { MembershipCard } from "@/types/membership";
-
-type MembershipCardApiRow = {
-  id: number;
-  name: string;
-  code_value: string;
-  code_format: string;
-  color: string;
-  icon: string | null;
-  notes: string | null;
-};
-
-function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
-  return {
-    id: row.id,
-    name: row.name,
-    codeValue: row.code_value,
-    codeFormat: isMembershipCodeFormat(row.code_format) ? row.code_format : "qr",
-    color: row.color,
-    icon: row.icon && isCategoryIconKey(row.icon) ? row.icon : null,
-    notes: row.notes,
-  };
-}
 
 const FORMAT_LABEL_KEYS: Record<MembershipCodeFormat, MessageKey> = {
   qr: "membership.formatQr",
@@ -67,6 +47,9 @@ export default function MembershipCardModal({
   const [color, setColor] = useState<string>(card?.color ?? CATEGORY_PALETTE[0]);
   const [icon, setIcon] = useState<string | null>(card?.icon ?? null);
   const [notes, setNotes] = useState(card?.notes ?? "");
+  const [template, setTemplate] = useState<PassTemplate>(card?.template ?? "generic");
+  const [fields, setFields] = useState<Record<string, string>>(card?.fields ?? {});
+  const [layout, setLayout] = useState(card?.layout ?? defaultLayoutFor(template));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,7 +62,7 @@ export default function MembershipCardModal({
     setSubmitting(true);
     setError(null);
     try {
-      const body = { name, codeValue, codeFormat, color, icon, notes: notes.trim() || null };
+      const body = { name, codeValue, codeFormat, color, icon, notes: notes.trim() || null, template, fields, layout };
       const res = isEdit
         ? await fetch(`/api/memberships/${card!.id}`, {
             method: "PATCH",
