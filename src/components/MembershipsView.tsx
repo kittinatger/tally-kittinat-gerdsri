@@ -198,4 +198,6 @@ const FORMAT_LABEL_KEYS = {
   code128: "membership.formatCode128",
   ean13: "membership.formatEan13",
   upc: "membership.formatUpc",
+  pdf417: "membership.formatPdf417",
+  aztec: "membership.formatAztec",
 } as const;

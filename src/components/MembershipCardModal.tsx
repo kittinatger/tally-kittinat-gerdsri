@@ -5,11 +5,12 @@ import { useState } from "react";
 import Modal from "./Modal";
 import MembershipCardCode from "./MembershipCardCode";
 import { CATEGORY_PALETTE } from "@/lib/categories";
-import { dotClasses } from "@/lib/category-styles";
+import { dotClasses, heroGradientClasses } from "@/lib/category-styles";
 import { CATEGORY_ICON_KEYS, CATEGORY_ICON_LABEL_KEYS, isCategoryIconKey } from "@/lib/category-icons";
-import { CATEGORY_ICON_COMPONENTS } from "@/lib/icons";
+import { CATEGORY_ICON_COMPONENTS, CategoryIcon } from "@/lib/icons";
 import { MEMBERSHIP_CODE_FORMATS, isMembershipCodeFormat, type MembershipCodeFormat } from "@/lib/memberships";
 import { useT } from "@/lib/language-context";
+import type { MessageKey } from "@/lib/i18n/messages";
 import type { MembershipCard } from "@/types/membership";
 
 type MembershipCardApiRow = {
@@ -34,11 +35,13 @@ function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
   };
 }
 
-const FORMAT_LABEL_KEYS: Record<MembershipCodeFormat, "membership.formatQr" | "membership.formatCode128" | "membership.formatEan13" | "membership.formatUpc"> = {
+const FORMAT_LABEL_KEYS: Record<MembershipCodeFormat, MessageKey> = {
   qr: "membership.formatQr",
   code128: "membership.formatCode128",
   ean13: "membership.formatEan13",
   upc: "membership.formatUpc",
+  pdf417: "membership.formatPdf417",
+  aztec: "membership.formatAztec",
 };
 
 export default function MembershipCardModal({
@@ -146,14 +149,16 @@ export default function MembershipCardModal({
 
         <div>
           <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("membership.formatLabel")}</label>
-          <div className="flex flex-wrap gap-1.5 rounded-full bg-bg-soft p-1">
+          <div className="flex flex-wrap gap-1.5">
             {MEMBERSHIP_CODE_FORMATS.map((f) => (
               <button
                 key={f}
                 type="button"
                 onClick={() => setCodeFormat(f)}
-                className={`flex-1 rounded-full px-2 py-2 text-xs font-semibold transition ${
-                  codeFormat === f ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                  codeFormat === f
+                    ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                    : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
                 }`}
               >
                 {t(FORMAT_LABEL_KEYS[f])}
@@ -163,8 +168,23 @@ export default function MembershipCardModal({
         </div>
 
         {codeValue && (
-          <div className="pointer-events-none">
-            <MembershipCardCode value={codeValue} format={codeFormat} size="small" />
+          <div>
+            <p className="mb-1.5 text-sm font-semibold text-ink-soft">{t("membership.previewLabel")}</p>
+            <div className="pointer-events-none rounded-2xl border border-line p-3">
+              <div className={`flex items-center gap-2.5 rounded-xl p-3 text-white ${heroGradientClasses(color)}`}>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20">
+                  {icon && isCategoryIconKey(icon) ? (
+                    <CategoryIcon iconKey={icon} className="h-4 w-4" />
+                  ) : (
+                    <span className="text-sm font-semibold">{(name || "?").charAt(0).toUpperCase()}</span>
+                  )}
+                </span>
+                <p className="min-w-0 truncate text-sm font-semibold">{name || t("membership.namePlaceholder")}</p>
+              </div>
+              <div className="mt-3">
+                <MembershipCardCode value={codeValue} format={codeFormat} size="small" />
+              </div>
+            </div>
           </div>
         )}
 
