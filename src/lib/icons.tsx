@@ -119,6 +119,18 @@ export function ListIcon({ className }: IconProps) {
   );
 }
 
+// A landscape photo shape (frame with a mountain/sun glyph) — used for the
+// "choose from photo gallery" action.
+export function ImageIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <rect x="2.5" y="3.5" width="15" height="13" rx="2" />
+      <circle cx="7" cy="8" r="1.4" fill="currentColor" stroke="none" />
+      <path d="M4 15l4.5-4.5a1.5 1.5 0 0 1 2.1 0L14 14M12.5 12.5l1-1a1.5 1.5 0 0 1 2.1 0l1.9 1.9" />
+    </svg>
+  );
+}
+
 // A ticket/pass shape (rounded card with a perforated tear line) — used for
 // the Memberships nav item and card-related UI, distinct from WalletIcon.
 export function MembershipCardIcon({ className }: IconProps) {

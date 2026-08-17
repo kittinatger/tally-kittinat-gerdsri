@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { BrowserMultiFormatReader, BarcodeFormat, type IScannerControls } from "@zxing/browser";
 import { describeMediaError } from "@/lib/media-error";
-import { CloseIcon } from "@/lib/icons";
+import { CloseIcon, ImageIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 import type { MembershipCodeFormat } from "@/lib/memberships";
 
@@ -34,8 +34,11 @@ export default function ScanCardModal({
 }) {
   const t = useT();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [decodingPhoto, setDecodingPhoto] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,7 +48,7 @@ export default function ScanCardModal({
     Promise.resolve().then(() => {
       if (cancelled) return;
       if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
-        setError(t("membership.scanUnsupported"));
+        setCameraError(t("membership.scanUnsupported"));
         return;
       }
       const reader = new BrowserMultiFormatReader();
@@ -57,7 +60,7 @@ export default function ScanCardModal({
           onScanned({ value: result.getText(), format: toMembershipFormat(result.getBarcodeFormat()) });
         })
         .catch((err) => {
-          if (!cancelled) setError(describeMediaError(err, "camera"));
+          if (!cancelled) setCameraError(describeMediaError(err, "camera"));
         });
     });
     return () => {
@@ -66,6 +69,25 @@ export default function ScanCardModal({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- onScanned intentionally not re-run on every parent render
   }, [t]);
+
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow picking the same file again after a failed decode
+    if (!file) return;
+    setPhotoError(null);
+    setDecodingPhoto(true);
+    const url = URL.createObjectURL(file);
+    try {
+      const reader = new BrowserMultiFormatReader();
+      const result = await reader.decodeFromImageUrl(url);
+      onScanned({ value: result.getText(), format: toMembershipFormat(result.getBarcodeFormat()) });
+    } catch {
+      setPhotoError(t("membership.scanPhotoError"));
+    } finally {
+      URL.revokeObjectURL(url);
+      setDecodingPhoto(false);
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black">
@@ -82,16 +104,9 @@ export default function ScanCardModal({
       </div>
 
       <div className="relative flex flex-1 items-center justify-center overflow-hidden">
-        {error ? (
+        {cameraError ? (
           <div className="max-w-xs px-6 text-center">
-            <p className="text-sm text-white">{error}</p>
-            <button
-              type="button"
-              onClick={onClose}
-              className="mt-4 rounded-full bg-white px-4 py-2 text-sm font-semibold text-black"
-            >
-              {t("membership.typeItInstead")}
-            </button>
+            <p className="text-sm text-white">{cameraError}</p>
           </div>
         ) : (
           <>
@@ -99,17 +114,33 @@ export default function ScanCardModal({
             <div className="pointer-events-none absolute inset-8 rounded-2xl border-2 border-white/70" />
           </>
         )}
+        {decodingPhoto && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/70">
+            <p className="text-sm text-white">{t("membership.decodingPhoto")}</p>
+          </div>
+        )}
       </div>
 
-      {!error && (
+      <div className="mx-4 mb-6 space-y-2">
+        {photoError && <p className="text-center text-sm text-red-400">{photoError}</p>}
+        <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelected} className="hidden" />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={decodingPhoto}
+          className="flex w-full items-center justify-center gap-1.5 rounded-full border border-white/30 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 disabled:opacity-60"
+        >
+          <ImageIcon className="h-4 w-4" />
+          {t("membership.choosePhoto")}
+        </button>
         <button
           type="button"
           onClick={onClose}
-          className="mx-4 mb-6 rounded-full border border-white/30 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
+          className="w-full rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black"
         >
           {t("membership.typeItInstead")}
         </button>
-      )}
+      </div>
     </div>
   );
 }
