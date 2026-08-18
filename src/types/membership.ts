@@ -14,4 +14,7 @@ export type MembershipCard = {
   fields: Record<string, string>;
   /** Null means "use the template's default layout" — see defaultLayoutFor. */
   layout: PassLayout | null;
+  /** Whether an image is stored at /api/memberships/[id]/logo|banner. */
+  hasLogo: boolean;
+  hasBanner: boolean;
 };

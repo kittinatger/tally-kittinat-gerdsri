@@ -1,13 +1,14 @@
 "use client";
 
 import { describeFetchError } from "@/lib/fetch-error";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Modal from "./Modal";
 import PassShape from "./PassShape";
 import { CATEGORY_PALETTE } from "@/lib/categories";
-import { dotClasses } from "@/lib/category-styles";
+import { dotClasses, heroGradientClasses } from "@/lib/category-styles";
 import { CATEGORY_ICON_KEYS, CATEGORY_ICON_LABEL_KEYS } from "@/lib/category-icons";
-import { CATEGORY_ICON_COMPONENTS } from "@/lib/icons";
+import { CATEGORY_ICON_COMPONENTS, PlusIcon, CloseIcon } from "@/lib/icons";
+import { downscaleImage } from "@/lib/image-downscale";
 import { MEMBERSHIP_CODE_FORMATS, type MembershipCodeFormat } from "@/lib/memberships";
 import {
   PASS_TEMPLATES,
@@ -39,6 +40,53 @@ const ZONE_LABEL_KEYS: Record<PassZone, MessageKey> = {
   auxiliary: "membership.zoneAuxiliary",
 };
 
+// A slot on the visual pass canvas — an empty translucent square with a
+// "+" (tap to pick an image) when unset, or the picked image with a small
+// remove button in the corner once one's attached. Mirrors the "Pass
+// editor" reference screenshot's plus-slot grid.
+function ImageSlot({
+  previewUrl,
+  onPick,
+  onClear,
+  ariaLabel,
+  removeLabel,
+  className,
+}: {
+  previewUrl: string | null;
+  onPick: () => void;
+  onClear: () => void;
+  ariaLabel: string;
+  removeLabel: string;
+  className: string;
+}) {
+  if (previewUrl) {
+    return (
+      <div className={`relative shrink-0 ${className}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- local object URL / API-served image, not a build-time asset */}
+        <img src={previewUrl} alt="" className="h-full w-full rounded-lg object-cover ring-1 ring-white/40" />
+        <button
+          type="button"
+          onClick={onClear}
+          aria-label={removeLabel}
+          className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white transition hover:bg-black"
+        >
+          <CloseIcon className="h-2.5 w-2.5" />
+        </button>
+      </div>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      aria-label={ariaLabel}
+      className={`flex shrink-0 items-center justify-center rounded-lg border border-dashed border-white/50 bg-white/15 text-white/90 transition hover:bg-white/25 ${className}`}
+    >
+      <PlusIcon className="h-4 w-4" />
+    </button>
+  );
+}
+
 export default function MembershipCardModal({
   card,
   onClose,
@@ -69,6 +117,82 @@ export default function MembershipCardModal({
   const [selectedFieldKey, setSelectedFieldKey] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Logo/banner: a staged File replaces whatever's already saved (shown via
+  // the /logo|/banner API routes for an existing card); "removed" clears a
+  // previously-saved image with no replacement. Actual upload/delete calls
+  // happen after the card itself is saved, since a brand-new card has no id
+  // yet to attach an image to.
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoRemoved, setLogoRemoved] = useState(false);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerRemoved, setBannerRemoved] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+
+  // Derived (not stateful) so creating the URL never triggers a setState-
+  // in-effect cascade — the effect below only ever revokes, never sets.
+  const logoObjectUrl = useMemo(() => (logoFile ? URL.createObjectURL(logoFile) : null), [logoFile]);
+  const bannerObjectUrl = useMemo(() => (bannerFile ? URL.createObjectURL(bannerFile) : null), [bannerFile]);
+  useEffect(() => () => { if (logoObjectUrl) URL.revokeObjectURL(logoObjectUrl); }, [logoObjectUrl]);
+  useEffect(() => () => { if (bannerObjectUrl) URL.revokeObjectURL(bannerObjectUrl); }, [bannerObjectUrl]);
+
+  const logoPreviewUrl = logoFile ? logoObjectUrl : logoRemoved ? null : card?.hasLogo ? `/api/memberships/${card.id}/logo` : null;
+  const bannerPreviewUrl = bannerFile ? bannerObjectUrl : bannerRemoved ? null : card?.hasBanner ? `/api/memberships/${card.id}/banner` : null;
+
+  async function handleLogoSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setLogoFile(await downscaleImage(file));
+    setLogoRemoved(false);
+  }
+
+  async function handleBannerSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setBannerFile(await downscaleImage(file));
+    setBannerRemoved(false);
+  }
+
+  function clearLogo() {
+    setLogoFile(null);
+    setLogoRemoved(true);
+  }
+
+  function clearBanner() {
+    setBannerFile(null);
+    setBannerRemoved(true);
+  }
+
+  // Runs after the card fields themselves are saved (so an id definitely
+  // exists) — uploads/deletes the logo and banner, then folds the result
+  // into the flags the rest of the app reads (MembershipCard.hasLogo/
+  // hasBanner) so the caller doesn't need a second fetch to see them.
+  async function syncImages(cardId: number, current: { hasLogo: boolean; hasBanner: boolean }) {
+    let hasLogo = current.hasLogo;
+    let hasBanner = current.hasBanner;
+    if (logoFile) {
+      const fd = new FormData();
+      fd.set("image", logoFile);
+      const res = await fetch(`/api/memberships/${cardId}/logo`, { method: "POST", body: fd });
+      if (res.ok) hasLogo = true;
+    } else if (logoRemoved) {
+      await fetch(`/api/memberships/${cardId}/logo`, { method: "DELETE" });
+      hasLogo = false;
+    }
+    if (bannerFile) {
+      const fd = new FormData();
+      fd.set("image", bannerFile);
+      const res = await fetch(`/api/memberships/${cardId}/banner`, { method: "POST", body: fd });
+      if (res.ok) hasBanner = true;
+    } else if (bannerRemoved) {
+      await fetch(`/api/memberships/${cardId}/banner`, { method: "DELETE" });
+      hasBanner = false;
+    }
+    return { hasLogo, hasBanner };
+  }
 
   const categoryIconLabels = Object.fromEntries(
     Object.entries(CATEGORY_ICON_LABEL_KEYS).map(([k, v]) => [k, t(v)]),
@@ -122,7 +246,9 @@ export default function MembershipCardModal({
         setError(typeof data.error === "string" ? data.error : "Could not save.");
         return;
       }
-      onSaved(toMembershipCard(data.card as MembershipCardApiRow));
+      const saved = toMembershipCard(data.card as MembershipCardApiRow);
+      const images = await syncImages(saved.id, saved);
+      onSaved({ ...saved, ...images });
     } catch (err) {
       setError(describeFetchError(err));
     } finally {
@@ -210,6 +336,35 @@ export default function MembershipCardModal({
                 {t(FORMAT_LABEL_KEYS[f])}
               </button>
             ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("membership.editorTitle")}</label>
+          <div className={`relative overflow-hidden rounded-2xl p-4 ${heroGradientClasses(color)}`}>
+            <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoSelected} className="hidden" />
+            <input ref={bannerInputRef} type="file" accept="image/*" onChange={handleBannerSelected} className="hidden" />
+            <div className="flex items-start justify-between gap-3">
+              <ImageSlot
+                previewUrl={logoPreviewUrl}
+                onPick={() => logoInputRef.current?.click()}
+                onClear={clearLogo}
+                ariaLabel={t("membership.addLogo")}
+                removeLabel={t("membership.removeImage")}
+                className="h-11 w-11"
+              />
+              <p className="mt-1.5 min-w-0 flex-1 truncate text-right text-sm font-semibold text-white/90">
+                {name || t("membership.namePlaceholder")}
+              </p>
+            </div>
+            <ImageSlot
+              previewUrl={bannerPreviewUrl}
+              onPick={() => bannerInputRef.current?.click()}
+              onClear={clearBanner}
+              ariaLabel={t("membership.addBanner")}
+              removeLabel={t("membership.removeImage")}
+              className="mt-3 aspect-[5/3] w-full"
+            />
           </div>
         </div>
 
@@ -355,6 +510,8 @@ export default function MembershipCardModal({
                 codeValue={codeValue}
                 codeFormat={codeFormat}
                 codeSize="small"
+                logoUrl={logoPreviewUrl}
+                bannerUrl={bannerPreviewUrl}
               />
             </div>
           </div>

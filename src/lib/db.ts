@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 15;
+const CURRENT_SCHEMA_VERSION = 16;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -808,6 +808,16 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS template TEXT NOT NULL DEFAULT 'generic';`;
       await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS fields TEXT NOT NULL DEFAULT '{}';`;
       await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS layout TEXT;`;
+
+      // Optional logo (small, top-left of the pass) and banner (full-width
+      // hero image) — stored as BYTEA directly in Postgres, same convention
+      // as expenses.receipt_image (see attachReceiptImage), rather than
+      // Vercel Blob storage, so this doesn't introduce a second storage
+      // system just for two more images.
+      await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS logo_image BYTEA;`;
+      await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS logo_image_type TEXT;`;
+      await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS banner_image BYTEA;`;
+      await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS banner_image_type TEXT;`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -3134,12 +3144,15 @@ export type MembershipCardRow = {
   /** Raw JSON text, or null for "use the template's default layout" — see
    * normalizePassLayout in membership-templates.ts. */
   layout: string | null;
+  has_logo: boolean;
+  has_banner: boolean;
 };
 
 export async function listMembershipCards(userId: number): Promise<MembershipCardRow[]> {
   await ensureSchema();
   const { rows } = await sql<MembershipCardRow>`
-    SELECT id, name, code_value, code_format, color, icon, notes, template, fields, layout
+    SELECT id, name, code_value, code_format, color, icon, notes, template, fields, layout,
+      (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner
     FROM membership_cards
     WHERE user_id = ${userId}
     ORDER BY sort_order, id;
@@ -3172,7 +3185,8 @@ export async function createMembershipCard(
   const { rows } = await sql<MembershipCardRow>`
     INSERT INTO membership_cards (user_id, name, code_value, code_format, color, icon, notes, sort_order, template, fields, layout)
     VALUES (${userId}, ${input.name}, ${input.codeValue}, ${input.codeFormat}, ${input.color}, ${input.icon ?? null}, ${input.notes ?? null}, ${nextSort}, ${template}, ${fields}, ${layout})
-    RETURNING id, name, code_value, code_format, color, icon, notes, template, fields, layout;
+    RETURNING id, name, code_value, code_format, color, icon, notes, template, fields, layout,
+      (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner;
   `;
   return rows[0];
 }
@@ -3194,7 +3208,8 @@ export async function updateMembershipCard(
 ): Promise<MembershipCardRow | null> {
   await ensureSchema();
   const { rows: existingRows } = await sql<MembershipCardRow>`
-    SELECT id, name, code_value, code_format, color, icon, notes, template, fields, layout
+    SELECT id, name, code_value, code_format, color, icon, notes, template, fields, layout,
+      (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner
     FROM membership_cards WHERE id = ${id} AND user_id = ${userId};
   `;
   const existing = existingRows[0];
@@ -3216,7 +3231,8 @@ export async function updateMembershipCard(
         color = ${newColor}, icon = ${newIcon}, notes = ${newNotes},
         template = ${newTemplate}, fields = ${newFields}, layout = ${newLayout}
     WHERE id = ${id} AND user_id = ${userId}
-    RETURNING id, name, code_value, code_format, color, icon, notes, template, fields, layout;
+    RETURNING id, name, code_value, code_format, color, icon, notes, template, fields, layout,
+      (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner;
   `;
   return rows[0];
 }
@@ -3224,6 +3240,70 @@ export async function updateMembershipCard(
 export async function deleteMembershipCard(userId: number, id: number): Promise<boolean> {
   await ensureSchema();
   const { rowCount } = await sql`DELETE FROM membership_cards WHERE id = ${id} AND user_id = ${userId};`;
+  return (rowCount ?? 0) > 0;
+}
+
+// Logo (small, top-left) and banner (full-width hero) images — same BYTEA-
+// in-Postgres pattern as attachReceiptImage/getReceiptImage on expenses.
+export async function attachMembershipLogo(userId: number, id: number, bytes: Buffer, mimeType: string): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    UPDATE membership_cards
+    SET logo_image = decode(${bytes.toString("hex")}, 'hex'), logo_image_type = ${mimeType}
+    WHERE id = ${id} AND user_id = ${userId};
+  `;
+  return (rowCount ?? 0) > 0;
+}
+
+export async function getMembershipLogo(userId: number, id: number): Promise<{ bytes: Buffer; mimeType: string } | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ hex: string | null; mime: string | null }>`
+    SELECT encode(logo_image, 'hex') AS hex, logo_image_type AS mime
+    FROM membership_cards
+    WHERE id = ${id} AND user_id = ${userId};
+  `;
+  const row = rows[0];
+  if (!row?.hex || !row.mime) return null;
+  return { bytes: Buffer.from(row.hex, "hex"), mimeType: row.mime };
+}
+
+export async function removeMembershipLogo(userId: number, id: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    UPDATE membership_cards SET logo_image = NULL, logo_image_type = NULL
+    WHERE id = ${id} AND user_id = ${userId};
+  `;
+  return (rowCount ?? 0) > 0;
+}
+
+export async function attachMembershipBanner(userId: number, id: number, bytes: Buffer, mimeType: string): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    UPDATE membership_cards
+    SET banner_image = decode(${bytes.toString("hex")}, 'hex'), banner_image_type = ${mimeType}
+    WHERE id = ${id} AND user_id = ${userId};
+  `;
+  return (rowCount ?? 0) > 0;
+}
+
+export async function getMembershipBanner(userId: number, id: number): Promise<{ bytes: Buffer; mimeType: string } | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ hex: string | null; mime: string | null }>`
+    SELECT encode(banner_image, 'hex') AS hex, banner_image_type AS mime
+    FROM membership_cards
+    WHERE id = ${id} AND user_id = ${userId};
+  `;
+  const row = rows[0];
+  if (!row?.hex || !row.mime) return null;
+  return { bytes: Buffer.from(row.hex, "hex"), mimeType: row.mime };
+}
+
+export async function removeMembershipBanner(userId: number, id: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    UPDATE membership_cards SET banner_image = NULL, banner_image_type = NULL
+    WHERE id = ${id} AND user_id = ${userId};
+  `;
   return (rowCount ?? 0) > 0;
 }
 

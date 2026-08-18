@@ -28,6 +28,8 @@ export default function PassShape({
   codeValue,
   codeFormat,
   codeSize = "large",
+  logoUrl,
+  bannerUrl,
 }: {
   name: string;
   color: string;
@@ -38,6 +40,11 @@ export default function PassShape({
   codeValue: string;
   codeFormat: MembershipCodeFormat;
   codeSize?: "large" | "small";
+  /** A small square mark shown top-left, in place of the icon/initial circle. */
+  logoUrl?: string | null;
+  /** A large full-width hero image shown under the header, like the "photo"
+   * strip on a real Wallet pass. */
+  bannerUrl?: string | null;
 }) {
   const t = useT();
   const effectiveLayout = layout ?? defaultLayoutFor(template);
@@ -61,15 +68,20 @@ export default function PassShape({
 
   return (
     <div className="w-full">
-      <div className={`rounded-2xl p-4 text-white ${heroGradientClasses(color)}`}>
+      <div className={`overflow-hidden rounded-2xl p-4 text-white ${heroGradientClasses(color)}`}>
         <div className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20">
-            {icon && isCategoryIconKey(icon) ? (
-              <CategoryIcon iconKey={icon} className="h-4.5 w-4.5" />
-            ) : (
-              <span className="text-sm font-semibold">{(name || "?").charAt(0).toUpperCase()}</span>
-            )}
-          </span>
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- user-uploaded, not a build-time asset
+            <img src={logoUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-white/30" />
+          ) : (
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20">
+              {icon && isCategoryIconKey(icon) ? (
+                <CategoryIcon iconKey={icon} className="h-4.5 w-4.5" />
+              ) : (
+                <span className="text-sm font-semibold">{(name || "?").charAt(0).toUpperCase()}</span>
+              )}
+            </span>
+          )}
           <p className="min-w-0 flex-1 truncate font-semibold">{name}</p>
           {headerFields.length > 0 && (
             <div className="flex shrink-0 items-center gap-2 text-right">
@@ -85,6 +97,11 @@ export default function PassShape({
             </div>
           )}
         </div>
+
+        {bannerUrl && (
+          // eslint-disable-next-line @next/next/no-img-element -- user-uploaded, not a build-time asset
+          <img src={bannerUrl} alt="" className="mt-3 aspect-[5/3] w-full rounded-xl object-cover" />
+        )}
 
         {primaryFields.length > 0 && (
           <div className="mt-3">

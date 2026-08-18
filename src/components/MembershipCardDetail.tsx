@@ -43,6 +43,8 @@ export default function MembershipCardDetail({
         codeValue={card.codeValue}
         codeFormat={card.codeFormat}
         codeSize="large"
+        logoUrl={card.hasLogo ? `/api/memberships/${card.id}/logo` : null}
+        bannerUrl={card.hasBanner ? `/api/memberships/${card.id}/banner` : null}
       />
 
       {card.notes && (
