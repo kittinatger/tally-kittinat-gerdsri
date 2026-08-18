@@ -8,7 +8,6 @@ import { heroGradientClasses } from "@/lib/category-styles";
 import { isCategoryIconKey } from "@/lib/category-icons";
 import { CategoryIcon, PlusIcon } from "@/lib/icons";
 import { describeFetchError } from "@/lib/fetch-error";
-import AppHeader from "./AppHeader";
 import Modal from "./Modal";
 import MembershipCardCode from "./MembershipCardCode";
 import MembershipCardDetail from "./MembershipCardDetail";
@@ -24,8 +23,18 @@ const MembershipCardModal = dynamic(() => import("./MembershipCardModal"), { ssr
 const ScanCardModal = dynamic(() => import("./ScanCardModal"), { ssr: false });
 const AddCardEntryModal = dynamic(() => import("./AddCardEntryModal"), { ssr: false });
 
-export default function MembershipsView({ initialCards }: { initialCards: MembershipCard[] }) {
+export default function MembershipsView({
+  initialCards,
+  category,
+}: {
+  initialCards: MembershipCard[];
+  /** Which /wallet tab this list belongs to — new cards are created with
+   * this category, and the header text reflects it. */
+  category: "pass" | "membership";
+}) {
   const t = useT();
+  const titleKey = category === "pass" ? "wallet.tabPasses" : "wallet.tabMemberships";
+  const subtitleKey = category === "pass" ? "wallet.passesSubtitle" : "membership.subtitle";
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
   const [cards, setCards] = useState<MembershipCard[]>(initialCards);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -90,15 +99,13 @@ export default function MembershipsView({ initialCards }: { initialCards: Member
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10 lg:max-w-6xl">
-      <AppHeader />
-
-      <main className="flex-1 px-1 py-6 sm:px-2 lg:flex lg:items-start lg:gap-6">
+    <>
+      <main className="px-1 lg:flex lg:items-start lg:gap-6">
         <div className="lg:w-[420px] lg:shrink-0">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h2 className="font-display text-2xl text-foreground">{t("membership.title")}</h2>
-              <p className="mt-0.5 text-sm text-ink-soft">{t("membership.subtitle")}</p>
+              <h2 className="font-display text-2xl text-foreground">{t(titleKey)}</h2>
+              <p className="mt-0.5 text-sm text-ink-soft">{t(subtitleKey)}</p>
             </div>
             <button
               type="button"
@@ -186,6 +193,7 @@ export default function MembershipsView({ initialCards }: { initialCards: Member
         <MembershipCardModal
           card={modal.mode === "edit" ? modal.card : undefined}
           scannedValue={modal.mode === "add" ? scannedValue : null}
+          category={category}
           onClose={() => setModal(null)}
           onSaved={handleSaved}
           onScanRequested={handleScanRequested}
@@ -211,7 +219,7 @@ export default function MembershipsView({ initialCards }: { initialCards: Member
       )}
 
       {scanOpen && <ScanCardModal onClose={() => setScanOpen(false)} onScanned={handleScanned} />}
-    </div>
+    </>
   );
 }
 

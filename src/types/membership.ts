@@ -17,4 +17,6 @@ export type MembershipCard = {
   /** Whether an image is stored at /api/memberships/[id]/logo|banner. */
   hasLogo: boolean;
   hasBanner: boolean;
+  /** Which tab on the /wallet page this card lives in. */
+  category: "pass" | "membership";
 };

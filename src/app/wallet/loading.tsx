@@ -5,7 +5,7 @@ import { BottomNav } from "@/components/AppHeader";
 // route can't be statically cached. Mirrors AppHeader's markup (including
 // which parts are hidden on mobile) so the nav doesn't flicker/disappear
 // during the transition.
-export default function MembershipsLoading() {
+export default function WalletLoading() {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10">
       <header className="sticky top-3 z-10 hidden items-center justify-between gap-2 rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] px-3 py-2 shadow-soft backdrop-blur-xl sm:flex sm:gap-3 sm:px-5 sm:py-2.5">
@@ -22,7 +22,7 @@ export default function MembershipsLoading() {
             Activities
           </span>
           <span className="rounded-full bg-surface px-2.5 py-1 text-xs font-semibold text-foreground shadow-sm sm:px-3.5 sm:py-1.5 sm:text-sm">
-            Memberships
+            Wallet
           </span>
           <span className="rounded-full px-2.5 py-1 text-xs font-semibold text-ink-soft sm:px-3.5 sm:py-1.5 sm:text-sm">
             Settings
@@ -31,10 +31,10 @@ export default function MembershipsLoading() {
         <div className="flex shrink-0 items-center gap-1.5" />
       </header>
 
-      <BottomNav pathname="/memberships" />
+      <BottomNav pathname="/wallet" />
 
       <main className="flex-1 px-1 py-6 sm:px-2">
-        <div className="mb-3 h-[52px] animate-pulse rounded-card border border-line bg-surface" />
+        <div className="mb-3 h-9 w-full max-w-xs animate-pulse rounded-full border border-line bg-surface" />
         <div className="space-y-2.5">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="h-16 animate-pulse rounded-card border border-line bg-surface" />

@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 16;
+const CURRENT_SCHEMA_VERSION = 17;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -818,6 +818,35 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS logo_image_type TEXT;`;
       await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS banner_image BYTEA;`;
       await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS banner_image_type TEXT;`;
+
+      // Splits the old single "Memberships" list into two tabs on the
+      // merged /wallet page — 'pass' for tickets/coupons/boarding passes,
+      // 'membership' for loyalty/store cards. Which tab a card was created
+      // from decides this; existing rows default to 'membership' since
+      // that's what this table originally was.
+      await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'membership';`;
+
+      // Payment-card *visuals* for the /wallet page's "Cards" tab — purely
+      // decorative pass-style art (like Apple Wallet's card display), not a
+      // real payment method: only the last 4 digits are ever stored, never
+      // a full card number, since this app has no payment processing and
+      // storing a full PAN would just be an unnecessary liability.
+      await sql`
+        CREATE TABLE IF NOT EXISTS wallet_cards (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          label TEXT NOT NULL,
+          holder_name TEXT,
+          last4 TEXT,
+          expiry_month SMALLINT,
+          expiry_year SMALLINT,
+          network TEXT NOT NULL DEFAULT 'other',
+          color TEXT NOT NULL DEFAULT 'slate',
+          notes TEXT,
+          sort_order INTEGER NOT NULL DEFAULT 0,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -3146,12 +3175,13 @@ export type MembershipCardRow = {
   layout: string | null;
   has_logo: boolean;
   has_banner: boolean;
+  category: string;
 };
 
 export async function listMembershipCards(userId: number): Promise<MembershipCardRow[]> {
   await ensureSchema();
   const { rows } = await sql<MembershipCardRow>`
-    SELECT id, name, code_value, code_format, color, icon, notes, template, fields, layout,
+    SELECT id, name, code_value, code_format, color, icon, notes, template, fields, layout, category,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner
     FROM membership_cards
     WHERE user_id = ${userId}
@@ -3172,6 +3202,7 @@ export async function createMembershipCard(
     template?: string;
     fields?: Record<string, string>;
     layout?: unknown;
+    category?: string;
   },
 ): Promise<MembershipCardRow> {
   await ensureSchema();
@@ -3182,10 +3213,11 @@ export async function createMembershipCard(
   const template = input.template ?? "generic";
   const fields = JSON.stringify(input.fields ?? {});
   const layout = input.layout ? JSON.stringify(input.layout) : null;
+  const category = input.category ?? "membership";
   const { rows } = await sql<MembershipCardRow>`
-    INSERT INTO membership_cards (user_id, name, code_value, code_format, color, icon, notes, sort_order, template, fields, layout)
-    VALUES (${userId}, ${input.name}, ${input.codeValue}, ${input.codeFormat}, ${input.color}, ${input.icon ?? null}, ${input.notes ?? null}, ${nextSort}, ${template}, ${fields}, ${layout})
-    RETURNING id, name, code_value, code_format, color, icon, notes, template, fields, layout,
+    INSERT INTO membership_cards (user_id, name, code_value, code_format, color, icon, notes, sort_order, template, fields, layout, category)
+    VALUES (${userId}, ${input.name}, ${input.codeValue}, ${input.codeFormat}, ${input.color}, ${input.icon ?? null}, ${input.notes ?? null}, ${nextSort}, ${template}, ${fields}, ${layout}, ${category})
+    RETURNING id, name, code_value, code_format, color, icon, notes, template, fields, layout, category,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner;
   `;
   return rows[0];
@@ -3204,11 +3236,12 @@ export async function updateMembershipCard(
     template?: string;
     fields?: Record<string, string>;
     layout?: unknown;
+    category?: string;
   },
 ): Promise<MembershipCardRow | null> {
   await ensureSchema();
   const { rows: existingRows } = await sql<MembershipCardRow>`
-    SELECT id, name, code_value, code_format, color, icon, notes, template, fields, layout,
+    SELECT id, name, code_value, code_format, color, icon, notes, template, fields, layout, category,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner
     FROM membership_cards WHERE id = ${id} AND user_id = ${userId};
   `;
@@ -3224,14 +3257,15 @@ export async function updateMembershipCard(
   const newTemplate = input.template ?? existing.template;
   const newFields = input.fields !== undefined ? JSON.stringify(input.fields) : existing.fields;
   const newLayout = input.layout !== undefined ? (input.layout ? JSON.stringify(input.layout) : null) : existing.layout;
+  const newCategory = input.category ?? existing.category;
 
   const { rows } = await sql<MembershipCardRow>`
     UPDATE membership_cards
     SET name = ${newName}, code_value = ${newCodeValue}, code_format = ${newCodeFormat},
         color = ${newColor}, icon = ${newIcon}, notes = ${newNotes},
-        template = ${newTemplate}, fields = ${newFields}, layout = ${newLayout}
+        template = ${newTemplate}, fields = ${newFields}, layout = ${newLayout}, category = ${newCategory}
     WHERE id = ${id} AND user_id = ${userId}
-    RETURNING id, name, code_value, code_format, color, icon, notes, template, fields, layout,
+    RETURNING id, name, code_value, code_format, color, icon, notes, template, fields, layout, category,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner;
   `;
   return rows[0];
@@ -3308,10 +3342,18 @@ export async function removeMembershipBanner(userId: number, id: number): Promis
 }
 
 // Same adjacent-swap approach as moveWallet/moveRecurringRule/moveSavingsGoal.
+// Scoped to the moved card's own category so reordering within the Passes
+// tab never swaps with a Memberships-tab card that just happens to be
+// adjacent in the shared sort_order sequence.
 export async function moveMembershipCard(userId: number, id: number, direction: "up" | "down"): Promise<void> {
   await ensureSchema();
+  const { rows: categoryRows } = await sql<{ category: string }>`
+    SELECT category FROM membership_cards WHERE id = ${id} AND user_id = ${userId};
+  `;
+  const category = categoryRows[0]?.category;
+  if (!category) return;
   const { rows } = await sql<{ id: number; sort_order: number }>`
-    SELECT id, sort_order FROM membership_cards WHERE user_id = ${userId} ORDER BY sort_order, id;
+    SELECT id, sort_order FROM membership_cards WHERE user_id = ${userId} AND category = ${category} ORDER BY sort_order, id;
   `;
   const idx = rows.findIndex((r) => r.id === id);
   const swapIdx = direction === "up" ? idx - 1 : idx + 1;
@@ -3323,6 +3365,131 @@ export async function moveMembershipCard(userId: number, id: number, direction: 
     await client.query("BEGIN");
     await client.sql`UPDATE membership_cards SET sort_order = ${b.sort_order} WHERE id = ${a.id} AND user_id = ${userId};`;
     await client.sql`UPDATE membership_cards SET sort_order = ${a.sort_order} WHERE id = ${b.id} AND user_id = ${userId};`;
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+// ---- Wallet cards (payment-card visuals) -----------------------------------
+
+export type WalletCardRow = {
+  id: number;
+  label: string;
+  holder_name: string | null;
+  last4: string | null;
+  expiry_month: number | null;
+  expiry_year: number | null;
+  network: string;
+  color: string;
+  notes: string | null;
+};
+
+export async function listWalletCards(userId: number): Promise<WalletCardRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<WalletCardRow>`
+    SELECT id, label, holder_name, last4, expiry_month, expiry_year, network, color, notes
+    FROM wallet_cards
+    WHERE user_id = ${userId}
+    ORDER BY sort_order, id;
+  `;
+  return rows;
+}
+
+export async function createWalletCard(
+  userId: number,
+  input: {
+    label: string;
+    holderName?: string | null;
+    last4?: string | null;
+    expiryMonth?: number | null;
+    expiryYear?: number | null;
+    network: string;
+    color: string;
+    notes?: string | null;
+  },
+): Promise<WalletCardRow> {
+  await ensureSchema();
+  const { rows: maxRows } = await sql<{ max: number | null }>`
+    SELECT MAX(sort_order) AS max FROM wallet_cards WHERE user_id = ${userId};
+  `;
+  const nextSort = (maxRows[0]?.max ?? -1) + 1;
+  const { rows } = await sql<WalletCardRow>`
+    INSERT INTO wallet_cards (user_id, label, holder_name, last4, expiry_month, expiry_year, network, color, notes, sort_order)
+    VALUES (${userId}, ${input.label}, ${input.holderName ?? null}, ${input.last4 ?? null}, ${input.expiryMonth ?? null},
+      ${input.expiryYear ?? null}, ${input.network}, ${input.color}, ${input.notes ?? null}, ${nextSort})
+    RETURNING id, label, holder_name, last4, expiry_month, expiry_year, network, color, notes;
+  `;
+  return rows[0];
+}
+
+export async function updateWalletCard(
+  userId: number,
+  id: number,
+  input: {
+    label?: string;
+    holderName?: string | null;
+    last4?: string | null;
+    expiryMonth?: number | null;
+    expiryYear?: number | null;
+    network?: string;
+    color?: string;
+    notes?: string | null;
+  },
+): Promise<WalletCardRow | null> {
+  await ensureSchema();
+  const { rows: existingRows } = await sql<WalletCardRow>`
+    SELECT id, label, holder_name, last4, expiry_month, expiry_year, network, color, notes
+    FROM wallet_cards WHERE id = ${id} AND user_id = ${userId};
+  `;
+  const existing = existingRows[0];
+  if (!existing) return null;
+
+  const newLabel = input.label?.trim() ?? existing.label;
+  const newHolderName = input.holderName !== undefined ? input.holderName : existing.holder_name;
+  const newLast4 = input.last4 !== undefined ? input.last4 : existing.last4;
+  const newExpiryMonth = input.expiryMonth !== undefined ? input.expiryMonth : existing.expiry_month;
+  const newExpiryYear = input.expiryYear !== undefined ? input.expiryYear : existing.expiry_year;
+  const newNetwork = input.network ?? existing.network;
+  const newColor = input.color ?? existing.color;
+  const newNotes = input.notes !== undefined ? input.notes : existing.notes;
+
+  const { rows } = await sql<WalletCardRow>`
+    UPDATE wallet_cards
+    SET label = ${newLabel}, holder_name = ${newHolderName}, last4 = ${newLast4},
+        expiry_month = ${newExpiryMonth}, expiry_year = ${newExpiryYear},
+        network = ${newNetwork}, color = ${newColor}, notes = ${newNotes}
+    WHERE id = ${id} AND user_id = ${userId}
+    RETURNING id, label, holder_name, last4, expiry_month, expiry_year, network, color, notes;
+  `;
+  return rows[0];
+}
+
+export async function deleteWalletCard(userId: number, id: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`DELETE FROM wallet_cards WHERE id = ${id} AND user_id = ${userId};`;
+  return (rowCount ?? 0) > 0;
+}
+
+// Same adjacent-swap approach as moveMembershipCard.
+export async function moveWalletCard(userId: number, id: number, direction: "up" | "down"): Promise<void> {
+  await ensureSchema();
+  const { rows } = await sql<{ id: number; sort_order: number }>`
+    SELECT id, sort_order FROM wallet_cards WHERE user_id = ${userId} ORDER BY sort_order, id;
+  `;
+  const idx = rows.findIndex((r) => r.id === id);
+  const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+  if (idx === -1 || swapIdx < 0 || swapIdx >= rows.length) return;
+  const a = rows[idx];
+  const b = rows[swapIdx];
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    await client.sql`UPDATE wallet_cards SET sort_order = ${b.sort_order} WHERE id = ${a.id} AND user_id = ${userId};`;
+    await client.sql`UPDATE wallet_cards SET sort_order = ${a.sort_order} WHERE id = ${b.id} AND user_id = ${userId};`;
     await client.query("COMMIT");
   } catch (err) {
     await client.query("ROLLBACK");

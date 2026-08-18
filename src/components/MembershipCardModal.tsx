@@ -89,12 +89,16 @@ function ImageSlot({
 
 export default function MembershipCardModal({
   card,
+  category,
   onClose,
   onSaved,
   onScanRequested,
   scannedValue,
 }: {
   card?: MembershipCard;
+  /** Which /wallet tab this card belongs to — fixed by the caller (the tab
+   * you opened the form from), not user-editable here. */
+  category: "pass" | "membership";
   onClose: () => void;
   onSaved: (card: MembershipCard) => void;
   /** Opens the camera scanner (see ScanCardModal); this modal stays mounted
@@ -229,7 +233,7 @@ export default function MembershipCardModal({
     setSubmitting(true);
     setError(null);
     try {
-      const body = { name, codeValue, codeFormat, color, icon, notes: notes.trim() || null, template, fields, layout };
+      const body = { name, codeValue, codeFormat, color, icon, notes: notes.trim() || null, template, fields, layout, category };
       const res = isEdit
         ? await fetch(`/api/memberships/${card!.id}`, {
             method: "PATCH",
@@ -257,7 +261,18 @@ export default function MembershipCardModal({
   }
 
   return (
-    <Modal onClose={onClose} title={isEdit ? t("membership.editTitle") : t("membership.addCard")}>
+    <Modal
+      onClose={onClose}
+      title={
+        category === "pass"
+          ? isEdit
+            ? t("wallet.editPass")
+            : t("wallet.addPass")
+          : isEdit
+            ? t("membership.editTitle")
+            : t("membership.addCard")
+      }
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="membershipName" className="mb-1.5 block text-sm font-semibold text-ink-soft">

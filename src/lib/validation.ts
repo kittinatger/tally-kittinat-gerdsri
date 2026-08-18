@@ -13,6 +13,7 @@ import { SPLIT_METHODS, SPLIT_PAYMENT_METHODS } from "@/lib/splits";
 import { CATEGORY_ICON_KEYS } from "@/lib/category-icons";
 import { MEMBERSHIP_CODE_FORMATS } from "@/lib/memberships";
 import { PASS_TEMPLATES, PASS_ZONES, type PassZone } from "@/lib/membership-templates";
+import { CARD_NETWORKS } from "@/lib/wallet-cards";
 import { isLanguageCode } from "@/lib/languages";
 
 export const forgotPasswordInputSchema = z.object({
@@ -275,6 +276,8 @@ const passZoneSchema = z.enum(PASS_ZONES as [PassZone, ...PassZone[]]);
 const passFieldsSchema = z.record(z.string().max(40), z.string().max(80));
 const passLayoutSchema = z.record(passZoneSchema, z.array(z.string().nullable())).nullable();
 
+const membershipCategorySchema = z.enum(["pass", "membership"]);
+
 export const membershipInputSchema = z.object({
   name: z.string().trim().min(1).max(60),
   codeValue: z.string().trim().min(1).max(128),
@@ -285,6 +288,7 @@ export const membershipInputSchema = z.object({
   template: z.enum(PASS_TEMPLATES).default("generic"),
   fields: passFieldsSchema.default({}),
   layout: passLayoutSchema.optional(),
+  category: membershipCategorySchema.default("membership"),
 });
 
 export const membershipUpdateSchema = z
@@ -298,6 +302,45 @@ export const membershipUpdateSchema = z
     template: z.enum(PASS_TEMPLATES).optional(),
     fields: passFieldsSchema.optional(),
     layout: passLayoutSchema.optional(),
+    category: membershipCategorySchema.optional(),
+  })
+  .refine((data) => Object.values(data).some((v) => v !== undefined), {
+    message: "Provide at least one field to update",
+  });
+
+// Payment-card visuals — see the wallet_cards table comment in db.ts for
+// why this only ever collects the last 4 digits, never a full PAN.
+export const walletCardInputSchema = z.object({
+  label: z.string().trim().min(1).max(60),
+  holderName: z.string().trim().max(60).nullable().optional(),
+  last4: z
+    .string()
+    .trim()
+    .regex(/^\d{4}$/, "Must be exactly 4 digits")
+    .nullable()
+    .optional(),
+  expiryMonth: z.number().int().min(1).max(12).nullable().optional(),
+  expiryYear: z.number().int().min(2000).max(2200).nullable().optional(),
+  network: z.enum(CARD_NETWORKS).default("other"),
+  color: z.string().trim().min(1).max(30),
+  notes: z.string().trim().max(500).nullable().optional(),
+});
+
+export const walletCardUpdateSchema = z
+  .object({
+    label: z.string().trim().min(1).max(60).optional(),
+    holderName: z.string().trim().max(60).nullable().optional(),
+    last4: z
+      .string()
+      .trim()
+      .regex(/^\d{4}$/, "Must be exactly 4 digits")
+      .nullable()
+      .optional(),
+    expiryMonth: z.number().int().min(1).max(12).nullable().optional(),
+    expiryYear: z.number().int().min(2000).max(2200).nullable().optional(),
+    network: z.enum(CARD_NETWORKS).optional(),
+    color: z.string().trim().min(1).max(30).optional(),
+    notes: z.string().trim().max(500).nullable().optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
     message: "Provide at least one field to update",

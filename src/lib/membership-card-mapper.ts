@@ -19,6 +19,7 @@ export type MembershipCardApiRow = {
   layout: string | null;
   has_logo: boolean;
   has_banner: boolean;
+  category: string;
 };
 
 export function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
@@ -48,5 +49,6 @@ export function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
     layout: row.layout ? normalizePassLayout(parsedLayout, template) : null,
     hasLogo: row.has_logo,
     hasBanner: row.has_banner,
+    category: row.category === "pass" ? "pass" : "membership",
   };
 }
