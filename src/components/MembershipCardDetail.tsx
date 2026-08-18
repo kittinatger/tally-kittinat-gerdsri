@@ -6,7 +6,7 @@ import { useT } from "@/lib/language-context";
 import PassShape from "./PassShape";
 import type { MembershipCard } from "@/types/membership";
 
-// Rendered with key={card.id} by the caller (MembershipsView) so switching
+// Rendered with key={card.id} by the caller (WalletPageView) so switching
 // which card is selected remounts this component and resets confirming —
 // otherwise a second-click "confirm delete" armed for one card could stay
 // armed after the user switches to a different card.

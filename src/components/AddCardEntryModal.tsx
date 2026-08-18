@@ -36,7 +36,7 @@ function Tile({
 }
 
 // The "Create pass" entry menu — replaces jumping straight into
-// MembershipCardModal from MembershipsView's + button. New pass opens the
+// MembershipCardModal from the Wallet page's + button. New pass opens the
 // blank form; Scan opens ScanCardModal's live camera path directly; Photo
 // gallery and From file both decode a still image via the shared
 // decodePassImage helper (From file has no `accept` restriction, so
