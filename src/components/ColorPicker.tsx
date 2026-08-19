@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { dotClasses, colorDotStyle } from "@/lib/category-styles";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import {
@@ -10,12 +10,15 @@ import {
   rgbToHex,
   rgbToCmyk,
   cmykToRgb,
+  rgbToHsv,
+  hsvToRgb,
   type RGB,
   type CMYK,
 } from "@/lib/color-convert";
 import { useT } from "@/lib/language-context";
 
 const DEFAULT_CUSTOM = "#64748b";
+const HUE_GRADIENT = "linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)";
 
 function clampByte(n: number): number {
   return Math.max(0, Math.min(255, Math.round(Number.isFinite(n) ? n : 0)));
@@ -23,15 +26,22 @@ function clampByte(n: number): number {
 function clampPercent(n: number): number {
   return Math.max(0, Math.min(100, Math.round(Number.isFinite(n) ? n : 0)));
 }
+function clamp01(n: number): number {
+  return Math.max(0, Math.min(1, n));
+}
 
 // A palette-plus-custom color selector, used everywhere the app lets you
 // pick a color for something (categories, wallets, cards, passes, savings
 // goals). The palette swatches are the app's existing named design-system
 // colors — tapping one stores that token, unchanged from before. "Custom"
-// opens a panel with Hex/RGB/CMYK fields, all kept in sync; picking one
-// stores a plain 6-digit hex string in the same color field. See
-// category-styles.ts's colorDotStyle/colorHeroStyle for how a hex value
-// renders back out wherever this color is displayed.
+// opens a panel with a saturation/value square, a hue slider, an eyedropper
+// (where the browser supports it), and Hex/RGB/CMYK fields — all kept in
+// sync via rgb as the single source of truth (hue/saturation/value are
+// derived from it on every render rather than tracked separately, so there
+// is nothing that can drift out of sync between the square, the sliders,
+// and the text fields). Picking a color stores a plain 6-digit hex string
+// in the same color field. See category-styles.ts's colorDotStyle/
+// colorHeroStyle for how a hex value renders back out wherever it's shown.
 export default function ColorPicker({
   value,
   onChange,
@@ -51,6 +61,10 @@ export default function ColorPicker({
   const [hexText, setHexText] = useState(seedHex);
   const [rgb, setRgb] = useState<RGB>(seedRgb);
   const [cmyk, setCmyk] = useState<CMYK>(seedCmyk);
+
+  const squareRef = useRef<HTMLDivElement>(null);
+  const hueRef = useRef<HTMLDivElement>(null);
+  const hsv = rgbToHsv(rgb);
 
   function applyHex(text: string) {
     setHexText(text);
@@ -81,6 +95,63 @@ export default function ColorPicker({
     setHexText(hex);
     onChange(hex);
   }
+
+  function handleSquarePointer(e: React.PointerEvent<HTMLDivElement>) {
+    const el = squareRef.current;
+    if (!el) return;
+    el.setPointerCapture(e.pointerId);
+    const rect = el.getBoundingClientRect();
+    const move = (clientX: number, clientY: number) => {
+      const s = clamp01((clientX - rect.left) / rect.width) * 100;
+      const v = 100 - clamp01((clientY - rect.top) / rect.height) * 100;
+      applyRgb(hsvToRgb({ h: hsv.h, s, v }));
+    };
+    move(e.clientX, e.clientY);
+    function onMove(ev: PointerEvent) {
+      move(ev.clientX, ev.clientY);
+    }
+    function onUp() {
+      el?.removeEventListener("pointermove", onMove);
+      el?.removeEventListener("pointerup", onUp);
+    }
+    el.addEventListener("pointermove", onMove);
+    el.addEventListener("pointerup", onUp);
+  }
+
+  function handleHuePointer(e: React.PointerEvent<HTMLDivElement>) {
+    const el = hueRef.current;
+    if (!el) return;
+    el.setPointerCapture(e.pointerId);
+    const rect = el.getBoundingClientRect();
+    const move = (clientX: number) => {
+      const h = clamp01((clientX - rect.left) / rect.width) * 360;
+      applyRgb(hsvToRgb({ h, s: hsv.s, v: hsv.v }));
+    };
+    move(e.clientX);
+    function onMove(ev: PointerEvent) {
+      move(ev.clientX);
+    }
+    function onUp() {
+      el?.removeEventListener("pointermove", onMove);
+      el?.removeEventListener("pointerup", onUp);
+    }
+    el.addEventListener("pointermove", onMove);
+    el.addEventListener("pointerup", onUp);
+  }
+
+  async function handleEyedropper() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- EyeDropper isn't in the TS DOM lib yet
+    const EyeDropperCtor = (window as any).EyeDropper;
+    if (!EyeDropperCtor) return;
+    try {
+      const result = await new EyeDropperCtor().open();
+      if (result?.sRGBHex) applyHex(result.sRGBHex);
+    } catch {
+      // User cancelled the eyedropper — nothing to do.
+    }
+  }
+
+  const supportsEyedropper = typeof window !== "undefined" && "EyeDropper" in window;
 
   return (
     <div>
@@ -115,6 +186,48 @@ export default function ColorPicker({
 
       {panelOpen && (
         <div className="mt-3 space-y-3 rounded-card border border-line bg-bg-soft p-3">
+          <div
+            ref={squareRef}
+            onPointerDown={handleSquarePointer}
+            className="relative aspect-square w-full touch-none rounded-xl"
+            style={{
+              backgroundImage: "linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent)",
+              backgroundColor: `hsl(${hsv.h}, 100%, 50%)`,
+            }}
+          >
+            <span
+              className="pointer-events-none absolute h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.3)]"
+              style={{ left: `${hsv.s}%`, top: `${100 - hsv.v}%`, backgroundColor: hexText }}
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div
+              ref={hueRef}
+              onPointerDown={handleHuePointer}
+              className="relative h-3.5 flex-1 touch-none rounded-full"
+              style={{ backgroundImage: HUE_GRADIENT }}
+            >
+              <span
+                className="pointer-events-none absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.3)]"
+                style={{ left: `${(hsv.h / 360) * 100}%`, backgroundColor: `hsl(${hsv.h}, 100%, 50%)` }}
+              />
+            </div>
+            {supportsEyedropper && (
+              <button
+                type="button"
+                onClick={handleEyedropper}
+                aria-label={t("color.eyedropper")}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-ink-soft transition hover:border-navy hover:text-foreground"
+              >
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                  <path d="m14.5 3.5 2 2-9 9-3 1 1-3 9-9Z" />
+                  <path d="M12.5 5.5 14.5 7.5" />
+                </svg>
+              </button>
+            )}
+          </div>
+
           <div className="flex items-center gap-3">
             <span
               className="h-10 w-10 shrink-0 rounded-full border border-line"
