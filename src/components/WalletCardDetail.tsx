@@ -38,6 +38,7 @@ export default function WalletCardDetail({
         expiryYear={card.expiryYear}
         network={card.network}
         color={card.color}
+        background={card.background}
       />
 
       {card.notes && (

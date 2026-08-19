@@ -1,6 +1,7 @@
 import type { MembershipCodeFormat } from "@/lib/memberships";
 import type { CategoryIconKey } from "@/lib/category-icons";
 import type { PassTemplate, PassLayout } from "@/lib/membership-templates";
+import type { CardBackground } from "@/lib/card-backgrounds";
 
 export type MembershipCard = {
   id: number;
@@ -8,6 +9,8 @@ export type MembershipCard = {
   codeValue: string;
   codeFormat: MembershipCodeFormat;
   color: string;
+  /** Optional pattern/gradient background — null means "plain `color` gradient". */
+  background: CardBackground | null;
   icon: CategoryIconKey | null;
   notes: string | null;
   template: PassTemplate;

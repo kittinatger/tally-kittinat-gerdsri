@@ -1,6 +1,7 @@
 "use client";
 
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
+import { cardBackgroundStyle, type CardBackground } from "@/lib/card-backgrounds";
 import { useT } from "@/lib/language-context";
 import type { CardNetwork } from "@/lib/wallet-cards";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -30,6 +31,7 @@ export default function WalletCardShape({
   expiryYear,
   network,
   color,
+  background = null,
 }: {
   label: string;
   holderName: string | null;
@@ -38,14 +40,15 @@ export default function WalletCardShape({
   expiryYear: number | null;
   network: CardNetwork;
   color: string;
+  background?: CardBackground | null;
 }) {
   const t = useT();
   const expiry = expiryMonth && expiryYear ? `${String(expiryMonth).padStart(2, "0")}/${String(expiryYear).slice(-2)}` : null;
 
   return (
     <div
-      className={`flex min-h-[190px] w-full flex-col justify-between rounded-2xl p-4 text-white shadow-soft ${heroGradientClasses(color)}`}
-      style={colorHeroStyle(color)}
+      className={`flex min-h-[190px] w-full flex-col justify-between rounded-2xl p-4 text-white shadow-soft ${background ? "" : heroGradientClasses(color)}`}
+      style={background ? cardBackgroundStyle(background) : colorHeroStyle(color)}
     >
       <div className="flex items-start justify-between gap-2">
         <p className="min-w-0 truncate text-sm font-semibold">{label}</p>

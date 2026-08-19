@@ -36,6 +36,7 @@ export default function MembershipCardDetail({
       <PassShape
         name={card.name}
         color={card.color}
+        background={card.background}
         icon={card.icon}
         template={card.template}
         fields={card.fields}

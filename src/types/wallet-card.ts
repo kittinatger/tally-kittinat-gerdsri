@@ -1,4 +1,5 @@
 import type { CardNetwork } from "@/lib/wallet-cards";
+import type { CardBackground } from "@/lib/card-backgrounds";
 
 export type WalletCard = {
   id: number;
@@ -10,5 +11,7 @@ export type WalletCard = {
   expiryYear: number | null;
   network: CardNetwork;
   color: string;
+  /** Optional pattern/gradient background — null means "plain `color` gradient". */
+  background: CardBackground | null;
   notes: string | null;
 };

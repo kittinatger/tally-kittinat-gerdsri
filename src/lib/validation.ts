@@ -14,7 +14,24 @@ import { CATEGORY_ICON_KEYS } from "@/lib/category-icons";
 import { MEMBERSHIP_CODE_FORMATS } from "@/lib/memberships";
 import { PASS_TEMPLATES, PASS_ZONES, type PassZone } from "@/lib/membership-templates";
 import { CARD_NETWORKS } from "@/lib/wallet-cards";
+import { CARD_PATTERNS, PATTERN_COLOR_COUNT } from "@/lib/card-backgrounds";
 import { isLanguageCode } from "@/lib/languages";
+
+// Shared by wallets, wallet_cards, and membership_cards' optional background
+// pattern/gradient — see card-backgrounds.ts. Colors are always plain hex
+// (never a named palette token), since these render as raw CSS gradients.
+// Length isn't cross-checked against PATTERN_COLOR_COUNT here — a short
+// array just means normalizeCardBackground pads it from that pattern's
+// defaults, so a slightly-stale client payload never fails validation.
+const cardBackgroundSchema = z
+  .object({
+    pattern: z.enum(CARD_PATTERNS),
+    colors: z
+      .array(z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, "Must be a 6-digit hex color"))
+      .min(1)
+      .max(Math.max(...Object.values(PATTERN_COLOR_COUNT))),
+  })
+  .nullable();
 
 export const forgotPasswordInputSchema = z.object({
   email: z.string().trim().email().max(255),
@@ -116,6 +133,7 @@ const walletCurrencySchema = z
 export const walletInputSchema = z.object({
   name: z.string().trim().min(1).max(40),
   color: z.string().trim().min(1).max(30),
+  background: cardBackgroundSchema.optional(),
   kind: z.enum(WALLET_KINDS).default("cash"),
   currency: walletCurrencySchema.optional(),
 });
@@ -124,6 +142,7 @@ export const walletUpdateSchema = z
   .object({
     name: z.string().trim().min(1).max(40).optional(),
     color: z.string().trim().min(1).max(30).optional(),
+    background: cardBackgroundSchema.optional(),
     kind: z.enum(WALLET_KINDS).optional(),
     currency: walletCurrencySchema.optional(),
     isDefault: z.literal(true).optional(),
@@ -288,6 +307,7 @@ export const membershipInputSchema = z.object({
   template: z.enum(PASS_TEMPLATES).default("generic"),
   fields: passFieldsSchema.default({}),
   layout: passLayoutSchema.optional(),
+  background: cardBackgroundSchema.optional(),
   category: membershipCategorySchema.default("membership"),
 });
 
@@ -302,6 +322,7 @@ export const membershipUpdateSchema = z
     template: z.enum(PASS_TEMPLATES).optional(),
     fields: passFieldsSchema.optional(),
     layout: passLayoutSchema.optional(),
+    background: cardBackgroundSchema.optional(),
     category: membershipCategorySchema.optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
@@ -323,6 +344,7 @@ export const walletCardInputSchema = z.object({
   expiryYear: z.number().int().min(2000).max(2200).nullable().optional(),
   network: z.enum(CARD_NETWORKS).default("other"),
   color: z.string().trim().min(1).max(30),
+  background: cardBackgroundSchema.optional(),
   notes: z.string().trim().max(500).nullable().optional(),
 });
 
@@ -340,6 +362,7 @@ export const walletCardUpdateSchema = z
     expiryYear: z.number().int().min(2000).max(2200).nullable().optional(),
     network: z.enum(CARD_NETWORKS).optional(),
     color: z.string().trim().min(1).max(30).optional(),
+    background: cardBackgroundSchema.optional(),
     notes: z.string().trim().max(500).nullable().optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {

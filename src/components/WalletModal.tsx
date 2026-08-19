@@ -7,8 +7,9 @@ import SelectDropdown from "./SelectDropdown";
 import FormSection from "./FormSection";
 import ColorGlowPreview from "./ColorGlowPreview";
 import AccountCardShape from "./AccountCardShape";
-import ColorPicker from "./ColorPicker";
+import CardBackgroundPicker from "./CardBackgroundPicker";
 import { CATEGORY_PALETTE } from "@/lib/categories";
+import type { CardBackground } from "@/lib/card-backgrounds";
 import { CategoryIcon, PaletteIcon } from "@/lib/icons";
 import { useCurrency } from "@/lib/currency-context";
 import { CURRENCIES } from "@/lib/currencies";
@@ -30,6 +31,7 @@ export default function WalletModal({
   const isEdit = Boolean(wallet);
   const [name, setName] = useState(wallet?.name ?? "");
   const [color, setColor] = useState<string>(wallet?.color ?? CATEGORY_PALETTE[0]);
+  const [background, setBackground] = useState<CardBackground | null>(wallet?.background ?? null);
   const [kind, setKind] = useState<WalletKind>(wallet?.kind ?? "cash");
   const [currency, setCurrency] = useState<string | null>(wallet?.currency ?? null);
   const [isDefault, setIsDefault] = useState(wallet?.isDefault ?? false);
@@ -47,6 +49,7 @@ export default function WalletModal({
     id: wallet?.id ?? 0,
     name: name || t("wallet.namePlaceholder"),
     color,
+    background,
     kind,
     currency,
     isDefault,
@@ -74,6 +77,7 @@ export default function WalletModal({
             body: JSON.stringify({
               name,
               color,
+              background,
               kind,
               currency,
               startingBalance: Number(startingBalance),
@@ -83,7 +87,7 @@ export default function WalletModal({
         : await fetch("/api/wallets", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, color, kind, currency }),
+            body: JSON.stringify({ name, color, background, kind, currency }),
           });
       const data = await res.json();
       if (!res.ok) {
@@ -108,7 +112,7 @@ export default function WalletModal({
   return (
     <Modal onClose={onClose} title={isEdit ? t("wallet.editTitle") : t("wallet.addWallet")}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <ColorGlowPreview color={color}>
+        <ColorGlowPreview color={background?.colors[0] ?? color}>
           <AccountCardShape wallet={previewWallet} currency={appCurrency} />
         </ColorGlowPreview>
 
@@ -198,7 +202,7 @@ export default function WalletModal({
         </FormSection>
 
         <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("wallet.colorLabel")}>
-          <ColorPicker value={color} onChange={setColor} />
+          <CardBackgroundPicker value={background} onChange={setBackground} plainColor={color} onPlainColorChange={setColor} />
         </FormSection>
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}

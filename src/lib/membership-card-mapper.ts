@@ -1,6 +1,7 @@
 import { isMembershipCodeFormat } from "@/lib/memberships";
 import { isCategoryIconKey } from "@/lib/category-icons";
 import { isPassTemplate, normalizePassFields, normalizePassLayout } from "@/lib/membership-templates";
+import { parseCardBackground } from "@/lib/card-backgrounds";
 import type { MembershipCard } from "@/types/membership";
 
 // The snake_case shape both the server's listMembershipCards (db.ts) and
@@ -17,6 +18,7 @@ export type MembershipCardApiRow = {
   template: string;
   fields: string;
   layout: string | null;
+  background: string | null;
   has_logo: boolean;
   has_banner: boolean;
   category: string;
@@ -47,6 +49,7 @@ export function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
     template,
     fields: normalizePassFields(parsedFields),
     layout: row.layout ? normalizePassLayout(parsedLayout, template) : null,
+    background: parseCardBackground(row.background),
     hasLogo: row.has_logo,
     hasBanner: row.has_banner,
     category: row.category === "pass" ? "pass" : "membership",

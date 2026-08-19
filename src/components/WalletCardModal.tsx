@@ -7,8 +7,9 @@ import WalletCardShape from "./WalletCardShape";
 import FormSection from "./FormSection";
 import ColorGlowPreview from "./ColorGlowPreview";
 import { CATEGORY_PALETTE } from "@/lib/categories";
-import ColorPicker from "./ColorPicker";
+import CardBackgroundPicker from "./CardBackgroundPicker";
 import { CARD_NETWORKS, type CardNetwork } from "@/lib/wallet-cards";
+import { parseCardBackground, type CardBackground } from "@/lib/card-backgrounds";
 import { CategoryIcon, PaletteIcon, FileIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -23,6 +24,7 @@ type WalletCardApiRow = {
   expiry_year: number | null;
   network: string;
   color: string;
+  background: string | null;
   notes: string | null;
 };
 
@@ -37,6 +39,7 @@ function toWalletCard(row: WalletCardApiRow): WalletCard {
     expiryYear: row.expiry_year,
     network,
     color: row.color,
+    background: parseCardBackground(row.background),
     notes: row.notes,
   };
 }
@@ -67,6 +70,7 @@ export default function WalletCardModal({
   const [expiryYear, setExpiryYear] = useState(card?.expiryYear ? String(card.expiryYear) : "");
   const [network, setNetwork] = useState<CardNetwork>(card?.network ?? "other");
   const [color, setColor] = useState<string>(card?.color ?? CATEGORY_PALETTE[0]);
+  const [background, setBackground] = useState<CardBackground | null>(card?.background ?? null);
   const [notes, setNotes] = useState(card?.notes ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +91,7 @@ export default function WalletCardModal({
         expiryYear: year,
         network,
         color,
+        background,
         notes: notes.trim() || null,
       };
       const res = isEdit
@@ -116,7 +121,7 @@ export default function WalletCardModal({
   return (
     <Modal onClose={onClose} title={isEdit ? t("wallet.editCard") : t("wallet.addCard")}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <ColorGlowPreview color={color}>
+        <ColorGlowPreview color={background?.colors[0] ?? color}>
           <WalletCardShape
             label={label || t("wallet.labelPlaceholder")}
             holderName={holderName || null}
@@ -125,6 +130,7 @@ export default function WalletCardModal({
             expiryYear={year}
             network={network}
             color={color}
+            background={background}
           />
         </ColorGlowPreview>
 
@@ -224,7 +230,7 @@ export default function WalletCardModal({
         </FormSection>
 
         <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("membership.colorLabel")}>
-          <ColorPicker value={color} onChange={setColor} />
+          <CardBackgroundPicker value={background} onChange={setBackground} plainColor={color} onPlainColorChange={setColor} />
         </FormSection>
 
         <FormSection icon={<FileIcon className="h-4 w-4" />} title={t("membership.notesLabel")}>

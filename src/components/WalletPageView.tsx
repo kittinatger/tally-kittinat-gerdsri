@@ -171,6 +171,7 @@ export default function WalletPageView({
         expiryYear={card.expiryYear}
         network={card.network}
         color={card.color}
+        background={card.background}
       />
     ),
     onOpen: () => setViewingCard(card),
@@ -185,6 +186,7 @@ export default function WalletPageView({
         <PassShape
           name={card.name}
           color={card.color}
+          background={card.background}
           icon={card.icon}
           template={card.template}
           fields={card.fields}

@@ -3,6 +3,7 @@ import { getUserId } from "@/lib/auth";
 import SettingsView from "@/components/SettingsView";
 import { isTransactionType } from "@/lib/categories";
 import { isWalletKind } from "@/lib/wallets";
+import { parseCardBackground } from "@/lib/card-backgrounds";
 import { isPanel } from "@/lib/settings-panels";
 import type { CategoryOption } from "@/types/category";
 import type { WalletOption } from "@/types/wallet";
@@ -36,6 +37,7 @@ export default async function SettingsPage({
     id: w.id,
     name: w.name,
     color: w.color,
+    background: parseCardBackground(w.background),
     kind: isWalletKind(w.kind) ? w.kind : "cash",
     currency: w.currency,
     isDefault: w.is_default,

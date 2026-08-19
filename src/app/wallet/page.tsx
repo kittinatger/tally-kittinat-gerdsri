@@ -2,6 +2,7 @@ import { listWallets, getActivitiesDefaultWalletId, listWalletCards, listMembers
 import { getUserId } from "@/lib/auth";
 import { isWalletKind } from "@/lib/wallets";
 import { isCardNetwork } from "@/lib/wallet-cards";
+import { parseCardBackground } from "@/lib/card-backgrounds";
 import { toMembershipCard } from "@/lib/membership-card-mapper";
 import WalletPageView from "@/components/WalletPageView";
 import type { WalletOption } from "@/types/wallet";
@@ -23,6 +24,7 @@ export default async function WalletPage() {
     id: w.id,
     name: w.name,
     color: w.color,
+    background: parseCardBackground(w.background),
     kind: isWalletKind(w.kind) ? w.kind : "cash",
     currency: w.currency,
     isDefault: w.is_default,
@@ -39,6 +41,7 @@ export default async function WalletPage() {
     expiryYear: c.expiry_year,
     network: isCardNetwork(c.network) ? c.network : "other",
     color: c.color,
+    background: parseCardBackground(c.background),
     notes: c.notes,
   }));
 

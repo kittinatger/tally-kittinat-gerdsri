@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 17;
+const CURRENT_SCHEMA_VERSION = 18;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -502,6 +502,12 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS is_default BOOLEAN NOT NULL DEFAULT false;`;
       await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT false;`;
       await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS currency TEXT;`;
+
+      // Optional pattern/gradient background (JSON text: {pattern, colors})
+      // for the card visual — see card-backgrounds.ts. NULL means "no
+      // pattern chosen", i.e. render the plain `color` gradient as before
+      // this existed. Same TEXT-not-JSONB convention as membership_cards.layout.
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS background TEXT;`;
 
       // Which wallet the Activities page's balance card is scoped to on
       // load — separate from is_default (which wallet new transactions fall
@@ -826,6 +832,10 @@ function ensureSchema(): Promise<void> {
       // that's what this table originally was.
       await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'membership';`;
 
+      // Same background-pattern column as wallets.background — see
+      // card-backgrounds.ts.
+      await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS background TEXT;`;
+
       // Payment-card *visuals* for the /wallet page's "Cards" tab — purely
       // decorative pass-style art (like Apple Wallet's card display), not a
       // real payment method: only the last 4 digits are ever stored, never
@@ -847,6 +857,10 @@ function ensureSchema(): Promise<void> {
           created_at TIMESTAMPTZ NOT NULL DEFAULT now()
         );
       `;
+
+      // Same background-pattern column as wallets.background — see
+      // card-backgrounds.ts.
+      await sql`ALTER TABLE wallet_cards ADD COLUMN IF NOT EXISTS background TEXT;`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -958,6 +972,8 @@ export type WalletRow = {
   id: number;
   name: string;
   color: string;
+  /** Raw JSON text, or null for "no pattern, use plain color" — see parseCardBackground in card-backgrounds.ts. */
+  background: string | null;
   kind: string;
   currency: string | null;
   is_default: boolean;
@@ -970,7 +986,7 @@ export async function listWallets(userId: number, opts: { includeArchived?: bool
   const { rows } = opts.includeArchived
     ? await sql<WalletRow>`
         SELECT
-          w.id, w.name, w.color, w.kind, w.currency, w.is_default, w.archived,
+          w.id, w.name, w.color, w.background, w.kind, w.currency, w.is_default, w.archived,
           (
             w.starting_balance + COALESCE((
               SELECT SUM(
@@ -990,7 +1006,7 @@ export async function listWallets(userId: number, opts: { includeArchived?: bool
       `
     : await sql<WalletRow>`
         SELECT
-          w.id, w.name, w.color, w.kind, w.currency, w.is_default, w.archived,
+          w.id, w.name, w.color, w.background, w.kind, w.currency, w.is_default, w.archived,
           (
             w.starting_balance + COALESCE((
               SELECT SUM(
@@ -1017,16 +1033,25 @@ export async function createWallet(
   color: string,
   kind: string,
   currency?: string | null,
+  background?: unknown,
 ): Promise<WalletRow> {
   await ensureSchema();
   const { rows: maxRows } = await sql<{ max: number | null }>`
     SELECT MAX(sort_order) AS max FROM wallets WHERE user_id = ${userId};
   `;
   const nextSort = (maxRows[0]?.max ?? -1) + 1;
-  const { rows } = await sql<{ id: number; name: string; color: string; kind: string; currency: string | null }>`
-    INSERT INTO wallets (user_id, name, color, kind, currency, sort_order)
-    VALUES (${userId}, ${name}, ${color}, ${kind}, ${currency ?? null}, ${nextSort})
-    RETURNING id, name, color, kind, currency;
+  const backgroundJson = background ? JSON.stringify(background) : null;
+  const { rows } = await sql<{
+    id: number;
+    name: string;
+    color: string;
+    background: string | null;
+    kind: string;
+    currency: string | null;
+  }>`
+    INSERT INTO wallets (user_id, name, color, background, kind, currency, sort_order)
+    VALUES (${userId}, ${name}, ${color}, ${backgroundJson}, ${kind}, ${currency ?? null}, ${nextSort})
+    RETURNING id, name, color, background, kind, currency;
   `;
   return { ...rows[0], is_default: false, archived: false, balance: "0" };
 }
@@ -1037,6 +1062,7 @@ export async function updateWallet(
   input: {
     name?: string;
     color?: string;
+    background?: unknown;
     kind?: string;
     currency?: string | null;
     isDefault?: boolean;
@@ -1048,12 +1074,13 @@ export async function updateWallet(
   const { rows: existingRows } = await sql<{
     name: string;
     color: string;
+    background: string | null;
     kind: string;
     currency: string | null;
     is_default: boolean;
     archived: boolean;
   }>`
-    SELECT name, color, kind, currency, is_default, archived FROM wallets WHERE id = ${id} AND user_id = ${userId};
+    SELECT name, color, background, kind, currency, is_default, archived FROM wallets WHERE id = ${id} AND user_id = ${userId};
   `;
   const existing = existingRows[0];
   if (!existing) return null;
@@ -1070,6 +1097,7 @@ export async function updateWallet(
 
   const newName = input.name?.trim() ?? existing.name;
   const newColor = input.color ?? existing.color;
+  const newBackground = input.background !== undefined ? (input.background ? JSON.stringify(input.background) : null) : existing.background;
   const newKind = input.kind ?? existing.kind;
   const newCurrency = input.currency !== undefined ? input.currency : existing.currency;
   const newArchived = input.archived ?? existing.archived;
@@ -1081,14 +1109,14 @@ export async function updateWallet(
     if (input.startingBalance !== undefined) {
       await client.sql`
         UPDATE wallets
-        SET name = ${newName}, color = ${newColor}, kind = ${newKind}, currency = ${newCurrency},
+        SET name = ${newName}, color = ${newColor}, background = ${newBackground}, kind = ${newKind}, currency = ${newCurrency},
             archived = ${newArchived}, starting_balance = ${input.startingBalance}, starting_balance_set_at = now()
         WHERE id = ${id} AND user_id = ${userId};
       `;
     } else {
       await client.sql`
         UPDATE wallets
-        SET name = ${newName}, color = ${newColor}, kind = ${newKind}, currency = ${newCurrency}, archived = ${newArchived}
+        SET name = ${newName}, color = ${newColor}, background = ${newBackground}, kind = ${newKind}, currency = ${newCurrency}, archived = ${newArchived}
         WHERE id = ${id} AND user_id = ${userId};
       `;
     }
@@ -1121,7 +1149,7 @@ export async function updateWallet(
 
   const { rows } = await sql<WalletRow>`
     SELECT
-      w.id, w.name, w.color, w.kind, w.currency, w.is_default, w.archived,
+      w.id, w.name, w.color, w.background, w.kind, w.currency, w.is_default, w.archived,
       (
         w.starting_balance + COALESCE((
           SELECT SUM(
@@ -3173,6 +3201,8 @@ export type MembershipCardRow = {
   /** Raw JSON text, or null for "use the template's default layout" — see
    * normalizePassLayout in membership-templates.ts. */
   layout: string | null;
+  /** Raw JSON text, or null — see parseCardBackground in card-backgrounds.ts. */
+  background: string | null;
   has_logo: boolean;
   has_banner: boolean;
   category: string;
@@ -3181,7 +3211,7 @@ export type MembershipCardRow = {
 export async function listMembershipCards(userId: number): Promise<MembershipCardRow[]> {
   await ensureSchema();
   const { rows } = await sql<MembershipCardRow>`
-    SELECT id, name, code_value, code_format, color, icon, notes, template, fields, layout, category,
+    SELECT id, name, code_value, code_format, color, icon, notes, template, fields, layout, background, category,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner
     FROM membership_cards
     WHERE user_id = ${userId}
@@ -3202,6 +3232,7 @@ export async function createMembershipCard(
     template?: string;
     fields?: Record<string, string>;
     layout?: unknown;
+    background?: unknown;
     category?: string;
   },
 ): Promise<MembershipCardRow> {
@@ -3213,11 +3244,12 @@ export async function createMembershipCard(
   const template = input.template ?? "generic";
   const fields = JSON.stringify(input.fields ?? {});
   const layout = input.layout ? JSON.stringify(input.layout) : null;
+  const background = input.background ? JSON.stringify(input.background) : null;
   const category = input.category ?? "membership";
   const { rows } = await sql<MembershipCardRow>`
-    INSERT INTO membership_cards (user_id, name, code_value, code_format, color, icon, notes, sort_order, template, fields, layout, category)
-    VALUES (${userId}, ${input.name}, ${input.codeValue}, ${input.codeFormat}, ${input.color}, ${input.icon ?? null}, ${input.notes ?? null}, ${nextSort}, ${template}, ${fields}, ${layout}, ${category})
-    RETURNING id, name, code_value, code_format, color, icon, notes, template, fields, layout, category,
+    INSERT INTO membership_cards (user_id, name, code_value, code_format, color, icon, notes, sort_order, template, fields, layout, background, category)
+    VALUES (${userId}, ${input.name}, ${input.codeValue}, ${input.codeFormat}, ${input.color}, ${input.icon ?? null}, ${input.notes ?? null}, ${nextSort}, ${template}, ${fields}, ${layout}, ${background}, ${category})
+    RETURNING id, name, code_value, code_format, color, icon, notes, template, fields, layout, background, category,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner;
   `;
   return rows[0];
@@ -3236,12 +3268,13 @@ export async function updateMembershipCard(
     template?: string;
     fields?: Record<string, string>;
     layout?: unknown;
+    background?: unknown;
     category?: string;
   },
 ): Promise<MembershipCardRow | null> {
   await ensureSchema();
   const { rows: existingRows } = await sql<MembershipCardRow>`
-    SELECT id, name, code_value, code_format, color, icon, notes, template, fields, layout, category,
+    SELECT id, name, code_value, code_format, color, icon, notes, template, fields, layout, background, category,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner
     FROM membership_cards WHERE id = ${id} AND user_id = ${userId};
   `;
@@ -3257,15 +3290,16 @@ export async function updateMembershipCard(
   const newTemplate = input.template ?? existing.template;
   const newFields = input.fields !== undefined ? JSON.stringify(input.fields) : existing.fields;
   const newLayout = input.layout !== undefined ? (input.layout ? JSON.stringify(input.layout) : null) : existing.layout;
+  const newBackground = input.background !== undefined ? (input.background ? JSON.stringify(input.background) : null) : existing.background;
   const newCategory = input.category ?? existing.category;
 
   const { rows } = await sql<MembershipCardRow>`
     UPDATE membership_cards
     SET name = ${newName}, code_value = ${newCodeValue}, code_format = ${newCodeFormat},
         color = ${newColor}, icon = ${newIcon}, notes = ${newNotes},
-        template = ${newTemplate}, fields = ${newFields}, layout = ${newLayout}, category = ${newCategory}
+        template = ${newTemplate}, fields = ${newFields}, layout = ${newLayout}, background = ${newBackground}, category = ${newCategory}
     WHERE id = ${id} AND user_id = ${userId}
-    RETURNING id, name, code_value, code_format, color, icon, notes, template, fields, layout, category,
+    RETURNING id, name, code_value, code_format, color, icon, notes, template, fields, layout, background, category,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner;
   `;
   return rows[0];
@@ -3385,13 +3419,14 @@ export type WalletCardRow = {
   expiry_year: number | null;
   network: string;
   color: string;
+  background: string | null;
   notes: string | null;
 };
 
 export async function listWalletCards(userId: number): Promise<WalletCardRow[]> {
   await ensureSchema();
   const { rows } = await sql<WalletCardRow>`
-    SELECT id, label, holder_name, last4, expiry_month, expiry_year, network, color, notes
+    SELECT id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, notes
     FROM wallet_cards
     WHERE user_id = ${userId}
     ORDER BY sort_order, id;
@@ -3409,6 +3444,7 @@ export async function createWalletCard(
     expiryYear?: number | null;
     network: string;
     color: string;
+    background?: unknown;
     notes?: string | null;
   },
 ): Promise<WalletCardRow> {
@@ -3417,11 +3453,12 @@ export async function createWalletCard(
     SELECT MAX(sort_order) AS max FROM wallet_cards WHERE user_id = ${userId};
   `;
   const nextSort = (maxRows[0]?.max ?? -1) + 1;
+  const backgroundJson = input.background ? JSON.stringify(input.background) : null;
   const { rows } = await sql<WalletCardRow>`
-    INSERT INTO wallet_cards (user_id, label, holder_name, last4, expiry_month, expiry_year, network, color, notes, sort_order)
+    INSERT INTO wallet_cards (user_id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, notes, sort_order)
     VALUES (${userId}, ${input.label}, ${input.holderName ?? null}, ${input.last4 ?? null}, ${input.expiryMonth ?? null},
-      ${input.expiryYear ?? null}, ${input.network}, ${input.color}, ${input.notes ?? null}, ${nextSort})
-    RETURNING id, label, holder_name, last4, expiry_month, expiry_year, network, color, notes;
+      ${input.expiryYear ?? null}, ${input.network}, ${input.color}, ${backgroundJson}, ${input.notes ?? null}, ${nextSort})
+    RETURNING id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, notes;
   `;
   return rows[0];
 }
@@ -3437,12 +3474,13 @@ export async function updateWalletCard(
     expiryYear?: number | null;
     network?: string;
     color?: string;
+    background?: unknown;
     notes?: string | null;
   },
 ): Promise<WalletCardRow | null> {
   await ensureSchema();
   const { rows: existingRows } = await sql<WalletCardRow>`
-    SELECT id, label, holder_name, last4, expiry_month, expiry_year, network, color, notes
+    SELECT id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, notes
     FROM wallet_cards WHERE id = ${id} AND user_id = ${userId};
   `;
   const existing = existingRows[0];
@@ -3455,15 +3493,16 @@ export async function updateWalletCard(
   const newExpiryYear = input.expiryYear !== undefined ? input.expiryYear : existing.expiry_year;
   const newNetwork = input.network ?? existing.network;
   const newColor = input.color ?? existing.color;
+  const newBackground = input.background !== undefined ? (input.background ? JSON.stringify(input.background) : null) : existing.background;
   const newNotes = input.notes !== undefined ? input.notes : existing.notes;
 
   const { rows } = await sql<WalletCardRow>`
     UPDATE wallet_cards
     SET label = ${newLabel}, holder_name = ${newHolderName}, last4 = ${newLast4},
         expiry_month = ${newExpiryMonth}, expiry_year = ${newExpiryYear},
-        network = ${newNetwork}, color = ${newColor}, notes = ${newNotes}
+        network = ${newNetwork}, color = ${newColor}, background = ${newBackground}, notes = ${newNotes}
     WHERE id = ${id} AND user_id = ${userId}
-    RETURNING id, label, holder_name, last4, expiry_month, expiry_year, network, color, notes;
+    RETURNING id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, notes;
   `;
   return rows[0];
 }
