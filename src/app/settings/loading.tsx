@@ -7,7 +7,7 @@ import { BottomNav } from "@/components/AppHeader";
 // during the transition.
 export default function SettingsLoading() {
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10">
+    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10 lg:max-w-6xl">
       <header className="sticky top-3 z-10 hidden items-center justify-between gap-2 rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] px-3 py-2 shadow-soft backdrop-blur-xl sm:flex sm:gap-3 sm:px-5 sm:py-2.5">
         <div className="flex shrink-0 items-center gap-2">
           <img src="/favicon-light.svg" alt="Tally" className="h-8 w-8 shrink-0 dark:hidden" />
@@ -28,9 +28,7 @@ export default function SettingsLoading() {
             Settings
           </span>
         </nav>
-        <div className="flex shrink-0 items-center gap-1.5 px-2.5 py-2 sm:px-3.5">
-          <span className="h-[18px] w-[18px] shrink-0 rounded-full bg-ink-soft/30" />
-        </div>
+        <div className="flex shrink-0 items-center gap-1.5" />
       </header>
 
       <BottomNav pathname="/settings" />
