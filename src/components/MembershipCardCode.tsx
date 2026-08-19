@@ -48,18 +48,25 @@ export default function MembershipCardCode({
       const canvas = canvasRef.current;
       if (!canvas) return;
       const is2d = format === "qr" || format === "aztec";
+      // bwip-js validates every key it sees on the options object and
+      // throws "invalidOptionType" if a key is present but set to
+      // undefined (e.g. {height: undefined}) — it wants the key left out
+      // entirely for symbologies that don't use it, not present-but-empty.
+      // So this builds the object conditionally instead of always setting
+      // every key and letting some end up undefined.
+      const opts = {
+        bcid: BCID[format],
+        text: value,
+        scale: size === "large" ? (is2d ? 6 : 3) : size === "small" ? (is2d ? 3 : 2) : is2d ? 2 : 1.4,
+        includetext: size !== "thumb" && !is2d,
+        textxalign: "center" as const,
+        ...(!is2d && { height: size === "large" ? 16 : size === "small" ? 9 : 5 }),
+        ...(size === "thumb" && { paddingwidth: 0, paddingheight: 0 }),
+      };
       try {
-        bwipjs.toCanvas(canvas, {
-          bcid: BCID[format],
-          text: value,
-          scale: size === "large" ? (is2d ? 6 : 3) : size === "small" ? (is2d ? 3 : 2) : is2d ? 2 : 1.4,
-          height: is2d ? undefined : size === "large" ? 16 : size === "small" ? 9 : 5,
-          includetext: size !== "thumb" && !is2d,
-          textxalign: "center",
-          paddingwidth: size === "thumb" ? 0 : undefined,
-          paddingheight: size === "thumb" ? 0 : undefined,
-        });
-      } catch {
+        bwipjs.toCanvas(canvas, opts);
+      } catch (err) {
+        console.error("bwip-js render failed:", err);
         if (size !== "thumb") setError(t("membership.codeRenderError"));
       }
     });
