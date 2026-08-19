@@ -1,6 +1,6 @@
 "use client";
 
-import { heroGradientClasses } from "@/lib/category-styles";
+import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { useT } from "@/lib/language-context";
 import type { CardNetwork } from "@/lib/wallet-cards";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -43,7 +43,10 @@ export default function WalletCardShape({
   const expiry = expiryMonth && expiryYear ? `${String(expiryMonth).padStart(2, "0")}/${String(expiryYear).slice(-2)}` : null;
 
   return (
-    <div className={`flex min-h-[190px] w-full flex-col justify-between rounded-2xl p-4 text-white shadow-soft ${heroGradientClasses(color)}`}>
+    <div
+      className={`flex min-h-[190px] w-full flex-col justify-between rounded-2xl p-4 text-white shadow-soft ${heroGradientClasses(color)}`}
+      style={colorHeroStyle(color)}
+    >
       <div className="flex items-start justify-between gap-2">
         <p className="min-w-0 truncate text-sm font-semibold">{label}</p>
         <p className="shrink-0 text-xs font-bold uppercase tracking-wide text-white/85">{t(NETWORK_LABEL_KEYS[network])}</p>

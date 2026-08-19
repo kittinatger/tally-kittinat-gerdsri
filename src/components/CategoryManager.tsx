@@ -3,7 +3,7 @@
 import { describeFetchError } from "@/lib/fetch-error";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { badgeClasses, dotClasses } from "@/lib/category-styles";
+import { badgeClasses, dotClasses, colorDotStyle } from "@/lib/category-styles";
 import type { TransactionType } from "@/lib/categories";
 import type { CategoryOption } from "@/types/category";
 import { isCategoryIconKey } from "@/lib/category-icons";
@@ -117,11 +117,12 @@ export default function CategoryManager({ categories }: { categories: CategoryOp
             >
               <span
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses(c.color)}`}
+                style={colorDotStyle(c.color)}
               >
                 {c.icon && isCategoryIconKey(c.icon) ? (
                   <CategoryIcon iconKey={c.icon} className="h-4.5 w-4.5" />
                 ) : (
-                  <span className={`h-2.5 w-2.5 rounded-full ${dotClasses(c.color)}`} />
+                  <span className={`h-2.5 w-2.5 rounded-full ${dotClasses(c.color)}`} style={colorDotStyle(c.color)} />
                 )}
               </span>
               <span className="min-w-0 flex-1 truncate font-medium text-foreground">{c.name}</span>

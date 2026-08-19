@@ -1,6 +1,6 @@
 "use client";
 
-import { heroGradientClasses } from "@/lib/category-styles";
+import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { isCategoryIconKey } from "@/lib/category-icons";
 import { CategoryIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
@@ -68,7 +68,7 @@ export default function PassShape({
 
   return (
     <div className="w-full">
-      <div className={`overflow-hidden rounded-2xl p-4 text-white ${heroGradientClasses(color)}`}>
+      <div className={`overflow-hidden rounded-2xl p-4 text-white ${heroGradientClasses(color)}`} style={colorHeroStyle(color)}>
         <div className="flex items-center gap-2.5">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- user-uploaded, not a build-time asset

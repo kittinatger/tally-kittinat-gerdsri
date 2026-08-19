@@ -4,7 +4,7 @@ import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
 import Modal from "./Modal";
 import { CATEGORY_PALETTE, type TransactionType } from "@/lib/categories";
-import { dotClasses } from "@/lib/category-styles";
+import ColorPicker from "./ColorPicker";
 import { CATEGORY_ICON_KEYS, CATEGORY_ICON_LABEL_KEYS } from "@/lib/category-icons";
 import { CATEGORY_ICON_COMPONENTS } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
@@ -89,19 +89,7 @@ export default function CategoryModal({
 
         <div>
           <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("category.colorLabel")}</label>
-          <div className="flex flex-wrap gap-2">
-            {CATEGORY_PALETTE.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setColor(c)}
-                aria-label={c}
-                className={`h-8 w-8 rounded-full transition ${dotClasses(c)} ${
-                  color === c ? "ring-2 ring-navy ring-offset-2 ring-offset-surface" : ""
-                }`}
-              />
-            ))}
-          </div>
+          <ColorPicker value={color} onChange={setColor} />
         </div>
 
         <div>

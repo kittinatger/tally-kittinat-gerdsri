@@ -3,7 +3,7 @@
 import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { badgeClasses } from "@/lib/category-styles";
+import { badgeClasses, colorDotStyle } from "@/lib/category-styles";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency } from "@/lib/format";
 import type { WalletOption } from "@/types/wallet";
@@ -194,7 +194,10 @@ export default function WalletManager({
           </button>
         </div>
 
-        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses(w.color)}`}>
+        <span
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses(w.color)}`}
+          style={colorDotStyle(w.color)}
+        >
           <WalletGlyphIcon />
         </span>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { heroGradientClasses } from "@/lib/category-styles";
+import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { formatCurrency } from "@/lib/format";
 import { useT } from "@/lib/language-context";
 import type { WalletOption } from "@/types/wallet";
@@ -15,7 +15,10 @@ import type { WalletOption } from "@/types/wallet";
 export default function AccountCardShape({ wallet, currency }: { wallet: WalletOption; currency: string }) {
   const t = useT();
   return (
-    <div className={`flex min-h-[190px] w-full flex-col justify-between rounded-2xl p-4 text-white shadow-soft ${heroGradientClasses(wallet.color)}`}>
+    <div
+      className={`flex min-h-[190px] w-full flex-col justify-between rounded-2xl p-4 text-white shadow-soft ${heroGradientClasses(wallet.color)}`}
+      style={colorHeroStyle(wallet.color)}
+    >
       <div className="flex items-start justify-between gap-2">
         <p className="min-w-0 truncate text-sm font-semibold">{wallet.name}</p>
         <p className="shrink-0 text-xs font-bold uppercase tracking-wide text-white/85">

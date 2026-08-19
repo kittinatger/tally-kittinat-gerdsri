@@ -5,7 +5,7 @@ import { useState } from "react";
 import Modal from "./Modal";
 import WalletCardShape from "./WalletCardShape";
 import { CATEGORY_PALETTE } from "@/lib/categories";
-import { dotClasses } from "@/lib/category-styles";
+import ColorPicker from "./ColorPicker";
 import { CARD_NETWORKS, type CardNetwork } from "@/lib/wallet-cards";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -228,19 +228,7 @@ export default function WalletCardModal({
 
         <div>
           <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("membership.colorLabel")}</label>
-          <div className="flex flex-wrap gap-2">
-            {CATEGORY_PALETTE.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setColor(c)}
-                aria-label={c}
-                className={`h-8 w-8 rounded-full transition ${dotClasses(c)} ${
-                  color === c ? "ring-2 ring-navy ring-offset-2 ring-offset-surface" : ""
-                }`}
-              />
-            ))}
-          </div>
+          <ColorPicker value={color} onChange={setColor} />
         </div>
 
         <div>

@@ -1,4 +1,6 @@
+import type { CSSProperties } from "react";
 import type { CategoryColor } from "@/lib/categories";
+import { isHexColor } from "@/lib/color-convert";
 
 export const CATEGORY_BADGE_CLASSES: Record<CategoryColor, string> = {
   emerald: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
@@ -41,12 +43,28 @@ const FALLBACK_DOT = "bg-neutral-400";
 
 export function badgeClasses(color: string | undefined): string {
   if (!color) return FALLBACK_BADGE;
+  if (isHexColor(color)) return "";
   return CATEGORY_BADGE_CLASSES[color as CategoryColor] ?? FALLBACK_BADGE;
 }
 
 export function dotClasses(color: string | undefined): string {
   if (!color) return FALLBACK_DOT;
+  if (isHexColor(color)) return "";
   return CATEGORY_DOT_CLASSES[color as CategoryColor] ?? FALLBACK_DOT;
+}
+
+// Companion to dotClasses/badgeClasses/heroGradientClasses — a custom hex
+// color (from ColorPicker's Hex/RGB/CMYK panel) can't be expressed as a
+// Tailwind class at runtime (Tailwind only generates CSS for class names
+// it can see at build time), so it's applied as inline style instead.
+// Returns undefined for a named palette token, since those are already
+// fully styled by the class functions above.
+export function colorDotStyle(color: string | undefined): CSSProperties | undefined {
+  return isHexColor(color) ? { backgroundColor: color } : undefined;
+}
+
+export function colorHeroStyle(color: string | undefined): CSSProperties | undefined {
+  return isHexColor(color) ? { backgroundImage: `linear-gradient(to bottom right, ${color}, ${color})` } : undefined;
 }
 
 // Same palette, used to let a Dashboard widget's headline number/bars/bars
@@ -72,11 +90,13 @@ export const CATEGORY_ACCENT_TEXT_CLASSES: Record<CategoryColor, string> = {
 
 export function accentTextClasses(color: string | undefined): string {
   if (!color) return "text-surface-foreground";
+  if (isHexColor(color)) return "";
   return CATEGORY_ACCENT_TEXT_CLASSES[color as CategoryColor] ?? "text-surface-foreground";
 }
 
 export function accentBgClasses(color: string | undefined): string {
   if (!color) return "bg-surface-accent";
+  if (isHexColor(color)) return "";
   return CATEGORY_DOT_CLASSES[color as CategoryColor] ?? "bg-surface-accent";
 }
 
@@ -104,5 +124,6 @@ export const CATEGORY_HERO_GRADIENT_CLASSES: Record<CategoryColor, string> = {
 
 export function heroGradientClasses(color: string | undefined): string {
   if (!color) return "bg-gradient-to-br from-rose-400 to-rose-600";
+  if (isHexColor(color)) return "";
   return CATEGORY_HERO_GRADIENT_CLASSES[color as CategoryColor] ?? "bg-gradient-to-br from-rose-400 to-rose-600";
 }

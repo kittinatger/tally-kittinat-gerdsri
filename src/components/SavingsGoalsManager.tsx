@@ -2,12 +2,13 @@
 
 import { describeFetchError } from "@/lib/fetch-error";
 import { useCallback, useEffect, useState } from "react";
-import { badgeClasses, dotClasses } from "@/lib/category-styles";
+import { badgeClasses, dotClasses, colorDotStyle } from "@/lib/category-styles";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency } from "@/lib/format";
 import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
 import { PlusIcon } from "@/lib/icons";
 import CsvManagerButtons from "./CsvManagerButtons";
+import ColorPicker from "./ColorPicker";
 import { useT } from "@/lib/language-context";
 
 type SavingsGoal = { id: number; name: string; color: string; target_amount: string; current_amount: string };
@@ -245,17 +246,7 @@ export default function SavingsGoalsManager() {
           </div>
           <div>
             <label className="mb-1.5 block text-sm font-semibold text-foreground">{t("savings.color")}</label>
-            <div className="flex flex-wrap gap-2">
-              {WIDGET_ACCENTS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setColor(c)}
-                  aria-label={c}
-                  className={`h-7 w-7 rounded-full ${dotClasses(c)} ${color === c ? "ring-2 ring-offset-2 ring-navy ring-offset-surface" : ""}`}
-                />
-              ))}
-            </div>
+            <ColorPicker value={color} onChange={setColor} palette={WIDGET_ACCENTS} />
           </div>
 
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
@@ -313,7 +304,10 @@ export default function SavingsGoalsManager() {
                     </button>
                   </div>
 
-                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses(g.color)}`}>
+                  <span
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses(g.color)}`}
+                    style={colorDotStyle(g.color)}
+                  >
                     <TargetIcon />
                   </span>
 
@@ -323,7 +317,10 @@ export default function SavingsGoalsManager() {
                       {formatCurrency(current, currency)} / {formatCurrency(goalTarget, currency)} ({percent.toFixed(0)}%)
                     </p>
                     <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-bg-soft">
-                      <div className={`h-full rounded-full ${dotClasses(g.color)}`} style={{ width: `${Math.max(4, percent)}%` }} />
+                      <div
+                        className={`h-full rounded-full ${dotClasses(g.color)}`}
+                        style={{ width: `${Math.max(4, percent)}%`, ...colorDotStyle(g.color) }}
+                      />
                     </div>
                   </div>
 

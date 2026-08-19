@@ -5,7 +5,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Modal from "./Modal";
 import PassShape from "./PassShape";
 import { CATEGORY_PALETTE } from "@/lib/categories";
-import { dotClasses, heroGradientClasses } from "@/lib/category-styles";
+import ColorPicker from "./ColorPicker";
+import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { CATEGORY_ICON_KEYS, CATEGORY_ICON_LABEL_KEYS } from "@/lib/category-icons";
 import { CATEGORY_ICON_COMPONENTS, PlusIcon, CloseIcon } from "@/lib/icons";
 import { downscaleImage } from "@/lib/image-downscale";
@@ -356,7 +357,10 @@ export default function MembershipCardModal({
 
         <div>
           <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("membership.editorTitle")}</label>
-          <div className={`relative overflow-hidden rounded-2xl p-4 ${heroGradientClasses(color)}`}>
+          <div
+            className={`relative overflow-hidden rounded-2xl p-4 ${heroGradientClasses(color)}`}
+            style={colorHeroStyle(color)}
+          >
             <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoSelected} className="hidden" />
             <input ref={bannerInputRef} type="file" accept="image/*" onChange={handleBannerSelected} className="hidden" />
             <div className="flex items-start justify-between gap-3">
@@ -534,19 +538,7 @@ export default function MembershipCardModal({
 
         <div>
           <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("membership.colorLabel")}</label>
-          <div className="flex flex-wrap gap-2">
-            {CATEGORY_PALETTE.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setColor(c)}
-                aria-label={c}
-                className={`h-8 w-8 rounded-full transition ${dotClasses(c)} ${
-                  color === c ? "ring-2 ring-navy ring-offset-2 ring-offset-surface" : ""
-                }`}
-              />
-            ))}
-          </div>
+          <ColorPicker value={color} onChange={setColor} />
         </div>
 
         <div>
