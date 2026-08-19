@@ -24,6 +24,8 @@ const WalletModal = dynamic(() => import("./WalletModal"), { ssr: false });
 const WalletCardModal = dynamic(() => import("./WalletCardModal"), { ssr: false });
 const MembershipCardModal = dynamic(() => import("./MembershipCardModal"), { ssr: false });
 const MembershipCardDetail = dynamic(() => import("./MembershipCardDetail"), { ssr: false });
+const AccountDetail = dynamic(() => import("./AccountDetail"), { ssr: false });
+const WalletCardDetail = dynamic(() => import("./WalletCardDetail"), { ssr: false });
 const WalletEntryModal = dynamic(() => import("./WalletEntryModal"), { ssr: false });
 const AddCardEntryModal = dynamic(() => import("./AddCardEntryModal"), { ssr: false });
 const ScanCardModal = dynamic(() => import("./ScanCardModal"), { ssr: false });
@@ -68,6 +70,9 @@ export default function WalletPageView({
     | null
   >(null);
   const [viewingPass, setViewingPass] = useState<MembershipCard | null>(null);
+  const [viewingAccount, setViewingAccount] = useState<WalletOption | null>(null);
+  const [accountDeleteError, setAccountDeleteError] = useState<string | null>(null);
+  const [viewingCard, setViewingCard] = useState<WalletCard | null>(null);
   const [entryCategoryOpen, setEntryCategoryOpen] = useState<PassCategory | null>(null);
   const [scanCategory, setScanCategory] = useState<PassCategory | null>(null);
 
@@ -108,12 +113,50 @@ export default function WalletPageView({
     setCardModal(null);
   }
 
+  async function handleDeleteCard(id: number) {
+    setError(null);
+    try {
+      const res = await fetch(`/api/wallet-cards/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(typeof data?.error === "string" ? data.error : "Could not delete that card.");
+        return;
+      }
+      setWalletCards((prev) => prev.filter((c) => c.id !== id));
+      setViewingCard(null);
+    } catch (err) {
+      setError(describeFetchError(err));
+    }
+  }
+
+  // deleteWallet (db.ts) refuses to delete a wallet with transactions on
+  // it, so the error is shown inline in AccountDetail rather than closing
+  // the modal — same as WalletManager's own delete flow.
+  async function handleDeleteAccount(id: number) {
+    setAccountDeleteError(null);
+    try {
+      const res = await fetch(`/api/wallets/${id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        setAccountDeleteError(typeof data?.error === "string" ? data.error : "Could not delete that wallet.");
+        return;
+      }
+      setViewingAccount(null);
+      router.refresh();
+    } catch (err) {
+      setAccountDeleteError(describeFetchError(err));
+    }
+  }
+
   const accountItems = wallets
     .filter((w) => !w.archived)
     .map((wallet) => ({
       key: `account-${wallet.id}`,
       node: <AccountCardShape wallet={wallet} currency={currency} />,
-      onOpen: () => setAccountModal({ mode: "edit", wallet }),
+      onOpen: () => {
+        setAccountDeleteError(null);
+        setViewingAccount(wallet);
+      },
       ariaLabel: wallet.name,
     }));
   const cardItems = walletCards.map((card) => ({
@@ -129,7 +172,7 @@ export default function WalletPageView({
         color={card.color}
       />
     ),
-    onOpen: () => setCardModal({ mode: "edit", card }),
+    onOpen: () => setViewingCard(card),
     ariaLabel: card.label,
   }));
   const cardsStack = [...accountItems, ...cardItems];
@@ -256,6 +299,35 @@ export default function WalletPageView({
       {manageAccountsOpen && (
         <Modal onClose={() => setManageAccountsOpen(false)} title={t("wallet.manageAccounts")}>
           <WalletManager wallets={wallets} initialActivitiesDefaultWalletId={activitiesDefaultWalletId} />
+        </Modal>
+      )}
+
+      {viewingAccount && (
+        <Modal onClose={() => setViewingAccount(null)} title={viewingAccount.name}>
+          <AccountDetail
+            key={viewingAccount.id}
+            wallet={viewingAccount}
+            deleteError={accountDeleteError}
+            onEdit={() => {
+              setAccountModal({ mode: "edit", wallet: viewingAccount });
+              setViewingAccount(null);
+            }}
+            onDelete={() => handleDeleteAccount(viewingAccount.id)}
+          />
+        </Modal>
+      )}
+
+      {viewingCard && (
+        <Modal onClose={() => setViewingCard(null)} title={viewingCard.label}>
+          <WalletCardDetail
+            key={viewingCard.id}
+            card={viewingCard}
+            onEdit={() => {
+              setCardModal({ mode: "edit", card: viewingCard });
+              setViewingCard(null);
+            }}
+            onDelete={() => handleDeleteCard(viewingCard.id)}
+          />
         </Modal>
       )}
 
