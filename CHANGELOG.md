@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.17.0] - 2026-08-19
+
+### Added
+- Wallet — a new Apple-Wallet-style page (replacing Memberships) combining money accounts, payment cards, passes, and memberships into one stacked view: accounts and cards stack together as bank-card visuals, passes and memberships stack together below as pass visuals, with each card peeking above the next and tapping any of them opening it straight to detail
+- Cards — a new payment-card visual (network, cardholder name, expiry, masked number) for keeping card art/details for reference; only ever stores the last 4 digits, never a full card number
+- Pass templates — Generic, Store card, Coupon, Event ticket, and Boarding pass, each with its own relevant fields, plus a Guided/Custom-layout dual editor (tap-to-place zone grid) and a visual pass-canvas editor for attaching a logo and banner image to a pass
+- 4-tile "Create pass" entry menu (New pass / Scan / Photo gallery / From file) and PDF417/Aztec barcode formats alongside QR/Code128/EAN-13/UPC-A
+- A universal color picker on every color selector in the app (categories, wallets, cards, passes, savings goals): the existing palette swatches plus a "Custom" panel with a draggable saturation/value square, a hue slider, an eyedropper (where the browser supports it), and synced Hex/RGB/CMYK fields
+
+### Changed
+- Tapping an account or payment card on the Wallet page now opens a read-only detail view with Edit/Delete buttons, instead of jumping straight into the edit form — matching how passes and memberships already worked
+- Account management (archive, set default, transfer between wallets) is now reachable from the Wallet page itself via a "Manage accounts" button, in addition to Settings
+
+### Fixed
+- A wallet's balance or a payment card's details could get visibly clipped mid-digit/mid-line on narrow phone screens; card visuals now grow to fit their content instead of clipping it
+- Pull-to-refresh was missing on the new Wallet page
+
 ## [0.16.0] - 2026-08-15
 
 ### Added
