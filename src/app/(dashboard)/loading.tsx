@@ -22,6 +22,9 @@ export default function DashboardLoading() {
             Activities
           </span>
           <span className="rounded-full px-2.5 py-1 text-xs font-semibold text-ink-soft sm:px-3.5 sm:py-1.5 sm:text-sm">
+            Wallet
+          </span>
+          <span className="rounded-full px-2.5 py-1 text-xs font-semibold text-ink-soft sm:px-3.5 sm:py-1.5 sm:text-sm">
             Settings
           </span>
         </nav>

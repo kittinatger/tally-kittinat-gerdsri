@@ -34,11 +34,26 @@ export default function WalletLoading() {
       <BottomNav pathname="/wallet" />
 
       <main className="flex-1 px-1 py-6 sm:px-2">
-        <div className="mb-3 h-9 w-full max-w-xs animate-pulse rounded-full border border-line bg-surface" />
-        <div className="space-y-2.5">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-16 animate-pulse rounded-card border border-line bg-surface" />
-          ))}
+        <div className="mx-auto max-w-md">
+          <div className="flex items-center justify-between gap-3">
+            <div className="h-7 w-24 animate-pulse rounded-full bg-surface" />
+            <div className="flex items-center gap-2">
+              <div className="h-10 w-10 shrink-0 animate-pulse rounded-full border border-line bg-surface" />
+              <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-surface" />
+            </div>
+          </div>
+
+          <div className="mt-5">
+            <div className="h-16 animate-pulse rounded-t-2xl border border-line bg-surface" />
+            <div className="h-16 -mt-2 animate-pulse rounded-t-2xl border border-line bg-surface" />
+            <div className="h-[190px] -mt-4 animate-pulse rounded-2xl border border-line bg-surface" />
+          </div>
+
+          <div className="mt-8">
+            <div className="h-16 animate-pulse rounded-t-2xl border border-line bg-surface" />
+            <div className="h-16 -mt-2 animate-pulse rounded-t-2xl border border-line bg-surface" />
+            <div className="h-56 -mt-4 animate-pulse rounded-2xl border border-line bg-surface" />
+          </div>
         </div>
       </main>
     </div>
