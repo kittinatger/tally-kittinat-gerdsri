@@ -4,11 +4,13 @@ import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Modal from "./Modal";
 import PassShape from "./PassShape";
+import FormSection from "./FormSection";
+import ColorGlowPreview from "./ColorGlowPreview";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import ColorPicker from "./ColorPicker";
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
-import { CATEGORY_ICON_KEYS, CATEGORY_ICON_LABEL_KEYS } from "@/lib/category-icons";
-import { CATEGORY_ICON_COMPONENTS, PlusIcon, CloseIcon } from "@/lib/icons";
+import { isCategoryIconKey, CATEGORY_ICON_KEYS, CATEGORY_ICON_LABEL_KEYS } from "@/lib/category-icons";
+import { CATEGORY_ICON_COMPONENTS, CategoryIcon, PlusIcon, CloseIcon, TagIcon, PaletteIcon, FileIcon, MembershipCardIcon } from "@/lib/icons";
 import { downscaleImage } from "@/lib/image-downscale";
 import { MEMBERSHIP_CODE_FORMATS, type MembershipCodeFormat } from "@/lib/memberships";
 import {
@@ -41,16 +43,15 @@ const ZONE_LABEL_KEYS: Record<PassZone, MessageKey> = {
   auxiliary: "membership.zoneAuxiliary",
 };
 
-// A slot on the visual pass canvas — an empty translucent square with a
-// "+" (tap to pick an image) when unset, or the picked image with a small
-// remove button in the corner once one's attached. Mirrors the "Pass
-// editor" reference screenshot's plus-slot grid.
+// A slot for attaching an image — a dashed "+" tile when empty, or the
+// picked image with a small remove button once one's attached.
 function ImageSlot({
   previewUrl,
   onPick,
   onClear,
   ariaLabel,
   removeLabel,
+  label,
   className,
 }: {
   previewUrl: string | null;
@@ -58,13 +59,14 @@ function ImageSlot({
   onClear: () => void;
   ariaLabel: string;
   removeLabel: string;
+  label: string;
   className: string;
 }) {
   if (previewUrl) {
     return (
       <div className={`relative shrink-0 ${className}`}>
         {/* eslint-disable-next-line @next/next/no-img-element -- local object URL / API-served image, not a build-time asset */}
-        <img src={previewUrl} alt="" className="h-full w-full rounded-lg object-cover ring-1 ring-white/40" />
+        <img src={previewUrl} alt="" className="h-full w-full rounded-lg object-cover ring-1 ring-line" />
         <button
           type="button"
           onClick={onClear}
@@ -81,9 +83,10 @@ function ImageSlot({
       type="button"
       onClick={onPick}
       aria-label={ariaLabel}
-      className={`flex shrink-0 items-center justify-center rounded-lg border border-dashed border-white/50 bg-white/15 text-white/90 transition hover:bg-white/25 ${className}`}
+      className={`flex shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-line bg-bg-soft text-ink-soft transition hover:border-navy hover:text-navy dark:hover:text-blue-300 ${className}`}
     >
       <PlusIcon className="h-4 w-4" />
+      <span className="text-[11px] font-semibold">{label}</span>
     </button>
   );
 }
@@ -275,10 +278,51 @@ export default function MembershipCardModal({
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="membershipName" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-            {t("membership.nameLabel")}
-          </label>
+        <ColorGlowPreview color={color}>
+          {codeValue ? (
+            <PassShape
+              name={name || t("membership.namePlaceholder")}
+              color={color}
+              icon={icon}
+              template={template}
+              fields={fields}
+              layout={layout}
+              codeValue={codeValue}
+              codeFormat={codeFormat}
+              codeSize="small"
+              logoUrl={logoPreviewUrl}
+              bannerUrl={bannerPreviewUrl}
+            />
+          ) : (
+            // Before a code is entered, MembershipCardCode would try (and
+            // fail) to render a barcode for an empty string — show a plain
+            // header-only stand-in instead of the full pass shape.
+            <div className={`overflow-hidden rounded-2xl p-4 text-white ${heroGradientClasses(color)}`} style={colorHeroStyle(color)}>
+              <div className="flex items-center gap-2.5">
+                {logoPreviewUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- local object URL / API-served image, not a build-time asset
+                  <img src={logoPreviewUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-white/30" />
+                ) : (
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20">
+                    {icon && isCategoryIconKey(icon) ? (
+                      <CategoryIcon iconKey={icon} className="h-4.5 w-4.5" />
+                    ) : (
+                      <span className="text-sm font-semibold">{(name || "?").charAt(0).toUpperCase()}</span>
+                    )}
+                  </span>
+                )}
+                <p className="min-w-0 flex-1 truncate font-semibold">{name || t("membership.namePlaceholder")}</p>
+              </div>
+              {bannerPreviewUrl && (
+                // eslint-disable-next-line @next/next/no-img-element -- local object URL / API-served image, not a build-time asset
+                <img src={bannerPreviewUrl} alt="" className="mt-3 aspect-[5/3] w-full rounded-xl object-cover" />
+              )}
+              <p className="mt-3 text-xs text-white/70">{t("membership.codePlaceholder")}</p>
+            </div>
+          )}
+        </ColorGlowPreview>
+
+        <FormSection icon={<TagIcon className="h-4 w-4" />} title={t("membership.nameLabel")}>
           <input
             id="membershipName"
             type="text"
@@ -289,33 +333,32 @@ export default function MembershipCardModal({
             placeholder={t("membership.namePlaceholder")}
             className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
-        </div>
 
-        <div>
-          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("membership.templateLabel")}</label>
-          <div className="flex flex-wrap gap-1.5">
-            {PASS_TEMPLATES.map((tpl) => (
-              <button
-                key={tpl}
-                type="button"
-                onClick={() => handleTemplateChange(tpl)}
-                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                  template === tpl
-                    ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
-                    : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
-                }`}
-              >
-                {t(TEMPLATE_LABEL_KEYS[tpl])}
-              </button>
-            ))}
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("membership.templateLabel")}</label>
+            <div className="flex flex-wrap gap-1.5">
+              {PASS_TEMPLATES.map((tpl) => (
+                <button
+                  key={tpl}
+                  type="button"
+                  onClick={() => handleTemplateChange(tpl)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    template === tpl
+                      ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                      : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                  }`}
+                >
+                  {t(TEMPLATE_LABEL_KEYS[tpl])}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        </FormSection>
 
-        <div>
-          <div className="mb-1.5 flex items-center justify-between gap-2">
-            <label htmlFor="membershipCode" className="block text-sm font-semibold text-ink-soft">
-              {t("membership.codeLabel")}
-            </label>
+        <FormSection
+          icon={<MembershipCardIcon className="h-4 w-4" />}
+          title={t("membership.codeLabel")}
+          action={
             <button
               type="button"
               onClick={onScanRequested}
@@ -323,7 +366,8 @@ export default function MembershipCardModal({
             >
               {t("membership.scanInstead")}
             </button>
-          </div>
+          }
+        >
           <input
             id="membershipCode"
             type="text"
@@ -333,64 +377,36 @@ export default function MembershipCardModal({
             placeholder={t("membership.codePlaceholder")}
             className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
-        </div>
 
-        <div>
-          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("membership.formatLabel")}</label>
-          <div className="flex flex-wrap gap-1.5">
-            {MEMBERSHIP_CODE_FORMATS.map((f) => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setCodeFormat(f)}
-                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                  codeFormat === f
-                    ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
-                    : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
-                }`}
-              >
-                {t(FORMAT_LABEL_KEYS[f])}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("membership.editorTitle")}</label>
-          <div
-            className={`relative overflow-hidden rounded-2xl p-4 ${heroGradientClasses(color)}`}
-            style={colorHeroStyle(color)}
-          >
-            <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoSelected} className="hidden" />
-            <input ref={bannerInputRef} type="file" accept="image/*" onChange={handleBannerSelected} className="hidden" />
-            <div className="flex items-start justify-between gap-3">
-              <ImageSlot
-                previewUrl={logoPreviewUrl}
-                onPick={() => logoInputRef.current?.click()}
-                onClear={clearLogo}
-                ariaLabel={t("membership.addLogo")}
-                removeLabel={t("membership.removeImage")}
-                className="h-11 w-11"
-              />
-              <p className="mt-1.5 min-w-0 flex-1 truncate text-right text-sm font-semibold text-white/90">
-                {name || t("membership.namePlaceholder")}
-              </p>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("membership.formatLabel")}</label>
+            <div className="flex flex-wrap gap-1.5">
+              {MEMBERSHIP_CODE_FORMATS.map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setCodeFormat(f)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    codeFormat === f
+                      ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                      : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                  }`}
+                >
+                  {t(FORMAT_LABEL_KEYS[f])}
+                </button>
+              ))}
             </div>
-            <ImageSlot
-              previewUrl={bannerPreviewUrl}
-              onPick={() => bannerInputRef.current?.click()}
-              onClear={clearBanner}
-              ariaLabel={t("membership.addBanner")}
-              removeLabel={t("membership.removeImage")}
-              className="mt-3 aspect-[5/3] w-full"
-            />
           </div>
-        </div>
+        </FormSection>
 
         {templateFieldDefs.length > 0 && (
-          <div>
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <label className="block text-sm font-semibold text-ink-soft">{t(TEMPLATE_LABEL_KEYS[template])}</label>
+          <FormSection
+            icon={(() => {
+              const Icon = CATEGORY_ICON_COMPONENTS.receipt;
+              return <Icon className="h-4 w-4" />;
+            })()}
+            title={t(TEMPLATE_LABEL_KEYS[template])}
+            action={
               <div className="flex gap-1 rounded-full bg-bg-soft p-1">
                 <button
                   type="button"
@@ -411,8 +427,8 @@ export default function MembershipCardModal({
                   {t("membership.editorCustom")}
                 </button>
               </div>
-            </div>
-
+            }
+          >
             {editorMode === "guided" ? (
               <div className="space-y-3">
                 {templateFieldDefs.map((def) => (
@@ -429,7 +445,7 @@ export default function MembershipCardModal({
                 ))}
               </div>
             ) : (
-              <div className="space-y-3 rounded-card border border-line p-3">
+              <div className="space-y-3 rounded-card border border-line bg-bg-soft p-3">
                 {PASS_ZONES.map((zone) => {
                   if (!templateFieldDefs.some((f) => f.zone === zone)) return null;
                   const placed = (layout[zone] ?? []).filter((k): k is string => Boolean(k));
@@ -457,7 +473,7 @@ export default function MembershipCardModal({
                           onClick={() => placeField(zone)}
                           disabled={!selectedFieldKey}
                           aria-label={t("membership.addFieldHere")}
-                          className="flex h-8 w-8 items-center justify-center rounded-full border border-dashed border-line text-ink-soft transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-40"
+                          className="flex h-8 w-8 items-center justify-center rounded-full border border-dashed border-line bg-surface text-ink-soft transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-40"
                         >
                           +
                         </button>
@@ -481,7 +497,7 @@ export default function MembershipCardModal({
                             className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                               selectedFieldKey === key
                                 ? "border-navy bg-navy text-white"
-                                : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                                : "border-line bg-surface text-ink-soft hover:bg-[var(--nav-hover-bg)]"
                             }`}
                           >
                             {def ? t(def.labelKey) : key}
@@ -504,7 +520,7 @@ export default function MembershipCardModal({
                             value={fields[def.key] ?? ""}
                             onChange={(e) => setFieldValue(def.key, e.target.value)}
                             placeholder={t(def.placeholderKey)}
-                            className="w-full rounded-card border border-line bg-bg-soft px-3 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+                            className="w-full rounded-card border border-line bg-surface px-3 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
                           />
                         </div>
                       ))}
@@ -512,72 +528,72 @@ export default function MembershipCardModal({
                 )}
               </div>
             )}
-          </div>
+          </FormSection>
         )}
 
-        {codeValue && (
-          <div>
-            <p className="mb-1.5 text-sm font-semibold text-ink-soft">{t("membership.previewLabel")}</p>
-            <div className="pointer-events-none">
-              <PassShape
-                name={name || t("membership.namePlaceholder")}
-                color={color}
-                icon={icon}
-                template={template}
-                fields={fields}
-                layout={layout}
-                codeValue={codeValue}
-                codeFormat={codeFormat}
-                codeSize="small"
-                logoUrl={logoPreviewUrl}
-                bannerUrl={bannerPreviewUrl}
+        <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("membership.colorLabel")}>
+          <ColorPicker value={color} onChange={setColor} />
+
+          <div className="border-t border-line pt-3">
+            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("membership.iconLabel")}</label>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => setIcon(null)}
+                className={`flex h-9 w-9 items-center justify-center rounded-full border text-xs font-semibold transition ${
+                  icon === null ? "border-navy bg-navy/10 text-navy dark:text-blue-300" : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                }`}
+              >
+                {t("category.none")}
+              </button>
+              {CATEGORY_ICON_KEYS.map((key) => {
+                const Icon = CATEGORY_ICON_COMPONENTS[key];
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setIcon(key)}
+                    aria-label={categoryIconLabels[key]}
+                    className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
+                      icon === key
+                        ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                        : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                    }`}
+                  >
+                    <Icon className="h-4.5 w-4.5" />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="border-t border-line pt-3">
+            <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoSelected} className="hidden" />
+            <input ref={bannerInputRef} type="file" accept="image/*" onChange={handleBannerSelected} className="hidden" />
+            <div className="flex gap-3">
+              <ImageSlot
+                previewUrl={logoPreviewUrl}
+                onPick={() => logoInputRef.current?.click()}
+                onClear={clearLogo}
+                ariaLabel={t("membership.addLogo")}
+                removeLabel={t("membership.removeImage")}
+                label={t("membership.addLogo")}
+                className="h-16 w-16"
+              />
+              <ImageSlot
+                previewUrl={bannerPreviewUrl}
+                onPick={() => bannerInputRef.current?.click()}
+                onClear={clearBanner}
+                ariaLabel={t("membership.addBanner")}
+                removeLabel={t("membership.removeImage")}
+                label={t("membership.addBanner")}
+                className="h-16 flex-1"
               />
             </div>
           </div>
-        )}
+        </FormSection>
 
-        <div>
-          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("membership.colorLabel")}</label>
-          <ColorPicker value={color} onChange={setColor} />
-        </div>
-
-        <div>
-          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("membership.iconLabel")}</label>
-          <div className="flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              onClick={() => setIcon(null)}
-              className={`flex h-9 w-9 items-center justify-center rounded-full border text-xs font-semibold transition ${
-                icon === null ? "border-navy bg-navy/10 text-navy dark:text-blue-300" : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
-              }`}
-            >
-              {t("category.none")}
-            </button>
-            {CATEGORY_ICON_KEYS.map((key) => {
-              const Icon = CATEGORY_ICON_COMPONENTS[key];
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setIcon(key)}
-                  aria-label={categoryIconLabels[key]}
-                  className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
-                    icon === key
-                      ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
-                      : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
-                  }`}
-                >
-                  <Icon className="h-4.5 w-4.5" />
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div>
-          <label htmlFor="membershipNotes" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-            {t("membership.notesLabel")}
-          </label>
+        <FormSection icon={<FileIcon className="h-4 w-4" />} title={t("membership.notesLabel")}>
           <textarea
             id="membershipNotes"
             rows={2}
@@ -586,7 +602,7 @@ export default function MembershipCardModal({
             placeholder={t("membership.notesPlaceholder")}
             className="w-full resize-none rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
-        </div>
+        </FormSection>
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 

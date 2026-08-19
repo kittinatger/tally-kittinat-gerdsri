@@ -4,9 +4,12 @@ import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
 import Modal from "./Modal";
 import WalletCardShape from "./WalletCardShape";
+import FormSection from "./FormSection";
+import ColorGlowPreview from "./ColorGlowPreview";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import ColorPicker from "./ColorPicker";
 import { CARD_NETWORKS, type CardNetwork } from "@/lib/wallet-cards";
+import { CategoryIcon, PaletteIcon, FileIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 import type { WalletCard } from "@/types/wallet-card";
@@ -113,10 +116,19 @@ export default function WalletCardModal({
   return (
     <Modal onClose={onClose} title={isEdit ? t("wallet.editCard") : t("wallet.addCard")}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="walletCardLabel" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-            {t("wallet.labelLabel")}
-          </label>
+        <ColorGlowPreview color={color}>
+          <WalletCardShape
+            label={label || t("wallet.labelPlaceholder")}
+            holderName={holderName || null}
+            last4={last4 || null}
+            expiryMonth={month}
+            expiryYear={year}
+            network={network}
+            color={color}
+          />
+        </ColorGlowPreview>
+
+        <FormSection icon={<CategoryIcon iconKey="card" className="h-4 w-4" />} title={t("wallet.labelLabel")}>
           <input
             id="walletCardLabel"
             type="text"
@@ -127,114 +139,95 @@ export default function WalletCardModal({
             placeholder={t("wallet.labelPlaceholder")}
             className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
-        </div>
 
-        <div>
-          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("wallet.networkLabel")}</label>
-          <div className="flex flex-wrap gap-1.5">
-            {CARD_NETWORKS.map((n) => (
-              <button
-                key={n}
-                type="button"
-                onClick={() => setNetwork(n)}
-                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                  network === n
-                    ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
-                    : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
-                }`}
-              >
-                {t(NETWORK_LABEL_KEYS[n])}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <label htmlFor="walletCardLast4" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-            {t("wallet.last4Label")}
-          </label>
-          <input
-            id="walletCardLast4"
-            type="text"
-            inputMode="numeric"
-            pattern="\d{4}"
-            maxLength={4}
-            value={last4}
-            onChange={(e) => setLast4(e.target.value.replace(/\D/g, "").slice(0, 4))}
-            placeholder="1234"
-            className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-          />
-          <p className="mt-1 text-[11px] text-ink-soft">{t("wallet.last4Hint")}</p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
           <div>
-            <label htmlFor="walletCardHolder" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-              {t("wallet.holderLabel")}
-            </label>
-            <input
-              id="walletCardHolder"
-              type="text"
-              value={holderName}
-              onChange={(e) => setHolderName(e.target.value)}
-              placeholder={t("wallet.holderPlaceholder")}
-              className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-            />
-          </div>
-          <div>
-            <label htmlFor="walletCardExpiry" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-              {t("wallet.expiryLabel")}
-            </label>
-            <div id="walletCardExpiry" className="flex items-center gap-1.5">
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={2}
-                value={expiryMonth}
-                onChange={(e) => setExpiryMonth(e.target.value.replace(/\D/g, "").slice(0, 2))}
-                placeholder="MM"
-                aria-label={t("wallet.expiryMonthLabel")}
-                className="w-full rounded-card border border-line bg-bg-soft px-3 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-              />
-              <span className="text-ink-soft">/</span>
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={4}
-                value={expiryYear}
-                onChange={(e) => setExpiryYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                placeholder="YYYY"
-                aria-label={t("wallet.expiryYearLabel")}
-                className="w-full rounded-card border border-line bg-bg-soft px-3 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-              />
+            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.networkLabel")}</label>
+            <div className="flex flex-wrap gap-1.5">
+              {CARD_NETWORKS.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setNetwork(n)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    network === n
+                      ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                      : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                  }`}
+                >
+                  {t(NETWORK_LABEL_KEYS[n])}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
 
-        <div>
-          <p className="mb-1.5 text-sm font-semibold text-ink-soft">{t("membership.previewLabel")}</p>
-          <div className="pointer-events-none">
-            <WalletCardShape
-              label={label || t("wallet.labelPlaceholder")}
-              holderName={holderName || null}
-              last4={last4 || null}
-              expiryMonth={month}
-              expiryYear={year}
-              network={network}
-              color={color}
+          <div>
+            <label htmlFor="walletCardLast4" className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              {t("wallet.last4Label")}
+            </label>
+            <input
+              id="walletCardLast4"
+              type="text"
+              inputMode="numeric"
+              pattern="\d{4}"
+              maxLength={4}
+              value={last4}
+              onChange={(e) => setLast4(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              placeholder="1234"
+              className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
             />
+            <p className="mt-1 text-[11px] text-ink-soft">{t("wallet.last4Hint")}</p>
           </div>
-        </div>
 
-        <div>
-          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("membership.colorLabel")}</label>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="walletCardHolder" className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                {t("wallet.holderLabel")}
+              </label>
+              <input
+                id="walletCardHolder"
+                type="text"
+                value={holderName}
+                onChange={(e) => setHolderName(e.target.value)}
+                placeholder={t("wallet.holderPlaceholder")}
+                className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+              />
+            </div>
+            <div>
+              <label htmlFor="walletCardExpiry" className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                {t("wallet.expiryLabel")}
+              </label>
+              <div id="walletCardExpiry" className="flex items-center gap-1.5">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={2}
+                  value={expiryMonth}
+                  onChange={(e) => setExpiryMonth(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                  placeholder="MM"
+                  aria-label={t("wallet.expiryMonthLabel")}
+                  className="w-full rounded-card border border-line bg-bg-soft px-3 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+                />
+                <span className="text-ink-soft">/</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={expiryYear}
+                  onChange={(e) => setExpiryYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  placeholder="YYYY"
+                  aria-label={t("wallet.expiryYearLabel")}
+                  className="w-full rounded-card border border-line bg-bg-soft px-3 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+                />
+              </div>
+            </div>
+          </div>
+        </FormSection>
+
+        <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("membership.colorLabel")}>
           <ColorPicker value={color} onChange={setColor} />
-        </div>
+        </FormSection>
 
-        <div>
-          <label htmlFor="walletCardNotes" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-            {t("membership.notesLabel")}
-          </label>
+        <FormSection icon={<FileIcon className="h-4 w-4" />} title={t("membership.notesLabel")}>
           <textarea
             id="walletCardNotes"
             rows={2}
@@ -243,7 +236,7 @@ export default function WalletCardModal({
             placeholder={t("membership.notesPlaceholder")}
             className="w-full resize-none rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
-        </div>
+        </FormSection>
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 

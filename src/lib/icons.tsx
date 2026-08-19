@@ -189,6 +189,29 @@ export function CalendarIcon({ className }: IconProps) {
   );
 }
 
+// A paint palette with a few "blob" dots — used as the Appearance/color
+// section header in the redesigned add-pass/add-card/add-wallet forms.
+export function PaletteIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <path d="M10 2.5a7.5 7.5 0 1 0 0 15 1.7 1.7 0 0 0 1.2-2.9 1.7 1.7 0 0 1 1.2-2.9H14a3.5 3.5 0 0 0 3.5-3.5C17.5 4.5 14.5 2.5 10 2.5Z" />
+      <circle cx="6.8" cy="8.2" r="1" fill="currentColor" stroke="none" />
+      <circle cx="10" cy="6.2" r="1" fill="currentColor" stroke="none" />
+      <circle cx="13.2" cy="8.2" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+// A small price/luggage tag — used as the "core details" section header.
+export function TagIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <path d="M10.5 3H16a1 1 0 0 1 1 1v5.5a1 1 0 0 1-.3.7l-6.7 6.7a1 1 0 0 1-1.4 0l-5.5-5.5a1 1 0 0 1 0-1.4l6.7-6.7a1 1 0 0 1 .7-.3Z" />
+      <circle cx="13.2" cy="6.8" r="1.1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export function CheckIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>

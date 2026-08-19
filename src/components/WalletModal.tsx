@@ -4,8 +4,12 @@ import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
 import Modal from "./Modal";
 import SelectDropdown from "./SelectDropdown";
-import { CATEGORY_PALETTE } from "@/lib/categories";
+import FormSection from "./FormSection";
+import ColorGlowPreview from "./ColorGlowPreview";
+import AccountCardShape from "./AccountCardShape";
 import ColorPicker from "./ColorPicker";
+import { CATEGORY_PALETTE } from "@/lib/categories";
+import { CategoryIcon, PaletteIcon } from "@/lib/icons";
 import { useCurrency } from "@/lib/currency-context";
 import { CURRENCIES } from "@/lib/currencies";
 import { useT } from "@/lib/language-context";
@@ -38,6 +42,17 @@ export default function WalletModal({
   const currencyValue = currency
     ? (CURRENCIES.find((c) => c.code === currency) ? `${currency} — ${CURRENCIES.find((c) => c.code === currency)!.name}` : currency)
     : `${appDefaultLabel} (${appCurrency})`;
+
+  const previewWallet: WalletOption = {
+    id: wallet?.id ?? 0,
+    name: name || t("wallet.namePlaceholder"),
+    color,
+    kind,
+    currency,
+    isDefault,
+    archived: false,
+    balance: Number(startingBalance) || 0,
+  };
 
   function handleCurrencyChange(label: string) {
     if (label.startsWith(appDefaultLabel)) {
@@ -93,10 +108,11 @@ export default function WalletModal({
   return (
     <Modal onClose={onClose} title={isEdit ? t("wallet.editTitle") : t("wallet.addWallet")}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="walletName" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-            {t("wallet.nameLabel")}
-          </label>
+        <ColorGlowPreview color={color}>
+          <AccountCardShape wallet={previewWallet} currency={appCurrency} />
+        </ColorGlowPreview>
+
+        <FormSection icon={<CategoryIcon iconKey="bank" className="h-4 w-4" />} title={t("wallet.nameLabel")}>
           <input
             id="walletName"
             type="text"
@@ -107,89 +123,83 @@ export default function WalletModal({
             placeholder={t("wallet.namePlaceholder")}
             className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
-        </div>
 
-        <div>
-          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("wallet.typeLabel")}</label>
-          <div className="flex gap-1 rounded-full bg-bg-soft p-1">
-            <button
-              type="button"
-              onClick={() => setKind("cash")}
-              className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-                kind === "cash" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
-              }`}
-            >
-              {t("wallet.cash")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setKind("digital")}
-              className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-                kind === "digital" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
-              }`}
-            >
-              {t("wallet.digital")}
-            </button>
-          </div>
-        </div>
-
-        <div>
-          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("wallet.colorLabel")}</label>
-          <ColorPicker value={color} onChange={setColor} />
-        </div>
-
-        <div>
-          <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("wallet.currencyLabel")}</label>
-          <SelectDropdown value={currencyValue} options={currencyOptions} onChange={handleCurrencyChange} />
-          <p className="mt-1.5 text-xs text-ink-soft">
-            {t("wallet.currencyNote")}
-          </p>
-        </div>
-
-        {isEdit && (
           <div>
-            <label htmlFor="walletBalance" className="mb-1.5 block text-sm font-semibold text-ink-soft">
-              {t("wallet.balanceLabel")} ({currency ?? appCurrency})
-            </label>
-            <input
-              id="walletBalance"
-              type="number"
-              step="0.01"
-              required
-              value={startingBalance}
-              onChange={(e) => setStartingBalance(e.target.value)}
-              className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-            />
-            <p className="mt-1.5 text-xs text-ink-soft">
-              {t("wallet.balanceNote")}
-            </p>
+            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.typeLabel")}</label>
+            <div className="flex gap-1 rounded-full bg-bg-soft p-1">
+              <button
+                type="button"
+                onClick={() => setKind("cash")}
+                className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+                  kind === "cash" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+                }`}
+              >
+                {t("wallet.cash")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setKind("digital")}
+                className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+                  kind === "digital" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+                }`}
+              >
+                {t("wallet.digital")}
+              </button>
+            </div>
           </div>
-        )}
+        </FormSection>
 
-        <button
-          type="button"
-          onClick={() => setIsDefault((v) => !v)}
-          disabled={isEdit && wallet!.isDefault}
-          className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition disabled:opacity-60"
-        >
-          <span>
-            <span className="block text-sm font-medium text-foreground">{t("wallet.defaultWalletLabel")}</span>
-            <span className="block text-xs text-ink-soft">{t("wallet.defaultWalletDesc")}</span>
-          </span>
-          <span
-            role="switch"
-            aria-checked={isDefault}
-            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
-              isDefault ? "bg-navy" : "bg-line"
-            }`}
+        <FormSection icon={<CategoryIcon iconKey="cash" className="h-4 w-4" />} title={t("wallet.currencyLabel")}>
+          <SelectDropdown value={currencyValue} options={currencyOptions} onChange={handleCurrencyChange} />
+          <p className="text-xs text-ink-soft">{t("wallet.currencyNote")}</p>
+
+          {isEdit && (
+            <div className="border-t border-line pt-3">
+              <label htmlFor="walletBalance" className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                {t("wallet.balanceLabel")} ({currency ?? appCurrency})
+              </label>
+              <input
+                id="walletBalance"
+                type="number"
+                step="0.01"
+                required
+                value={startingBalance}
+                onChange={(e) => setStartingBalance(e.target.value)}
+                className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+              />
+              <p className="mt-1.5 text-xs text-ink-soft">{t("wallet.balanceNote")}</p>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setIsDefault((v) => !v)}
+            disabled={isEdit && wallet!.isDefault}
+            className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition disabled:opacity-60"
           >
+            <span>
+              <span className="block text-sm font-medium text-foreground">{t("wallet.defaultWalletLabel")}</span>
+              <span className="block text-xs text-ink-soft">{t("wallet.defaultWalletDesc")}</span>
+            </span>
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                isDefault ? "translate-x-6" : "translate-x-1"
+              role="switch"
+              aria-checked={isDefault}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                isDefault ? "bg-navy" : "bg-line"
               }`}
-            />
-          </span>
-        </button>
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                  isDefault ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </span>
+          </button>
+        </FormSection>
+
+        <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("wallet.colorLabel")}>
+          <ColorPicker value={color} onChange={setColor} />
+        </FormSection>
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
