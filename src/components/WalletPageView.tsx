@@ -4,6 +4,7 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import AppHeader from "./AppHeader";
+import PullToRefresh from "./PullToRefresh";
 import Modal from "./Modal";
 import CardStack from "./CardStack";
 import AccountCardShape from "./AccountCardShape";
@@ -205,55 +206,57 @@ export default function WalletPageView({
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10 lg:max-w-6xl">
-      <AppHeader />
+      <PullToRefresh>
+        <AppHeader />
 
-      <main className="flex-1 px-1 py-6 sm:px-2">
-        <div className="mx-auto max-w-md">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="font-display text-2xl text-foreground">{t("nav.wallet")}</h2>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setManageAccountsOpen(true)}
-                aria-label={t("wallet.manageAccounts")}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-ink-soft transition hover:border-navy hover:text-foreground"
-              >
-                <GearIcon className="h-4.5 w-4.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setEntryOpen(true)}
-                aria-label={t("wallet.entryTitle")}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark"
-              >
-                <PlusIcon className="h-4 w-4 shrink-0" />
-              </button>
+        <main className="flex-1 px-1 py-6 sm:px-2">
+          <div className="mx-auto max-w-md">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-display text-2xl text-foreground">{t("nav.wallet")}</h2>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setManageAccountsOpen(true)}
+                  aria-label={t("wallet.manageAccounts")}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-ink-soft transition hover:border-navy hover:text-foreground"
+                >
+                  <GearIcon className="h-4.5 w-4.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEntryOpen(true)}
+                  aria-label={t("wallet.entryTitle")}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark"
+                >
+                  <PlusIcon className="h-4 w-4 shrink-0" />
+                </button>
+              </div>
             </div>
+
+            {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+
+            {isEmpty ? (
+              <div className="mt-6 flex flex-col items-center gap-2 rounded-card border border-dashed border-line px-6 py-12 text-center">
+                <p className="text-sm font-medium text-foreground">{t("wallet.stackEmptyTitle")}</p>
+                <p className="text-xs text-ink-soft">{t("wallet.stackEmptyDesc")}</p>
+              </div>
+            ) : (
+              <>
+                {cardsStack.length > 0 && (
+                  <div className="mt-5">
+                    <CardStack items={cardsStack} />
+                  </div>
+                )}
+                {passesStack.length > 0 && (
+                  <div className="mt-8">
+                    <CardStack items={passesStack} />
+                  </div>
+                )}
+              </>
+            )}
           </div>
-
-          {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
-
-          {isEmpty ? (
-            <div className="mt-6 flex flex-col items-center gap-2 rounded-card border border-dashed border-line px-6 py-12 text-center">
-              <p className="text-sm font-medium text-foreground">{t("wallet.stackEmptyTitle")}</p>
-              <p className="text-xs text-ink-soft">{t("wallet.stackEmptyDesc")}</p>
-            </div>
-          ) : (
-            <>
-              {cardsStack.length > 0 && (
-                <div className="mt-5">
-                  <CardStack items={cardsStack} />
-                </div>
-              )}
-              {passesStack.length > 0 && (
-                <div className="mt-8">
-                  <CardStack items={passesStack} />
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </main>
+        </main>
+      </PullToRefresh>
 
       {entryOpen && (
         <WalletEntryModal
