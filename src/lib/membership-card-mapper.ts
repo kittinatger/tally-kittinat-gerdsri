@@ -19,6 +19,7 @@ export type MembershipCardApiRow = {
   fields: string;
   layout: string | null;
   background: string | null;
+  text_color: string | null;
   has_logo: boolean;
   has_banner: boolean;
   category: string;
@@ -50,6 +51,7 @@ export function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
     fields: normalizePassFields(parsedFields),
     layout: row.layout ? normalizePassLayout(parsedLayout, template) : null,
     background: parseCardBackground(row.background),
+    textColor: row.text_color,
     hasLogo: row.has_logo,
     hasBanner: row.has_banner,
     category: row.category === "pass" ? "pass" : "membership",

@@ -8,8 +8,9 @@ import FormSection from "./FormSection";
 import ColorGlowPreview from "./ColorGlowPreview";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import CardBackgroundPicker from "./CardBackgroundPicker";
+import CardTextColorPicker from "./CardTextColorPicker";
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
-import { cardBackgroundStyle, backgroundGlowColor } from "@/lib/card-backgrounds";
+import { cardBackgroundStyle, backgroundGlowColor, cardForegroundFor } from "@/lib/card-backgrounds";
 import type { CardBackground } from "@/lib/card-backgrounds";
 import { isCategoryIconKey, CATEGORY_ICON_KEYS, CATEGORY_ICON_LABEL_KEYS } from "@/lib/category-icons";
 import { CATEGORY_ICON_COMPONENTS, CategoryIcon, PlusIcon, CloseIcon, TagIcon, PaletteIcon, FileIcon, MembershipCardIcon } from "@/lib/icons";
@@ -119,6 +120,7 @@ export default function MembershipCardModal({
   const [codeFormat, setCodeFormat] = useState<MembershipCodeFormat>(scannedValue?.format ?? card?.codeFormat ?? "qr");
   const [color, setColor] = useState<string>(card?.color ?? CATEGORY_PALETTE[0]);
   const [background, setBackground] = useState<CardBackground | null>(card?.background ?? null);
+  const [textColor, setTextColor] = useState<string | null>(card?.textColor ?? null);
   const [icon, setIcon] = useState<string | null>(card?.icon ?? null);
   const [notes, setNotes] = useState(card?.notes ?? "");
   const [template, setTemplate] = useState<PassTemplate>(card?.template ?? "generic");
@@ -240,7 +242,20 @@ export default function MembershipCardModal({
     setSubmitting(true);
     setError(null);
     try {
-      const body = { name, codeValue, codeFormat, color, background, icon, notes: notes.trim() || null, template, fields, layout, category };
+      const body = {
+        name,
+        codeValue,
+        codeFormat,
+        color,
+        background,
+        textColor,
+        icon,
+        notes: notes.trim() || null,
+        template,
+        fields,
+        layout,
+        category,
+      };
       const res = isEdit
         ? await fetch(`/api/memberships/${card!.id}`, {
             method: "PATCH",
@@ -267,6 +282,8 @@ export default function MembershipCardModal({
     }
   }
 
+  const previewFg = cardForegroundFor(textColor, background, color);
+
   return (
     <Modal
       onClose={onClose}
@@ -287,6 +304,7 @@ export default function MembershipCardModal({
               name={name || t("membership.namePlaceholder")}
               color={color}
               background={background}
+              textColor={textColor}
               icon={icon}
               template={template}
               fields={fields}
@@ -302,15 +320,26 @@ export default function MembershipCardModal({
             // fail) to render a barcode for an empty string — show a plain
             // header-only stand-in instead of the full pass shape.
             <div
-              className={`overflow-hidden rounded-2xl p-4 text-white ${background ? "" : heroGradientClasses(color)}`}
-              style={background ? cardBackgroundStyle(background) : colorHeroStyle(color)}
+              className={`overflow-hidden rounded-2xl p-4 ${background ? "" : heroGradientClasses(color)}`}
+              style={{
+                color: previewFg.full,
+                ...(background ? cardBackgroundStyle(background) : colorHeroStyle(color)),
+              }}
             >
               <div className="flex items-center gap-2.5">
                 {logoPreviewUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element -- local object URL / API-served image, not a build-time asset
-                  <img src={logoPreviewUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-white/30" />
+                  <img
+                    src={logoPreviewUrl}
+                    alt=""
+                    className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1"
+                    style={{ boxShadow: `0 0 0 1px ${previewFg.a30}` }}
+                  />
                 ) : (
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20">
+                  <span
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                    style={{ backgroundColor: previewFg.a20 }}
+                  >
                     {icon && isCategoryIconKey(icon) ? (
                       <CategoryIcon iconKey={icon} className="h-4.5 w-4.5" />
                     ) : (
@@ -324,7 +353,9 @@ export default function MembershipCardModal({
                 // eslint-disable-next-line @next/next/no-img-element -- local object URL / API-served image, not a build-time asset
                 <img src={bannerPreviewUrl} alt="" className="mt-3 aspect-[5/3] w-full rounded-xl object-cover" />
               )}
-              <p className="mt-3 text-xs text-white/70">{t("membership.codePlaceholder")}</p>
+              <p className="mt-3 text-xs" style={{ color: previewFg.a70 }}>
+                {t("membership.codePlaceholder")}
+              </p>
             </div>
           )}
         </ColorGlowPreview>
@@ -540,6 +571,11 @@ export default function MembershipCardModal({
 
         <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("membership.colorLabel")}>
           <CardBackgroundPicker value={background} onChange={setBackground} plainColor={color} onPlainColorChange={setColor} />
+
+          <div className="border-t border-line pt-3">
+            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("background.textColorLabel")}</label>
+            <CardTextColorPicker value={textColor} onChange={setTextColor} autoColor={cardForegroundFor(null, background, color).full} />
+          </div>
 
           <div className="border-t border-line pt-3">
             <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("membership.iconLabel")}</label>

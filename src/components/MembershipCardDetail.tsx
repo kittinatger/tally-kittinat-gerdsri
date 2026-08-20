@@ -37,6 +37,7 @@ export default function MembershipCardDetail({
         name={card.name}
         color={card.color}
         background={card.background}
+        textColor={card.textColor}
         icon={card.icon}
         template={card.template}
         fields={card.fields}

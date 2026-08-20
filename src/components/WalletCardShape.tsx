@@ -1,7 +1,7 @@
 "use client";
 
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
-import { cardBackgroundStyle, type CardBackground } from "@/lib/card-backgrounds";
+import { cardBackgroundStyle, cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
 import { useT } from "@/lib/language-context";
 import type { CardNetwork } from "@/lib/wallet-cards";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -56,6 +56,7 @@ export default function WalletCardShape({
   network,
   color,
   background = null,
+  textColor = null,
   showNetworkBadge = true,
 }: {
   label: string;
@@ -66,20 +67,23 @@ export default function WalletCardShape({
   network: CardNetwork;
   color: string;
   background?: CardBackground | null;
+  /** Manual text-color override — null means auto-contrast against the background. */
+  textColor?: string | null;
   showNetworkBadge?: boolean;
 }) {
   const t = useT();
   const expiry = expiryMonth && expiryYear ? `${String(expiryMonth).padStart(2, "0")}/${String(expiryYear).slice(-2)}` : null;
+  const fg = cardForegroundFor(textColor, background, color);
 
   return (
     <div
-      className={`flex min-h-[190px] w-full flex-col justify-between rounded-2xl p-4 text-white shadow-soft ${background ? "" : heroGradientClasses(color)}`}
-      style={background ? cardBackgroundStyle(background) : colorHeroStyle(color)}
+      className={`flex min-h-[190px] w-full flex-col justify-between rounded-2xl p-4 shadow-soft ${background ? "" : heroGradientClasses(color)}`}
+      style={{ color: fg.full, ...(background ? cardBackgroundStyle(background) : colorHeroStyle(color)) }}
     >
       <div className="flex items-start justify-between gap-2">
         <p className="min-w-0 truncate text-sm font-semibold">{label}</p>
         {showNetworkBadge && (
-          <div className="flex shrink-0 items-center gap-1.5 text-white/85">
+          <div className="flex shrink-0 items-center gap-1.5" style={{ color: fg.a85 }}>
             <NetworkBadge network={network} />
             <p className="text-xs font-bold uppercase tracking-wide">{t(NETWORK_LABEL_KEYS[network])}</p>
           </div>
@@ -94,8 +98,14 @@ export default function WalletCardShape({
       </div>
 
       <div className="flex items-end justify-between gap-2">
-        <p className="min-w-0 truncate text-xs uppercase tracking-wide text-white/85">{holderName || " "}</p>
-        {expiry && <p className="shrink-0 text-xs font-semibold text-white/85">{expiry}</p>}
+        <p className="min-w-0 truncate text-xs uppercase tracking-wide" style={{ color: fg.a85 }}>
+          {holderName || " "}
+        </p>
+        {expiry && (
+          <p className="shrink-0 text-xs font-semibold" style={{ color: fg.a85 }}>
+            {expiry}
+          </p>
+        )}
       </div>
     </div>
   );

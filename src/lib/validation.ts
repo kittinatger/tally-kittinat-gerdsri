@@ -45,6 +45,15 @@ const cardPhotoBackgroundSchema = z.object({
 });
 const cardBackgroundSchema = z.union([cardPatternBackgroundSchema, cardPhotoBackgroundSchema]).nullable();
 
+// Shared by the same three entities' optional manual text-color override —
+// see cardForegroundFor in card-backgrounds.ts. Null means "auto-contrast
+// against the background", the default for every card before this existed.
+const cardTextColorSchema = z
+  .string()
+  .trim()
+  .regex(/^#[0-9a-fA-F]{6}$/, "Must be a 6-digit hex color")
+  .nullable();
+
 export const forgotPasswordInputSchema = z.object({
   email: z.string().trim().email().max(255),
 });
@@ -146,6 +155,7 @@ export const walletInputSchema = z.object({
   name: z.string().trim().min(1).max(40),
   color: z.string().trim().min(1).max(30),
   background: cardBackgroundSchema.optional(),
+  textColor: cardTextColorSchema.optional(),
   kind: z.enum(WALLET_KINDS).default("cash"),
   currency: walletCurrencySchema.optional(),
 });
@@ -155,6 +165,7 @@ export const walletUpdateSchema = z
     name: z.string().trim().min(1).max(40).optional(),
     color: z.string().trim().min(1).max(30).optional(),
     background: cardBackgroundSchema.optional(),
+    textColor: cardTextColorSchema.optional(),
     kind: z.enum(WALLET_KINDS).optional(),
     currency: walletCurrencySchema.optional(),
     isDefault: z.literal(true).optional(),
@@ -320,6 +331,7 @@ export const membershipInputSchema = z.object({
   fields: passFieldsSchema.default({}),
   layout: passLayoutSchema.optional(),
   background: cardBackgroundSchema.optional(),
+  textColor: cardTextColorSchema.optional(),
   category: membershipCategorySchema.default("membership"),
 });
 
@@ -335,6 +347,7 @@ export const membershipUpdateSchema = z
     fields: passFieldsSchema.optional(),
     layout: passLayoutSchema.optional(),
     background: cardBackgroundSchema.optional(),
+    textColor: cardTextColorSchema.optional(),
     category: membershipCategorySchema.optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
@@ -357,6 +370,7 @@ export const walletCardInputSchema = z.object({
   network: z.enum(CARD_NETWORKS).default("other"),
   color: z.string().trim().min(1).max(30),
   background: cardBackgroundSchema.optional(),
+  textColor: cardTextColorSchema.optional(),
   showNetworkBadge: z.boolean().default(true),
   notes: z.string().trim().max(500).nullable().optional(),
 });
@@ -376,6 +390,7 @@ export const walletCardUpdateSchema = z
     network: z.enum(CARD_NETWORKS).optional(),
     color: z.string().trim().min(1).max(30).optional(),
     background: cardBackgroundSchema.optional(),
+    textColor: cardTextColorSchema.optional(),
     showNetworkBadge: z.boolean().optional(),
     notes: z.string().trim().max(500).nullable().optional(),
   })

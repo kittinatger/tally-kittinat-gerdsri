@@ -40,6 +40,7 @@ export default function WalletCardDetail({
         color={card.color}
         background={card.background}
         showNetworkBadge={card.showNetworkBadge}
+        textColor={card.textColor}
       />
 
       {card.notes && (

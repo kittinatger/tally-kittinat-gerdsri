@@ -7,6 +7,8 @@ export type WalletOption = {
   color: string;
   /** Optional pattern/gradient background — null means "plain `color` gradient". */
   background: CardBackground | null;
+  /** Manual text-color override — null means auto-contrast against the background. */
+  textColor: string | null;
   kind: WalletKind;
   /** Null means "use the app's default currency" — a display label only, amounts aren't converted. */
   currency: string | null;

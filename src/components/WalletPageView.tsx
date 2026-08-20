@@ -173,6 +173,7 @@ export default function WalletPageView({
         color={card.color}
         background={card.background}
         showNetworkBadge={card.showNetworkBadge}
+        textColor={card.textColor}
       />
     ),
     onOpen: () => setViewingCard(card),
@@ -188,6 +189,7 @@ export default function WalletPageView({
           name={card.name}
           color={card.color}
           background={card.background}
+          textColor={card.textColor}
           icon={card.icon}
           template={card.template}
           fields={card.fields}

@@ -11,6 +11,8 @@ export type MembershipCard = {
   color: string;
   /** Optional pattern/gradient background — null means "plain `color` gradient". */
   background: CardBackground | null;
+  /** Manual text-color override — null means auto-contrast against the background. */
+  textColor: string | null;
   icon: CategoryIconKey | null;
   notes: string | null;
   template: PassTemplate;

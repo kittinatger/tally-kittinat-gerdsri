@@ -25,6 +25,7 @@ export default async function WalletPage() {
     name: w.name,
     color: w.color,
     background: parseCardBackground(w.background),
+    textColor: w.text_color,
     kind: isWalletKind(w.kind) ? w.kind : "cash",
     currency: w.currency,
     isDefault: w.is_default,
@@ -43,6 +44,7 @@ export default async function WalletPage() {
     color: c.color,
     background: parseCardBackground(c.background),
     showNetworkBadge: c.show_network_badge,
+    textColor: c.text_color,
     notes: c.notes,
   }));
 

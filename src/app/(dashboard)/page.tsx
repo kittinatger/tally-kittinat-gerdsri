@@ -88,6 +88,7 @@ export default async function HomePage() {
     name: w.name,
     color: w.color,
     background: parseCardBackground(w.background),
+    textColor: w.text_color,
     kind: isWalletKind(w.kind) ? w.kind : "cash",
     currency: w.currency,
     isDefault: w.is_default,

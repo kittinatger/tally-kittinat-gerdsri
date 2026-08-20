@@ -1,7 +1,7 @@
 "use client";
 
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
-import { cardBackgroundStyle } from "@/lib/card-backgrounds";
+import { cardBackgroundStyle, cardForegroundFor } from "@/lib/card-backgrounds";
 import { formatCurrency } from "@/lib/format";
 import { useT } from "@/lib/language-context";
 import type { WalletOption } from "@/types/wallet";
@@ -15,19 +15,22 @@ import type { WalletOption } from "@/types/wallet";
 // was found cut off mid-digit on a narrow phone screen.
 export default function AccountCardShape({ wallet, currency }: { wallet: WalletOption; currency: string }) {
   const t = useT();
+  const fg = cardForegroundFor(wallet.textColor, wallet.background, wallet.color);
   return (
     <div
-      className={`flex min-h-[190px] w-full flex-col justify-between rounded-2xl p-4 text-white shadow-soft ${wallet.background ? "" : heroGradientClasses(wallet.color)}`}
-      style={wallet.background ? cardBackgroundStyle(wallet.background) : colorHeroStyle(wallet.color)}
+      className={`flex min-h-[190px] w-full flex-col justify-between rounded-2xl p-4 shadow-soft ${wallet.background ? "" : heroGradientClasses(wallet.color)}`}
+      style={{ color: fg.full, ...(wallet.background ? cardBackgroundStyle(wallet.background) : colorHeroStyle(wallet.color)) }}
     >
       <div className="flex items-start justify-between gap-2">
         <p className="min-w-0 truncate text-sm font-semibold">{wallet.name}</p>
-        <p className="shrink-0 text-xs font-bold uppercase tracking-wide text-white/85">
+        <p className="shrink-0 text-xs font-bold uppercase tracking-wide" style={{ color: fg.a85 }}>
           {wallet.kind === "digital" ? t("wallet.digital") : t("wallet.cash")}
         </p>
       </div>
       <div>
-        <p className="text-[10px] uppercase tracking-wide text-white/70">{t("wallet.balanceLabel")}</p>
+        <p className="text-[10px] uppercase tracking-wide" style={{ color: fg.a70 }}>
+          {t("wallet.balanceLabel")}
+        </p>
         <p className="truncate text-2xl font-bold">{formatCurrency(wallet.balance, wallet.currency ?? currency)}</p>
       </div>
     </div>

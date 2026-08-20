@@ -8,8 +8,9 @@ import FormSection from "./FormSection";
 import ColorGlowPreview from "./ColorGlowPreview";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import CardBackgroundPicker from "./CardBackgroundPicker";
+import CardTextColorPicker from "./CardTextColorPicker";
 import { CARD_NETWORKS, type CardNetwork } from "@/lib/wallet-cards";
-import { parseCardBackground, backgroundGlowColor, type CardBackground } from "@/lib/card-backgrounds";
+import { parseCardBackground, backgroundGlowColor, cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
 import { CategoryIcon, PaletteIcon, FileIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -26,6 +27,7 @@ type WalletCardApiRow = {
   color: string;
   background: string | null;
   show_network_badge: boolean;
+  text_color: string | null;
   notes: string | null;
 };
 
@@ -42,6 +44,7 @@ function toWalletCard(row: WalletCardApiRow): WalletCard {
     color: row.color,
     background: parseCardBackground(row.background),
     showNetworkBadge: row.show_network_badge,
+    textColor: row.text_color,
     notes: row.notes,
   };
 }
@@ -74,6 +77,7 @@ export default function WalletCardModal({
   const [color, setColor] = useState<string>(card?.color ?? CATEGORY_PALETTE[0]);
   const [background, setBackground] = useState<CardBackground | null>(card?.background ?? null);
   const [showNetworkBadge, setShowNetworkBadge] = useState(card?.showNetworkBadge ?? true);
+  const [textColor, setTextColor] = useState<string | null>(card?.textColor ?? null);
   const [notes, setNotes] = useState(card?.notes ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,6 +100,7 @@ export default function WalletCardModal({
         color,
         background,
         showNetworkBadge,
+        textColor,
         notes: notes.trim() || null,
       };
       const res = isEdit
@@ -136,6 +141,7 @@ export default function WalletCardModal({
             color={color}
             background={background}
             showNetworkBadge={showNetworkBadge}
+            textColor={textColor}
           />
         </ColorGlowPreview>
 
@@ -260,6 +266,10 @@ export default function WalletCardModal({
 
         <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("membership.colorLabel")}>
           <CardBackgroundPicker value={background} onChange={setBackground} plainColor={color} onPlainColorChange={setColor} />
+          <div className="border-t border-line pt-3">
+            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("background.textColorLabel")}</label>
+            <CardTextColorPicker value={textColor} onChange={setTextColor} autoColor={cardForegroundFor(null, background, color).full} />
+          </div>
         </FormSection>
 
         <FormSection icon={<FileIcon className="h-4 w-4" />} title={t("membership.notesLabel")}>

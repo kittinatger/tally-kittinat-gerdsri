@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type { MessageKey } from "@/lib/i18n/messages";
+import { isHexColor, hexToRgb } from "@/lib/color-convert";
 
 // Background treatments for card/pass visuals (WalletCardShape, PassShape,
 // AccountCardShape) — the plain single-gradient look ("solid") stays the
@@ -257,4 +258,60 @@ export function cardBackgroundStyle(bg: CardBackground): CSSProperties {
         `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c2}"/><rect width="150" height="95" fill="${c0}"/><rect x="150" width="150" height="95" fill="${c1}"/><circle cx="150" cy="95" r="45" fill="${c2}"/></svg>`,
       );
   }
+}
+
+// ---- Text color (auto-contrast, with an optional manual override) --------
+
+// Simple relative-luminance check (perceptual weighting, not true WCAG
+// contrast ratio — plenty accurate for picking "light or dark text" against
+// a single representative background color, which is all this needs).
+export function contrastTextColor(hex: string): string {
+  const { r, g, b } = hexToRgb(hex);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6 ? "#0f172a" : "#ffffff";
+}
+
+function withAlpha(hex: string, alpha: number): string {
+  const { r, g, b } = hexToRgb(hex);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+// The full set of opacities the card shapes actually use (their labels vs.
+// values vs. dividers) — computed once per base color so callers never
+// re-derive rgba strings by hand. Tailwind's `text-white/70`-style opacity
+// utilities only work for literal white, so once the base can be any
+// runtime color, every one of those becomes an inline style instead.
+export type CardForeground = { full: string; a85: string; a70: string; a60: string; a40: string; a30: string; a20: string };
+
+function cardForeground(base: string): CardForeground {
+  return {
+    full: base,
+    a85: withAlpha(base, 0.85),
+    a70: withAlpha(base, 0.7),
+    a60: withAlpha(base, 0.6),
+    a40: withAlpha(base, 0.4),
+    a30: withAlpha(base, 0.3),
+    a20: withAlpha(base, 0.2),
+  };
+}
+
+// Resolves what a card's text/foreground chrome should be: an explicit
+// manual override if one is set, otherwise auto-contrast against the
+// card's own background. A pattern's own `colors[0]` is its base/dominant
+// color, so that's what gets tested; a photo background has no single
+// representative color to test, so it keeps the white-text default that
+// every card had before this existed (still overridable manually). A named
+// palette token (e.g. "emerald") isn't tested either — that curated
+// palette was already chosen to read well with white text, unlike an
+// arbitrary user-picked hex, which might be light.
+export function cardForegroundFor(
+  explicitTextColor: string | null | undefined,
+  background: CardBackground | null,
+  plainColor: string,
+): CardForeground {
+  if (explicitTextColor) return cardForeground(explicitTextColor);
+  if (background) {
+    return cardForeground(background.pattern === "photo" ? "#ffffff" : contrastTextColor(background.colors[0]));
+  }
+  return cardForeground(isHexColor(plainColor) ? contrastTextColor(plainColor) : "#ffffff");
 }

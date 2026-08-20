@@ -15,5 +15,7 @@ export type WalletCard = {
   background: CardBackground | null;
   /** Whether the generic (non-trademark) network badge shows on the card visual. */
   showNetworkBadge: boolean;
+  /** Manual text-color override — null means auto-contrast against the background. */
+  textColor: string | null;
   notes: string | null;
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
-import { cardBackgroundStyle, type CardBackground } from "@/lib/card-backgrounds";
+import { cardBackgroundStyle, cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
 import { isCategoryIconKey } from "@/lib/category-icons";
 import { CategoryIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
@@ -23,6 +23,7 @@ export default function PassShape({
   name,
   color,
   background = null,
+  textColor = null,
   icon,
   template,
   fields,
@@ -36,6 +37,8 @@ export default function PassShape({
   name: string;
   color: string;
   background?: CardBackground | null;
+  /** Manual text-color override — null means auto-contrast against the background. */
+  textColor?: string | null;
   icon: string | null;
   template: PassTemplate;
   fields: Record<string, string>;
@@ -68,19 +71,20 @@ export default function PassShape({
   const secondaryFields = zoneEntries("secondary");
   const auxiliaryFields = zoneEntries("auxiliary");
   const stubFields = [...secondaryFields, ...auxiliaryFields];
+  const fg = cardForegroundFor(textColor, background, color);
 
   return (
     <div className="w-full">
       <div
-        className={`overflow-hidden rounded-2xl p-4 text-white ${background ? "" : heroGradientClasses(color)}`}
-        style={background ? cardBackgroundStyle(background) : colorHeroStyle(color)}
+        className={`overflow-hidden rounded-2xl p-4 ${background ? "" : heroGradientClasses(color)}`}
+        style={{ color: fg.full, ...(background ? cardBackgroundStyle(background) : colorHeroStyle(color)) }}
       >
         <div className="flex items-center gap-2.5">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- user-uploaded, not a build-time asset
-            <img src={logoUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-white/30" />
+            <img src={logoUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1" style={{ boxShadow: `0 0 0 1px ${fg.a30}` }} />
           ) : (
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: fg.a20 }}>
               {icon && isCategoryIconKey(icon) ? (
                 <CategoryIcon iconKey={icon} className="h-4.5 w-4.5" />
               ) : (
@@ -93,9 +97,11 @@ export default function PassShape({
             <div className="flex shrink-0 items-center gap-2 text-right">
               {headerFields.map(({ key, def, value }, i) => (
                 <div key={key} className="flex items-center gap-2">
-                  {i > 0 && <span className="text-white/60">→</span>}
+                  {i > 0 && <span style={{ color: fg.a60 }}>→</span>}
                   <div>
-                    <p className="text-[9px] uppercase tracking-wide text-white/70">{t(def!.labelKey)}</p>
+                    <p className="text-[9px] uppercase tracking-wide" style={{ color: fg.a70 }}>
+                      {t(def!.labelKey)}
+                    </p>
                     <p className="text-sm font-semibold">{value}</p>
                   </div>
                 </div>
@@ -113,7 +119,9 @@ export default function PassShape({
           <div className="mt-3">
             {primaryFields.map(({ key, def, value }) => (
               <div key={key}>
-                <p className="text-[10px] uppercase tracking-wide text-white/70">{t(def!.labelKey)}</p>
+                <p className="text-[10px] uppercase tracking-wide" style={{ color: fg.a70 }}>
+                  {t(def!.labelKey)}
+                </p>
                 <p className="text-2xl font-bold">{value}</p>
               </div>
             ))}
@@ -122,13 +130,15 @@ export default function PassShape({
 
         {hasStub ? (
           stubFields.length > 0 && (
-            <div className="relative mt-3 border-t border-dashed border-white/40 pt-3">
+            <div className="relative mt-3 border-t border-dashed pt-3" style={{ borderColor: fg.a40 }}>
               <span className="absolute -left-2 -top-2 h-3 w-3 rounded-full bg-black/15" />
               <span className="absolute -right-2 -top-2 h-3 w-3 rounded-full bg-black/15" />
               <div className="flex flex-wrap gap-x-4 gap-y-2">
                 {stubFields.map(({ key, def, value }) => (
                   <div key={key}>
-                    <p className="text-[9px] uppercase tracking-wide text-white/70">{t(def!.labelKey)}</p>
+                    <p className="text-[9px] uppercase tracking-wide" style={{ color: fg.a70 }}>
+                      {t(def!.labelKey)}
+                    </p>
                     <p className="text-sm font-semibold">{value}</p>
                   </div>
                 ))}
@@ -140,7 +150,9 @@ export default function PassShape({
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
               {stubFields.map(({ key, def, value }) => (
                 <div key={key}>
-                  <p className="text-[9px] uppercase tracking-wide text-white/70">{t(def!.labelKey)}</p>
+                  <p className="text-[9px] uppercase tracking-wide" style={{ color: fg.a70 }}>
+                    {t(def!.labelKey)}
+                  </p>
                   <p className="text-sm font-semibold">{value}</p>
                 </div>
               ))}
