@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 18;
+const CURRENT_SCHEMA_VERSION = 19;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -861,6 +861,10 @@ function ensureSchema(): Promise<void> {
       // Same background-pattern column as wallets.background — see
       // card-backgrounds.ts.
       await sql`ALTER TABLE wallet_cards ADD COLUMN IF NOT EXISTS background TEXT;`;
+
+      // Whether the (generic, non-trademark — see WalletCardShape.tsx)
+      // network badge is shown on the card visual at all.
+      await sql`ALTER TABLE wallet_cards ADD COLUMN IF NOT EXISTS show_network_badge BOOLEAN NOT NULL DEFAULT true;`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -3420,13 +3424,14 @@ export type WalletCardRow = {
   network: string;
   color: string;
   background: string | null;
+  show_network_badge: boolean;
   notes: string | null;
 };
 
 export async function listWalletCards(userId: number): Promise<WalletCardRow[]> {
   await ensureSchema();
   const { rows } = await sql<WalletCardRow>`
-    SELECT id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, notes
+    SELECT id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, notes
     FROM wallet_cards
     WHERE user_id = ${userId}
     ORDER BY sort_order, id;
@@ -3445,6 +3450,7 @@ export async function createWalletCard(
     network: string;
     color: string;
     background?: unknown;
+    showNetworkBadge?: boolean;
     notes?: string | null;
   },
 ): Promise<WalletCardRow> {
@@ -3454,11 +3460,12 @@ export async function createWalletCard(
   `;
   const nextSort = (maxRows[0]?.max ?? -1) + 1;
   const backgroundJson = input.background ? JSON.stringify(input.background) : null;
+  const showNetworkBadge = input.showNetworkBadge ?? true;
   const { rows } = await sql<WalletCardRow>`
-    INSERT INTO wallet_cards (user_id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, notes, sort_order)
+    INSERT INTO wallet_cards (user_id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, notes, sort_order)
     VALUES (${userId}, ${input.label}, ${input.holderName ?? null}, ${input.last4 ?? null}, ${input.expiryMonth ?? null},
-      ${input.expiryYear ?? null}, ${input.network}, ${input.color}, ${backgroundJson}, ${input.notes ?? null}, ${nextSort})
-    RETURNING id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, notes;
+      ${input.expiryYear ?? null}, ${input.network}, ${input.color}, ${backgroundJson}, ${showNetworkBadge}, ${input.notes ?? null}, ${nextSort})
+    RETURNING id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, notes;
   `;
   return rows[0];
 }
@@ -3475,12 +3482,13 @@ export async function updateWalletCard(
     network?: string;
     color?: string;
     background?: unknown;
+    showNetworkBadge?: boolean;
     notes?: string | null;
   },
 ): Promise<WalletCardRow | null> {
   await ensureSchema();
   const { rows: existingRows } = await sql<WalletCardRow>`
-    SELECT id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, notes
+    SELECT id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, notes
     FROM wallet_cards WHERE id = ${id} AND user_id = ${userId};
   `;
   const existing = existingRows[0];
@@ -3494,15 +3502,17 @@ export async function updateWalletCard(
   const newNetwork = input.network ?? existing.network;
   const newColor = input.color ?? existing.color;
   const newBackground = input.background !== undefined ? (input.background ? JSON.stringify(input.background) : null) : existing.background;
+  const newShowNetworkBadge = input.showNetworkBadge ?? existing.show_network_badge;
   const newNotes = input.notes !== undefined ? input.notes : existing.notes;
 
   const { rows } = await sql<WalletCardRow>`
     UPDATE wallet_cards
     SET label = ${newLabel}, holder_name = ${newHolderName}, last4 = ${newLast4},
         expiry_month = ${newExpiryMonth}, expiry_year = ${newExpiryYear},
-        network = ${newNetwork}, color = ${newColor}, background = ${newBackground}, notes = ${newNotes}
+        network = ${newNetwork}, color = ${newColor}, background = ${newBackground},
+        show_network_badge = ${newShowNetworkBadge}, notes = ${newNotes}
     WHERE id = ${id} AND user_id = ${userId}
-    RETURNING id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, notes;
+    RETURNING id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, notes;
   `;
   return rows[0];
 }

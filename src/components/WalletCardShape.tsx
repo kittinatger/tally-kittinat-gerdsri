@@ -14,10 +14,34 @@ const NETWORK_LABEL_KEYS: Record<CardNetwork, MessageKey> = {
   other: "wallet.networkOther",
 };
 
-// Plain text wordmarks rather than the real network logos — this is a
+// A generic 2-letter monogram per network, not the real initials/shapes any
+// brand uses — see NetworkBadge below for why.
+const NETWORK_MONOGRAMS: Record<CardNetwork, string> = {
+  visa: "VI",
+  mastercard: "MC",
+  amex: "AX",
+  discover: "DI",
+  other: "••",
+};
+
+// A generic rounded-badge monogram, rendered as inline SVG (crisp at any
+// size, no raster asset) — deliberately NOT a recreation of any network's
+// actual logo mark, wordmark typography, or brand colors: this is a
 // decorative pass-style visual, not a licensed payment-brand integration,
-// so it deliberately avoids reproducing trademarked logo artwork.
-//
+// so it stays a plain, original badge regardless of which network is
+// selected. Text color inherits from the parent (`currentColor`) so it
+// always matches the surrounding white card text.
+function NetworkBadge({ network }: { network: CardNetwork }) {
+  return (
+    <svg viewBox="0 0 40 24" className="h-4 w-7 shrink-0" aria-hidden="true">
+      <rect x="0.75" y="0.75" width="38.5" height="22.5" rx="5" fill="none" stroke="currentColor" strokeWidth="1.3" opacity="0.85" />
+      <text x="20" y="16.5" textAnchor="middle" fontSize="10" fontWeight="700" fill="currentColor">
+        {NETWORK_MONOGRAMS[network]}
+      </text>
+    </svg>
+  );
+}
+
 // Height is min-height + natural content flow (not a fixed aspect-ratio
 // box) so a long cardholder name never gets silently clipped — see
 // AccountCardShape for the same fix, made after a real balance was found
@@ -32,6 +56,7 @@ export default function WalletCardShape({
   network,
   color,
   background = null,
+  showNetworkBadge = true,
 }: {
   label: string;
   holderName: string | null;
@@ -41,6 +66,7 @@ export default function WalletCardShape({
   network: CardNetwork;
   color: string;
   background?: CardBackground | null;
+  showNetworkBadge?: boolean;
 }) {
   const t = useT();
   const expiry = expiryMonth && expiryYear ? `${String(expiryMonth).padStart(2, "0")}/${String(expiryYear).slice(-2)}` : null;
@@ -52,7 +78,12 @@ export default function WalletCardShape({
     >
       <div className="flex items-start justify-between gap-2">
         <p className="min-w-0 truncate text-sm font-semibold">{label}</p>
-        <p className="shrink-0 text-xs font-bold uppercase tracking-wide text-white/85">{t(NETWORK_LABEL_KEYS[network])}</p>
+        {showNetworkBadge && (
+          <div className="flex shrink-0 items-center gap-1.5 text-white/85">
+            <NetworkBadge network={network} />
+            <p className="text-xs font-bold uppercase tracking-wide">{t(NETWORK_LABEL_KEYS[network])}</p>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-2">

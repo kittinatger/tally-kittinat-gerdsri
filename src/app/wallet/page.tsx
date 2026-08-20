@@ -42,6 +42,7 @@ export default async function WalletPage() {
     network: isCardNetwork(c.network) ? c.network : "other",
     color: c.color,
     background: parseCardBackground(c.background),
+    showNetworkBadge: c.show_network_badge,
     notes: c.notes,
   }));
 

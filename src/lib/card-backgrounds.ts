@@ -4,12 +4,16 @@ import type { MessageKey } from "@/lib/i18n/messages";
 // Background treatments for card/pass visuals (WalletCardShape, PassShape,
 // AccountCardShape) — the plain single-gradient look ("solid") stays the
 // default and behind-the-scenes fallback (see the "solid" case below, which
-// mirrors heroGradientClasses/colorHeroStyle in category-styles.ts exactly),
-// while the other ten are pure-CSS patterns/gradients inspired by real card
+// mirrors heroGradientClasses/colorHeroStyle in category-styles.ts exactly).
+// Of the rest: ten are pure-CSS gradients/textures inspired by real card
 // designs (metal-card sheen, neobank wave/dot motifs, geometric fintech
-// cards, etc). Every pattern's colors are plain hex — never named palette
-// tokens — since these render as raw inline CSS gradients that Tailwind
-// can't express as build-time classes (same reasoning as colorHeroStyle).
+// cards, etc), and six (diagonalSplit through colorBlocks) are original SVG
+// shape illustrations — folded ribbons, interlocking rings, a spiral, a
+// soft radial burst, geometric color blocks — in the style of abstract
+// wallpaper art, not modeled on any specific card or brand. Every pattern's
+// colors are plain hex — never named palette tokens — since these render
+// as raw inline CSS/SVG that Tailwind can't express as build-time classes
+// (same reasoning as colorHeroStyle).
 export const CARD_PATTERNS = [
   "solid",
   "diagonal",
@@ -22,6 +26,12 @@ export const CARD_PATTERNS = [
   "sheen",
   "topographic",
   "confetti",
+  "diagonalSplit",
+  "ribbonFold",
+  "loopKnot",
+  "spiralCoil",
+  "radialBurst",
+  "colorBlocks",
 ] as const;
 
 export type CardPattern = (typeof CARD_PATTERNS)[number];
@@ -47,6 +57,12 @@ export const PATTERN_COLOR_COUNT: Record<CardPattern, number> = {
   sheen: 2,
   topographic: 2,
   confetti: 3,
+  diagonalSplit: 2,
+  ribbonFold: 2,
+  loopKnot: 3,
+  spiralCoil: 3,
+  radialBurst: 3,
+  colorBlocks: 3,
 };
 
 export const PATTERN_LABEL_KEYS: Partial<Record<CardPattern, MessageKey>> = {
@@ -60,6 +76,12 @@ export const PATTERN_LABEL_KEYS: Partial<Record<CardPattern, MessageKey>> = {
   sheen: "background.patternSheen",
   topographic: "background.patternTopographic",
   confetti: "background.patternConfetti",
+  diagonalSplit: "background.patternDiagonalSplit",
+  ribbonFold: "background.patternRibbonFold",
+  loopKnot: "background.patternLoopKnot",
+  spiralCoil: "background.patternSpiralCoil",
+  radialBurst: "background.patternRadialBurst",
+  colorBlocks: "background.patternColorBlocks",
 };
 
 export const COLOR_SLOT_LABEL_KEYS: MessageKey[] = ["background.colorSlot1", "background.colorSlot2", "background.colorSlot3"];
@@ -87,6 +109,12 @@ const DEFAULT_COLORS: Record<CardPattern, string[]> = {
   sheen: ["#334155", "#e2e8f0"],
   topographic: ["#166534", "#86efac"],
   confetti: ["#7c3aed", "#f472b6", "#facc15"],
+  diagonalSplit: ["#a3e635", "#16a34a"],
+  ribbonFold: ["#7c3aed", "#2dd4bf"],
+  loopKnot: ["#ffffff", "#ef4444", "#7c3aed"],
+  spiralCoil: ["#ffffff", "#db2777", "#2563eb"],
+  radialBurst: ["#2563eb", "#f59e0b", "#16a34a"],
+  colorBlocks: ["#f97316", "#1d4ed8", "#facc15"],
 };
 
 export function defaultCardBackground(pattern: CardPattern): CardBackground {
@@ -137,12 +165,23 @@ export function parseCardBackground(text: string | null | undefined): CardBackgr
   }
 }
 
-// Pure-CSS renderers, one per non-"solid" pattern — plain gradient
-// functions so colors can be swapped at runtime via inline style, no SVG/
-// canvas/image assets involved. "solid" isn't handled here: callers keep
-// using heroGradientClasses/colorHeroStyle for it, same as before this
-// system existed, so a card with no background set renders byte-identical
-// to how it always has.
+// Wraps original, non-brand SVG artwork (see the six shape-based patterns
+// below) as a data-URI background-image — same rendering path as the
+// pure-CSS gradient patterns (still just a CSSProperties object), so
+// callers never need to know which patterns are gradients and which are
+// vector shapes.
+function svgBackground(markup: string): CSSProperties {
+  return { backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(markup)}")`, backgroundSize: "cover", backgroundPosition: "center" };
+}
+
+// Pure-CSS renderers for most patterns — plain gradient functions so colors
+// can be swapped at runtime via inline style. Six patterns (diagonalSplit
+// through colorBlocks) are instead small original SVG shape illustrations
+// (folded ribbons, interlocking rings, a spiral, a soft radial burst,
+// geometric color blocks) recolored the same way. "solid" isn't handled
+// here: callers keep using heroGradientClasses/colorHeroStyle for it, same
+// as before this system existed, so a card with no background set renders
+// byte-identical to how it always has.
 export function cardBackgroundStyle(bg: CardBackground): CSSProperties {
   if (bg.pattern === "photo") {
     return { backgroundImage: `url(${bg.photoDataUrl})`, backgroundSize: "cover", backgroundPosition: "center" };
@@ -193,5 +232,29 @@ export function cardBackgroundStyle(bg: CardBackground): CSSProperties {
       };
     case "solid":
       return { backgroundImage: `linear-gradient(to bottom right, ${c0}, ${c0})` };
+    case "diagonalSplit":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><polygon points="0,0 300,190 0,190" fill="${c1}"/></svg>`,
+      );
+    case "ribbonFold":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><path d="M60 40 L220 40 L60 150 L220 150" fill="none" stroke="${c1}" stroke-width="55" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      );
+    case "loopKnot":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><circle cx="190" cy="60" r="35" fill="none" stroke="${c1}" stroke-width="26"/><circle cx="110" cy="130" r="35" fill="none" stroke="${c2}" stroke-width="26"/></svg>`,
+      );
+    case "spiralCoil":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><circle cx="230" cy="40" r="28" fill="none" stroke="${c1}" stroke-width="20"/><circle cx="180" cy="90" r="24" fill="none" stroke="${c2}" stroke-width="18"/><circle cx="140" cy="140" r="20" fill="none" stroke="${c1}" stroke-width="16"/></svg>`,
+      );
+    case "radialBurst":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><defs><filter id="b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="35"/></filter></defs><rect width="300" height="190" fill="${c0}"/><circle cx="40" cy="30" r="70" fill="${c1}" filter="url(#b)"/><circle cx="260" cy="160" r="70" fill="${c2}" filter="url(#b)"/></svg>`,
+      );
+    case "colorBlocks":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c2}"/><rect width="150" height="95" fill="${c0}"/><rect x="150" width="150" height="95" fill="${c1}"/><circle cx="150" cy="95" r="45" fill="${c2}"/></svg>`,
+      );
   }
 }

@@ -25,6 +25,7 @@ type WalletCardApiRow = {
   network: string;
   color: string;
   background: string | null;
+  show_network_badge: boolean;
   notes: string | null;
 };
 
@@ -40,6 +41,7 @@ function toWalletCard(row: WalletCardApiRow): WalletCard {
     network,
     color: row.color,
     background: parseCardBackground(row.background),
+    showNetworkBadge: row.show_network_badge,
     notes: row.notes,
   };
 }
@@ -71,6 +73,7 @@ export default function WalletCardModal({
   const [network, setNetwork] = useState<CardNetwork>(card?.network ?? "other");
   const [color, setColor] = useState<string>(card?.color ?? CATEGORY_PALETTE[0]);
   const [background, setBackground] = useState<CardBackground | null>(card?.background ?? null);
+  const [showNetworkBadge, setShowNetworkBadge] = useState(card?.showNetworkBadge ?? true);
   const [notes, setNotes] = useState(card?.notes ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,6 +95,7 @@ export default function WalletCardModal({
         network,
         color,
         background,
+        showNetworkBadge,
         notes: notes.trim() || null,
       };
       const res = isEdit
@@ -131,6 +135,7 @@ export default function WalletCardModal({
             network={network}
             color={color}
             background={background}
+            showNetworkBadge={showNetworkBadge}
           />
         </ColorGlowPreview>
 
@@ -165,6 +170,30 @@ export default function WalletCardModal({
               ))}
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setShowNetworkBadge((v) => !v)}
+            className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+          >
+            <span>
+              <span className="block text-sm font-medium text-foreground">{t("wallet.showNetworkBadgeLabel")}</span>
+              <span className="block text-xs text-ink-soft">{t("wallet.showNetworkBadgeDesc")}</span>
+            </span>
+            <span
+              role="switch"
+              aria-checked={showNetworkBadge}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                showNetworkBadge ? "bg-navy" : "bg-line"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                  showNetworkBadge ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </span>
+          </button>
 
           <div>
             <label htmlFor="walletCardLast4" className="mb-1.5 block text-xs font-semibold text-ink-soft">

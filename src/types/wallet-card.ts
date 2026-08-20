@@ -13,5 +13,7 @@ export type WalletCard = {
   color: string;
   /** Optional pattern/gradient background — null means "plain `color` gradient". */
   background: CardBackground | null;
+  /** Whether the generic (non-trademark) network badge shows on the card visual. */
+  showNetworkBadge: boolean;
   notes: string | null;
 };

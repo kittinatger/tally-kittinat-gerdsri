@@ -357,6 +357,7 @@ export const walletCardInputSchema = z.object({
   network: z.enum(CARD_NETWORKS).default("other"),
   color: z.string().trim().min(1).max(30),
   background: cardBackgroundSchema.optional(),
+  showNetworkBadge: z.boolean().default(true),
   notes: z.string().trim().max(500).nullable().optional(),
 });
 
@@ -375,6 +376,7 @@ export const walletCardUpdateSchema = z
     network: z.enum(CARD_NETWORKS).optional(),
     color: z.string().trim().min(1).max(30).optional(),
     background: cardBackgroundSchema.optional(),
+    showNetworkBadge: z.boolean().optional(),
     notes: z.string().trim().max(500).nullable().optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {

@@ -39,6 +39,7 @@ export default function WalletCardDetail({
         network={card.network}
         color={card.color}
         background={card.background}
+        showNetworkBadge={card.showNetworkBadge}
       />
 
       {card.notes && (
