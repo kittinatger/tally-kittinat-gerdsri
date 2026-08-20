@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Modal from "./Modal";
 import { downscaleImage } from "@/lib/image-downscale";
 import { CARD_ASPECT, defaultQuad, detectCardCorners, warpPerspective, extractPalette, type Quad } from "@/lib/image-perspective";
@@ -154,7 +155,14 @@ export default function CardPhotoScanModal({
     onApply({ pattern, colors });
   }
 
-  return (
+  // Portaled to document.body — this modal is opened from inside
+  // CardBackgroundPicker, which is itself always inside another modal's own
+  // glass sheet (WalletModal/WalletCardModal/MembershipCardModal). That
+  // ancestor's backdrop-blur creates a new containing block for `position:
+  // fixed` descendants, so without the portal this modal's fixed overlay
+  // would be confined to the parent modal's panel instead of the viewport
+  // — see SelectDropdown.tsx/DatePicker.tsx for the same fix elsewhere.
+  return createPortal(
     <Modal
       onClose={onClose}
       title={
@@ -296,6 +304,7 @@ export default function CardPhotoScanModal({
           </div>
         </div>
       )}
-    </Modal>
+    </Modal>,
+    document.body,
   );
 }
