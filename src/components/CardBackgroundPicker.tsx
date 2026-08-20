@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import ColorPicker from "./ColorPicker";
+import CardPhotoScanModal from "./CardPhotoScanModal";
+import { CameraIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 import {
   GALLERY_PATTERNS,
@@ -32,6 +35,7 @@ export default function CardBackgroundPicker({
   palette?: readonly string[];
 }) {
   const t = useT();
+  const [scanOpen, setScanOpen] = useState(false);
 
   function selectPattern(pattern: (typeof GALLERY_PATTERNS)[number]) {
     if (value?.pattern === pattern) return;
@@ -66,7 +70,26 @@ export default function CardBackgroundPicker({
             }`}
           />
         ))}
+        <button
+          type="button"
+          onClick={() => setScanOpen(true)}
+          aria-label={t("background.scanCard")}
+          title={t("background.scanCard")}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-dashed border-line text-ink-soft transition hover:border-navy hover:text-navy dark:hover:text-blue-300"
+        >
+          <CameraIcon className="h-4.5 w-4.5" />
+        </button>
       </div>
+
+      {scanOpen && (
+        <CardPhotoScanModal
+          onClose={() => setScanOpen(false)}
+          onApply={(background) => {
+            onChange(background);
+            setScanOpen(false);
+          }}
+        />
+      )}
 
       {value === null ? (
         <ColorPicker value={plainColor} onChange={onPlainColorChange} palette={palette} />
