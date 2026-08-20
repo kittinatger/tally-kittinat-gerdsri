@@ -8,13 +8,21 @@ import { isHexColor, hexToRgb } from "@/lib/color-convert";
 // mirrors heroGradientClasses/colorHeroStyle in category-styles.ts exactly).
 // Of the rest: ten are pure-CSS gradients/textures inspired by real card
 // designs (metal-card sheen, neobank wave/dot motifs, geometric fintech
-// cards, etc), and six (diagonalSplit through colorBlocks) are original SVG
+// cards, etc), six (diagonalSplit through colorBlocks) are original SVG
 // shape illustrations — folded ribbons, interlocking rings, a spiral, a
 // soft radial burst, geometric color blocks — in the style of abstract
-// wallpaper art, not modeled on any specific card or brand. Every pattern's
-// colors are plain hex — never named palette tokens — since these render
-// as raw inline CSS/SVG that Tailwind can't express as build-time classes
-// (same reasoning as colorHeroStyle).
+// wallpaper art, and six more (brushedMetal through microEmboss) are
+// original textures evoking the general *finish* of premium payment cards
+// — anodized/brushed metal, engine-turned (guilloché) engraving, a woven
+// carbon-fiber weave, concentric rings, an iridescent holo sheen, and a
+// fine embossed dot grid. None of the six reproduce any network's actual
+// logo, wordmark, hologram/dove/centurion artwork, or a specific brand's
+// signature color combination — only the material/texture language common
+// across many premium cards in general, same non-brand-specific spirit as
+// the "inspired by real card designs" original ten. Every pattern's colors
+// are plain hex — never named palette tokens — since these render as raw
+// inline CSS/SVG that Tailwind can't express as build-time classes (same
+// reasoning as colorHeroStyle).
 export const CARD_PATTERNS = [
   "solid",
   "diagonal",
@@ -33,6 +41,12 @@ export const CARD_PATTERNS = [
   "spiralCoil",
   "radialBurst",
   "colorBlocks",
+  "brushedMetal",
+  "guilloche",
+  "carbonFiber",
+  "concentricRings",
+  "holoWave",
+  "microEmboss",
 ] as const;
 
 export type CardPattern = (typeof CARD_PATTERNS)[number];
@@ -64,6 +78,12 @@ export const PATTERN_COLOR_COUNT: Record<CardPattern, number> = {
   spiralCoil: 3,
   radialBurst: 3,
   colorBlocks: 3,
+  brushedMetal: 2,
+  guilloche: 2,
+  carbonFiber: 2,
+  concentricRings: 2,
+  holoWave: 3,
+  microEmboss: 2,
 };
 
 export const PATTERN_LABEL_KEYS: Partial<Record<CardPattern, MessageKey>> = {
@@ -83,6 +103,12 @@ export const PATTERN_LABEL_KEYS: Partial<Record<CardPattern, MessageKey>> = {
   spiralCoil: "background.patternSpiralCoil",
   radialBurst: "background.patternRadialBurst",
   colorBlocks: "background.patternColorBlocks",
+  brushedMetal: "background.patternBrushedMetal",
+  guilloche: "background.patternGuilloche",
+  carbonFiber: "background.patternCarbonFiber",
+  concentricRings: "background.patternConcentricRings",
+  holoWave: "background.patternHoloWave",
+  microEmboss: "background.patternMicroEmboss",
 };
 
 export const COLOR_SLOT_LABEL_KEYS: MessageKey[] = ["background.colorSlot1", "background.colorSlot2", "background.colorSlot3"];
@@ -116,6 +142,12 @@ const DEFAULT_COLORS: Record<CardPattern, string[]> = {
   spiralCoil: ["#ffffff", "#db2777", "#2563eb"],
   radialBurst: ["#2563eb", "#f59e0b", "#16a34a"],
   colorBlocks: ["#f97316", "#1d4ed8", "#facc15"],
+  brushedMetal: ["#94a3b8", "#f8fafc"],
+  guilloche: ["#0f172a", "#64748b"],
+  carbonFiber: ["#111827", "#1f2937"],
+  concentricRings: ["#1e3a8a", "#93c5fd"],
+  holoWave: ["#7c3aed", "#ec4899", "#06b6d4"],
+  microEmboss: ["#78350f", "#fde68a"],
 };
 
 export function defaultCardBackground(pattern: CardPattern): CardBackground {
@@ -176,13 +208,12 @@ function svgBackground(markup: string): CSSProperties {
 }
 
 // Pure-CSS renderers for most patterns — plain gradient functions so colors
-// can be swapped at runtime via inline style. Six patterns (diagonalSplit
-// through colorBlocks) are instead small original SVG shape illustrations
-// (folded ribbons, interlocking rings, a spiral, a soft radial burst,
-// geometric color blocks) recolored the same way. "solid" isn't handled
-// here: callers keep using heroGradientClasses/colorHeroStyle for it, same
-// as before this system existed, so a card with no background set renders
-// byte-identical to how it always has.
+// can be swapped at runtime via inline style. Some patterns (diagonalSplit
+// through colorBlocks, plus guilloche/carbonFiber/concentricRings) are
+// instead small original SVG illustrations recolored the same way. "solid"
+// isn't handled here: callers keep using heroGradientClasses/colorHeroStyle
+// for it, same as before this system existed, so a card with no background
+// set renders byte-identical to how it always has.
 export function cardBackgroundStyle(bg: CardBackground): CSSProperties {
   if (bg.pattern === "photo") {
     return { backgroundImage: `url(${bg.photoDataUrl})`, backgroundSize: "cover", backgroundPosition: "center" };
@@ -257,6 +288,31 @@ export function cardBackgroundStyle(bg: CardBackground): CSSProperties {
       return svgBackground(
         `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c2}"/><rect width="150" height="95" fill="${c0}"/><rect x="150" width="150" height="95" fill="${c1}"/><circle cx="150" cy="95" r="45" fill="${c2}"/></svg>`,
       );
+    case "brushedMetal":
+      return {
+        backgroundImage: `repeating-linear-gradient(100deg, ${c1}26 0px, transparent 1px, transparent 3px), linear-gradient(115deg, transparent 30%, ${c1}66 48%, transparent 66%), linear-gradient(135deg, ${c0}, ${c0})`,
+      };
+    case "guilloche":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><g fill="none" stroke="${c1}" stroke-width="1" opacity="0.55"><path d="M-10 15 C 40 55, 80 -25, 130 15 S 220 55, 310 15"/><path d="M-10 45 C 40 85, 80 5, 130 45 S 220 85, 310 45"/><path d="M-10 75 C 40 115, 80 35, 130 75 S 220 115, 310 75"/><path d="M-10 105 C 40 145, 80 65, 130 105 S 220 145, 310 105"/><path d="M-10 135 C 40 175, 80 95, 130 135 S 220 175, 310 135"/><path d="M-10 165 C 40 205, 80 125, 130 165 S 220 205, 310 165"/></g></svg>`,
+      );
+    case "carbonFiber":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><defs><pattern id="cf" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="12" height="12" fill="${c0}"/><rect width="6" height="6" fill="${c1}"/><rect x="6" y="6" width="6" height="6" fill="${c1}"/></pattern></defs><rect width="300" height="190" fill="url(#cf)"/></svg>`,
+      );
+    case "concentricRings":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><g fill="none" stroke="${c1}" stroke-width="2" opacity="0.55"><circle cx="230" cy="55" r="20"/><circle cx="230" cy="55" r="40"/><circle cx="230" cy="55" r="60"/><circle cx="230" cy="55" r="80"/><circle cx="230" cy="55" r="100"/></g></svg>`,
+      );
+    case "holoWave":
+      return {
+        backgroundImage: `linear-gradient(120deg, ${c0} 0%, ${c1} 35%, ${c2} 60%, ${c0} 100%), linear-gradient(75deg, transparent 40%, rgba(255,255,255,0.35) 50%, transparent 60%)`,
+      };
+    case "microEmboss":
+      return {
+        backgroundImage: `radial-gradient(circle at 30% 30%, ${c1}cc 0.6px, transparent 0.6px), radial-gradient(circle at 70% 70%, rgba(0,0,0,0.25) 0.6px, transparent 0.6px), linear-gradient(135deg, ${c0}, ${c0})`,
+        backgroundSize: "6px 6px, 6px 6px, 100% 100%",
+      };
   }
 }
 
