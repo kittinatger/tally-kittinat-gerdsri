@@ -13,7 +13,7 @@ import {
   type CardBackground,
   type CardPattern,
 } from "@/lib/card-backgrounds";
-import { CameraIcon, ImageIcon } from "@/lib/icons";
+import { CameraIcon, ImageIcon, SparkleIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 
 const WORK_WIDTH = 900;
@@ -64,6 +64,9 @@ export default function CardPhotoScanModal({
   const [palette, setPalette] = useState<string[]>([]);
   const [pattern, setPattern] = useState<CardPattern>("diagonal");
   const [colors, setColors] = useState<string[]>([]);
+  const [aiImage, setAiImage] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -151,8 +154,42 @@ export default function CardPhotoScanModal({
     setColors(fitColors(palette, PATTERN_COLOR_COUNT[p]));
   }
 
-  function apply() {
+  function useDirectPhoto() {
+    if (!resultCanvas) return;
+    onApply({ pattern: "photo", photoDataUrl: resultCanvas.toDataURL("image/jpeg", 0.85) });
+  }
+
+  function usePatternLook() {
     onApply({ pattern, colors });
+  }
+
+  function useGeneratedImage() {
+    if (!aiImage) return;
+    onApply({ pattern: "photo", photoDataUrl: aiImage });
+  }
+
+  async function generateAiPattern() {
+    if (!resultCanvas) return;
+    setAiError(null);
+    setAiLoading(true);
+    setAiImage(null);
+    try {
+      const blob = await new Promise<Blob | null>((resolve) => resultCanvas.toBlob(resolve, "image/jpeg", 0.9));
+      if (!blob) throw new Error("toBlob failed");
+      const form = new FormData();
+      form.append("image", blob, "card.jpg");
+      const res = await fetch("/api/card-background/generate-pattern", { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) {
+        setAiError(typeof data.error === "string" ? data.error : t("background.aiGenerateError"));
+        return;
+      }
+      setAiImage(data.image as string);
+    } catch {
+      setAiError(t("background.aiGenerateError"));
+    } finally {
+      setAiLoading(false);
+    }
   }
 
   // Portaled to document.body — this modal is opened from inside
@@ -253,21 +290,32 @@ export default function CardPhotoScanModal({
       )}
 
       {step === "result" && resultCanvas && (
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="overflow-hidden rounded-2xl border border-line">
             <CanvasView canvas={resultCanvas} className="w-full" />
           </div>
 
-          <div>
-            <p className="mb-1.5 text-xs font-semibold text-ink-soft">{t("background.extractedColors")}</p>
+          {/* Option 1: the corrected photo itself, used as the background verbatim. */}
+          <div className="space-y-2 rounded-card border border-line bg-bg-soft p-3">
+            <p className="text-xs font-semibold text-ink-soft">{t("background.useDirectTitle")}</p>
+            <p className="text-xs text-ink-soft">{t("background.useDirectHint")}</p>
+            <button
+              type="button"
+              onClick={useDirectPhoto}
+              className="w-full rounded-full bg-navy px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark"
+            >
+              {t("background.useThisPhoto")}
+            </button>
+          </div>
+
+          {/* Option 2: extract a small palette and apply it to one of the CSS patterns. */}
+          <div className="space-y-2 rounded-card border border-line bg-bg-soft p-3">
+            <p className="text-xs font-semibold text-ink-soft">{t("background.extractedColors")}</p>
             <div className="flex gap-2">
               {palette.map((c, i) => (
                 <span key={i} className="h-8 w-8 rounded-full border border-line" style={{ backgroundColor: c }} />
               ))}
             </div>
-          </div>
-
-          <div>
             <p className="mb-1.5 text-xs font-semibold text-ink-soft">{t("background.chooseLook")}</p>
             <div className="flex flex-wrap gap-2">
               {GALLERY_PATTERNS.map((p) => (
@@ -284,22 +332,64 @@ export default function CardPhotoScanModal({
                 />
               ))}
             </div>
+            <button
+              type="button"
+              onClick={usePatternLook}
+              className="w-full rounded-full border border-line px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
+            >
+              {t("background.useThisLook")}
+            </button>
           </div>
 
-          <div className="flex items-center justify-between gap-2 pt-1">
+          {/* Option 3: ask an AI model to generate a new abstract pattern inspired by the photo. */}
+          <div className="space-y-2 rounded-card border border-line bg-bg-soft p-3">
+            <p className="text-xs font-semibold text-ink-soft">{t("background.aiGenerateTitle")}</p>
+            <p className="text-xs text-ink-soft">{t("background.aiGenerateHint")}</p>
+            {aiError && <p className="text-xs text-red-600 dark:text-red-400">{aiError}</p>}
+            {aiImage ? (
+              <>
+                <div className="overflow-hidden rounded-xl border border-line">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- generated data URL, not a build-time asset */}
+                  <img src={aiImage} alt="" className="aspect-[8/5] w-full object-cover" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={generateAiPattern}
+                    disabled={aiLoading}
+                    className="flex-1 rounded-full border border-line px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-60"
+                  >
+                    {t("background.regenerate")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={useGeneratedImage}
+                    className="flex-1 rounded-full bg-navy px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark"
+                  >
+                    {t("background.useThisPattern")}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={generateAiPattern}
+                disabled={aiLoading}
+                className="flex w-full items-center justify-center gap-2 rounded-full border border-line px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-60"
+              >
+                <SparkleIcon className="h-4 w-4" />
+                {aiLoading ? t("background.generating") : t("background.generatePattern")}
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center justify-start pt-1">
             <button
               type="button"
               onClick={() => setStep("adjust")}
               className="rounded-full px-4 py-2 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)]"
             >
               {t("background.back")}
-            </button>
-            <button
-              type="button"
-              onClick={apply}
-              className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark"
-            >
-              {t("background.useThisLook")}
             </button>
           </div>
         </div>

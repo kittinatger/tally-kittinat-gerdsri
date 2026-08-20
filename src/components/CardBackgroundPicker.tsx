@@ -75,9 +75,12 @@ export default function CardBackgroundPicker({
           onClick={() => setScanOpen(true)}
           aria-label={t("background.scanCard")}
           title={t("background.scanCard")}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-dashed border-line text-ink-soft transition hover:border-navy hover:text-navy dark:hover:text-blue-300"
+          style={value?.pattern === "photo" ? cardBackgroundStyle(value) : undefined}
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-ink-soft transition hover:border-navy hover:text-navy dark:hover:text-blue-300 ${
+            value?.pattern === "photo" ? "border-line ring-2 ring-navy ring-offset-2 ring-offset-surface" : "border-dashed border-line"
+          }`}
         >
-          <CameraIcon className="h-4.5 w-4.5" />
+          {value?.pattern !== "photo" && <CameraIcon className="h-4.5 w-4.5" />}
         </button>
       </div>
 
@@ -93,6 +96,21 @@ export default function CardBackgroundPicker({
 
       {value === null ? (
         <ColorPicker value={plainColor} onChange={onPlainColorChange} palette={palette} />
+      ) : value.pattern === "photo" ? (
+        <div className="space-y-2.5 rounded-card border border-line bg-bg-soft p-3">
+          <p className="text-xs font-semibold text-ink-soft">{t("background.scanCard")}</p>
+          <div className="overflow-hidden rounded-xl border border-line">
+            {/* eslint-disable-next-line @next/next/no-img-element -- stored/generated data URL, not a build-time asset */}
+            <img src={value.photoDataUrl} alt="" className="aspect-[8/5] w-full object-cover" />
+          </div>
+          <button
+            type="button"
+            onClick={() => setScanOpen(true)}
+            className="w-full rounded-full border border-line px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
+          >
+            {t("background.scanCard")}
+          </button>
+        </div>
       ) : (
         <div className="space-y-2.5 rounded-card border border-line bg-bg-soft p-3">
           <p className="text-xs font-semibold text-ink-soft">{t(PATTERN_LABEL_KEYS[value.pattern]!)}</p>

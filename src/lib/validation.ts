@@ -23,15 +23,27 @@ import { isLanguageCode } from "@/lib/languages";
 // Length isn't cross-checked against PATTERN_COLOR_COUNT here — a short
 // array just means normalizeCardBackground pads it from that pattern's
 // defaults, so a slightly-stale client payload never fails validation.
-const cardBackgroundSchema = z
-  .object({
-    pattern: z.enum(CARD_PATTERNS),
-    colors: z
-      .array(z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, "Must be a 6-digit hex color"))
-      .min(1)
-      .max(Math.max(...Object.values(PATTERN_COLOR_COUNT))),
-  })
-  .nullable();
+const cardPatternBackgroundSchema = z.object({
+  pattern: z.enum(CARD_PATTERNS),
+  colors: z
+    .array(z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, "Must be a 6-digit hex color"))
+    .min(1)
+    .max(Math.max(...Object.values(PATTERN_COLOR_COUNT))),
+});
+// A literal image background (the scanned photo used as-is, or an
+// AI-generated pattern derived from it) — see the CardBackground union in
+// card-backgrounds.ts for why both share this one shape. Capped well above
+// what the app itself ever produces (a downscaled, JPEG-compressed data
+// URL), just to bound how much a malicious payload could bloat the row.
+const cardPhotoBackgroundSchema = z.object({
+  pattern: z.literal("photo"),
+  photoDataUrl: z
+    .string()
+    .trim()
+    .regex(/^data:image\/[a-z0-9.+-]+;base64,/i, "Must be an image data URL")
+    .max(2_000_000),
+});
+const cardBackgroundSchema = z.union([cardPatternBackgroundSchema, cardPhotoBackgroundSchema]).nullable();
 
 export const forgotPasswordInputSchema = z.object({
   email: z.string().trim().email().max(255),

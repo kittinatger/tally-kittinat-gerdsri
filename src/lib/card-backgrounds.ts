@@ -64,11 +64,16 @@ export const PATTERN_LABEL_KEYS: Partial<Record<CardPattern, MessageKey>> = {
 
 export const COLOR_SLOT_LABEL_KEYS: MessageKey[] = ["background.colorSlot1", "background.colorSlot2", "background.colorSlot3"];
 
-export type CardBackground = {
-  pattern: CardPattern;
-  /** Hex colors, one per PATTERN_COLOR_COUNT[pattern] slot. */
-  colors: string[];
-};
+// A literal image background — either the corrected photo from "Scan a
+// card" used as-is, or an AI-generated pattern derived from it (see
+// CardPhotoScanModal.tsx). Both are "just an image", so they share this one
+// variant rather than needing two — the distinction (real photo vs.
+// AI-generated) only matters at the point the image was produced, not for
+// how it's stored or rendered. `pattern` stays the single discriminant
+// field (rather than a separate `kind`) so existing saved CSS-pattern
+// backgrounds — which only ever had `pattern` in CardPattern — keep parsing
+// unchanged; "photo" was never a valid CardPattern before this.
+export type CardBackground = { pattern: CardPattern; colors: string[] } | { pattern: "photo"; photoDataUrl: string };
 
 const DEFAULT_COLORS: Record<CardPattern, string[]> = {
   solid: ["#f43f5e"],
@@ -88,6 +93,15 @@ export function defaultCardBackground(pattern: CardPattern): CardBackground {
   return { pattern, colors: [...DEFAULT_COLORS[pattern]] };
 }
 
+// The color ColorGlowPreview should glow behind a card — its own first
+// color for a CSS pattern, or the caller's plain `color` for a photo
+// background (a photo has no discrete "color" to pull one out of) or when
+// no background is set at all.
+export function backgroundGlowColor(bg: CardBackground | null, fallbackColor: string): string {
+  if (!bg || bg.pattern === "photo") return fallbackColor;
+  return bg.colors[0];
+}
+
 const HEX_RE = /^#[0-9a-f]{6}$/i;
 
 // Tolerant parse for the JSON-in-TEXT column (same convention as
@@ -97,6 +111,12 @@ const HEX_RE = /^#[0-9a-f]{6}$/i;
 export function normalizeCardBackground(raw: unknown): CardBackground | null {
   if (!raw || typeof raw !== "object") return null;
   const obj = raw as Record<string, unknown>;
+
+  if (obj.pattern === "photo") {
+    const url = typeof obj.photoDataUrl === "string" && obj.photoDataUrl.startsWith("data:image/") ? obj.photoDataUrl : null;
+    return url ? { pattern: "photo", photoDataUrl: url } : null;
+  }
+
   const pattern = typeof obj.pattern === "string" && isCardPattern(obj.pattern) ? obj.pattern : null;
   if (!pattern || pattern === "solid") return null;
   const need = PATTERN_COLOR_COUNT[pattern];
@@ -124,6 +144,9 @@ export function parseCardBackground(text: string | null | undefined): CardBackgr
 // system existed, so a card with no background set renders byte-identical
 // to how it always has.
 export function cardBackgroundStyle(bg: CardBackground): CSSProperties {
+  if (bg.pattern === "photo") {
+    return { backgroundImage: `url(${bg.photoDataUrl})`, backgroundSize: "cover", backgroundPosition: "center" };
+  }
   const [c0, c1, c2] = bg.colors;
   switch (bg.pattern) {
     case "diagonal":

@@ -212,6 +212,16 @@ export function TagIcon({ className }: IconProps) {
   );
 }
 
+// A four-point sparkle — used for the "Generate an AI pattern" action.
+export function SparkleIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <path d="M10 2.5c.5 3 2.2 4.7 5.2 5.2-3 .5-4.7 2.2-5.2 5.2-.5-3-2.2-4.7-5.2-5.2 3-.5 4.7-2.2 5.2-5.2Z" />
+      <path d="M15.8 14c.25 1.2.9 1.85 2.1 2.1-1.2.25-1.85.9-2.1 2.1-.25-1.2-.9-1.85-2.1-2.1 1.2-.25 1.85-.9 2.1-2.1Z" />
+    </svg>
+  );
+}
+
 export function CheckIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>

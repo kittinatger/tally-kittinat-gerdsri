@@ -9,7 +9,7 @@ import ColorGlowPreview from "./ColorGlowPreview";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import CardBackgroundPicker from "./CardBackgroundPicker";
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
-import { cardBackgroundStyle } from "@/lib/card-backgrounds";
+import { cardBackgroundStyle, backgroundGlowColor } from "@/lib/card-backgrounds";
 import type { CardBackground } from "@/lib/card-backgrounds";
 import { isCategoryIconKey, CATEGORY_ICON_KEYS, CATEGORY_ICON_LABEL_KEYS } from "@/lib/category-icons";
 import { CATEGORY_ICON_COMPONENTS, CategoryIcon, PlusIcon, CloseIcon, TagIcon, PaletteIcon, FileIcon, MembershipCardIcon } from "@/lib/icons";
@@ -281,7 +281,7 @@ export default function MembershipCardModal({
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <ColorGlowPreview color={background?.colors[0] ?? color}>
+        <ColorGlowPreview color={backgroundGlowColor(background, color)}>
           {codeValue ? (
             <PassShape
               name={name || t("membership.namePlaceholder")}

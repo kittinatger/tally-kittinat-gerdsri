@@ -9,7 +9,7 @@ import ColorGlowPreview from "./ColorGlowPreview";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import CardBackgroundPicker from "./CardBackgroundPicker";
 import { CARD_NETWORKS, type CardNetwork } from "@/lib/wallet-cards";
-import { parseCardBackground, type CardBackground } from "@/lib/card-backgrounds";
+import { parseCardBackground, backgroundGlowColor, type CardBackground } from "@/lib/card-backgrounds";
 import { CategoryIcon, PaletteIcon, FileIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -121,7 +121,7 @@ export default function WalletCardModal({
   return (
     <Modal onClose={onClose} title={isEdit ? t("wallet.editCard") : t("wallet.addCard")}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <ColorGlowPreview color={background?.colors[0] ?? color}>
+        <ColorGlowPreview color={backgroundGlowColor(background, color)}>
           <WalletCardShape
             label={label || t("wallet.labelPlaceholder")}
             holderName={holderName || null}
