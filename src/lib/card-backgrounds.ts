@@ -26,9 +26,16 @@ import { isHexColor, hexToRgb } from "@/lib/color-convert";
 // oval cluster, angular color shards, an organic ink blob, a marbled
 // swirl, and a paint-speckle texture — again none of them reproduce any
 // bank's name, wordmark, or logo mark, only the general abstract-shape
-// aesthetic. Every pattern's colors are plain hex — never named palette
-// tokens — since these render as raw inline CSS/SVG that Tailwind can't
-// express as build-time classes (same reasoning as colorHeroStyle).
+// aesthetic. 22 more (auroraHalo through flameGradient) round out the
+// gallery with further original motifs common across fintech card art —
+// glow/halo blurs, circuit traces, neon ribbons, faceted/prism shards,
+// folded banners, fine line/lattice/hex textures, bold silhouettes
+// (teardrop, bolt, ink splatter), radiating rays and arcs, a pixel
+// mosaic, and warm gradient swooshes — same rule as every pattern above:
+// original artwork only, never a specific brand's name/wordmark/logo.
+// Every pattern's colors are plain hex — never named palette tokens —
+// since these render as raw inline CSS/SVG that Tailwind can't express as
+// build-time classes (same reasoning as colorHeroStyle).
 export const CARD_PATTERNS = [
   "solid",
   "diagonal",
@@ -61,6 +68,28 @@ export const CARD_PATTERNS = [
   "inkBlob",
   "marbleSwirl",
   "speckleSplash",
+  "auroraHalo",
+  "circuitMaze",
+  "neonRibbon",
+  "prismShard",
+  "bannerFold",
+  "wavyLines",
+  "tearDrop",
+  "chevronBolt",
+  "cosmicStreak",
+  "diagonalGrain",
+  "liquidRibbon",
+  "halfMoonGlow",
+  "inkSplatter",
+  "diamondLattice",
+  "sunburstRays",
+  "zigzagPulse",
+  "hexGrid",
+  "gemFacet",
+  "cloudDrift",
+  "arcBands",
+  "pixelMosaic",
+  "flameGradient",
 ] as const;
 
 export type CardPattern = (typeof CARD_PATTERNS)[number];
@@ -106,6 +135,28 @@ export const PATTERN_COLOR_COUNT: Record<CardPattern, number> = {
   inkBlob: 2,
   marbleSwirl: 2,
   speckleSplash: 2,
+  auroraHalo: 2,
+  circuitMaze: 2,
+  neonRibbon: 2,
+  prismShard: 3,
+  bannerFold: 3,
+  wavyLines: 2,
+  tearDrop: 2,
+  chevronBolt: 2,
+  cosmicStreak: 2,
+  diagonalGrain: 2,
+  liquidRibbon: 3,
+  halfMoonGlow: 2,
+  inkSplatter: 2,
+  diamondLattice: 2,
+  sunburstRays: 2,
+  zigzagPulse: 2,
+  hexGrid: 2,
+  gemFacet: 3,
+  cloudDrift: 2,
+  arcBands: 2,
+  pixelMosaic: 3,
+  flameGradient: 2,
 };
 
 export const PATTERN_LABEL_KEYS: Partial<Record<CardPattern, MessageKey>> = {
@@ -139,6 +190,28 @@ export const PATTERN_LABEL_KEYS: Partial<Record<CardPattern, MessageKey>> = {
   inkBlob: "background.patternInkBlob",
   marbleSwirl: "background.patternMarbleSwirl",
   speckleSplash: "background.patternSpeckleSplash",
+  auroraHalo: "background.patternAuroraHalo",
+  circuitMaze: "background.patternCircuitMaze",
+  neonRibbon: "background.patternNeonRibbon",
+  prismShard: "background.patternPrismShard",
+  bannerFold: "background.patternBannerFold",
+  wavyLines: "background.patternWavyLines",
+  tearDrop: "background.patternTearDrop",
+  chevronBolt: "background.patternChevronBolt",
+  cosmicStreak: "background.patternCosmicStreak",
+  diagonalGrain: "background.patternDiagonalGrain",
+  liquidRibbon: "background.patternLiquidRibbon",
+  halfMoonGlow: "background.patternHalfMoonGlow",
+  inkSplatter: "background.patternInkSplatter",
+  diamondLattice: "background.patternDiamondLattice",
+  sunburstRays: "background.patternSunburstRays",
+  zigzagPulse: "background.patternZigzagPulse",
+  hexGrid: "background.patternHexGrid",
+  gemFacet: "background.patternGemFacet",
+  cloudDrift: "background.patternCloudDrift",
+  arcBands: "background.patternArcBands",
+  pixelMosaic: "background.patternPixelMosaic",
+  flameGradient: "background.patternFlameGradient",
 };
 
 export const COLOR_SLOT_LABEL_KEYS: MessageKey[] = ["background.colorSlot1", "background.colorSlot2", "background.colorSlot3"];
@@ -186,6 +259,28 @@ const DEFAULT_COLORS: Record<CardPattern, string[]> = {
   inkBlob: ["#0f172a", "#f97316"],
   marbleSwirl: ["#0f766e", "#facc15"],
   speckleSplash: ["#111827", "#f8fafc"],
+  auroraHalo: ["#0a0a0a", "#22d3ee"],
+  circuitMaze: ["#0f172a", "#f59e0b"],
+  neonRibbon: ["#0a0a12", "#22d3ee"],
+  prismShard: ["#0a0a0a", "#dc2626", "#16a34a"],
+  bannerFold: ["#fbbf24", "#f8fafc", "#9ca3af"],
+  wavyLines: ["#fb7185", "#ffffff"],
+  tearDrop: ["#a78bfa", "#6b7280"],
+  chevronBolt: ["#1e3a8a", "#3b82f6"],
+  cosmicStreak: ["#581c87", "#a855f7"],
+  diagonalGrain: ["#1e293b", "#64748b"],
+  liquidRibbon: ["#1e1b4b", "#7c3aed", "#38bdf8"],
+  halfMoonGlow: ["#111827", "#ec4899"],
+  inkSplatter: ["#f8fafc", "#111827"],
+  diamondLattice: ["#0c4a6e", "#7dd3fc"],
+  sunburstRays: ["#7c2d12", "#fb923c"],
+  zigzagPulse: ["#111827", "#22c55e"],
+  hexGrid: ["#134e4a", "#5eead4"],
+  gemFacet: ["#1e1b4b", "#818cf8", "#c4b5fd"],
+  cloudDrift: ["#f0f9ff", "#93c5fd"],
+  arcBands: ["#78350f", "#fbbf24"],
+  pixelMosaic: ["#111827", "#f43f5e", "#eab308"],
+  flameGradient: ["#7f1d1d", "#f97316"],
 };
 
 export function defaultCardBackground(pattern: CardPattern): CardBackground {
@@ -382,6 +477,94 @@ export function cardBackgroundStyle(bg: CardBackground): CSSProperties {
     case "speckleSplash":
       return {
         backgroundImage: `radial-gradient(circle at 12% 22%, ${c1} 0 2px, transparent 2px), radial-gradient(circle at 34% 8%, ${c1} 0 1.5px, transparent 1.5px), radial-gradient(circle at 58% 30%, ${c1} 0 2.5px, transparent 2.5px), radial-gradient(circle at 75% 12%, ${c1} 0 1px, transparent 1px), radial-gradient(circle at 20% 55%, ${c1} 0 1.5px, transparent 1.5px), radial-gradient(circle at 45% 65%, ${c1} 0 2px, transparent 2px), radial-gradient(circle at 68% 50%, ${c1} 0 1px, transparent 1px), radial-gradient(circle at 88% 60%, ${c1} 0 2px, transparent 2px), radial-gradient(circle at 30% 85%, ${c1} 0 1.5px, transparent 1.5px), radial-gradient(circle at 55% 90%, ${c1} 0 1px, transparent 1px), radial-gradient(circle at 80% 82%, ${c1} 0 2px, transparent 2px), linear-gradient(135deg, ${c0}, ${c0})`,
+      };
+    case "auroraHalo":
+      return {
+        backgroundImage: `radial-gradient(60% 50% at 50% 100%, ${c1} 0%, transparent 70%), linear-gradient(135deg, ${c0}, ${c0})`,
+      };
+    case "circuitMaze":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><g fill="none" stroke="${c1}" stroke-width="2" opacity="0.7"><path d="M20 20 H100 V60 H180 V20 H260"/><path d="M20 60 H60 V100 H140 V140 H220 V100 H260"/><path d="M20 140 H100 V170 H200"/><circle cx="100" cy="60" r="3" fill="${c1}"/><circle cx="180" cy="20" r="3" fill="${c1}"/><circle cx="140" cy="140" r="3" fill="${c1}"/></g></svg>`,
+      );
+    case "neonRibbon":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><path d="M-20 140 C 60 80, 100 180, 180 110 S 320 40, 340 90" fill="none" stroke="${c1}" stroke-width="30" stroke-linecap="round" opacity="0.3"/><path d="M-20 140 C 60 80, 100 180, 180 110 S 320 40, 340 90" fill="none" stroke="${c1}" stroke-width="14" stroke-linecap="round" opacity="0.85"/></svg>`,
+      );
+    case "prismShard":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><polygon points="0,190 90,60 140,190" fill="${c1}"/><polygon points="140,190 190,90 260,190" fill="${c2}"/></svg>`,
+      );
+    case "bannerFold":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><polygon points="0,0 220,0 60,190 0,190" fill="${c1}"/><polygon points="220,0 300,0 300,90 100,190 60,190" fill="${c2}"/></svg>`,
+      );
+    case "wavyLines":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><defs><pattern id="wl" width="30" height="20" patternUnits="userSpaceOnUse"><path d="M0 10 Q7.5 0 15 10 T30 10" fill="none" stroke="${c1}" stroke-width="1" opacity="0.55"/></pattern></defs><rect width="300" height="190" fill="${c0}"/><rect width="300" height="190" fill="url(#wl)"/></svg>`,
+      );
+    case "tearDrop":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><path d="M150 20 C 210 60, 230 120, 150 170 C 70 120, 90 60, 150 20 Z" fill="${c1}"/></svg>`,
+      );
+    case "chevronBolt":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><polygon points="170,10 90,110 140,110 110,180 220,80 170,80 200,10" fill="${c1}"/></svg>`,
+      );
+    case "cosmicStreak":
+      return {
+        backgroundImage: `radial-gradient(70% 60% at 30% 90%, ${c1} 0%, transparent 60%), linear-gradient(135deg, ${c0}, ${c0}), linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.85) 21%, transparent 22%)`,
+      };
+    case "diagonalGrain":
+      return {
+        backgroundImage: `repeating-linear-gradient(60deg, ${c1}22 0px, transparent 1px, transparent 4px), linear-gradient(200deg, ${c0}, ${c1}33, ${c0})`,
+      };
+    case "liquidRibbon":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><path d="M-20 60 C 60 20, 100 100, 180 60 S 320 20, 340 60 L 340 190 L -20 190 Z" fill="${c1}" opacity="0.85"/><path d="M-20 100 C 60 60, 100 140, 180 100 S 320 60, 340 100 L 340 190 L -20 190 Z" fill="${c2}" opacity="0.75"/></svg>`,
+      );
+    case "halfMoonGlow":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><defs><filter id="hb" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="18"/></filter></defs><rect width="300" height="190" fill="${c0}"/><circle cx="150" cy="220" r="90" fill="${c1}" filter="url(#hb)"/></svg>`,
+      );
+    case "inkSplatter":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><g fill="${c1}"><circle cx="110" cy="90" r="55"/><circle cx="170" cy="50" r="14"/><circle cx="200" cy="110" r="10"/><circle cx="90" cy="150" r="8"/><circle cx="230" cy="70" r="6"/><circle cx="60" cy="60" r="6"/></g></svg>`,
+      );
+    case "diamondLattice":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><defs><pattern id="dl" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M15 0 L30 15 L15 30 L0 15 Z" fill="none" stroke="${c1}" stroke-width="1.2" opacity="0.5"/></pattern></defs><rect width="300" height="190" fill="${c0}"/><rect width="300" height="190" fill="url(#dl)"/></svg>`,
+      );
+    case "sunburstRays":
+      return {
+        backgroundImage: `repeating-conic-gradient(from 0deg at 0% 0%, ${c1}33 0deg 4deg, transparent 4deg 12deg), linear-gradient(135deg, ${c0}, ${c0})`,
+      };
+    case "zigzagPulse":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><polyline points="0,100 60,100 80,40 100,160 120,100 300,100" fill="none" stroke="${c1}" stroke-width="4" opacity="0.8"/></svg>`,
+      );
+    case "hexGrid":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><defs><pattern id="hx" width="26" height="30" patternUnits="userSpaceOnUse"><polygon points="13,0 26,7.5 26,22.5 13,30 0,22.5 0,7.5" fill="none" stroke="${c1}" stroke-width="1" opacity="0.45"/></pattern></defs><rect width="300" height="190" fill="${c0}"/><rect width="300" height="190" fill="url(#hx)"/></svg>`,
+      );
+    case "gemFacet":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><polygon points="150,20 210,70 180,150 120,150 90,70" fill="${c1}" opacity="0.85"/><polygon points="150,20 210,70 150,90" fill="${c2}" opacity="0.9"/><polygon points="90,70 150,90 120,150" fill="${c2}" opacity="0.6"/></svg>`,
+      );
+    case "cloudDrift":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><defs><filter id="cb" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="20"/></filter></defs><rect width="300" height="190" fill="${c0}"/><ellipse cx="80" cy="60" rx="70" ry="40" fill="${c1}" filter="url(#cb)"/><ellipse cx="220" cy="130" rx="80" ry="45" fill="${c1}" filter="url(#cb)" opacity="0.7"/></svg>`,
+      );
+    case "arcBands":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><g fill="none" stroke="${c1}" stroke-width="10" opacity="0.5"><path d="M300,190 A 60 60 0 0 0 240,130"/><path d="M300,190 A 100 100 0 0 0 200,90"/><path d="M300,190 A 140 140 0 0 0 160,50"/><path d="M300,190 A 180 180 0 0 0 120,10"/></g></svg>`,
+      );
+    case "pixelMosaic":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><defs><pattern id="pm" width="24" height="24" patternUnits="userSpaceOnUse"><rect width="24" height="24" fill="${c0}"/><rect width="12" height="12" fill="${c1}"/><rect x="12" y="12" width="12" height="12" fill="${c2}"/></pattern></defs><rect width="300" height="190" fill="url(#pm)"/></svg>`,
+      );
+    case "flameGradient":
+      return {
+        backgroundImage: `radial-gradient(60% 90% at 30% 100%, ${c1} 0%, transparent 60%), radial-gradient(50% 70% at 65% 100%, ${c1} 0%, transparent 55%), linear-gradient(180deg, ${c0}, ${c0})`,
       };
   }
 }
