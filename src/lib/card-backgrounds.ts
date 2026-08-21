@@ -19,10 +19,16 @@ import { isHexColor, hexToRgb } from "@/lib/color-convert";
 // logo, wordmark, hologram/dove/centurion artwork, or a specific brand's
 // signature color combination — only the material/texture language common
 // across many premium cards in general, same non-brand-specific spirit as
-// the "inspired by real card designs" original ten. Every pattern's colors
-// are plain hex — never named palette tokens — since these render as raw
-// inline CSS/SVG that Tailwind can't express as build-time classes (same
-// reasoning as colorHeroStyle).
+// the "inspired by real card designs" original ten. Eight more
+// (scallopWave through speckleSplash) are original shape illustrations in
+// the general style of colorful neobank/fintech card art — scalloped wave
+// bands, overlapping petal blooms, floating rotated squares, a scattered
+// oval cluster, angular color shards, an organic ink blob, a marbled
+// swirl, and a paint-speckle texture — again none of them reproduce any
+// bank's name, wordmark, or logo mark, only the general abstract-shape
+// aesthetic. Every pattern's colors are plain hex — never named palette
+// tokens — since these render as raw inline CSS/SVG that Tailwind can't
+// express as build-time classes (same reasoning as colorHeroStyle).
 export const CARD_PATTERNS = [
   "solid",
   "diagonal",
@@ -47,6 +53,14 @@ export const CARD_PATTERNS = [
   "concentricRings",
   "holoWave",
   "microEmboss",
+  "scallopWave",
+  "petalBloom",
+  "floatingSquares",
+  "ovalCluster",
+  "fragmentShards",
+  "inkBlob",
+  "marbleSwirl",
+  "speckleSplash",
 ] as const;
 
 export type CardPattern = (typeof CARD_PATTERNS)[number];
@@ -84,6 +98,14 @@ export const PATTERN_COLOR_COUNT: Record<CardPattern, number> = {
   concentricRings: 2,
   holoWave: 3,
   microEmboss: 2,
+  scallopWave: 2,
+  petalBloom: 3,
+  floatingSquares: 3,
+  ovalCluster: 2,
+  fragmentShards: 3,
+  inkBlob: 2,
+  marbleSwirl: 2,
+  speckleSplash: 2,
 };
 
 export const PATTERN_LABEL_KEYS: Partial<Record<CardPattern, MessageKey>> = {
@@ -109,6 +131,14 @@ export const PATTERN_LABEL_KEYS: Partial<Record<CardPattern, MessageKey>> = {
   concentricRings: "background.patternConcentricRings",
   holoWave: "background.patternHoloWave",
   microEmboss: "background.patternMicroEmboss",
+  scallopWave: "background.patternScallopWave",
+  petalBloom: "background.patternPetalBloom",
+  floatingSquares: "background.patternFloatingSquares",
+  ovalCluster: "background.patternOvalCluster",
+  fragmentShards: "background.patternFragmentShards",
+  inkBlob: "background.patternInkBlob",
+  marbleSwirl: "background.patternMarbleSwirl",
+  speckleSplash: "background.patternSpeckleSplash",
 };
 
 export const COLOR_SLOT_LABEL_KEYS: MessageKey[] = ["background.colorSlot1", "background.colorSlot2", "background.colorSlot3"];
@@ -148,6 +178,14 @@ const DEFAULT_COLORS: Record<CardPattern, string[]> = {
   concentricRings: ["#1e3a8a", "#93c5fd"],
   holoWave: ["#7c3aed", "#ec4899", "#06b6d4"],
   microEmboss: ["#78350f", "#fde68a"],
+  scallopWave: ["#dc2626", "#7c3aed"],
+  petalBloom: ["#ef4444", "#f472b6", "#60a5fa"],
+  floatingSquares: ["#0d9488", "#1d4ed8", "#f97316"],
+  ovalCluster: ["#f5d0fe", "#4c1d95"],
+  fragmentShards: ["#fef08a", "#db2777", "#94a3b8"],
+  inkBlob: ["#0f172a", "#f97316"],
+  marbleSwirl: ["#0f766e", "#facc15"],
+  speckleSplash: ["#111827", "#f8fafc"],
 };
 
 export function defaultCardBackground(pattern: CardPattern): CardBackground {
@@ -312,6 +350,38 @@ export function cardBackgroundStyle(bg: CardBackground): CSSProperties {
       return {
         backgroundImage: `radial-gradient(circle at 30% 30%, ${c1}cc 0.6px, transparent 0.6px), radial-gradient(circle at 70% 70%, rgba(0,0,0,0.25) 0.6px, transparent 0.6px), linear-gradient(135deg, ${c0}, ${c0})`,
         backgroundSize: "6px 6px, 6px 6px, 100% 100%",
+      };
+    case "scallopWave":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><path d="M0 40 Q37.5 0 75 40 T150 40 T225 40 T300 40 V190 H0 Z" fill="${c1}"/></svg>`,
+      );
+    case "petalBloom":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><ellipse cx="150" cy="70" rx="70" ry="90" fill="${c1}" transform="rotate(-20 150 70)"/><ellipse cx="190" cy="40" rx="35" ry="50" fill="${c2}" transform="rotate(30 190 40)"/><ellipse cx="110" cy="30" rx="30" ry="45" fill="${c2}" transform="rotate(-60 110 30)"/></svg>`,
+      );
+    case "floatingSquares":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><g opacity="0.85"><rect x="40" y="20" width="70" height="70" fill="${c1}" transform="rotate(15 75 55)"/><rect x="150" y="60" width="90" height="90" fill="${c2}" transform="rotate(-10 195 105)"/><rect x="90" y="90" width="60" height="60" fill="${c1}" transform="rotate(25 120 120)"/></g><path d="M20 150 C 80 110, 120 190, 180 130 S 260 60, 290 100" fill="none" stroke="${c2}" stroke-width="3" opacity="0.7"/></svg>`,
+      );
+    case "ovalCluster":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><g fill="${c1}" opacity="0.85"><ellipse cx="40" cy="30" rx="22" ry="14" transform="rotate(20 40 30)"/><ellipse cx="90" cy="20" rx="16" ry="10" transform="rotate(-10 90 20)"/><ellipse cx="150" cy="45" rx="24" ry="15" transform="rotate(35 150 45)"/><ellipse cx="220" cy="25" rx="18" ry="12" transform="rotate(-25 220 25)"/><ellipse cx="270" cy="55" rx="20" ry="13" transform="rotate(15 270 55)"/><ellipse cx="55" cy="90" rx="20" ry="13" transform="rotate(-15 55 90)"/><ellipse cx="120" cy="100" rx="26" ry="16" transform="rotate(10 120 100)"/><ellipse cx="190" cy="95" rx="18" ry="12" transform="rotate(-30 190 95)"/><ellipse cx="250" cy="115" rx="22" ry="14" transform="rotate(20 250 115)"/><ellipse cx="80" cy="150" rx="22" ry="14" transform="rotate(-20 80 150)"/><ellipse cx="160" cy="160" rx="20" ry="13" transform="rotate(25 160 160)"/><ellipse cx="230" cy="165" rx="18" ry="12" transform="rotate(-10 230 165)"/></g></svg>`,
+      );
+    case "fragmentShards":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><polygon points="0,0 150,0 90,95" fill="${c1}"/><polygon points="150,0 300,0 300,60 210,95" fill="${c2}"/><polygon points="0,190 130,95 0,60" fill="${c2}"/><polygon points="300,190 150,190 210,95 300,140" fill="${c1}"/></svg>`,
+      );
+    case "inkBlob":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><path d="M40 60 C 10 90, 30 140, 80 150 C 130 160, 140 110, 180 100 C 230 90, 250 40, 200 20 C 150 0, 120 40, 80 30 C 50 22, 60 40, 40 60 Z" fill="${c1}"/></svg>`,
+      );
+    case "marbleSwirl":
+      return {
+        backgroundImage: `conic-gradient(from 200deg at 30% 40%, ${c0}, ${c1}, ${c0} 60%, ${c1} 80%, ${c0}), radial-gradient(60% 50% at 70% 70%, ${c1}55, transparent 60%)`,
+      };
+    case "speckleSplash":
+      return {
+        backgroundImage: `radial-gradient(circle at 12% 22%, ${c1} 0 2px, transparent 2px), radial-gradient(circle at 34% 8%, ${c1} 0 1.5px, transparent 1.5px), radial-gradient(circle at 58% 30%, ${c1} 0 2.5px, transparent 2.5px), radial-gradient(circle at 75% 12%, ${c1} 0 1px, transparent 1px), radial-gradient(circle at 20% 55%, ${c1} 0 1.5px, transparent 1.5px), radial-gradient(circle at 45% 65%, ${c1} 0 2px, transparent 2px), radial-gradient(circle at 68% 50%, ${c1} 0 1px, transparent 1px), radial-gradient(circle at 88% 60%, ${c1} 0 2px, transparent 2px), radial-gradient(circle at 30% 85%, ${c1} 0 1.5px, transparent 1.5px), radial-gradient(circle at 55% 90%, ${c1} 0 1px, transparent 1px), radial-gradient(circle at 80% 82%, ${c1} 0 2px, transparent 2px), linear-gradient(135deg, ${c0}, ${c0})`,
       };
   }
 }
