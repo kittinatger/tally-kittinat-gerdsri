@@ -122,7 +122,23 @@ export default function WalletCardShape({
         <p className="min-w-0 truncate text-sm font-semibold">{label}</p>
         {showNetworkBadge && (
           <div className="flex shrink-0 items-center gap-1.5" style={{ color: fg.a85 }}>
-            {network !== "other" ? (
+            {network === "visa" || network === "discover" ? (
+              <div
+                aria-label={network}
+                className={`h-5 ${network === "visa" ? "aspect-[3840/1247]" : "aspect-[3660/835]"}`}
+                style={{
+                  backgroundColor: "currentColor",
+                  maskImage: `url(/badges/${network}.svg)`,
+                  maskSize: "contain",
+                  maskRepeat: "no-repeat",
+                  maskPosition: "center",
+                  WebkitMaskImage: `url(/badges/${network}.svg)`,
+                  WebkitMaskSize: "contain",
+                  WebkitMaskRepeat: "no-repeat",
+                  WebkitMaskPosition: "center",
+                }}
+              />
+            ) : network !== "other" ? (
               <img src={`/badges/${network}.svg`} alt={network} className="h-6 w-auto object-contain" />
             ) : (
               <>
