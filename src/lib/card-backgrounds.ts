@@ -33,9 +33,13 @@ import { isHexColor, hexToRgb } from "@/lib/color-convert";
 // (teardrop, bolt, ink splatter), radiating rays and arcs, a pixel
 // mosaic, and warm gradient swooshes — same rule as every pattern above:
 // original artwork only, never a specific brand's name/wordmark/logo.
-// Every pattern's colors are plain hex — never named palette tokens —
-// since these render as raw inline CSS/SVG that Tailwind can't express as
-// build-time classes (same reasoning as colorHeroStyle).
+// Three more (curvedWing through arrowGlint) round things out with a big
+// rounded wing/tab shape, a corner sun-fan gradient, and a metallic
+// arrow/chevron with a glint streak and fine speckle — again general
+// shape/finish language, not any brand's actual mark. Every pattern's
+// colors are plain hex — never named palette tokens — since these render
+// as raw inline CSS/SVG that Tailwind can't express as build-time classes
+// (same reasoning as colorHeroStyle).
 export const CARD_PATTERNS = [
   "solid",
   "diagonal",
@@ -90,6 +94,9 @@ export const CARD_PATTERNS = [
   "arcBands",
   "pixelMosaic",
   "flameGradient",
+  "curvedWing",
+  "sunFan",
+  "arrowGlint",
 ] as const;
 
 export type CardPattern = (typeof CARD_PATTERNS)[number];
@@ -157,6 +164,9 @@ export const PATTERN_COLOR_COUNT: Record<CardPattern, number> = {
   arcBands: 2,
   pixelMosaic: 3,
   flameGradient: 2,
+  curvedWing: 2,
+  sunFan: 2,
+  arrowGlint: 3,
 };
 
 export const PATTERN_LABEL_KEYS: Partial<Record<CardPattern, MessageKey>> = {
@@ -212,6 +222,9 @@ export const PATTERN_LABEL_KEYS: Partial<Record<CardPattern, MessageKey>> = {
   arcBands: "background.patternArcBands",
   pixelMosaic: "background.patternPixelMosaic",
   flameGradient: "background.patternFlameGradient",
+  curvedWing: "background.patternCurvedWing",
+  sunFan: "background.patternSunFan",
+  arrowGlint: "background.patternArrowGlint",
 };
 
 export const COLOR_SLOT_LABEL_KEYS: MessageKey[] = ["background.colorSlot1", "background.colorSlot2", "background.colorSlot3"];
@@ -281,6 +294,9 @@ const DEFAULT_COLORS: Record<CardPattern, string[]> = {
   arcBands: ["#78350f", "#fbbf24"],
   pixelMosaic: ["#111827", "#f43f5e", "#eab308"],
   flameGradient: ["#7f1d1d", "#f97316"],
+  curvedWing: ["#0f172a", "#7c3aed"],
+  sunFan: ["#7f1d1d", "#f87171"],
+  arrowGlint: ["#1c0505", "#7f1d1d", "#f87171"],
 };
 
 export function defaultCardBackground(pattern: CardPattern): CardBackground {
@@ -566,6 +582,18 @@ export function cardBackgroundStyle(bg: CardBackground): CSSProperties {
       return {
         backgroundImage: `radial-gradient(60% 90% at 30% 100%, ${c1} 0%, transparent 60%), radial-gradient(50% 70% at 65% 100%, ${c1} 0%, transparent 55%), linear-gradient(180deg, ${c0}, ${c0})`,
       };
+    case "curvedWing":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><path d="M0 90 H150 C 210 90 210 190 150 190 H0 Z" fill="${c1}"/></svg>`,
+      );
+    case "sunFan":
+      return {
+        backgroundImage: `repeating-conic-gradient(from -90deg at 0% 100%, ${c1}55 0deg 2deg, transparent 2deg 10deg), linear-gradient(200deg, ${c0}, ${c1})`,
+      };
+    case "arrowGlint":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><defs><linearGradient id="ag" x1="0" y1="190" x2="300" y2="0"><stop offset="0%" stop-color="${c0}"/><stop offset="100%" stop-color="${c1}"/></linearGradient></defs><rect width="300" height="190" fill="url(#ag)"/><polygon points="40,190 140,190 220,90 160,90 220,20 90,20 20,110 90,110" fill="${c2}" opacity="0.9"/><g fill="${c2}" opacity="0.5"><circle cx="60" cy="40" r="1.2"/><circle cx="90" cy="150" r="1"/><circle cx="200" cy="60" r="1.3"/><circle cx="250" cy="130" r="1"/><circle cx="30" cy="100" r="1"/><circle cx="270" cy="40" r="1.2"/></g></svg>`,
+      );
   }
 }
 
