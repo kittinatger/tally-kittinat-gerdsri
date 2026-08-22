@@ -11,6 +11,7 @@ import CardBackgroundPicker from "./CardBackgroundPicker";
 import CardTextColorPicker from "./CardTextColorPicker";
 import { CARD_NETWORKS, type CardNetwork } from "@/lib/wallet-cards";
 import { parseCardBackground, backgroundGlowColor, cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
+import { CHIP_COLORS, CHIP_COLOR_LABEL_KEYS, CHIP_COLOR_STOPS, DEFAULT_CHIP_COLOR, isChipColor, type ChipColor } from "@/lib/chip-colors";
 import { CategoryIcon, PaletteIcon, FileIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -28,6 +29,8 @@ type WalletCardApiRow = {
   background: string | null;
   show_network_badge: boolean;
   text_color: string | null;
+  show_chip: boolean;
+  chip_color: string;
   notes: string | null;
 };
 
@@ -45,6 +48,8 @@ function toWalletCard(row: WalletCardApiRow): WalletCard {
     background: parseCardBackground(row.background),
     showNetworkBadge: row.show_network_badge,
     textColor: row.text_color,
+    showChip: row.show_chip,
+    chipColor: isChipColor(row.chip_color) ? row.chip_color : DEFAULT_CHIP_COLOR,
     notes: row.notes,
   };
 }
@@ -78,6 +83,8 @@ export default function WalletCardModal({
   const [background, setBackground] = useState<CardBackground | null>(card?.background ?? null);
   const [showNetworkBadge, setShowNetworkBadge] = useState(card?.showNetworkBadge ?? true);
   const [textColor, setTextColor] = useState<string | null>(card?.textColor ?? null);
+  const [showChip, setShowChip] = useState(card?.showChip ?? true);
+  const [chipColor, setChipColor] = useState<ChipColor>(card?.chipColor ?? DEFAULT_CHIP_COLOR);
   const [notes, setNotes] = useState(card?.notes ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -101,6 +108,8 @@ export default function WalletCardModal({
         background,
         showNetworkBadge,
         textColor,
+        showChip,
+        chipColor,
         notes: notes.trim() || null,
       };
       const res = isEdit
@@ -142,6 +151,8 @@ export default function WalletCardModal({
             background={background}
             showNetworkBadge={showNetworkBadge}
             textColor={textColor}
+            showChip={showChip}
+            chipColor={chipColor}
           />
         </ColorGlowPreview>
 
@@ -200,6 +211,51 @@ export default function WalletCardModal({
               />
             </span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setShowChip((v) => !v)}
+            className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+          >
+            <span>
+              <span className="block text-sm font-medium text-foreground">{t("wallet.showChipLabel")}</span>
+              <span className="block text-xs text-ink-soft">{t("wallet.showChipDesc")}</span>
+            </span>
+            <span
+              role="switch"
+              aria-checked={showChip}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${showChip ? "bg-navy" : "bg-line"}`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                  showChip ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </span>
+          </button>
+
+          {showChip && (
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.chipColorLabel")}</label>
+              <div className="flex flex-wrap gap-2">
+                {CHIP_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setChipColor(c)}
+                    aria-label={t(CHIP_COLOR_LABEL_KEYS[c])}
+                    title={t(CHIP_COLOR_LABEL_KEYS[c])}
+                    style={{
+                      background: `linear-gradient(135deg, ${CHIP_COLOR_STOPS[c].light}, ${CHIP_COLOR_STOPS[c].base}, ${CHIP_COLOR_STOPS[c].dark})`,
+                    }}
+                    className={`h-8 w-8 shrink-0 rounded-lg border border-line transition ${
+                      chipColor === c ? "ring-2 ring-navy ring-offset-2 ring-offset-surface" : ""
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           <div>
             <label htmlFor="walletCardLast4" className="mb-1.5 block text-xs font-semibold text-ink-soft">

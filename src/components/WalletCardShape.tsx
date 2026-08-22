@@ -2,6 +2,7 @@
 
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { cardBackgroundStyle, cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
+import { CHIP_COLOR_STOPS, DEFAULT_CHIP_COLOR, type ChipColor } from "@/lib/chip-colors";
 import { useT } from "@/lib/language-context";
 import type { CardNetwork } from "@/lib/wallet-cards";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -42,6 +43,39 @@ function NetworkBadge({ network }: { network: CardNetwork }) {
   );
 }
 
+// A generic ISO/EMV-style contact chip — the six-pad house-shaped notch
+// pattern is the industry-standard chip look used across every issuer's
+// cards, not any one manufacturer's proprietary design, so it's safe to
+// render literally rather than needing a "generic" reinterpretation the
+// way NetworkBadge does. Colorable via CHIP_COLOR_STOPS (see
+// chip-colors.ts) so it can match gold, silver, rose gold, graphite, or
+// copper chip finishes.
+function EMVChip({ color }: { color: ChipColor }) {
+  const { light, base, dark } = CHIP_COLOR_STOPS[color];
+  const gradientId = `chip-${color}`;
+  return (
+    <svg viewBox="0 0 100 74" className="h-6 w-8 shrink-0" aria-hidden="true">
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="100" y2="74">
+          <stop offset="0%" stopColor={light} />
+          <stop offset="55%" stopColor={base} />
+          <stop offset="100%" stopColor={dark} />
+        </linearGradient>
+      </defs>
+      <rect x="1" y="1" width="98" height="72" rx="9" fill={`url(#${gradientId})`} stroke={dark} strokeWidth="1" />
+      <g fill="none" stroke={dark} strokeWidth="1.4" opacity="0.65" strokeLinejoin="round">
+        <path d="M40,27 H60 V47 H40 Z" />
+        <path d="M40,27 L26,9" />
+        <path d="M60,27 L74,9" />
+        <path d="M40,47 L26,65" />
+        <path d="M60,47 L74,65" />
+        <path d="M40,37 H8" />
+        <path d="M60,37 H92" />
+      </g>
+    </svg>
+  );
+}
+
 // Height is min-height + natural content flow (not a fixed aspect-ratio
 // box) so a long cardholder name never gets silently clipped — see
 // AccountCardShape for the same fix, made after a real balance was found
@@ -58,6 +92,8 @@ export default function WalletCardShape({
   background = null,
   textColor = null,
   showNetworkBadge = true,
+  showChip = true,
+  chipColor = DEFAULT_CHIP_COLOR,
 }: {
   label: string;
   holderName: string | null;
@@ -70,6 +106,8 @@ export default function WalletCardShape({
   /** Manual text-color override — null means auto-contrast against the background. */
   textColor?: string | null;
   showNetworkBadge?: boolean;
+  showChip?: boolean;
+  chipColor?: ChipColor;
 }) {
   const t = useT();
   const expiry = expiryMonth && expiryYear ? `${String(expiryMonth).padStart(2, "0")}/${String(expiryYear).slice(-2)}` : null;
@@ -91,7 +129,7 @@ export default function WalletCardShape({
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="h-6 w-8 shrink-0 rounded-[5px] bg-gradient-to-br from-yellow-200/90 to-yellow-400/80" />
+        {showChip && <EMVChip color={chipColor} />}
         <p className="truncate text-base font-semibold tracking-[0.15em]">
           •••• •••• •••• {last4 ?? "••••"}
         </p>

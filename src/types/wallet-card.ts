@@ -1,5 +1,6 @@
 import type { CardNetwork } from "@/lib/wallet-cards";
 import type { CardBackground } from "@/lib/card-backgrounds";
+import type { ChipColor } from "@/lib/chip-colors";
 
 export type WalletCard = {
   id: number;
@@ -17,5 +18,9 @@ export type WalletCard = {
   showNetworkBadge: boolean;
   /** Manual text-color override — null means auto-contrast against the background. */
   textColor: string | null;
+  /** Whether the EMV contact-chip visual shows on the card. */
+  showChip: boolean;
+  /** Which metal finish the chip renders in — see chip-colors.ts. */
+  chipColor: ChipColor;
   notes: string | null;
 };
