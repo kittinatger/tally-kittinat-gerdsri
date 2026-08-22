@@ -1,7 +1,7 @@
 "use client";
 
 import Modal from "./Modal";
-import { MembershipCardIcon } from "@/lib/icons";
+import { MembershipCardIcon, TagIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 
 function BankIcon() {
@@ -42,7 +42,11 @@ function Row({ icon, label, desc, onClick }: { icon: React.ReactNode; label: str
 }
 
 // The "+" entry menu on the merged Wallet page — one place to start adding
-// any of the four things the stack can hold.
+// any of the four things the stack can hold. "Add payment card" and "Add
+// loyalty card" used to both just say "Add card" (differing only in their
+// small description text), which read as two duplicate options — they now
+// have distinct labels and icons (a payment-card glyph vs. a price tag) so
+// the two rows are unambiguous at a glance.
 export default function WalletEntryModal({
   onClose,
   onAddAccount,
@@ -63,7 +67,7 @@ export default function WalletEntryModal({
         <Row icon={<BankIcon />} label={t("wallet.addWallet")} desc={t("wallet.entryAccountDesc")} onClick={onAddAccount} />
         <Row icon={<CardGlyphIcon />} label={t("wallet.addCard")} desc={t("wallet.entryCardDesc")} onClick={onAddCard} />
         <Row icon={<MembershipCardIcon className="h-4.5 w-4.5" />} label={t("wallet.addPass")} desc={t("wallet.entryPassDesc")} onClick={onAddPass} />
-        <Row icon={<MembershipCardIcon className="h-4.5 w-4.5" />} label={t("membership.addCard")} desc={t("wallet.entryMembershipDesc")} onClick={onAddMembership} />
+        <Row icon={<TagIcon className="h-4.5 w-4.5" />} label={t("membership.addCard")} desc={t("wallet.entryMembershipDesc")} onClick={onAddMembership} />
       </div>
     </Modal>
   );

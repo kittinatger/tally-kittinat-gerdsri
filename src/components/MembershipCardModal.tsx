@@ -662,7 +662,13 @@ export default function MembershipCardModal({
             disabled={submitting}
             className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
           >
-            {submitting ? t("common.saving") : isEdit ? t("form.saveChanges") : t("membership.addCard")}
+            {submitting
+              ? t("common.saving")
+              : isEdit
+                ? t("form.saveChanges")
+                : category === "pass"
+                  ? t("wallet.addPass")
+                  : t("membership.addCard")}
           </button>
         </div>
       </form>
