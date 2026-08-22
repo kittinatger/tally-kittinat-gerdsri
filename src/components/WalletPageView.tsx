@@ -28,6 +28,7 @@ const MembershipCardDetail = dynamic(() => import("./MembershipCardDetail"), { s
 const AccountDetail = dynamic(() => import("./AccountDetail"), { ssr: false });
 const WalletCardDetail = dynamic(() => import("./WalletCardDetail"), { ssr: false });
 const WalletEntryModal = dynamic(() => import("./WalletEntryModal"), { ssr: false });
+const WalletKindModal = dynamic(() => import("./WalletKindModal"), { ssr: false });
 const AddCardEntryModal = dynamic(() => import("./AddCardEntryModal"), { ssr: false });
 const ScanCardModal = dynamic(() => import("./ScanCardModal"), { ssr: false });
 
@@ -62,35 +63,45 @@ export default function WalletPageView({
   const [error, setError] = useState<string | null>(null);
 
   const [entryOpen, setEntryOpen] = useState(false);
+  const [walletKindOpen, setWalletKindOpen] = useState(false);
   const [manageAccountsOpen, setManageAccountsOpen] = useState(false);
   const [accountModal, setAccountModal] = useState<{ mode: "edit"; wallet: WalletOption } | { mode: "add" } | null>(null);
   const [cardModal, setCardModal] = useState<{ mode: "edit"; card: WalletCard } | { mode: "add" } | null>(null);
   const [passModal, setPassModal] = useState<
-    | { mode: "add"; category: PassCategory; scannedValue?: { value: string; format: MembershipCodeFormat } | null }
-    | { mode: "edit"; category: PassCategory; card: MembershipCard }
+    | { mode: "add"; scannedValue?: { value: string; format: MembershipCodeFormat } | null }
+    | { mode: "edit"; card: MembershipCard }
     | null
   >(null);
   const [viewingPass, setViewingPass] = useState<MembershipCard | null>(null);
   const [viewingAccount, setViewingAccount] = useState<WalletOption | null>(null);
   const [accountDeleteError, setAccountDeleteError] = useState<string | null>(null);
   const [viewingCard, setViewingCard] = useState<WalletCard | null>(null);
-  const [entryCategoryOpen, setEntryCategoryOpen] = useState<PassCategory | null>(null);
-  const [scanCategory, setScanCategory] = useState<PassCategory | null>(null);
+  const [passEntryOpen, setPassEntryOpen] = useState(false);
+  const [passScanOpen, setPassScanOpen] = useState(false);
 
+  // A saved card's own `category` (derived in MembershipCardModal from
+  // whichever template was picked — see CATEGORY_BY_TEMPLATE there) says
+  // which of the two locally-patched lists it belongs in; the entry menu
+  // no longer asks the user this up front, so it has to be read back off
+  // the card instead of threaded through from the "add" flow.
   function setPassesFor(category: PassCategory) {
     return category === "pass" ? setPasses : setMemberships;
   }
 
-  function handlePassSaved(category: PassCategory, card: MembershipCard) {
-    setPassesFor(category)((prev) => {
+  function handlePassSaved(card: MembershipCard) {
+    setPassesFor(card.category)((prev) => {
       const exists = prev.some((c) => c.id === card.id);
       return exists ? prev.map((c) => (c.id === card.id ? card : c)) : [...prev, card];
     });
+    // A card can change category on edit (switching to a different
+    // template), so it also has to be pruned from whichever list it used
+    // to be in — a no-op filter on the list it's actually in.
+    setPassesFor(card.category === "pass" ? "membership" : "pass")((prev) => prev.filter((c) => c.id !== card.id));
     setPassModal(null);
     setViewingPass(null);
   }
 
-  async function handleDeletePass(category: PassCategory, id: number) {
+  async function handleDeletePass(id: number) {
     setError(null);
     try {
       const res = await fetch(`/api/memberships/${id}`, { method: "DELETE" });
@@ -99,7 +110,8 @@ export default function WalletPageView({
         setError(typeof data?.error === "string" ? data.error : t("membership.couldNotDelete"));
         return;
       }
-      setPassesFor(category)((prev) => prev.filter((c) => c.id !== id));
+      setPasses((prev) => prev.filter((c) => c.id !== id));
+      setMemberships((prev) => prev.filter((c) => c.id !== id));
       setViewingPass(null);
     } catch (err) {
       setError(describeFetchError(err));
@@ -268,21 +280,27 @@ export default function WalletPageView({
       {entryOpen && (
         <WalletEntryModal
           onClose={() => setEntryOpen(false)}
-          onAddAccount={() => {
+          onAddWallet={() => {
             setEntryOpen(false);
-            setAccountModal({ mode: "add" });
-          }}
-          onAddCard={() => {
-            setEntryOpen(false);
-            setCardModal({ mode: "add" });
+            setWalletKindOpen(true);
           }}
           onAddPass={() => {
             setEntryOpen(false);
-            setEntryCategoryOpen("pass");
+            setPassEntryOpen(true);
           }}
-          onAddMembership={() => {
-            setEntryOpen(false);
-            setEntryCategoryOpen("membership");
+        />
+      )}
+
+      {walletKindOpen && (
+        <WalletKindModal
+          onClose={() => setWalletKindOpen(false)}
+          onAddAccount={() => {
+            setWalletKindOpen(false);
+            setAccountModal({ mode: "add" });
+          }}
+          onAddCard={() => {
+            setWalletKindOpen(false);
+            setCardModal({ mode: "add" });
           }}
         />
       )}
@@ -347,42 +365,38 @@ export default function WalletPageView({
             key={viewingPass.id}
             card={viewingPass}
             onEdit={() => {
-              setPassModal({ mode: "edit", category: viewingPass.category, card: viewingPass });
+              setPassModal({ mode: "edit", card: viewingPass });
               setViewingPass(null);
             }}
-            onDelete={() => handleDeletePass(viewingPass.category, viewingPass.id)}
+            onDelete={() => handleDeletePass(viewingPass.id)}
           />
         </Modal>
       )}
 
-      {entryCategoryOpen && (
+      {passEntryOpen && (
         <AddCardEntryModal
-          onClose={() => setEntryCategoryOpen(null)}
+          onClose={() => setPassEntryOpen(false)}
           onNewPass={() => {
-            const category = entryCategoryOpen;
-            setEntryCategoryOpen(null);
-            setPassModal({ mode: "add", category });
+            setPassEntryOpen(false);
+            setPassModal({ mode: "add" });
           }}
           onScanRequested={() => {
-            const category = entryCategoryOpen;
-            setEntryCategoryOpen(null);
-            setScanCategory(category);
+            setPassEntryOpen(false);
+            setPassScanOpen(true);
           }}
           onScanned={(result) => {
-            const category = entryCategoryOpen;
-            setEntryCategoryOpen(null);
-            setPassModal({ mode: "add", category, scannedValue: result });
+            setPassEntryOpen(false);
+            setPassModal({ mode: "add", scannedValue: result });
           }}
         />
       )}
 
-      {scanCategory && (
+      {passScanOpen && (
         <ScanCardModal
-          onClose={() => setScanCategory(null)}
+          onClose={() => setPassScanOpen(false)}
           onScanned={(result) => {
-            const category = scanCategory;
-            setScanCategory(null);
-            setPassModal({ mode: "add", category, scannedValue: result });
+            setPassScanOpen(false);
+            setPassModal({ mode: "add", scannedValue: result });
           }}
         />
       )}
@@ -391,13 +405,11 @@ export default function WalletPageView({
         <MembershipCardModal
           card={passModal.mode === "edit" ? passModal.card : undefined}
           scannedValue={passModal.mode === "add" ? (passModal.scannedValue ?? null) : null}
-          category={passModal.category}
           onClose={() => setPassModal(null)}
-          onSaved={(card) => handlePassSaved(passModal.category, card)}
+          onSaved={handlePassSaved}
           onScanRequested={() => {
-            const category = passModal.category;
             setPassModal(null);
-            setScanCategory(category);
+            setPassScanOpen(true);
           }}
         />
       )}

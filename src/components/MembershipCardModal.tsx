@@ -46,6 +46,21 @@ const ZONE_LABEL_KEYS: Record<PassZone, MessageKey> = {
   auxiliary: "membership.zoneAuxiliary",
 };
 
+// Which /wallet stack ("pass" vs. "membership") a card belongs to used to
+// be a question the entry menu asked up front (separate "Add pass" and
+// "Add loyalty card" rows). That was redundant with the Template picker
+// below, which already distinguishes a store/loyalty card from a
+// ticket/coupon/boarding pass — so category is now just derived from
+// whichever template is selected, and the two entry-menu rows collapsed
+// into one ("Add pass" in WalletEntryModal).
+const CATEGORY_BY_TEMPLATE: Record<PassTemplate, "pass" | "membership"> = {
+  generic: "membership",
+  storeCard: "membership",
+  coupon: "pass",
+  eventTicket: "pass",
+  boardingPass: "pass",
+};
+
 // A slot for attaching an image — a dashed "+" tile when empty, or the
 // picked image with a small remove button once one's attached.
 function ImageSlot({
@@ -96,16 +111,12 @@ function ImageSlot({
 
 export default function MembershipCardModal({
   card,
-  category,
   onClose,
   onSaved,
   onScanRequested,
   scannedValue,
 }: {
   card?: MembershipCard;
-  /** Which /wallet tab this card belongs to — fixed by the caller (the tab
-   * you opened the form from), not user-editable here. */
-  category: "pass" | "membership";
   onClose: () => void;
   onSaved: (card: MembershipCard) => void;
   /** Opens the camera scanner (see ScanCardModal); this modal stays mounted
@@ -130,6 +141,7 @@ export default function MembershipCardModal({
   const [selectedFieldKey, setSelectedFieldKey] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const category = CATEGORY_BY_TEMPLATE[template];
 
   // Logo/banner: a staged File replaces whatever's already saved (shown via
   // the /logo|/banner API routes for an existing card); "removed" clears a

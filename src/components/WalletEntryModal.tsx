@@ -1,7 +1,7 @@
 "use client";
 
 import Modal from "./Modal";
-import { MembershipCardIcon, TagIcon } from "@/lib/icons";
+import { MembershipCardIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 
 function BankIcon() {
@@ -14,16 +14,7 @@ function BankIcon() {
   );
 }
 
-function CardGlyphIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <rect x="2.5" y="4.5" width="15" height="11" rx="1.8" />
-      <path d="M2.5 8h15" />
-    </svg>
-  );
-}
-
-function Row({ icon, label, desc, onClick }: { icon: React.ReactNode; label: string; desc: string; onClick: () => void }) {
+export function Row({ icon, label, desc, onClick }: { icon: React.ReactNode; label: string; desc: string; onClick: () => void }) {
   return (
     <button
       type="button"
@@ -41,33 +32,34 @@ function Row({ icon, label, desc, onClick }: { icon: React.ReactNode; label: str
   );
 }
 
-// The "+" entry menu on the merged Wallet page — one place to start adding
-// any of the four things the stack can hold. "Add payment card" and "Add
-// loyalty card" used to both just say "Add card" (differing only in their
-// small description text), which read as two duplicate options — they now
-// have distinct labels and icons (a payment-card glyph vs. a price tag) so
-// the two rows are unambiguous at a glance.
+// The "+" entry menu on the merged Wallet page. Used to be four rows (bank
+// account / payment card / pass / loyalty card), but "payment card" reads
+// as basically "wallet" to a user picking a top-level category, and "pass"
+// vs "loyalty card" is the same underlying flow already (MembershipCardModal
+// derives which one a saved card actually is from its template — see
+// CATEGORY_BY_TEMPLATE there) — so both pairs collapse to one row apiece.
+// "Add wallet" opens WalletKindModal to ask bank/cash vs. payment card;
+// "Add pass" goes straight into AddCardEntryModal, no separate question.
 export default function WalletEntryModal({
   onClose,
-  onAddAccount,
-  onAddCard,
+  onAddWallet,
   onAddPass,
-  onAddMembership,
 }: {
   onClose: () => void;
-  onAddAccount: () => void;
-  onAddCard: () => void;
+  onAddWallet: () => void;
   onAddPass: () => void;
-  onAddMembership: () => void;
 }) {
   const t = useT();
   return (
     <Modal onClose={onClose} title={t("wallet.entryTitle")}>
       <div className="space-y-2">
-        <Row icon={<BankIcon />} label={t("wallet.addWallet")} desc={t("wallet.entryAccountDesc")} onClick={onAddAccount} />
-        <Row icon={<CardGlyphIcon />} label={t("wallet.addCard")} desc={t("wallet.entryCardDesc")} onClick={onAddCard} />
-        <Row icon={<MembershipCardIcon className="h-4.5 w-4.5" />} label={t("wallet.addPass")} desc={t("wallet.entryPassDesc")} onClick={onAddPass} />
-        <Row icon={<TagIcon className="h-4.5 w-4.5" />} label={t("membership.addCard")} desc={t("wallet.entryMembershipDesc")} onClick={onAddMembership} />
+        <Row icon={<BankIcon />} label={t("wallet.addWallet")} desc={t("wallet.entryWalletDesc")} onClick={onAddWallet} />
+        <Row
+          icon={<MembershipCardIcon className="h-4.5 w-4.5" />}
+          label={t("wallet.addPass")}
+          desc={t("wallet.entryPassCombinedDesc")}
+          onClick={onAddPass}
+        />
       </div>
     </Modal>
   );
