@@ -122,8 +122,14 @@ export default function WalletCardShape({
         <p className="min-w-0 truncate text-sm font-semibold">{label}</p>
         {showNetworkBadge && (
           <div className="flex shrink-0 items-center gap-1.5" style={{ color: fg.a85 }}>
-            <NetworkBadge network={network} />
-            <p className="text-xs font-bold uppercase tracking-wide">{t(NETWORK_LABEL_KEYS[network])}</p>
+            {network !== "other" ? (
+              <img src={`/badges/${network}.svg`} alt={network} className="h-6 w-auto object-contain" />
+            ) : (
+              <>
+                <NetworkBadge network={network} />
+                <p className="text-xs font-bold uppercase tracking-wide">{t(NETWORK_LABEL_KEYS[network])}</p>
+              </>
+            )}
           </div>
         )}
       </div>
