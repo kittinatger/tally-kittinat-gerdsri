@@ -28,7 +28,7 @@ const MembershipCardDetail = dynamic(() => import("./MembershipCardDetail"), { s
 const AccountDetail = dynamic(() => import("./AccountDetail"), { ssr: false });
 const WalletCardDetail = dynamic(() => import("./WalletCardDetail"), { ssr: false });
 const WalletEntryModal = dynamic(() => import("./WalletEntryModal"), { ssr: false });
-const WalletKindModal = dynamic(() => import("./WalletKindModal"), { ssr: false });
+const WalletOrCardModal = dynamic(() => import("./WalletOrCardModal"), { ssr: false });
 const AddCardEntryModal = dynamic(() => import("./AddCardEntryModal"), { ssr: false });
 const ScanCardModal = dynamic(() => import("./ScanCardModal"), { ssr: false });
 
@@ -63,7 +63,7 @@ export default function WalletPageView({
   const [error, setError] = useState<string | null>(null);
 
   const [entryOpen, setEntryOpen] = useState(false);
-  const [walletKindOpen, setWalletKindOpen] = useState(false);
+  const [walletOrCardOpen, setWalletOrCardOpen] = useState(false);
   const [manageAccountsOpen, setManageAccountsOpen] = useState(false);
   const [accountModal, setAccountModal] = useState<{ mode: "edit"; wallet: WalletOption } | { mode: "add" } | null>(null);
   const [cardModal, setCardModal] = useState<{ mode: "edit"; card: WalletCard } | { mode: "add" } | null>(null);
@@ -282,7 +282,7 @@ export default function WalletPageView({
           onClose={() => setEntryOpen(false)}
           onAddWallet={() => {
             setEntryOpen(false);
-            setWalletKindOpen(true);
+            setWalletOrCardOpen(true);
           }}
           onAddPass={() => {
             setEntryOpen(false);
@@ -291,16 +291,16 @@ export default function WalletPageView({
         />
       )}
 
-      {walletKindOpen && (
-        <WalletKindModal
-          onClose={() => setWalletKindOpen(false)}
-          onAddAccount={() => {
-            setWalletKindOpen(false);
-            setAccountModal({ mode: "add" });
+      {walletOrCardOpen && (
+        <WalletOrCardModal
+          onClose={() => setWalletOrCardOpen(false)}
+          onSavedAccount={() => {
+            setWalletOrCardOpen(false);
+            router.refresh();
           }}
-          onAddCard={() => {
-            setWalletKindOpen(false);
-            setCardModal({ mode: "add" });
+          onSavedCard={(card) => {
+            setWalletOrCardOpen(false);
+            handleCardSaved(card);
           }}
         />
       )}

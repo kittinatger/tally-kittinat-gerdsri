@@ -14,7 +14,7 @@ function BankIcon() {
   );
 }
 
-export function Row({ icon, label, desc, onClick }: { icon: React.ReactNode; label: string; desc: string; onClick: () => void }) {
+function Row({ icon, label, desc, onClick }: { icon: React.ReactNode; label: string; desc: string; onClick: () => void }) {
   return (
     <button
       type="button"
@@ -38,8 +38,9 @@ export function Row({ icon, label, desc, onClick }: { icon: React.ReactNode; lab
 // vs "loyalty card" is the same underlying flow already (MembershipCardModal
 // derives which one a saved card actually is from its template — see
 // CATEGORY_BY_TEMPLATE there) — so both pairs collapse to one row apiece.
-// "Add wallet" opens WalletKindModal to ask bank/cash vs. payment card;
-// "Add pass" goes straight into AddCardEntryModal, no separate question.
+// "Add wallet" and "Add pass" both go straight into one combined form now
+// (WalletOrCardModal / AddCardEntryModal+MembershipCardModal) — no
+// separate bank-vs-card or pass-vs-loyalty question modal in between.
 export default function WalletEntryModal({
   onClose,
   onAddWallet,
