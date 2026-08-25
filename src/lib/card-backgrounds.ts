@@ -36,10 +36,14 @@ import { isHexColor, hexToRgb } from "@/lib/color-convert";
 // Three more (curvedWing through arrowGlint) round things out with a big
 // rounded wing/tab shape, a corner sun-fan gradient, and a metallic
 // arrow/chevron with a glint streak and fine speckle — again general
-// shape/finish language, not any brand's actual mark. Every pattern's
-// colors are plain hex — never named palette tokens — since these render
-// as raw inline CSS/SVG that Tailwind can't express as build-time classes
-// (same reasoning as colorHeroStyle).
+// shape/finish language, not any brand's actual mark. One more, dotFan, is
+// an original swarm of small dots fanning out across a dark card with a
+// customizable two-color gradient sweep — a generic "dot-matrix arc"
+// composition, not a reproduction of any specific card issuer's actual
+// artwork, iconography, wordmark, or logo. Every pattern's colors are
+// plain hex — never named palette tokens — since these render as raw
+// inline CSS/SVG that Tailwind can't express as build-time classes (same
+// reasoning as colorHeroStyle).
 export const CARD_PATTERNS = [
   "solid",
   "diagonal",
@@ -97,6 +101,7 @@ export const CARD_PATTERNS = [
   "curvedWing",
   "sunFan",
   "arrowGlint",
+  "dotFan",
 ] as const;
 
 export type CardPattern = (typeof CARD_PATTERNS)[number];
@@ -167,6 +172,7 @@ export const PATTERN_COLOR_COUNT: Record<CardPattern, number> = {
   curvedWing: 2,
   sunFan: 2,
   arrowGlint: 3,
+  dotFan: 3,
 };
 
 export const PATTERN_LABEL_KEYS: Partial<Record<CardPattern, MessageKey>> = {
@@ -225,6 +231,7 @@ export const PATTERN_LABEL_KEYS: Partial<Record<CardPattern, MessageKey>> = {
   curvedWing: "background.patternCurvedWing",
   sunFan: "background.patternSunFan",
   arrowGlint: "background.patternArrowGlint",
+  dotFan: "background.patternDotFan",
 };
 
 export const COLOR_SLOT_LABEL_KEYS: MessageKey[] = ["background.colorSlot1", "background.colorSlot2", "background.colorSlot3"];
@@ -297,6 +304,7 @@ const DEFAULT_COLORS: Record<CardPattern, string[]> = {
   curvedWing: ["#0f172a", "#7c3aed"],
   sunFan: ["#7f1d1d", "#f87171"],
   arrowGlint: ["#1c0505", "#7f1d1d", "#f87171"],
+  dotFan: ["#0a0a0a", "#34d399", "#6366f1"],
 };
 
 export function defaultCardBackground(pattern: CardPattern): CardBackground {
@@ -593,6 +601,10 @@ export function cardBackgroundStyle(bg: CardBackground): CSSProperties {
     case "arrowGlint":
       return svgBackground(
         `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><defs><linearGradient id="ag" x1="0" y1="190" x2="300" y2="0"><stop offset="0%" stop-color="${c0}"/><stop offset="100%" stop-color="${c1}"/></linearGradient></defs><rect width="300" height="190" fill="url(#ag)"/><polygon points="40,190 140,190 220,90 160,90 220,20 90,20 20,110 90,110" fill="${c2}" opacity="0.9"/><g fill="${c2}" opacity="0.5"><circle cx="60" cy="40" r="1.2"/><circle cx="90" cy="150" r="1"/><circle cx="200" cy="60" r="1.3"/><circle cx="250" cy="130" r="1"/><circle cx="30" cy="100" r="1"/><circle cx="270" cy="40" r="1.2"/></g></svg>`,
+      );
+    case "dotFan":
+      return svgBackground(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><rect width="300" height="190" fill="${c0}"/><defs><linearGradient id="dotGrad" x1="0" y1="0" x2="300" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="${c1}"/><stop offset="100%" stop-color="${c2}"/></linearGradient></defs><g fill="url(#dotGrad)"><circle cx="130.4" cy="183.6" r="2.6"/><circle cx="145.6" cy="180.2" r="2.6"/><circle cx="161.3" cy="181.2" r="2.6"/><circle cx="96.0" cy="182.9" r="2.6"/><circle cx="108.1" cy="172.8" r="2.6"/><circle cx="121.9" cy="165.5" r="2.6"/><circle cx="137.0" cy="161.1" r="2.6"/><circle cx="152.6" cy="160.0" r="2.6"/><circle cx="168.1" cy="162.2" r="2.6"/><circle cx="182.9" cy="167.6" r="2.6"/><circle cx="196.2" cy="175.9" r="2.6"/><circle cx="76.1" cy="175.3" r="2.6"/><circle cx="87.0" cy="163.9" r="2.6"/><circle cx="99.5" cy="154.5" r="2.6"/><circle cx="113.4" cy="147.3" r="2.6"/><circle cx="128.4" cy="142.5" r="2.6"/><circle cx="143.9" cy="140.2" r="2.6"/><circle cx="159.6" cy="140.5" r="2.6"/><circle cx="175.0" cy="143.4" r="2.6"/><circle cx="189.8" cy="148.7" r="2.6"/><circle cx="203.4" cy="156.4" r="2.6"/><circle cx="215.6" cy="166.3" r="2.6"/><circle cx="226.0" cy="178.0" r="2.6"/><circle cx="48.3" cy="181.3" r="2.6"/><circle cx="56.6" cy="168.0" r="2.6"/><circle cx="66.6" cy="155.9" r="2.6"/><circle cx="78.1" cy="145.2" r="2.6"/><circle cx="91.0" cy="136.3" r="2.6"/><circle cx="105.0" cy="129.2" r="2.6"/><circle cx="119.8" cy="124.0" r="2.6"/><circle cx="135.2" cy="121.0" r="2.6"/><circle cx="150.9" cy="120.0" r="2.6"/><circle cx="166.5" cy="121.2" r="2.6"/><circle cx="181.9" cy="124.5" r="2.6"/><circle cx="196.6" cy="129.9" r="2.6"/><circle cx="210.5" cy="137.2" r="2.6"/><circle cx="223.2" cy="146.3" r="2.6"/><circle cx="234.6" cy="157.1" r="2.6"/><circle cx="244.5" cy="169.4" r="2.6"/><circle cx="252.5" cy="182.9" r="2.6"/><circle cx="29.4" cy="174.4" r="2.6"/><circle cx="37.2" cy="160.8" r="2.6"/><circle cx="46.6" cy="148.2" r="2.6"/><circle cx="57.4" cy="136.8" r="2.6"/><circle cx="69.4" cy="126.7" r="2.6"/><circle cx="82.5" cy="118.1" r="2.6"/><circle cx="96.5" cy="111.0" r="2.6"/><circle cx="111.3" cy="105.7" r="2.6"/><circle cx="126.6" cy="102.1" r="2.6"/><circle cx="142.2" cy="100.2" r="2.6"/><circle cx="157.8" cy="100.2" r="2.6"/><circle cx="173.4" cy="102.1" r="2.6"/><circle cx="188.7" cy="105.7" r="2.6"/><circle cx="203.5" cy="111.0" r="2.6"/><circle cx="217.5" cy="118.1" r="2.6"/><circle cx="230.6" cy="126.7" r="2.6"/><circle cx="242.6" cy="136.8" r="2.6"/><circle cx="253.4" cy="148.2" r="2.6"/><circle cx="262.8" cy="160.8" r="2.6"/><circle cx="270.6" cy="174.4" r="2.6"/><circle cx="4.3" cy="182.0" r="2.6"/><circle cx="10.7" cy="167.1" r="2.6"/><circle cx="18.6" cy="152.9" r="2.6"/><circle cx="27.9" cy="139.6" r="2.6"/><circle cx="38.5" cy="127.3" r="2.6"/><circle cx="50.4" cy="116.3" r="2.6"/><circle cx="63.3" cy="106.5" r="2.6"/><circle cx="77.2" cy="98.1" r="2.6"/><circle cx="91.9" cy="91.3" r="2.6"/><circle cx="107.3" cy="86.0" r="2.6"/><circle cx="123.1" cy="82.4" r="2.6"/><circle cx="139.2" cy="80.4" r="2.6"/><circle cx="155.4" cy="80.1" r="2.6"/><circle cx="171.6" cy="81.5" r="2.6"/><circle cx="187.5" cy="84.6" r="2.6"/><circle cx="203.0" cy="89.3" r="2.6"/><circle cx="217.9" cy="95.7" r="2.6"/><circle cx="232.1" cy="103.6" r="2.6"/><circle cx="245.4" cy="112.9" r="2.6"/><circle cx="257.7" cy="123.5" r="2.6"/><circle cx="268.7" cy="135.4" r="2.6"/><circle cx="278.5" cy="148.3" r="2.6"/><circle cx="286.9" cy="162.2" r="2.6"/><circle cx="293.7" cy="176.9" r="2.6"/><circle cx="9.7" cy="125.4" r="2.6"/><circle cx="22.0" cy="111.4" r="2.6"/><circle cx="35.6" cy="98.6" r="2.6"/><circle cx="50.5" cy="87.4" r="2.6"/><circle cx="66.4" cy="77.8" r="2.6"/><circle cx="83.3" cy="70.0" r="2.6"/><circle cx="100.9" cy="63.9" r="2.6"/><circle cx="119.1" cy="59.7" r="2.6"/><circle cx="137.6" cy="57.4" r="2.6"/><circle cx="156.2" cy="57.1" r="2.6"/><circle cx="174.8" cy="58.7" r="2.6"/><circle cx="193.1" cy="62.3" r="2.6"/><circle cx="210.9" cy="67.7" r="2.6"/><circle cx="228.0" cy="75.0" r="2.6"/><circle cx="244.3" cy="84.0" r="2.6"/><circle cx="259.6" cy="94.7" r="2.6"/><circle cx="273.6" cy="107.0" r="2.6"/><circle cx="286.4" cy="120.6" r="2.6"/><circle cx="297.6" cy="135.5" r="2.6"/></g></svg>`,
       );
   }
 }
