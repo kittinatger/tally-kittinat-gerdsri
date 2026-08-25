@@ -16,6 +16,7 @@ import { PASS_TEMPLATES, PASS_ZONES, type PassZone } from "@/lib/membership-temp
 import { CARD_NETWORKS } from "@/lib/wallet-cards";
 import { CARD_PATTERNS, PATTERN_COLOR_COUNT } from "@/lib/card-backgrounds";
 import { CHIP_COLORS } from "@/lib/chip-colors";
+import { BADGE_POSITIONS } from "@/lib/badge-position";
 import { isLanguageCode } from "@/lib/languages";
 
 // Shared by wallets, wallet_cards, and membership_cards' optional background
@@ -373,6 +374,7 @@ export const walletCardInputSchema = z.object({
   background: cardBackgroundSchema.optional(),
   textColor: cardTextColorSchema.optional(),
   showNetworkBadge: z.boolean().default(true),
+  badgePosition: z.enum(BADGE_POSITIONS).default("topRight"),
   showChip: z.boolean().default(true),
   chipColor: z.enum(CHIP_COLORS).default("gold"),
   notes: z.string().trim().max(500).nullable().optional(),
@@ -395,6 +397,7 @@ export const walletCardUpdateSchema = z
     background: cardBackgroundSchema.optional(),
     textColor: cardTextColorSchema.optional(),
     showNetworkBadge: z.boolean().optional(),
+    badgePosition: z.enum(BADGE_POSITIONS).optional(),
     showChip: z.boolean().optional(),
     chipColor: z.enum(CHIP_COLORS).optional(),
     notes: z.string().trim().max(500).nullable().optional(),

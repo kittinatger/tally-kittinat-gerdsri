@@ -4,6 +4,7 @@ import { isWalletKind } from "@/lib/wallets";
 import { isCardNetwork } from "@/lib/wallet-cards";
 import { parseCardBackground } from "@/lib/card-backgrounds";
 import { isChipColor, DEFAULT_CHIP_COLOR } from "@/lib/chip-colors";
+import { isBadgePosition, DEFAULT_BADGE_POSITION } from "@/lib/badge-position";
 import { toMembershipCard } from "@/lib/membership-card-mapper";
 import WalletPageView from "@/components/WalletPageView";
 import type { WalletOption } from "@/types/wallet";
@@ -45,6 +46,7 @@ export default async function WalletPage() {
     color: c.color,
     background: parseCardBackground(c.background),
     showNetworkBadge: c.show_network_badge,
+    badgePosition: isBadgePosition(c.badge_position) ? c.badge_position : DEFAULT_BADGE_POSITION,
     textColor: c.text_color,
     showChip: c.show_chip,
     chipColor: isChipColor(c.chip_color) ? c.chip_color : DEFAULT_CHIP_COLOR,

@@ -40,6 +40,7 @@ export default function WalletCardDetail({
         color={card.color}
         background={card.background}
         showNetworkBadge={card.showNetworkBadge}
+        badgePosition={card.badgePosition}
         textColor={card.textColor}
         showChip={card.showChip}
         chipColor={card.chipColor}

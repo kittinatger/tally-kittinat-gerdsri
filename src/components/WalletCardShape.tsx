@@ -3,6 +3,7 @@
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { cardBackgroundStyle, cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
 import { CHIP_COLOR_STOPS, DEFAULT_CHIP_COLOR, type ChipColor } from "@/lib/chip-colors";
+import { BADGE_POSITION_CLASSES, DEFAULT_BADGE_POSITION, type BadgePosition } from "@/lib/badge-position";
 import { useT } from "@/lib/language-context";
 import type { CardNetwork } from "@/lib/wallet-cards";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -92,6 +93,7 @@ export default function WalletCardShape({
   background = null,
   textColor = null,
   showNetworkBadge = true,
+  badgePosition = DEFAULT_BADGE_POSITION,
   showChip = true,
   chipColor = DEFAULT_CHIP_COLOR,
 }: {
@@ -106,48 +108,62 @@ export default function WalletCardShape({
   /** Manual text-color override — null means auto-contrast against the background. */
   textColor?: string | null;
   showNetworkBadge?: boolean;
+  /** Which corner the network badge sits in — see badge-position.ts. */
+  badgePosition?: BadgePosition;
   showChip?: boolean;
   chipColor?: ChipColor;
 }) {
   const t = useT();
   const expiry = expiryMonth && expiryYear ? `${String(expiryMonth).padStart(2, "0")}/${String(expiryYear).slice(-2)}` : null;
   const fg = cardForegroundFor(textColor, background, color);
+  // The badge floats free of the label/holder/expiry text rows (absolute,
+  // anchored to whichever corner is picked) rather than sharing a flex row
+  // with them, since any of the 4 corners can coincide with text that's
+  // already anchored there (e.g. the label sits top-left, same as a
+  // topLeft badge) — reserving space in that row for both would fight the
+  // row's own layout logic four different ways. The label and holder-name
+  // rows instead reserve horizontal space on whichever side the badge
+  // shares their row with, so long text truncates before running under it.
+  const badgeOnTop = badgePosition === "topLeft" || badgePosition === "topRight";
+  const badgeOnRight = badgePosition === "topRight" || badgePosition === "bottomRight";
+  const reserveClass = showNetworkBadge ? (badgeOnRight ? "pr-16" : "pl-16") : "";
 
   return (
     <div
-      className={`flex min-h-[190px] w-full flex-col justify-between rounded-2xl p-4 shadow-soft ${background ? "" : heroGradientClasses(color)}`}
+      className={`relative flex min-h-[190px] w-full flex-col justify-between rounded-2xl p-4 shadow-soft ${background ? "" : heroGradientClasses(color)}`}
       style={{ color: fg.full, ...(background ? cardBackgroundStyle(background) : colorHeroStyle(color)) }}
     >
-      <div className="flex items-start justify-between gap-2">
+      {showNetworkBadge && (
+        <div className={`absolute flex items-center gap-1.5 ${BADGE_POSITION_CLASSES[badgePosition]}`} style={{ color: fg.a85 }}>
+          {network === "visa" || network === "discover" ? (
+            <div
+              aria-label={network}
+              className={`h-5 ${network === "visa" ? "aspect-[3840/1247]" : "aspect-[3660/835]"}`}
+              style={{
+                backgroundColor: "currentColor",
+                maskImage: `url(/badges/${network}.svg)`,
+                maskSize: "contain",
+                maskRepeat: "no-repeat",
+                maskPosition: "center",
+                WebkitMaskImage: `url(/badges/${network}.svg)`,
+                WebkitMaskSize: "contain",
+                WebkitMaskRepeat: "no-repeat",
+                WebkitMaskPosition: "center",
+              }}
+            />
+          ) : network !== "other" ? (
+            <img src={`/badges/${network}.svg`} alt={network} className="h-6 w-auto object-contain" />
+          ) : (
+            <>
+              <NetworkBadge network={network} />
+              <p className="text-xs font-bold uppercase tracking-wide">{t(NETWORK_LABEL_KEYS[network])}</p>
+            </>
+          )}
+        </div>
+      )}
+
+      <div className={`flex items-start ${badgeOnTop ? reserveClass : ""}`}>
         <p className="min-w-0 truncate text-sm font-semibold">{label}</p>
-        {showNetworkBadge && (
-          <div className="flex shrink-0 items-center gap-1.5" style={{ color: fg.a85 }}>
-            {network === "visa" || network === "discover" ? (
-              <div
-                aria-label={network}
-                className={`h-5 ${network === "visa" ? "aspect-[3840/1247]" : "aspect-[3660/835]"}`}
-                style={{
-                  backgroundColor: "currentColor",
-                  maskImage: `url(/badges/${network}.svg)`,
-                  maskSize: "contain",
-                  maskRepeat: "no-repeat",
-                  maskPosition: "center",
-                  WebkitMaskImage: `url(/badges/${network}.svg)`,
-                  WebkitMaskSize: "contain",
-                  WebkitMaskRepeat: "no-repeat",
-                  WebkitMaskPosition: "center",
-                }}
-              />
-            ) : network !== "other" ? (
-              <img src={`/badges/${network}.svg`} alt={network} className="h-6 w-auto object-contain" />
-            ) : (
-              <>
-                <NetworkBadge network={network} />
-                <p className="text-xs font-bold uppercase tracking-wide">{t(NETWORK_LABEL_KEYS[network])}</p>
-              </>
-            )}
-          </div>
-        )}
       </div>
 
       <div className="flex items-center gap-2">
@@ -157,7 +173,7 @@ export default function WalletCardShape({
         </p>
       </div>
 
-      <div className="flex items-end justify-between gap-2">
+      <div className={`flex items-end justify-between gap-2 ${!badgeOnTop ? reserveClass : ""}`}>
         <p className="min-w-0 truncate text-xs uppercase tracking-wide" style={{ color: fg.a85 }}>
           {holderName || " "}
         </p>

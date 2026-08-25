@@ -1,6 +1,7 @@
 import type { CardNetwork } from "@/lib/wallet-cards";
 import type { CardBackground } from "@/lib/card-backgrounds";
 import type { ChipColor } from "@/lib/chip-colors";
+import type { BadgePosition } from "@/lib/badge-position";
 
 export type WalletCard = {
   id: number;
@@ -16,6 +17,8 @@ export type WalletCard = {
   background: CardBackground | null;
   /** Whether the generic (non-trademark) network badge shows on the card visual. */
   showNetworkBadge: boolean;
+  /** Which corner the network badge sits in — see badge-position.ts. */
+  badgePosition: BadgePosition;
   /** Manual text-color override — null means auto-contrast against the background. */
   textColor: string | null;
   /** Whether the EMV contact-chip visual shows on the card. */

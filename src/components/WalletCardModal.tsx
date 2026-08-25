@@ -12,6 +12,13 @@ import CardTextColorPicker from "./CardTextColorPicker";
 import { CARD_NETWORKS, type CardNetwork } from "@/lib/wallet-cards";
 import { parseCardBackground, backgroundGlowColor, cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
 import { CHIP_COLORS, CHIP_COLOR_LABEL_KEYS, CHIP_COLOR_STOPS, DEFAULT_CHIP_COLOR, isChipColor, type ChipColor } from "@/lib/chip-colors";
+import {
+  BADGE_POSITIONS,
+  BADGE_POSITION_LABEL_KEYS,
+  DEFAULT_BADGE_POSITION,
+  isBadgePosition,
+  type BadgePosition,
+} from "@/lib/badge-position";
 import { CategoryIcon, PaletteIcon, FileIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -31,6 +38,7 @@ type WalletCardApiRow = {
   text_color: string | null;
   show_chip: boolean;
   chip_color: string;
+  badge_position: string;
   notes: string | null;
 };
 
@@ -50,6 +58,7 @@ function toWalletCard(row: WalletCardApiRow): WalletCard {
     textColor: row.text_color,
     showChip: row.show_chip,
     chipColor: isChipColor(row.chip_color) ? row.chip_color : DEFAULT_CHIP_COLOR,
+    badgePosition: isBadgePosition(row.badge_position) ? row.badge_position : DEFAULT_BADGE_POSITION,
     notes: row.notes,
   };
 }
@@ -82,6 +91,7 @@ export default function WalletCardModal({
   const [color, setColor] = useState<string>(card?.color ?? CATEGORY_PALETTE[0]);
   const [background, setBackground] = useState<CardBackground | null>(card?.background ?? null);
   const [showNetworkBadge, setShowNetworkBadge] = useState(card?.showNetworkBadge ?? true);
+  const [badgePosition, setBadgePosition] = useState<BadgePosition>(card?.badgePosition ?? DEFAULT_BADGE_POSITION);
   const [textColor, setTextColor] = useState<string | null>(card?.textColor ?? null);
   const [showChip, setShowChip] = useState(card?.showChip ?? true);
   const [chipColor, setChipColor] = useState<ChipColor>(card?.chipColor ?? DEFAULT_CHIP_COLOR);
@@ -107,6 +117,7 @@ export default function WalletCardModal({
         color,
         background,
         showNetworkBadge,
+        badgePosition,
         textColor,
         showChip,
         chipColor,
@@ -150,6 +161,7 @@ export default function WalletCardModal({
             color={color}
             background={background}
             showNetworkBadge={showNetworkBadge}
+            badgePosition={badgePosition}
             textColor={textColor}
             showChip={showChip}
             chipColor={chipColor}
@@ -211,6 +223,32 @@ export default function WalletCardModal({
               />
             </span>
           </button>
+
+          {showNetworkBadge && (
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.badgePositionLabel")}</label>
+              <div className="grid w-24 grid-cols-2 gap-1.5">
+                {BADGE_POSITIONS.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setBadgePosition(p)}
+                    aria-label={t(BADGE_POSITION_LABEL_KEYS[p])}
+                    title={t(BADGE_POSITION_LABEL_KEYS[p])}
+                    className={`flex h-10 w-10 items-center rounded-lg border transition ${
+                      p === "topLeft" || p === "topRight" ? "items-start" : "items-end"
+                    } ${p === "topLeft" || p === "bottomLeft" ? "justify-start" : "justify-end"} ${
+                      badgePosition === p
+                        ? "border-navy bg-navy/10"
+                        : "border-line bg-bg-soft hover:bg-[var(--nav-hover-bg)]"
+                    } p-1.5`}
+                  >
+                    <span className={`h-2 w-2 rounded-full ${badgePosition === p ? "bg-navy" : "bg-ink-soft/50"}`} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <button
             type="button"
