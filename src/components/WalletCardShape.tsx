@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useId, type CSSProperties } from "react";
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { cardBackgroundStyle, cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
 import { CHIP_COLOR_STOPS, DEFAULT_CHIP_COLOR, type ChipColor } from "@/lib/chip-colors";
@@ -55,7 +55,13 @@ function NetworkBadge({ network }: { network: CardNetwork }) {
 // copper chip finishes.
 function EMVChip({ color }: { color: ChipColor }) {
   const { light, base, dark } = CHIP_COLOR_STOPS[color];
-  const gradientId = `chip-${color}`;
+  // Unique per rendered instance, not just per color — reusing a plain
+  // `chip-${color}` id meant every same-colored chip on the page (e.g. the
+  // desktop grid, which shows several cards at once) shared one gradient
+  // id. Duplicate SVG ids in one document break `fill="url(#id)"`
+  // resolution in Safari specifically, which drops the fill and leaves
+  // only the stroke outline visible.
+  const gradientId = `chip-${color}-${useId()}`;
   return (
     <svg viewBox="0 0 100 74" className="h-6 w-8 shrink-0" aria-hidden="true">
       <defs>
