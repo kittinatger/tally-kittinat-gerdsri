@@ -28,7 +28,12 @@ export default function SettingsSubpageLayout({
       <AppHeader />
 
       <main className="flex-1 px-1 py-6 sm:px-2 lg:flex lg:items-start lg:gap-6">
-        <div className="hidden lg:block lg:w-[320px] lg:shrink-0">
+        {/* Independent scroll region at lg+ (sticky under the header,
+         * capped to the viewport) — otherwise the nav list and the page
+         * content share one page scroll, so scrolling the list drags the
+         * content down with it. Matches SettingsView.tsx's two-pane
+         * layout. */}
+        <div className="hidden lg:sticky lg:top-[88px] lg:block lg:max-h-[calc(100dvh-104px)] lg:w-[320px] lg:shrink-0 lg:overflow-y-auto">
           <SettingsNavList mode="link" username={username} email={email} />
         </div>
         <div className="lg:min-w-0 lg:flex-1">

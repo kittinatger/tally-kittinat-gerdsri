@@ -186,8 +186,18 @@ export default function SettingsView({
 
           <main className="flex-1 px-1 py-6 sm:px-2">
             <div className="lg:flex lg:items-start lg:gap-6">
-              <div className={`${panel ? "hidden" : "block"} lg:block lg:w-[320px] lg:shrink-0`}>{listContent}</div>
-              <div className={`${panel ? "block" : "hidden"} lg:block lg:flex-1`}>
+              {/* Independent scroll regions at lg+ (each sticky under the
+               * header, capped to the viewport, scrolling on its own) —
+               * otherwise the list and detail panes share one page scroll,
+               * so scrolling down a long nav list (to reach e.g. Changelog
+               * near the bottom) drags the short detail pane down and out
+               * of view with it. */}
+              <div
+                className={`${panel ? "hidden" : "block"} lg:sticky lg:top-[88px] lg:block lg:max-h-[calc(100dvh-104px)] lg:w-[320px] lg:shrink-0 lg:overflow-y-auto`}
+              >
+                {listContent}
+              </div>
+              <div className={`${panel ? "block" : "hidden"} lg:sticky lg:top-[88px] lg:block lg:max-h-[calc(100dvh-104px)] lg:flex-1 lg:overflow-y-auto`}>
                 {panel ? detailContent : detailEmptyState}
               </div>
             </div>
