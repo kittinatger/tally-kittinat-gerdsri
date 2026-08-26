@@ -32,6 +32,20 @@
       "purpose": "maskable"
     }
   ],
+  "shortcuts": [
+    {
+      "name": "Add expense",
+      "short_name": "Add expense",
+      "url": "/?add=expense",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
   "share_target": {
     "action": "/share-target",
     "method": "POST",

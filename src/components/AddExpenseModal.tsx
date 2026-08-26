@@ -73,6 +73,10 @@ export default function AddExpenseModal({
   const [lastRecording, setLastRecording] = useState<{ blob: Blob; mimeType: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [pendingDuplicate, setPendingDuplicate] = useState<{
+    values: ExpenseFormValues;
+    duplicate: { id: number; date: string; amount: string; merchant: string };
+  } | null>(null);
 
   async function processFile(file: File) {
     setPreviewUrl(URL.createObjectURL(file));
@@ -272,6 +276,28 @@ export default function AddExpenseModal({
       }
       onClose();
     } catch (err) {
+      if (err instanceof DuplicateExpenseError) {
+        setPendingDuplicate({ values, duplicate: err.duplicate });
+        return;
+      }
+      setSubmitError(err instanceof Error ? err.message : "Could not save that entry.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleConfirmDuplicate() {
+    if (!pendingDuplicate) return;
+    const { values } = pendingDuplicate;
+    setPendingDuplicate(null);
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const expense = await createExpense(values, true);
+      onCreated(expense);
+      await maybeSplitWithFriends(values, expense.amount);
+      onClose();
+    } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Could not save that entry.");
     } finally {
       setSubmitting(false);
@@ -384,15 +410,45 @@ export default function AddExpenseModal({
       </div>
 
       {tab === "manual" && (
-        <ExpenseForm
-          initialValues={{ ...emptyExpenseFormValues, type: initialType }}
-          submitLabel={t("form.addTransaction")}
-          onSubmit={handleManualSubmit}
-          submitting={submitting}
-          error={submitError}
-          allowSplit
-          allowFriendSplit
-        />
+        <>
+          {pendingDuplicate && (
+            <div className="mb-4 rounded-card border border-amber-300 bg-amber-50 p-4 text-sm dark:border-amber-700 dark:bg-amber-950/40">
+              <p className="font-semibold text-amber-900 dark:text-amber-200">{t("form.duplicateWarningTitle")}</p>
+              <p className="mt-1 text-amber-800 dark:text-amber-300">{t("form.duplicateWarningBody")}</p>
+              <p className="mt-1 font-medium text-amber-900 dark:text-amber-200">
+                {pendingDuplicate.duplicate.merchant} · {formatCurrency(Number(pendingDuplicate.duplicate.amount), currency)} ·{" "}
+                {pendingDuplicate.duplicate.date}
+              </p>
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPendingDuplicate(null)}
+                  disabled={submitting}
+                  className="rounded-full border border-amber-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-amber-900 transition hover:bg-amber-100 disabled:opacity-60 dark:border-amber-700 dark:bg-transparent dark:text-amber-200"
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDuplicate}
+                  disabled={submitting}
+                  className="rounded-full bg-amber-600 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:opacity-60"
+                >
+                  {t("form.saveDuplicateAnyway")}
+                </button>
+              </div>
+            </div>
+          )}
+          <ExpenseForm
+            initialValues={{ ...emptyExpenseFormValues, type: initialType }}
+            submitLabel={t("form.addTransaction")}
+            onSubmit={handleManualSubmit}
+            submitting={submitting}
+            error={submitError}
+            allowSplit
+            allowFriendSplit
+          />
+        </>
       )}
 
       {tab === "scan" && (
@@ -640,7 +696,18 @@ async function createSplitExpense(values: ExpenseFormValues): Promise<Expense[]>
   }));
 }
 
-async function createExpense(values: ExpenseFormValues): Promise<Expense> {
+// Thrown by createExpense() when the server flags a likely duplicate
+// (409, see api/expenses/route.ts) — carries the existing match so the
+// caller can show what it collided with rather than a generic error.
+export class DuplicateExpenseError extends Error {
+  duplicate: { id: number; date: string; amount: string; merchant: string };
+  constructor(duplicate: { id: number; date: string; amount: string; merchant: string }) {
+    super("duplicate");
+    this.duplicate = duplicate;
+  }
+}
+
+async function createExpense(values: ExpenseFormValues, confirmDuplicate = false): Promise<Expense> {
   const res = await fetch("/api/expenses", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -654,9 +721,13 @@ async function createExpense(values: ExpenseFormValues): Promise<Expense> {
       notes: values.notes || undefined,
       tags: values.tags,
       walletId: values.walletId,
+      confirmDuplicate,
     }),
   });
   const data = await res.json();
+  if (res.status === 409 && data.duplicate) {
+    throw new DuplicateExpenseError(data.duplicate);
+  }
   if (!res.ok) {
     throw new Error(typeof data.error === "string" ? data.error : "Could not save that entry.");
   }

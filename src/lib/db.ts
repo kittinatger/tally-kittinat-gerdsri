@@ -1585,6 +1585,22 @@ export async function listExpenses(userId: number): Promise<Expense[]> {
   return rows;
 }
 
+// Powers the merchant-field autocomplete in ExpenseForm.tsx — every
+// merchant the user has typed before, most-recently-used first, so
+// retyping "Starbucks" for the tenth time is one tap instead of a retype.
+export async function listDistinctMerchants(userId: number): Promise<string[]> {
+  await ensureSchema();
+  const { rows } = await sql<{ merchant: string }>`
+    SELECT merchant, MAX(date) AS last_used
+    FROM expenses
+    WHERE user_id = ${userId}
+    GROUP BY merchant
+    ORDER BY last_used DESC
+    LIMIT 200;
+  `;
+  return rows.map((r) => r.merchant);
+}
+
 export type TagCount = { name: string; count: number };
 
 export async function listTags(userId: number): Promise<TagCount[]> {
@@ -1631,6 +1647,33 @@ async function resolveWalletId(userId: number, walletId: number | null | undefin
     SELECT id FROM wallets WHERE user_id = ${userId} AND archived = false ORDER BY is_default DESC, sort_order, id LIMIT 1;
   `;
   return fallback[0]?.id ?? null;
+}
+
+export type PossibleDuplicateExpense = { id: number; date: string; amount: string; merchant: string };
+
+// A same-day, same-merchant (case-insensitive), same-amount transaction
+// already on file — surfaced as a non-blocking warning before create
+// (see the `confirmDuplicate` flow in api/expenses/route.ts), not a hard
+// block: a genuine repeat purchase (coffee twice a day) must still be
+// allowed through with one extra confirm tap.
+export async function findPossibleDuplicateExpense(
+  userId: number,
+  date: string,
+  amount: number,
+  merchant: string,
+): Promise<PossibleDuplicateExpense | null> {
+  await ensureSchema();
+  const { rows } = await sql<PossibleDuplicateExpense>`
+    SELECT id, to_char(date, 'YYYY-MM-DD') AS date, amount::text AS amount, merchant
+    FROM expenses
+    WHERE user_id = ${userId}
+      AND date = ${date}
+      AND amount = ${amount}
+      AND lower(merchant) = lower(${merchant})
+    ORDER BY id DESC
+    LIMIT 1;
+  `;
+  return rows[0] ?? null;
 }
 
 export async function createExpense(userId: number, input: ExpenseInput): Promise<Expense> {

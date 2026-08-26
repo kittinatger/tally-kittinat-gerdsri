@@ -259,7 +259,7 @@ export default function ExpenseList({
       if (dateFrom && e.date < dateFrom) return false;
       if (dateTo && e.date > dateTo) return false;
       if (q) {
-        const haystack = `${e.merchant} ${e.notes ?? ""} ${e.tags.join(" ")}`.toLowerCase();
+        const haystack = `${e.merchant} ${e.notes ?? ""} ${e.tags.join(" ")} ${e.category}`.toLowerCase();
         if (!haystack.includes(q)) return false;
       }
       return true;

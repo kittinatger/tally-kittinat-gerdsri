@@ -27,7 +27,12 @@ import type { WalletOption } from "@/types/wallet";
 // also avoids the build needing a reachable database at build time.
 export const dynamic = "force-dynamic";
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ add?: string }>;
+}) {
+  const { add } = await searchParams;
   const userId = await getUserId();
   const loggedRecurring = await processDueRecurringRules(userId);
   const [rows, remaining, categoryRows, currency, walletRows, widgets, budgetRows, savingsGoalRows, convertEnabled, user] =
@@ -113,6 +118,7 @@ export default async function HomePage() {
       budgets={budgets}
       savingsGoals={savingsGoals}
       username={user?.username ?? "there"}
+      initialAddType={add && isTransactionType(add) ? add : null}
     />
   );
 }

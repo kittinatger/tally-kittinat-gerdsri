@@ -84,6 +84,7 @@ export default function ExpenseForm({
   ]);
   const [friendSplitMode, setFriendSplitMode] = useState(false);
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [merchants, setMerchants] = useState<string[]>([]);
   const [friendIds, setFriendIds] = useState<number[]>([]);
   const [friendSplitMethod, setFriendSplitMethod] = useState<"equal" | "custom">("equal");
   const [customFriendOwed, setCustomFriendOwed] = useState<Record<number, string>>({});
@@ -105,6 +106,24 @@ export default function ExpenseForm({
       cancelled = true;
     };
   }, [allowFriendSplit]);
+
+  // Powers the merchant field's <datalist> — fetched once regardless of
+  // form mode (unlike the friends list above, every expense/income/
+  // transfer entry has a merchant/source/description field).
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/merchants")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled && Array.isArray(data.merchants)) setMerchants(data.merchants);
+      })
+      .catch(() => {
+        // Leave the list empty — the field still works as a plain text input.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const categories = allCategories.filter((c) => c.type === values.type);
   const defaultWallet = wallets.find((w) => w.isDefault) ?? wallets[0];
   const selectedWalletId = values.walletId ?? defaultWallet?.id ?? null;
@@ -313,6 +332,7 @@ export default function ExpenseForm({
           id="merchant"
           type="text"
           required
+          list="merchant-suggestions"
           value={values.merchant}
           onChange={(e) => update("merchant", e.target.value)}
           placeholder={
@@ -324,6 +344,11 @@ export default function ExpenseForm({
           }
           className={inputClass}
         />
+        <datalist id="merchant-suggestions">
+          {merchants.map((m) => (
+            <option key={m} value={m} />
+          ))}
+        </datalist>
       </div>
 
       {allowSplit && values.type !== "transfer" && (

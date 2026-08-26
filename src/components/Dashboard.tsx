@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { signedAmount, type Expense } from "@/types/expense";
 import type { CategoryOption } from "@/types/category";
 import type { TransactionType } from "@/lib/categories";
@@ -39,6 +40,7 @@ export default function Dashboard({
   budgets: initialBudgets,
   savingsGoals,
   username,
+  initialAddType = null,
 }: {
   initialExpenses: Expense[];
   initialRemaining: number;
@@ -51,6 +53,11 @@ export default function Dashboard({
   budgets: Budget[];
   savingsGoals: SavingsGoal[];
   username: string;
+  /** Opens AddExpenseModal on mount — powers the PWA "Add expense" home-
+   * screen shortcut (manifest.json -> shortcuts -> "/?add=expense"), read
+   * server-side by page.tsx and passed down, same pattern as Settings'
+   * `?panel=` deep link. */
+  initialAddType?: TransactionType | null;
 }) {
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [remaining, setRemaining] = useState(initialRemaining);
@@ -60,7 +67,16 @@ export default function Dashboard({
     setBudgets((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
   }
   const [editingBalance, setEditingBalance] = useState(false);
-  const [addingType, setAddingType] = useState<TransactionType | null>(null);
+  const [addingType, setAddingType] = useState<TransactionType | null>(initialAddType);
+  const router = useRouter();
+
+  // Strips the `?add=expense` param once consumed (replace, not push) so
+  // it doesn't linger in history and reopen the modal on back/refresh.
+  useEffect(() => {
+    if (!initialAddType) return;
+    router.replace("/", { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only
+  }, []);
 
   function handleBalanceSaved(value: number) {
     setRemaining(value);
