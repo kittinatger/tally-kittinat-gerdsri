@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.17.1] - 2026-08-26
+
+### Added
+- A custom themed scrollbar on desktop (matching the app's colors, thinner than the default OS one) for modals and other scrollable panels
+- A prompt to optimize an existing profile picture that's still loading slowly, with one tap to re-save it at a smaller size
+
+### Changed
+- New profile pictures are now downscaled automatically before upload so they load faster everywhere they appear (existing pictures are unaffected until re-saved, via the new optimize prompt above)
+- Settings > Wallets rows now stack the name/balance and the action buttons (Make default, edit, archive, delete) onto two lines on mobile instead of squeezing everything into one, which was truncating long wallet names down to a couple of characters
+- Settings' nav list and its content pane now scroll independently on desktop, instead of sharing one page scroll — scrolling down a long nav list no longer drags the shorter content pane out of view with it
+- The pass/membership card editor's live preview now always reflects template fields, layout, and images, instead of only appearing once a code was entered or scanned
+
+### Fixed
+- A gold (or other same-colored) EMV chip icon could render as an outline only, with no fill, whenever multiple cards sharing that chip color were on screen at once (e.g. the Wallet page's desktop grid)
+- A modal's own scrollbar could render outside its rounded corners on desktop, and the page behind an open modal could keep scrolling and show its native scrollbar past the modal's edge
+- Payment cards could look stretched or squeezed depending on which view they were shown in
+
 ## [0.17.0] - 2026-08-19
 
 ### Added

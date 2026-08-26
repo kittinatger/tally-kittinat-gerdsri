@@ -6,6 +6,66 @@ export const dynamic = "force-dynamic";
 
 const RELEASES: { version: string; date: string; sections: { heading: string; items: string[] }[] }[] = [
   {
+    version: "0.17.1",
+    date: "2026-08-26",
+    sections: [
+      {
+        heading: "Added",
+        items: [
+          "A custom themed scrollbar on desktop (matching the app's colors, thinner than the default OS one) for modals and other scrollable panels",
+          "A prompt to optimize an existing profile picture that's still loading slowly, with one tap to re-save it at a smaller size",
+        ],
+      },
+      {
+        heading: "Changed",
+        items: [
+          "New profile pictures are now downscaled automatically before upload so they load faster everywhere they appear (existing pictures are unaffected until re-saved, via the new optimize prompt above)",
+          "Settings > Wallets rows now stack the name/balance and the action buttons (Make default, edit, archive, delete) onto two lines on mobile instead of squeezing everything into one, which was truncating long wallet names down to a couple of characters",
+          "Settings' nav list and its content pane now scroll independently on desktop, instead of sharing one page scroll — scrolling down a long nav list no longer drags the shorter content pane out of view with it",
+          "The pass/membership card editor's live preview now always reflects template fields, layout, and images, instead of only appearing once a code was entered or scanned",
+        ],
+      },
+      {
+        heading: "Fixed",
+        items: [
+          "A gold (or other same-colored) EMV chip icon could render as an outline only, with no fill, whenever multiple cards sharing that chip color were on screen at once (e.g. the Wallet page's desktop grid)",
+          "A modal's own scrollbar could render outside its rounded corners on desktop, and the page behind an open modal could keep scrolling and show its native scrollbar past the modal's edge",
+          "Payment cards could look stretched or squeezed depending on which view they were shown in",
+        ],
+      },
+    ],
+  },
+  {
+    version: "0.17.0",
+    date: "2026-08-19",
+    sections: [
+      {
+        heading: "Added",
+        items: [
+          "Wallet — a new Apple-Wallet-style page (replacing Memberships) combining money accounts, payment cards, passes, and memberships into one stacked view: accounts and cards stack together as bank-card visuals, passes and memberships stack together below as pass visuals, with each card peeking above the next and tapping any of them opening it straight to detail",
+          "Cards — a new payment-card visual (network, cardholder name, expiry, masked number) for keeping card art/details for reference; only ever stores the last 4 digits, never a full card number",
+          "Pass templates — Generic, Store card, Coupon, Event ticket, and Boarding pass, each with its own relevant fields, plus a Guided/Custom-layout dual editor (tap-to-place zone grid) and a visual pass-canvas editor for attaching a logo and banner image to a pass",
+          "4-tile \"Create pass\" entry menu (New pass / Scan / Photo gallery / From file) and PDF417/Aztec barcode formats alongside QR/Code128/EAN-13/UPC-A",
+          "A universal color picker on every color selector in the app (categories, wallets, cards, passes, savings goals): the existing palette swatches plus a \"Custom\" panel with a draggable saturation/value square, a hue slider, an eyedropper (where the browser supports it), and synced Hex/RGB/CMYK fields",
+        ],
+      },
+      {
+        heading: "Changed",
+        items: [
+          "Tapping an account or payment card on the Wallet page now opens a read-only detail view with Edit/Delete buttons, instead of jumping straight into the edit form — matching how passes and memberships already worked",
+          "Account management (archive, set default, transfer between wallets) is now reachable from the Wallet page itself via a \"Manage accounts\" button, in addition to Settings",
+        ],
+      },
+      {
+        heading: "Fixed",
+        items: [
+          "A wallet's balance or a payment card's details could get visibly clipped mid-digit/mid-line on narrow phone screens; card visuals now grow to fit their content instead of clipping it",
+          "Pull-to-refresh was missing on the new Wallet page",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.16.0",
     date: "2026-08-15",
     sections: [

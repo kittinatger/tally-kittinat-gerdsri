@@ -33,6 +33,13 @@ function TrashIcon() {
 const MAX_DIMENSION = 512;
 const JPEG_QUALITY = 0.85;
 
+// A picture uploaded before this resize step existed (or from a stale
+// client) can still be sitting on the server at full camera resolution —
+// this fix only shrinks pictures uploaded from now on, it doesn't
+// retroactively touch what's already stored. A resized 512px JPEG avatar
+// is well under this, so anything larger is worth offering to re-save.
+const OPTIMIZE_THRESHOLD_BYTES = 150 * 1024;
+
 function resizeImage(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -72,6 +79,7 @@ export default function ProfilePictureUploader({
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pictureUrl, setPictureUrl] = useState<string | null>(null);
+  const [pictureBlob, setPictureBlob] = useState<Blob | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -85,11 +93,42 @@ export default function ProfilePictureUploader({
       const res = await fetch("/api/account/profile-picture", { cache: "no-store" });
       if (res.ok) {
         const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        setPictureUrl(url);
+        setPictureBlob(blob);
+        setPictureUrl(URL.createObjectURL(blob));
+      } else {
+        setPictureBlob(null);
       }
     } catch (err) {
       console.error("Failed to load profile picture:", err);
+    }
+  }
+
+  const canOptimize = (pictureBlob?.size ?? 0) > OPTIMIZE_THRESHOLD_BYTES;
+
+  async function handleOptimize() {
+    if (!pictureBlob) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const file = new File([pictureBlob], "profile.jpg", { type: "image/jpeg" });
+      const resized = await resizeImage(file);
+      const formData = new FormData();
+      formData.append("image", resized, "profile.jpg");
+
+      const res = await fetch("/api/account/profile-picture", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Could not optimize picture");
+      }
+      await loadProfilePicture();
+      onSuccess?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not optimize picture");
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -137,6 +176,7 @@ export default function ProfilePictureUploader({
       if (!res.ok) throw new Error("Failed to remove picture");
 
       setPictureUrl(null);
+      setPictureBlob(null);
       onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to remove picture");
@@ -192,6 +232,20 @@ export default function ProfilePictureUploader({
             </button>
           )}
         </div>
+
+        {canOptimize && (
+          <div className="flex w-full items-center gap-2 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-xs text-surface-foreground-soft">
+            <span className="flex-1">This photo is larger than it needs to be, which can slow down loading.</span>
+            <button
+              type="button"
+              onClick={handleOptimize}
+              disabled={isLoading}
+              className="shrink-0 font-semibold text-surface-accent transition hover:underline disabled:opacity-50"
+            >
+              {isLoading ? "Optimizing…" : "Optimize"}
+            </button>
+          </div>
+        )}
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
