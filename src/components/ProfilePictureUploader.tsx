@@ -22,6 +22,49 @@ function TrashIcon() {
   );
 }
 
+// Phone camera photos routinely come in at several MB and thousands of
+// pixels per side — stored and served as-is, that meant every place the
+// avatar renders (Settings nav, Welcome widget, this uploader) had to
+// download and decode a multi-megabyte image just to paint a 32-128px
+// circle, with no caching (the profile-picture endpoint is deliberately
+// no-store — see route.ts). Downscaling to a small square JPEG here, once,
+// at upload time fixes it at the source without touching the server or
+// adding an image-processing dependency.
+const MAX_DIMENSION = 512;
+const JPEG_QUALITY = 0.85;
+
+function resizeImage(file: File): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const scale = Math.min(1, MAX_DIMENSION / Math.max(img.width, img.height));
+      const width = Math.round(img.width * scale);
+      const height = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Could not process image"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => (blob ? resolve(blob) : reject(new Error("Could not process image"))),
+        "image/jpeg",
+        JPEG_QUALITY,
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Could not read that image"));
+    };
+    img.src = objectUrl;
+  });
+}
+
 export default function ProfilePictureUploader({
   onSuccess,
 }: {
@@ -58,8 +101,9 @@ export default function ProfilePictureUploader({
     setError(null);
 
     try {
+      const resized = await resizeImage(file);
       const formData = new FormData();
-      formData.append("image", file);
+      formData.append("image", resized, "profile.jpg");
 
       const res = await fetch("/api/account/profile-picture", {
         method: "POST",
