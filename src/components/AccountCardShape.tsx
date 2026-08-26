@@ -8,17 +8,20 @@ import type { WalletOption } from "@/types/wallet";
 
 // The money-account equivalent of WalletCardShape/PassShape — same card
 // gradient treatment so accounts and payment cards read as one visual
-// family when stacked together on the Wallet page. Height is min-height +
-// natural content flow (not a fixed aspect-ratio box) so a long wallet
-// name or a large balance never gets silently clipped — see the sibling
-// components for the same fix, made after a real balance ("$1,336.00")
-// was found cut off mid-digit on a narrow phone screen.
+// family when stacked together on the Wallet page. aspect-[1.586/1]
+// (the real ID-1 card ratio) keeps the shape consistent across the very
+// different container widths it renders at, with min-h-[190px] as a
+// floor on narrow screens — see WalletCardShape for the full reasoning.
+// Neither clips: with no overflow-hidden and height left auto, a long
+// wallet name or a large balance ("$1,336.00", once found cut off
+// mid-digit under the old aspect-ratio + overflow-hidden approach) still
+// pushes the box taller than the ratio implies instead of getting cut off.
 export default function AccountCardShape({ wallet, currency }: { wallet: WalletOption; currency: string }) {
   const t = useT();
   const fg = cardForegroundFor(wallet.textColor, wallet.background, wallet.color);
   return (
     <div
-      className={`flex min-h-[190px] w-full flex-col justify-between rounded-2xl p-4 shadow-soft ${wallet.background ? "" : heroGradientClasses(wallet.color)}`}
+      className={`flex aspect-[1.586/1] min-h-[190px] w-full flex-col justify-between rounded-2xl p-4 shadow-soft ${wallet.background ? "" : heroGradientClasses(wallet.color)}`}
       style={{ color: fg.full, ...(wallet.background ? cardBackgroundStyle(wallet.background) : colorHeroStyle(wallet.color)) }}
     >
       <div className="flex items-start justify-between gap-2">

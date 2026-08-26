@@ -77,11 +77,17 @@ function EMVChip({ color }: { color: ChipColor }) {
   );
 }
 
-// Height is min-height + natural content flow (not a fixed aspect-ratio
-// box) so a long cardholder name never gets silently clipped — see
-// AccountCardShape for the same fix, made after a real balance was found
-// cut off mid-digit on a narrow phone screen using the old aspect-ratio +
-// overflow-hidden approach.
+// aspect-[1.586/1] targets the real ID-1 card ratio so the shape looks
+// consistent across the very different container widths it renders at
+// (a phone-width bottom-sheet modal, a capped sm:max-w-md dialog, the
+// /wallet stack) — without it, height was min-height-only, so the same
+// card read square on a narrow phone and badly stretched/flat on a wider
+// one. min-h-[190px] stays as a floor for very narrow widths, and neither
+// this nor the aspect-ratio clips: with no overflow-hidden and height
+// left auto, a long cardholder name or a large balance still pushes the
+// box taller than the ratio implies instead of getting cut off — the
+// failure mode aspect-ratio + overflow-hidden caused before (see
+// AccountCardShape for the matching fix).
 export default function WalletCardShape({
   label,
   holderName,
@@ -130,7 +136,7 @@ export default function WalletCardShape({
 
   return (
     <div
-      className={`relative flex min-h-[190px] w-full flex-col justify-between rounded-2xl p-4 shadow-soft ${background ? "" : heroGradientClasses(color)}`}
+      className={`relative flex aspect-[1.586/1] min-h-[190px] w-full flex-col justify-between rounded-2xl p-4 shadow-soft ${background ? "" : heroGradientClasses(color)}`}
       style={{ color: fg.full, ...(background ? cardBackgroundStyle(background) : colorHeroStyle(color)) }}
     >
       {showNetworkBadge && (
