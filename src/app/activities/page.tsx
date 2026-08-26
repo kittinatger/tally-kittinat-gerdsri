@@ -53,6 +53,7 @@ export default async function ActivitiesPage() {
     isDefault: w.is_default,
     archived: w.archived,
     balance: Number(w.balance),
+    isOwner: w.is_owner,
   }));
 
   const initialWalletFilter = wallets.find((w) => w.id === activitiesDefaultWalletId && !w.archived)

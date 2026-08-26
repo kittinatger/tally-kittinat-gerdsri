@@ -159,6 +159,7 @@ export default function WalletOrCardModal({
     isDefault,
     archived: false,
     balance: 0,
+    isOwner: true,
   };
 
   const month = expiryMonth ? Number(expiryMonth) : null;

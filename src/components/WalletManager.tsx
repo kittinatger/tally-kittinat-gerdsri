@@ -1,7 +1,7 @@
 "use client";
 
 import { describeFetchError } from "@/lib/fetch-error";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { badgeClasses, colorDotStyle } from "@/lib/category-styles";
 import { useCurrency } from "@/lib/currency-context";
@@ -10,8 +10,20 @@ import type { WalletOption } from "@/types/wallet";
 import { EditIcon, TrashIcon, PlusIcon } from "@/lib/icons";
 import WalletModal from "./WalletModal";
 import WalletTransferModal from "./WalletTransferModal";
+import WalletShareModal from "./WalletShareModal";
 import FilterDropdown from "./FilterDropdown";
 import { useT } from "@/lib/language-context";
+
+function ShareIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+      <circle cx="15" cy="5" r="2.25" />
+      <circle cx="5" cy="10" r="2.25" />
+      <circle cx="15" cy="15" r="2.25" />
+      <path d="M7 8.9l6-2.8M7 11.1l6 2.8" />
+    </svg>
+  );
+}
 
 function WalletGlyphIcon() {
   return (
@@ -52,6 +64,43 @@ export default function WalletManager({
   const [activitiesDefaultWalletId, setActivitiesDefaultWalletId] = useState(initialActivitiesDefaultWalletId);
   const [savingActivitiesDefault, setSavingActivitiesDefault] = useState(false);
   const [activitiesDefaultError, setActivitiesDefaultError] = useState<string | null>(null);
+  const [sharingWallet, setSharingWallet] = useState<WalletOption | null>(null);
+  const [pendingInvites, setPendingInvites] = useState<{ id: number; wallet_id: number; wallet_name: string; owner_username: string }[]>([]);
+  const [invitesBusyId, setInvitesBusyId] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch("/api/wallet-members/pending")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data.invites)) setPendingInvites(data.invites);
+      })
+      .catch(() => {});
+  }, []);
+
+  async function respondToInvite(id: number, accept: boolean) {
+    setInvitesBusyId(id);
+    try {
+      await fetch(`/api/wallet-members/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accept }),
+      });
+      setPendingInvites((prev) => prev.filter((i) => i.id !== id));
+      if (accept) router.refresh();
+    } finally {
+      setInvitesBusyId(null);
+    }
+  }
+
+  async function handleLeaveShared(walletId: number) {
+    setBusyId(walletId);
+    try {
+      await fetch(`/api/wallets/${walletId}/members/me`, { method: "DELETE" });
+      router.refresh();
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   const activeWallets = wallets.filter((w) => !w.archived);
   const archivedWallets = wallets.filter((w) => w.archived);
@@ -178,7 +227,7 @@ export default function WalletManager({
          * the balance line to wrap awkwardly. At sm+ both blocks sit in one
          * row as before (this div only gets sm:flex-1 there). */}
         <div className="flex min-w-0 items-center gap-3 sm:flex-1">
-          <div className="flex shrink-0 flex-col">
+          <div className={`flex shrink-0 flex-col ${w.isOwner ? "" : "invisible"}`}>
             <button
               onClick={() => handleMove(w.id, "up")}
               disabled={busyId === w.id || indexInGroup === 0}
@@ -216,6 +265,11 @@ export default function WalletManager({
                   {t("wallet.default")}
                 </span>
               )}
+              {!w.isOwner && (
+                <span className="shrink-0 rounded-full bg-bg-soft px-1.5 py-0.5 text-[10px] font-semibold text-ink-soft">
+                  {t("wallet.sharedWithYou")}
+                </span>
+              )}
             </div>
             <p className="text-xs text-ink-soft">
               {w.kind === "digital" ? t("wallet.digital") : t("wallet.cash")} · {formatCurrency(w.balance, w.currency ?? currency)}
@@ -241,7 +295,7 @@ export default function WalletManager({
               {deleting ? t("common.deleting") : t("common.confirmDelete")}
             </button>
           </div>
-        ) : (
+        ) : w.isOwner ? (
           <div className="flex shrink-0 items-center justify-end gap-1">
             {!w.archived && !w.isDefault && (
               <button
@@ -250,6 +304,15 @@ export default function WalletManager({
                 className="rounded-full px-2.5 py-1.5 text-[11px] font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
               >
                 {t("wallet.makeDefault")}
+              </button>
+            )}
+            {!w.archived && (
+              <button
+                onClick={() => setSharingWallet(w)}
+                aria-label={t("wallet.shareWallet")}
+                className="rounded-full p-2 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
+              >
+                <ShareIcon />
               </button>
             )}
             <button
@@ -276,6 +339,16 @@ export default function WalletManager({
                 <TrashIcon />
               </button>
             )}
+          </div>
+        ) : (
+          <div className="flex shrink-0 items-center justify-end gap-1">
+            <button
+              onClick={() => handleLeaveShared(w.id)}
+              disabled={busyId === w.id}
+              className="rounded-full px-2.5 py-1.5 text-[11px] font-semibold text-ink-soft transition hover:bg-red-50 hover:text-red-600 disabled:opacity-60 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+            >
+              {t("wallet.leaveShared")}
+            </button>
           </div>
         )}
       </div>
@@ -314,6 +387,35 @@ export default function WalletManager({
       </div>
 
       {actionError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{actionError}</p>}
+
+      {pendingInvites.length > 0 && (
+        <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
+          {pendingInvites.map((inv, i) => (
+            <div key={inv.id} className={`flex items-center gap-3 px-4 py-3 ${i === 0 ? "" : "border-t border-line"}`}>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-foreground">{inv.wallet_name}</p>
+                <p className="text-xs text-ink-soft">
+                  {t("wallet.invitedBy")} {inv.owner_username}
+                </p>
+              </div>
+              <button
+                onClick={() => respondToInvite(inv.id, false)}
+                disabled={invitesBusyId === inv.id}
+                className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                onClick={() => respondToInvite(inv.id, true)}
+                disabled={invitesBusyId === inv.id}
+                className="shrink-0 rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-60"
+              >
+                {t("wallet.accept")}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {activeWallets.length > 1 && (
         <div className="mt-4 rounded-card border border-line bg-surface p-4">
@@ -357,6 +459,10 @@ export default function WalletManager({
 
       {transferOpen && (
         <WalletTransferModal wallets={activeWallets} onClose={() => setTransferOpen(false)} onSaved={handleTransferSaved} />
+      )}
+
+      {sharingWallet && (
+        <WalletShareModal walletId={sharingWallet.id} walletName={sharingWallet.name} onClose={() => setSharingWallet(null)} />
       )}
     </div>
   );

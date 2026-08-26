@@ -34,6 +34,7 @@ export default async function WalletPage() {
     isDefault: w.is_default,
     archived: w.archived,
     balance: Number(w.balance),
+    isOwner: w.is_owner,
   }));
 
   const walletCards: WalletCard[] = walletCardRows.map((c) => ({

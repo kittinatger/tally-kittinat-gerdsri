@@ -13,6 +13,7 @@ export const PANEL_VALUES = [
   "challenges",
   "splitBills",
   "loans",
+  "assistant",
   "currency",
   "language",
   "calendar",

@@ -9,6 +9,7 @@ import SettingsSection from "./SettingsSection";
 import SettingsListItem from "./SettingsListItem";
 import ExportDataButton from "./ExportDataButton";
 import ImportDataButton from "./ImportDataButton";
+import ReportExportButton from "./ReportExportButton";
 
 function AccountIcon() {
   return (
@@ -103,6 +104,17 @@ function DashboardWidgetsIcon() {
       <rect x="11.5" y="2.5" width="6" height="4.5" rx="1.5" />
       <rect x="11.5" y="9" width="6" height="8.5" rx="1.5" />
       <rect x="2.5" y="11.5" width="7" height="6" rx="1.5" />
+    </svg>
+  );
+}
+
+function AssistantIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <path d="M10 2.5c-3.6 0-6.5 2.5-6.5 5.75 0 1.85.95 3.5 2.45 4.6L5 17l3.35-1.5c.53.1 1.08.15 1.65.15 3.6 0 6.5-2.5 6.5-5.75S13.6 2.5 10 2.5Z" />
+      <circle cx="7.25" cy="8.25" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="10" cy="8.25" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="12.75" cy="8.25" r="0.9" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -360,6 +372,7 @@ export default function SettingsNavList({
         <SettingsListItem icon={<WalletIcon />} label={t("settings.wallets")} accent="sky" {...panelItemProps("wallets")} />
         <ExportDataButton />
         <ImportDataButton />
+        <ReportExportButton />
       </SettingsSection>
 
       <SettingsSection title={t("settings.section.social")}>
@@ -367,6 +380,7 @@ export default function SettingsNavList({
         <SettingsListItem icon={<TrophyNavIcon />} label={t("settings.challenges")} accent="violet" {...panelItemProps("challenges")} />
         <SettingsListItem icon={<ReceiptNavIcon />} label={t("settings.splitBills")} accent="amber" {...panelItemProps("splitBills")} />
         <SettingsListItem icon={<LoanIcon />} label={t("settings.loans")} accent="teal" {...panelItemProps("loans")} />
+        <SettingsListItem icon={<AssistantIcon />} label={t("settings.assistant")} accent="violet" {...panelItemProps("assistant")} />
       </SettingsSection>
 
       <SettingsSection title={t("settings.section.budgeting")}>

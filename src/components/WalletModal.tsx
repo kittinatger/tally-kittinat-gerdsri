@@ -58,6 +58,7 @@ export default function WalletModal({
     isDefault,
     archived: false,
     balance: Number(startingBalance) || 0,
+    isOwner: wallet?.isOwner ?? true,
   };
 
   function handleCurrencyChange(label: string) {

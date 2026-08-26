@@ -26,9 +26,9 @@ export type CategoriesByType = {
 // same way "gemini-2.5-flash" did — that model was quietly retired for new
 // API keys/projects while staying listed in the models API, which is what
 // broke scanning/voice entry for weeks with no code change on our end.
-const MODEL = "gemini-flash-latest";
+export const MODEL = "gemini-flash-latest";
 
-function getClient(): GoogleGenAI {
+export function getClient(): GoogleGenAI {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY environment variable is not set.");

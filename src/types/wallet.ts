@@ -15,4 +15,8 @@ export type WalletOption = {
   isDefault: boolean;
   archived: boolean;
   balance: number;
+  /** False for a wallet shared with this account (see wallet_members) —
+   * management actions (archive, delete, rename, invite another member)
+   * are only offered when true; viewing/posting works either way. */
+  isOwner: boolean;
 };

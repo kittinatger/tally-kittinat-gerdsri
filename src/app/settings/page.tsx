@@ -44,6 +44,7 @@ export default async function SettingsPage({
     isDefault: w.is_default,
     archived: w.archived,
     balance: Number(w.balance),
+    isOwner: w.is_owner,
   }));
 
   return (

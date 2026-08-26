@@ -99,6 +99,7 @@ export default async function HomePage({
     isDefault: w.is_default,
     archived: w.archived,
     balance: Number(w.balance),
+    isOwner: w.is_owner,
   }));
 
   // Scheduled to run after the response is sent, not awaited here — email

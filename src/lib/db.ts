@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 26;
+const CURRENT_SCHEMA_VERSION = 27;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -946,6 +946,30 @@ function ensureSchema(): Promise<void> {
       // existing splits are unaffected until someone taps "Copy share link".
       await sql`ALTER TABLE splits ADD COLUMN IF NOT EXISTS share_token TEXT UNIQUE;`;
 
+      // Shared/household wallets: an invited friend can view and post
+      // transactions to a wallet they don't own. Ownership itself stays a
+      // single wallets.user_id column (unchanged) — this table only adds
+      // *members* on top of that, modeled on friend_requests (pending/
+      // accepted/declined, unique pair, no-self-share). The wallet's
+      // balance query already SUMs every expense with a matching
+      // wallet_id regardless of who posted it, so it needed no change;
+      // what needed widening was: which wallets a member can see at all
+      // (listWallets), which wallet ids a member can post an expense
+      // against (resolveWalletId), and which expenses a member can see
+      // beyond their own postings (listExpenses) — see those three
+      // functions.
+      await sql`
+        CREATE TABLE IF NOT EXISTS wallet_members (
+          id SERIAL PRIMARY KEY,
+          wallet_id INTEGER NOT NULL REFERENCES wallets(id) ON DELETE CASCADE,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','accepted','declined')),
+          invited_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          UNIQUE(wallet_id, user_id)
+        );
+      `;
+      await sql`CREATE INDEX IF NOT EXISTS wallet_members_user_id_idx ON wallet_members (user_id) WHERE status = 'accepted';`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -1065,6 +1089,11 @@ export type WalletRow = {
   is_default: boolean;
   archived: boolean;
   balance: string;
+  /** False for a wallet shared with this user (see wallet_members) —
+   * governs whether wallet-management actions (archive, delete, transfer,
+   * set default, invite another member) should be offered at all;
+   * viewing and posting transactions works the same either way. */
+  is_owner: boolean;
 };
 
 export async function listWallets(userId: number, opts: { includeArchived?: boolean } = {}): Promise<WalletRow[]> {
@@ -1085,9 +1114,11 @@ export async function listWallets(userId: number, opts: { includeArchived?: bool
               FROM expenses e
               WHERE e.wallet_id = w.id AND e.created_at > w.starting_balance_set_at
             ), 0)
-          )::text AS balance
+          )::text AS balance,
+          (w.user_id = ${userId}) AS is_owner
         FROM wallets w
         WHERE w.user_id = ${userId}
+           OR w.id IN (SELECT wallet_id FROM wallet_members WHERE user_id = ${userId} AND status = 'accepted')
         ORDER BY w.archived, w.sort_order, w.id;
       `
     : await sql<WalletRow>`
@@ -1105,9 +1136,12 @@ export async function listWallets(userId: number, opts: { includeArchived?: bool
               FROM expenses e
               WHERE e.wallet_id = w.id AND e.created_at > w.starting_balance_set_at
             ), 0)
-          )::text AS balance
+          )::text AS balance,
+          (w.user_id = ${userId}) AS is_owner
         FROM wallets w
-        WHERE w.user_id = ${userId} AND w.archived = false
+        WHERE (w.user_id = ${userId}
+           OR w.id IN (SELECT wallet_id FROM wallet_members WHERE user_id = ${userId} AND status = 'accepted'))
+          AND w.archived = false
         ORDER BY w.sort_order, w.id;
       `;
   return rows;
@@ -1141,7 +1175,7 @@ export async function createWallet(
     VALUES (${userId}, ${name}, ${color}, ${backgroundJson}, ${textColor ?? null}, ${kind}, ${currency ?? null}, ${nextSort})
     RETURNING id, name, color, background, text_color, kind, currency;
   `;
-  return { ...rows[0], is_default: false, archived: false, balance: "0" };
+  return { ...rows[0], is_default: false, archived: false, balance: "0", is_owner: true };
 }
 
 export async function updateWallet(
@@ -1326,6 +1360,105 @@ export async function moveWallet(userId: number, id: number, direction: "up" | "
   } finally {
     client.release();
   }
+}
+
+// ---- Wallet members (shared/household wallets) ----------------------------
+// See the schema-v27 comment above for the design: ownership stays a
+// single wallets.user_id column; this table only adds view+post access
+// on top of it for invited friends.
+
+export type WalletMemberRow = {
+  id: number;
+  wallet_id: number;
+  user_id: number;
+  username: string;
+  status: "pending" | "accepted" | "declined";
+};
+
+export async function listWalletMembers(userId: number, walletId: number): Promise<WalletMemberRow[]> {
+  await ensureSchema();
+  const { rows: ownedRows } = await sql`SELECT 1 FROM wallets WHERE id = ${walletId} AND user_id = ${userId};`;
+  if (!ownedRows[0]) return [];
+  const { rows } = await sql<WalletMemberRow>`
+    SELECT wm.id, wm.wallet_id, wm.user_id, u.username, wm.status
+    FROM wallet_members wm
+    JOIN users u ON u.id = wm.user_id
+    WHERE wm.wallet_id = ${walletId}
+    ORDER BY wm.id;
+  `;
+  return rows;
+}
+
+// Only the owning wallet's own account can invite — a member can't
+// re-share a wallet they don't own onward to someone else.
+export async function inviteWalletMember(
+  userId: number,
+  walletId: number,
+  friendId: number,
+): Promise<{ error: string } | { id: number }> {
+  await ensureSchema();
+  const { rows: ownedRows } = await sql`SELECT 1 FROM wallets WHERE id = ${walletId} AND user_id = ${userId};`;
+  if (!ownedRows[0]) return { error: "That wallet could not be found." };
+  if (friendId === userId) return { error: "You can't share a wallet with yourself." };
+  if (!(await areFriends(userId, friendId))) return { error: "You can only share a wallet with a friend." };
+  const { rows } = await sql<{ id: number }>`
+    INSERT INTO wallet_members (wallet_id, user_id, status)
+    VALUES (${walletId}, ${friendId}, 'pending')
+    ON CONFLICT (wallet_id, user_id) DO UPDATE SET status = 'pending'
+    RETURNING id;
+  `;
+  return { id: rows[0].id };
+}
+
+export type PendingWalletInvite = { id: number; wallet_id: number; wallet_name: string; owner_username: string };
+
+// Incoming invites for the signed-in user to respond to — the wallet-
+// share equivalent of listFriendRequests.
+export async function listMyPendingWalletInvites(userId: number): Promise<PendingWalletInvite[]> {
+  await ensureSchema();
+  const { rows } = await sql<PendingWalletInvite>`
+    SELECT wm.id, wm.wallet_id, w.name AS wallet_name, u.username AS owner_username
+    FROM wallet_members wm
+    JOIN wallets w ON w.id = wm.wallet_id
+    JOIN users u ON u.id = w.user_id
+    WHERE wm.user_id = ${userId} AND wm.status = 'pending'
+    ORDER BY wm.invited_at DESC;
+  `;
+  return rows;
+}
+
+export async function respondToWalletInvite(userId: number, memberId: number, accept: boolean): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    UPDATE wallet_members SET status = ${accept ? "accepted" : "declined"}
+    WHERE id = ${memberId} AND user_id = ${userId} AND status = 'pending';
+  `;
+  return (rowCount ?? 0) > 0;
+}
+
+// The owner can remove any member; a member can remove themselves
+// (leaving the shared wallet) — either way it's just deleting their row.
+export async function removeWalletMember(userId: number, memberId: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    DELETE FROM wallet_members wm
+    USING wallets w
+    WHERE wm.id = ${memberId}
+      AND wm.wallet_id = w.id
+      AND (wm.user_id = ${userId} OR w.user_id = ${userId});
+  `;
+  return (rowCount ?? 0) > 0;
+}
+
+// Lets a member leave a shared wallet by wallet id, without needing to
+// know their own wallet_members row id — the natural shape for "Leave"
+// on a wallet the client only has the wallet's id for.
+export async function leaveSharedWallet(userId: number, walletId: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    DELETE FROM wallet_members WHERE wallet_id = ${walletId} AND user_id = ${userId};
+  `;
+  return (rowCount ?? 0) > 0;
 }
 
 export async function seedDefaultWalletForUser(userId: number): Promise<void> {
@@ -1634,6 +1767,8 @@ export async function listExpenses(userId: number): Promise<Expense[]> {
     FROM expenses e
     LEFT JOIN wallets w ON w.id = e.wallet_id
     WHERE e.user_id = ${userId}
+       OR e.wallet_id IN (SELECT id FROM wallets WHERE user_id = ${userId})
+       OR e.wallet_id IN (SELECT wallet_id FROM wallet_members WHERE user_id = ${userId} AND status = 'accepted')
     ORDER BY e.date DESC, e.id DESC
     LIMIT ${MAX_LISTED_EXPENSES};
   `;
@@ -1695,7 +1830,14 @@ export async function deleteTag(userId: number, name: string): Promise<void> {
 // theirs, otherwise their first (default) wallet.
 async function resolveWalletId(userId: number, walletId: number | null | undefined): Promise<number | null> {
   if (walletId !== undefined && walletId !== null) {
-    const { rows } = await sql<{ id: number }>`SELECT id FROM wallets WHERE id = ${walletId} AND user_id = ${userId};`;
+    // Accepts the caller's own wallet, or a wallet they're an accepted
+    // member of (shared/household wallets — see wallet_members).
+    const { rows } = await sql<{ id: number }>`
+      SELECT id FROM wallets WHERE id = ${walletId} AND (
+        user_id = ${userId}
+        OR id IN (SELECT wallet_id FROM wallet_members WHERE user_id = ${userId} AND status = 'accepted')
+      );
+    `;
     if (rows[0]) return rows[0].id;
   }
   const { rows: fallback } = await sql<{ id: number }>`
