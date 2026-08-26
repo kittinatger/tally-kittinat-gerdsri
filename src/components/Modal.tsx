@@ -27,11 +27,20 @@ export default function Modal({
       if (e.key === "Escape") onClose();
     }
     document.addEventListener("keydown", onKey);
-    const prevOverflow = document.body.style.overflow;
+    // Locking body alone isn't enough: the page's scrolling element is
+    // <html> (documentElement), not <body>, so with a tall page behind the
+    // modal (e.g. a long Settings list) the browser's own page scrollbar
+    // stayed active and rendered at the true viewport edge — outside the
+    // modal's rounded panel — which read as a scrollbar "escaping" the
+    // dialog. Locking both stops the page itself from scrolling at all.
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prevOverflow;
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
     };
   }, [onClose]);
 
