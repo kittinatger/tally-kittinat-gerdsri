@@ -2,7 +2,7 @@
 
 import { describeFetchError } from "@/lib/fetch-error";
 import { logAppError } from "@/lib/error-log";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useT } from "@/lib/language-context";
 import Modal from "./Modal";
 import ReceiptLightbox from "./ReceiptLightbox";
@@ -10,6 +10,9 @@ import ExpenseForm, { type ExpenseFormValues } from "./ExpenseForm";
 import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
 import { todayInputValue } from "@/lib/format";
 import { downscaleImage } from "@/lib/image-downscale";
+import { PlusIcon, CloseIcon } from "@/lib/icons";
+
+const MAX_RECEIPTS_PER_EXPENSE = 10;
 
 function ReceiptIcon() {
   return (
@@ -58,9 +61,34 @@ export default function EditExpenseModal({
   const [attaching, setAttaching] = useState(false);
   const [attachError, setAttachError] = useState<string | null>(null);
   const [duplicating, setDuplicating] = useState(false);
-  const [viewingReceipt, setViewingReceipt] = useState(false);
+  const [viewingSrc, setViewingSrc] = useState<string | null>(null);
+  const [extraReceiptIds, setExtraReceiptIds] = useState<number[]>([]);
+  const [deletingReceiptId, setDeletingReceiptId] = useState<number | null>(null);
   const receiptInputRef = useRef<HTMLInputElement>(null);
   const receiptUrl = `/api/expenses/${expense.id}/receipt`;
+  const extraReceiptUrl = (receiptId: number) => `/api/expenses/${expense.id}/receipts/${receiptId}`;
+  const totalReceiptCount = (expense.hasReceipt ? 1 : 0) + extraReceiptIds.length;
+
+  // The legacy single-image column (receiptUrl) and the new multi-photo
+  // table (expense_receipts) are both in play — see db.ts's schema v24
+  // comment — so on open, fetch whichever extra photos exist beyond the
+  // one `hasReceipt` already accounts for.
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/expenses/${expense.id}/receipts`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled && Array.isArray(data.receipts)) {
+          setExtraReceiptIds(data.receipts.map((r: { id: number }) => r.id));
+        }
+      })
+      .catch(() => {
+        // Leave it empty — the legacy single receipt (if any) still shows.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [expense.id]);
 
   const initialValues: ExpenseFormValues = {
     type: expense.type,
@@ -149,20 +177,46 @@ export default function EditExpenseModal({
     try {
       const formData = new FormData();
       formData.append("image", await downscaleImage(file));
-      const res = await fetch(`/api/expenses/${expense.id}/receipt`, { method: "POST", body: formData });
+      // The very first photo still goes through the legacy single-image
+      // endpoint (keeps hasReceipt-based UI elsewhere in the app, e.g. list
+      // row indicators, working unchanged); every photo after that goes
+      // through the new multi-photo endpoint.
+      const url = expense.hasReceipt ? `/api/expenses/${expense.id}/receipts` : `/api/expenses/${expense.id}/receipt`;
+      const res = await fetch(url, { method: "POST", body: formData });
+      const data = await res.json().catch(() => null);
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
         const message = typeof data?.error === "string" ? data.error : "Could not attach that image.";
         setAttachError(message);
         logAppError("Attach receipt", message);
         return;
       }
-      onUpdated({ ...expense, hasReceipt: true });
+      if (expense.hasReceipt) {
+        setExtraReceiptIds((prev) => [...prev, data.id as number]);
+      } else {
+        onUpdated({ ...expense, hasReceipt: true });
+      }
     } catch (err) {
       setAttachError(describeFetchError(err, "Attach receipt"));
     } finally {
       setAttaching(false);
       if (receiptInputRef.current) receiptInputRef.current.value = "";
+    }
+  }
+
+  async function handleDeleteExtraReceipt(receiptId: number) {
+    setDeletingReceiptId(receiptId);
+    setAttachError(null);
+    try {
+      const res = await fetch(extraReceiptUrl(receiptId), { method: "DELETE" });
+      if (!res.ok) {
+        setAttachError("Could not remove that photo.");
+        return;
+      }
+      setExtraReceiptIds((prev) => prev.filter((id) => id !== receiptId));
+    } catch (err) {
+      setAttachError(describeFetchError(err, "Remove receipt"));
+    } finally {
+      setDeletingReceiptId(null);
     }
   }
 
@@ -215,23 +269,57 @@ export default function EditExpenseModal({
 
   return (
     <Modal onClose={onClose} title={t("modal.editTransaction")} wide>
-      {expense.hasReceipt && (
-        <button
-          type="button"
-          onClick={() => setViewingReceipt(true)}
-          className="mb-4 flex w-full items-center gap-3 rounded-card border border-amber-200/70 bg-gradient-to-br from-amber-50 via-surface-soft to-surface-soft p-3 text-left transition hover:border-amber-400 dark:border-amber-900/50 dark:from-amber-950/30 dark:via-surface-soft dark:to-surface-soft"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={receiptUrl} alt="Receipt" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
-          <span className="flex items-center gap-1.5 text-sm font-semibold text-surface-foreground">
-            <ReceiptIcon />
-            {t("activities.viewReceipt")}
-          </span>
-        </button>
+      {totalReceiptCount > 0 && (
+        <div className="mb-3 flex flex-wrap gap-2">
+          {expense.hasReceipt && (
+            <button
+              type="button"
+              onClick={() => setViewingSrc(receiptUrl)}
+              className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-amber-200/70 dark:border-amber-900/50"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={receiptUrl} alt="Receipt" className="h-full w-full object-cover" />
+            </button>
+          )}
+          {extraReceiptIds.map((id) => (
+            <div key={id} className="group relative h-16 w-16 shrink-0">
+              <button
+                type="button"
+                onClick={() => setViewingSrc(extraReceiptUrl(id))}
+                className="h-full w-full overflow-hidden rounded-lg border border-amber-200/70 dark:border-amber-900/50"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={extraReceiptUrl(id)} alt="Receipt" className="h-full w-full object-cover" />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteExtraReceipt(id)}
+                disabled={deletingReceiptId === id}
+                aria-label={t("membership.removeImage")}
+                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition group-hover:opacity-100 disabled:opacity-60"
+              >
+                <CloseIcon className="h-2.5 w-2.5" />
+              </button>
+            </div>
+          ))}
+          {totalReceiptCount < MAX_RECEIPTS_PER_EXPENSE && (
+            <button
+              type="button"
+              onClick={() => receiptInputRef.current?.click()}
+              disabled={attaching}
+              aria-label={t("form.addReceiptPhoto")}
+              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-dashed border-amber-300 text-amber-600 transition hover:border-amber-400 disabled:opacity-60 dark:border-amber-800 dark:text-amber-400"
+            >
+              {attaching ? (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
+              ) : (
+                <PlusIcon className="h-5 w-5" />
+              )}
+            </button>
+          )}
+        </div>
       )}
-
-      {viewingReceipt && <ReceiptLightbox src={receiptUrl} onClose={() => setViewingReceipt(false)} />}
-      {!expense.hasReceipt && (
+      {totalReceiptCount === 0 && (
         <div className="mb-4">
           <button
             type="button"
@@ -242,19 +330,21 @@ export default function EditExpenseModal({
             <ReceiptIcon />
             {attaching ? "Attaching..." : "Attach receipt"}
           </button>
-          <input
-            ref={receiptInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleAttachReceipt(file);
-            }}
-          />
-          {attachError && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{attachError}</p>}
         </div>
       )}
+      <input
+        ref={receiptInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleAttachReceipt(file);
+        }}
+      />
+      {attachError && <p className="-mt-2 mb-3 text-xs text-red-600 dark:text-red-400">{attachError}</p>}
+
+      {viewingSrc && <ReceiptLightbox src={viewingSrc} onClose={() => setViewingSrc(null)} />}
       <ExpenseForm
         initialValues={initialValues}
         submitLabel={t("form.saveChanges")}

@@ -54,6 +54,11 @@ export const config = {
     // session yet when they run. api/auth/github/link is deliberately NOT
     // excluded: it links GitHub to an *already signed-in* account, so it
     // needs the normal auth gate (getUserId() inside it depends on this).
-    "/((?!welcome|login|register|forgot-password|reset-password|offline|manifest.json|sw.js|api/auth/login|api/auth/register|api/auth/forgot-password|api/auth/reset-password|api/auth/github/callback|api/auth/github$|api/intake|_next/static|_next/image|favicon.ico|favicon-light.svg|favicon-dark.svg).*)",
+    // "splits" (bare, no api/ prefix) is the public read-only share-link
+    // page (app/splits/[token]/page.tsx) — distinct from api/splits, the
+    // authenticated CRUD routes for the Settings splitBills panel, which
+    // stay behind the normal auth gate since this prefix match doesn't
+    // touch anything starting with "api/".
+    "/((?!welcome|login|register|forgot-password|reset-password|offline|manifest.json|sw.js|api/auth/login|api/auth/register|api/auth/forgot-password|api/auth/reset-password|api/auth/github/callback|api/auth/github$|api/intake|splits|_next/static|_next/image|favicon.ico|favicon-light.svg|favicon-dark.svg).*)",
   ],
 };

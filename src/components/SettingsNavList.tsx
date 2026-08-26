@@ -107,6 +107,15 @@ function DashboardWidgetsIcon() {
   );
 }
 
+function LoanIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <path d="M3 10c0-3.5 3-6.5 7-6.5s7 3 7 6.5-3 6.5-7 6.5c-1.2 0-2.3-.25-3.3-.7L3 17l1.3-3.6C3.5 12.4 3 11.3 3 10Z" />
+      <path d="M7.5 10h5M10 7.5v5" />
+    </svg>
+  );
+}
+
 function CoinIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
@@ -357,6 +366,7 @@ export default function SettingsNavList({
         <SettingsListItem icon={<FriendsIcon />} label={t("settings.friends")} accent="pink" {...panelItemProps("friends")} />
         <SettingsListItem icon={<TrophyNavIcon />} label={t("settings.challenges")} accent="violet" {...panelItemProps("challenges")} />
         <SettingsListItem icon={<ReceiptNavIcon />} label={t("settings.splitBills")} accent="amber" {...panelItemProps("splitBills")} />
+        <SettingsListItem icon={<LoanIcon />} label={t("settings.loans")} accent="teal" {...panelItemProps("loans")} />
       </SettingsSection>
 
       <SettingsSection title={t("settings.section.budgeting")}>

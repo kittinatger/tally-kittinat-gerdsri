@@ -1,5 +1,5 @@
 import { sql, db } from "@vercel/postgres";
-import { createHash, randomBytes } from "crypto";
+import { createHash, randomBytes, randomUUID } from "crypto";
 import type { ExpenseInput } from "@/lib/validation";
 import { hashPassword } from "@/lib/password";
 import { normalizeDashboardWidgets, type DashboardWidgetInstance } from "@/lib/dashboard-widgets";
@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 23;
+const CURRENT_SCHEMA_VERSION = 26;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -891,6 +891,61 @@ function ensureSchema(): Promise<void> {
       // chip's original placement (inline next to the card number).
       await sql`ALTER TABLE wallet_cards ADD COLUMN IF NOT EXISTS chip_position TEXT NOT NULL DEFAULT 'middleLeft';`;
 
+      // Multiple receipt photos per expense. expenses.receipt_image/
+      // receipt_image_type (the original single-image columns) are left
+      // in place for backward compatibility — every receipt attached
+      // before this migration stays reachable at its existing URL. New
+      // uploads after this ships go here instead; see
+      // api/expenses/[id]/receipts/route.ts.
+      await sql`
+        CREATE TABLE IF NOT EXISTS expense_receipts (
+          id SERIAL PRIMARY KEY,
+          expense_id INTEGER NOT NULL REFERENCES expenses(id) ON DELETE CASCADE,
+          image BYTEA NOT NULL,
+          image_type TEXT NOT NULL,
+          sort_order INTEGER NOT NULL DEFAULT 0,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `;
+      await sql`CREATE INDEX IF NOT EXISTS expense_receipts_expense_id_idx ON expense_receipts (expense_id);`;
+
+      // Debt/loan tracker — a standalone ledger like `splits`/
+      // `split_participants` above, but for an ongoing lent/borrowed
+      // amount with a manual payoff schedule rather than a one-off shared
+      // expense. Deliberately not linked to `expenses` for the same reason
+      // splits aren't. counterparty_friend_id is nullable: an IOU can be
+      // with someone not on Tally at all (counterparty_name covers that
+      // case; one of the two is always set, enforced at the app layer).
+      await sql`
+        CREATE TABLE IF NOT EXISTS loans (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          counterparty_friend_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+          counterparty_name TEXT,
+          direction TEXT NOT NULL CHECK (direction IN ('lent','borrowed')),
+          principal NUMERIC(12,2) NOT NULL,
+          notes TEXT,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `;
+      await sql`
+        CREATE TABLE IF NOT EXISTS loan_installments (
+          id SERIAL PRIMARY KEY,
+          loan_id INTEGER NOT NULL REFERENCES loans(id) ON DELETE CASCADE,
+          due_date DATE NOT NULL,
+          amount NUMERIC(12,2) NOT NULL,
+          paid BOOLEAN NOT NULL DEFAULT false,
+          paid_at TIMESTAMPTZ
+        );
+      `;
+      await sql`CREATE INDEX IF NOT EXISTS loan_installments_loan_id_idx ON loan_installments (loan_id);`;
+
+      // A public, read-only share link for a split — see
+      // getOrCreateSplitShareToken/getSplitByShareToken and
+      // app/splits/[token]/page.tsx. Nullable/generated on demand, so
+      // existing splits are unaffected until someone taps "Copy share link".
+      await sql`ALTER TABLE splits ADD COLUMN IF NOT EXISTS share_token TEXT UNIQUE;`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -1572,7 +1627,7 @@ export async function listExpenses(userId: number): Promise<Expense[]> {
       e.category,
       e.notes,
       e.tags,
-      (e.receipt_image IS NOT NULL) AS has_receipt,
+      (e.receipt_image IS NOT NULL OR EXISTS (SELECT 1 FROM expense_receipts er WHERE er.expense_id = e.id)) AS has_receipt,
       e.wallet_id,
       w.name AS wallet_name,
       e.split_group_id
@@ -1735,7 +1790,7 @@ export async function updateExpense(userId: number, id: number, input: ExpenseIn
       updated.category,
       updated.notes,
       updated.tags,
-      (updated.receipt_image IS NOT NULL) AS has_receipt,
+      (updated.receipt_image IS NOT NULL OR EXISTS (SELECT 1 FROM expense_receipts er WHERE er.expense_id = updated.id)) AS has_receipt,
       updated.wallet_id,
       w.name AS wallet_name,
       updated.split_group_id
@@ -1832,6 +1887,68 @@ export async function getReceiptImage(userId: number, id: number): Promise<{ byt
   const row = rows[0];
   if (!row?.hex || !row.mime) return null;
   return { bytes: Buffer.from(row.hex, "hex"), mimeType: row.mime };
+}
+
+// Multi-photo receipts (expense_receipts, schema v24) — additive to the
+// single receipt_image/receipt_image_type columns above, which stay
+// exactly as they were for backward compatibility. New uploads go here;
+// old ones stay reachable at their original GET /receipt URL.
+export type ExpenseReceiptSummary = { id: number; sortOrder: number };
+
+export async function addExpenseReceipt(
+  userId: number,
+  expenseId: number,
+  bytes: Buffer,
+  mimeType: string,
+): Promise<number | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ id: number }>`
+    WITH owned AS (
+      SELECT id FROM expenses WHERE id = ${expenseId} AND user_id = ${userId}
+    ), next_order AS (
+      SELECT COALESCE(MAX(sort_order) + 1, 0) AS n FROM expense_receipts WHERE expense_id = ${expenseId}
+    )
+    INSERT INTO expense_receipts (expense_id, image, image_type, sort_order)
+    SELECT owned.id, decode(${bytes.toString("hex")}, 'hex'), ${mimeType}, next_order.n
+    FROM owned, next_order
+    RETURNING id;
+  `;
+  return rows[0]?.id ?? null;
+}
+
+export async function listExpenseReceipts(userId: number, expenseId: number): Promise<ExpenseReceiptSummary[]> {
+  await ensureSchema();
+  const { rows } = await sql<{ id: number; sort_order: number }>`
+    SELECT er.id, er.sort_order
+    FROM expense_receipts er
+    JOIN expenses e ON e.id = er.expense_id
+    WHERE er.expense_id = ${expenseId} AND e.user_id = ${userId}
+    ORDER BY er.sort_order ASC, er.id ASC;
+  `;
+  return rows.map((r) => ({ id: r.id, sortOrder: r.sort_order }));
+}
+
+export async function getExpenseReceiptImage(userId: number, receiptId: number): Promise<{ bytes: Buffer; mimeType: string } | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ hex: string; mime: string }>`
+    SELECT encode(er.image, 'hex') AS hex, er.image_type AS mime
+    FROM expense_receipts er
+    JOIN expenses e ON e.id = er.expense_id
+    WHERE er.id = ${receiptId} AND e.user_id = ${userId};
+  `;
+  const row = rows[0];
+  if (!row) return null;
+  return { bytes: Buffer.from(row.hex, "hex"), mimeType: row.mime };
+}
+
+export async function deleteExpenseReceipt(userId: number, receiptId: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    DELETE FROM expense_receipts er
+    USING expenses e
+    WHERE er.id = ${receiptId} AND er.expense_id = e.id AND e.user_id = ${userId};
+  `;
+  return (rowCount ?? 0) > 0;
 }
 
 export type UserRow = {
@@ -3233,6 +3350,56 @@ export async function getSplit(
   return { split, participants };
 }
 
+// Generates the split's share_token on first request and reuses it after
+// that — same token for every subsequent "Copy share link" tap, so an
+// already-shared link keeps working. Scoped to participants (same access
+// check as getSplit) since only someone already in the split should be
+// able to mint a public link for it.
+export async function getOrCreateSplitShareToken(userId: number, splitId: number): Promise<string | null> {
+  await ensureSchema();
+  const { rows: myRow } = await sql`
+    SELECT 1 FROM split_participants WHERE split_id = ${splitId} AND user_id = ${userId};
+  `;
+  if (!myRow[0]) return null;
+
+  const { rows: existing } = await sql<{ share_token: string | null }>`
+    SELECT share_token FROM splits WHERE id = ${splitId};
+  `;
+  if (!existing[0]) return null;
+  if (existing[0].share_token) return existing[0].share_token;
+
+  const token = randomUUID();
+  await sql`UPDATE splits SET share_token = ${token} WHERE id = ${splitId};`;
+  return token;
+}
+
+// Public, unauthenticated lookup for app/splits/[token]/page.tsx — no
+// userId scoping, deliberately: the whole point of the link is that
+// someone without a Tally account can view it. Read-only; there's no
+// mutating counterpart, so a leaked link can't be used to change anything.
+export async function getSplitByShareToken(
+  token: string,
+): Promise<{ split: SplitRow; participants: SplitParticipantRow[] } | null> {
+  await ensureSchema();
+  const { rows: splitRows } = await sql<SplitRow>`
+    SELECT id, creator_id, title, total_amount::text AS total_amount, split_method,
+      to_char(date, 'YYYY-MM-DD') AS date
+    FROM splits WHERE share_token = ${token};
+  `;
+  const split = splitRows[0];
+  if (!split) return null;
+
+  const { rows: participants } = await sql<SplitParticipantRow>`
+    SELECT sp.id, sp.user_id, u.username, sp.owed_amount::text AS owed_amount, sp.paid_amount::text AS paid_amount,
+      sp.confirm_status, sp.settled, false AS is_me
+    FROM split_participants sp
+    JOIN users u ON u.id = sp.user_id
+    WHERE sp.split_id = ${split.id}
+    ORDER BY sp.id;
+  `;
+  return { split, participants };
+}
+
 export async function respondToSplit(userId: number, splitId: number, accept: boolean): Promise<boolean> {
   await ensureSchema();
   const { rowCount } = await sql`
@@ -3262,6 +3429,116 @@ export async function leaveOrDeleteSplit(userId: number, splitId: number): Promi
   } else {
     await sql`DELETE FROM split_participants WHERE split_id = ${splitId} AND user_id = ${userId};`;
   }
+}
+
+// ---- Loans (debt tracker) --------------------------------------------------
+// See the schema-v25 comment above for why this is a standalone ledger like
+// splits, not linked to expenses.
+
+export type LoanListItem = {
+  id: number;
+  counterparty_friend_id: number | null;
+  counterparty_name: string | null;
+  counterparty_username: string | null;
+  direction: "lent" | "borrowed";
+  principal: string;
+  notes: string | null;
+  created_at: string;
+  paid_total: string;
+  installment_count: number;
+  paid_count: number;
+};
+
+export type LoanInstallmentRow = {
+  id: number;
+  due_date: string;
+  amount: string;
+  paid: boolean;
+  paid_at: string | null;
+};
+
+export async function listLoans(userId: number): Promise<LoanListItem[]> {
+  await ensureSchema();
+  const { rows } = await sql<LoanListItem>`
+    SELECT
+      l.id,
+      l.counterparty_friend_id,
+      l.counterparty_name,
+      u.username AS counterparty_username,
+      l.direction,
+      l.principal::text AS principal,
+      l.notes,
+      l.created_at::text AS created_at,
+      COALESCE(SUM(li.amount) FILTER (WHERE li.paid), 0)::text AS paid_total,
+      COUNT(li.id)::int AS installment_count,
+      COUNT(li.id) FILTER (WHERE li.paid)::int AS paid_count
+    FROM loans l
+    LEFT JOIN users u ON u.id = l.counterparty_friend_id
+    LEFT JOIN loan_installments li ON li.loan_id = l.id
+    WHERE l.user_id = ${userId}
+    GROUP BY l.id, u.username
+    ORDER BY l.created_at DESC;
+  `;
+  return rows;
+}
+
+export async function listLoanInstallments(userId: number, loanId: number): Promise<LoanInstallmentRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<LoanInstallmentRow>`
+    SELECT li.id, to_char(li.due_date, 'YYYY-MM-DD') AS due_date, li.amount::text AS amount, li.paid, li.paid_at::text AS paid_at
+    FROM loan_installments li
+    JOIN loans l ON l.id = li.loan_id
+    WHERE li.loan_id = ${loanId} AND l.user_id = ${userId}
+    ORDER BY li.due_date ASC, li.id ASC;
+  `;
+  return rows;
+}
+
+export async function createLoan(
+  userId: number,
+  input: {
+    counterpartyFriendId: number | null;
+    counterpartyName: string | null;
+    direction: "lent" | "borrowed";
+    principal: number;
+    notes: string | null;
+    installments: { dueDate: string; amount: number }[];
+  },
+): Promise<{ error: string } | { id: number }> {
+  await ensureSchema();
+  if (input.counterpartyFriendId !== null && !(await areFriends(userId, input.counterpartyFriendId))) {
+    return { error: "You can only link a loan to a friend." };
+  }
+  const { rows } = await sql<{ id: number }>`
+    INSERT INTO loans (user_id, counterparty_friend_id, counterparty_name, direction, principal, notes)
+    VALUES (${userId}, ${input.counterpartyFriendId}, ${input.counterpartyName}, ${input.direction}, ${input.principal}, ${input.notes})
+    RETURNING id;
+  `;
+  const loanId = rows[0].id;
+  for (const inst of input.installments) {
+    await sql`
+      INSERT INTO loan_installments (loan_id, due_date, amount)
+      VALUES (${loanId}, ${inst.dueDate}, ${inst.amount});
+    `;
+  }
+  return { id: loanId };
+}
+
+export async function toggleLoanInstallmentPaid(userId: number, installmentId: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    UPDATE loan_installments li
+    SET paid = NOT li.paid, paid_at = CASE WHEN li.paid THEN NULL ELSE now() END
+    FROM loans l
+    WHERE li.id = ${installmentId} AND li.loan_id = l.id AND l.user_id = ${userId};
+  `;
+  return (rowCount ?? 0) > 0;
+}
+
+export async function deleteLoan(userId: number, loanId: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`DELETE FROM loans WHERE id = ${loanId} AND user_id = ${userId};`;
+  return (rowCount ?? 0) > 0;
 }
 
 // ---- Membership cards -----------------------------------------------------

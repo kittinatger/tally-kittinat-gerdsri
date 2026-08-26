@@ -32,6 +32,7 @@ const SavingsGoalsManager = dynamic(() => import("./SavingsGoalsManager"), { ssr
 const FriendsManager = dynamic(() => import("./FriendsManager"), { ssr: false });
 const ChallengesManager = dynamic(() => import("./ChallengesManager"), { ssr: false });
 const SplitBillManager = dynamic(() => import("./SplitBillManager"), { ssr: false });
+const LoanManager = dynamic(() => import("./LoanManager"), { ssr: false });
 const ApiTokensManager = dynamic(() => import("./ApiTokensManager"), { ssr: false });
 const AutoImportInstructions = dynamic(() => import("./AutoImportInstructions"), { ssr: false });
 const ErrorReportsPanel = dynamic(() => import("./ErrorReportsPanel"), { ssr: false });
@@ -45,6 +46,7 @@ const PANEL_TITLES: Record<Panel, string> = {
   friends: "Friends & Family",
   challenges: "Challenges",
   splitBills: "Split bills",
+  loans: "Loans",
   currency: "Currency",
   language: "Language",
   calendar: "Calendar settings",
@@ -124,7 +126,7 @@ export default function SettingsView({
           Settings
         </button>
       )}
-      {(panel === "currency" || panel === "language" || panel === "tags" || panel === "calendar" || panel === "friends" || panel === "challenges" || panel === "splitBills") && (
+      {(panel === "currency" || panel === "language" || panel === "tags" || panel === "calendar" || panel === "friends" || panel === "challenges" || panel === "splitBills" || panel === "loans") && (
         <h2 className="mb-5 font-display text-2xl text-foreground">{PANEL_TITLES[panel]}</h2>
       )}
 
@@ -145,6 +147,7 @@ export default function SettingsView({
       {panel === "friends" && <FriendsManager />}
       {panel === "challenges" && <ChallengesManager />}
       {panel === "splitBills" && <SplitBillManager />}
+      {panel === "loans" && <LoanManager />}
       {panel === "currency" && <CurrencySettings />}
       {panel === "language" && <LanguageSettings />}
       {panel === "calendar" && <CalendarSettings />}

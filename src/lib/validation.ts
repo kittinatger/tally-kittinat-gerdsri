@@ -10,6 +10,7 @@ import {
 } from "@/lib/dashboard-widgets";
 import { CHALLENGE_TYPES, CHALLENGE_MODES } from "@/lib/challenges";
 import { SPLIT_METHODS, SPLIT_PAYMENT_METHODS } from "@/lib/splits";
+import { LOAN_DIRECTIONS } from "@/lib/loans";
 import { CATEGORY_ICON_KEYS } from "@/lib/category-icons";
 import { MEMBERSHIP_CODE_FORMATS } from "@/lib/memberships";
 import { PASS_TEMPLATES, PASS_ZONES, type PassZone } from "@/lib/membership-templates";
@@ -467,3 +468,21 @@ export const splitInputSchema = z.object({
 export const splitRespondSchema = z.object({
   accept: z.boolean(),
 });
+
+const loanInstallmentEntrySchema = z.object({
+  dueDate: dateStringSchema,
+  amount: z.number().positive().finite(),
+});
+
+export const loanInputSchema = z
+  .object({
+    counterpartyFriendId: z.number().int().positive().nullable(),
+    counterpartyName: z.string().trim().max(60).nullable(),
+    direction: z.enum(LOAN_DIRECTIONS),
+    principal: z.number().positive().finite(),
+    notes: z.string().trim().max(500).nullable().optional(),
+    installments: z.array(loanInstallmentEntrySchema).max(60).optional(),
+  })
+  .refine((data) => data.counterpartyFriendId !== null || (data.counterpartyName ?? "").length > 0, {
+    message: "Pick a friend or enter a name for who this loan is with.",
+  });

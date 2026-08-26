@@ -135,6 +135,7 @@ export default function SplitBillManager() {
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [copiedShareId, setCopiedShareId] = useState<number | null>(null);
   const detailReqId = useRef(0);
 
   const [title, setTitle] = useState("");
@@ -248,6 +249,24 @@ export default function SplitBillManager() {
       if (expandedId === id) await loadDetail(id);
     } catch (err) {
       setError(describeFetchError(err));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleCopyShareLink(id: number) {
+    setBusyId(`share-${id}`);
+    try {
+      const res = await fetch(`/api/splits/${id}/share`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok && typeof data.token === "string") {
+        await navigator.clipboard.writeText(`${window.location.origin}/splits/${data.token}`);
+        setCopiedShareId(id);
+        setTimeout(() => setCopiedShareId((prev) => (prev === id ? null : prev)), 2000);
+      }
+    } catch {
+      // Best-effort — no error surfaced for a failed share-link copy, the
+      // button just doesn't show the "Copied" confirmation.
     } finally {
       setBusyId(null);
     }
@@ -673,7 +692,15 @@ export default function SplitBillManager() {
                               </button>
                             </div>
                           ) : (
-                            <div className="flex justify-end">
+                            <div className="flex items-center justify-between gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleCopyShareLink(s.id)}
+                                disabled={busyId === `share-${s.id}`}
+                                className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
+                              >
+                                {copiedShareId === s.id ? t("split.linkCopied") : t("split.copyShareLink")}
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => setConfirmDeleteId(s.id)}
