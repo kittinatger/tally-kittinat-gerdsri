@@ -158,3 +158,48 @@ input:-webkit-autofill:focus {
   transition: background-color 9999s ease-in-out 0s;
   caret-color: var(--foreground);
 }
+
+/* Desktop-only (mobile browsers already render their own slim overlay
+   scrollbar) — the default OS scrollbar is a flat gray slab that clashes
+   with the app's green/glass theme. Thin, tinted with --ink-soft at low
+   opacity so it recedes against any surface, and brightens toward
+   --navy on hover. Applied globally (::-webkit-scrollbar has no bare-body
+   fallback selector, and Firefox's `scrollbar-color` does), so every
+   scrollable modal/page picks it up automatically. */
+@media (hover: hover) and (pointer: fine) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(75, 92, 80, 0.35) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(75, 92, 80, 0.35);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--navy);
+  }
+}
+
+:root[data-theme="dark"] {
+  @media (hover: hover) and (pointer: fine) {
+    * {
+      scrollbar-color: rgba(157, 179, 164, 0.3) transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: rgba(157, 179, 164, 0.3);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: var(--navy);
+    }
+  }
+}
