@@ -73,23 +73,29 @@ export default function Modal({
       onClick={onClose}
     >
       <div
-        ref={panelRef}
-        className={`max-h-[92dvh] w-full overflow-y-auto rounded-t-[28px] border border-[var(--modal-glass-border)] bg-[image:var(--modal-glass-bg)] p-5 shadow-[var(--modal-panel-shadow)] backdrop-blur-xl sm:rounded-[28px] sm:p-6 ${
+        className={`max-h-[92dvh] w-full overflow-hidden rounded-t-[28px] border border-[var(--modal-glass-border)] bg-[image:var(--modal-glass-bg)] shadow-[var(--modal-panel-shadow)] backdrop-blur-xl sm:rounded-[28px] ${
           wide ? "sm:max-w-2xl" : "sm:max-w-md"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-xl text-surface-foreground">{title}</h2>
-          <button
-            onClick={onClose}
-            aria-label={t("common.close")}
-            className="rounded-full p-1.5 text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
-          >
-            <CloseIcon className="h-3.5 w-3.5" />
-          </button>
+        {/* The scrollbar lives on this inner scrolling div, not the rounded
+         * outer panel — a straight-edged scrollbar drawn against a rounded
+         * corner pokes out past the curve at the top/bottom of the panel.
+         * overflow-hidden on the outer div clips it back to the rounded
+         * shape. */}
+        <div ref={panelRef} className="max-h-[92dvh] overflow-y-auto p-5 sm:p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="font-display text-xl text-surface-foreground">{title}</h2>
+            <button
+              onClick={onClose}
+              aria-label={t("common.close")}
+              className="rounded-full p-1.5 text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
+            >
+              <CloseIcon className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          {children}
         </div>
-        {children}
       </div>
     </div>
   );
