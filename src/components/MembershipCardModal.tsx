@@ -9,11 +9,10 @@ import ColorGlowPreview from "./ColorGlowPreview";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import CardBackgroundPicker from "./CardBackgroundPicker";
 import CardTextColorPicker from "./CardTextColorPicker";
-import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
-import { cardBackgroundStyle, backgroundGlowColor, cardForegroundFor } from "@/lib/card-backgrounds";
+import { backgroundGlowColor, cardForegroundFor } from "@/lib/card-backgrounds";
 import type { CardBackground } from "@/lib/card-backgrounds";
-import { isCategoryIconKey, CATEGORY_ICON_KEYS, CATEGORY_ICON_LABEL_KEYS } from "@/lib/category-icons";
-import { CATEGORY_ICON_COMPONENTS, CategoryIcon, PlusIcon, CloseIcon, TagIcon, PaletteIcon, FileIcon, MembershipCardIcon } from "@/lib/icons";
+import { CATEGORY_ICON_KEYS, CATEGORY_ICON_LABEL_KEYS } from "@/lib/category-icons";
+import { CATEGORY_ICON_COMPONENTS, PlusIcon, CloseIcon, TagIcon, PaletteIcon, FileIcon, MembershipCardIcon } from "@/lib/icons";
 import { downscaleImage } from "@/lib/image-downscale";
 import { MEMBERSHIP_CODE_FORMATS, type MembershipCodeFormat } from "@/lib/memberships";
 import {
@@ -294,8 +293,6 @@ export default function MembershipCardModal({
     }
   }
 
-  const previewFg = cardForegroundFor(textColor, background, color);
-
   return (
     <Modal
       onClose={onClose}
@@ -310,66 +307,30 @@ export default function MembershipCardModal({
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Always renders through PassShape — the same component the saved
+         * detail view uses — rather than swapping in a separate bare
+         * placeholder before a code is entered. That previously meant
+         * template/field/layout edits (points balance, discount, seat,
+         * etc.) had no visible effect at all until a code existed;
+         * MembershipCardCode itself now handles the empty-code case (a
+         * dashed placeholder instead of trying to render a barcode for
+         * empty text), so PassShape can always be shown. */}
         <ColorGlowPreview color={backgroundGlowColor(background, color)}>
-          {codeValue ? (
-            <PassShape
-              name={name || t("membership.namePlaceholder")}
-              color={color}
-              background={background}
-              textColor={textColor}
-              icon={icon}
-              template={template}
-              fields={fields}
-              layout={layout}
-              codeValue={codeValue}
-              codeFormat={codeFormat}
-              codeSize="small"
-              logoUrl={logoPreviewUrl}
-              bannerUrl={bannerPreviewUrl}
-            />
-          ) : (
-            // Before a code is entered, MembershipCardCode would try (and
-            // fail) to render a barcode for an empty string — show a plain
-            // header-only stand-in instead of the full pass shape.
-            <div
-              className={`overflow-hidden rounded-2xl p-4 ${background ? "" : heroGradientClasses(color)}`}
-              style={{
-                color: previewFg.full,
-                ...(background ? cardBackgroundStyle(background) : colorHeroStyle(color)),
-              }}
-            >
-              <div className="flex items-center gap-2.5">
-                {logoPreviewUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- local object URL / API-served image, not a build-time asset
-                  <img
-                    src={logoPreviewUrl}
-                    alt=""
-                    className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1"
-                    style={{ boxShadow: `0 0 0 1px ${previewFg.a30}` }}
-                  />
-                ) : (
-                  <span
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-                    style={{ backgroundColor: previewFg.a20 }}
-                  >
-                    {icon && isCategoryIconKey(icon) ? (
-                      <CategoryIcon iconKey={icon} className="h-4.5 w-4.5" />
-                    ) : (
-                      <span className="text-sm font-semibold">{(name || "?").charAt(0).toUpperCase()}</span>
-                    )}
-                  </span>
-                )}
-                <p className="min-w-0 flex-1 truncate font-semibold">{name || t("membership.namePlaceholder")}</p>
-              </div>
-              {bannerPreviewUrl && (
-                // eslint-disable-next-line @next/next/no-img-element -- local object URL / API-served image, not a build-time asset
-                <img src={bannerPreviewUrl} alt="" className="mt-3 aspect-[5/3] w-full rounded-xl object-cover" />
-              )}
-              <p className="mt-3 text-xs" style={{ color: previewFg.a70 }}>
-                {t("membership.codePlaceholder")}
-              </p>
-            </div>
-          )}
+          <PassShape
+            name={name || t("membership.namePlaceholder")}
+            color={color}
+            background={background}
+            textColor={textColor}
+            icon={icon}
+            template={template}
+            fields={fields}
+            layout={layout}
+            codeValue={codeValue}
+            codeFormat={codeFormat}
+            codeSize="small"
+            logoUrl={logoPreviewUrl}
+            bannerUrl={bannerPreviewUrl}
+          />
         </ColorGlowPreview>
 
         <FormSection icon={<TagIcon className="h-4 w-4" />} title={t("membership.nameLabel")}>

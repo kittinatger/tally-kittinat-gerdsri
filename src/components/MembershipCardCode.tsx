@@ -37,6 +37,8 @@ export default function MembershipCardCode({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const isEmpty = value.trim() === "";
+
   useEffect(() => {
     let cancelled = false;
     // Deferred by a microtask so the initial setError(null) below doesn't
@@ -45,6 +47,11 @@ export default function MembershipCardCode({
     Promise.resolve().then(() => {
       if (cancelled) return;
       setError(null);
+      // bwip-js throws on an empty string — skip the render attempt (and
+      // the error box below it) entirely until there's something to encode,
+      // rather than surfacing "couldn't render" for a code the user simply
+      // hasn't typed or scanned yet.
+      if (isEmpty) return;
       const canvas = canvasRef.current;
       if (!canvas) return;
       const is2d = format === "qr" || format === "aztec";
@@ -73,12 +80,21 @@ export default function MembershipCardCode({
     return () => {
       cancelled = true;
     };
-  }, [value, format, size, t]);
+  }, [value, format, size, t, isEmpty]);
 
   if (size === "thumb") {
+    if (isEmpty) return null;
     return (
       <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white p-1">
         <canvas ref={canvasRef} className="block max-h-full max-w-full" />
+      </div>
+    );
+  }
+
+  if (isEmpty) {
+    return (
+      <div className="flex w-full items-center justify-center rounded-2xl border border-dashed border-line py-8">
+        <p className="text-sm text-ink-soft">{t("membership.codePlaceholder")}</p>
       </div>
     );
   }
