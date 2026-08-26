@@ -6,6 +6,27 @@ export const dynamic = "force-dynamic";
 
 const RELEASES: { version: string; date: string; sections: { heading: string; items: string[] }[] }[] = [
   {
+    version: "0.18.0",
+    date: "2026-08-27",
+    sections: [
+      {
+        heading: "Added",
+        items: [
+          "Global search now also matches category name, not just merchant/notes/tags",
+          "Merchant/payee autocomplete on the transaction form",
+          "A duplicate-transaction warning when saving an entry that looks like a repeat of one already on file",
+          "A PWA \"Add expense\" home-screen shortcut",
+          "Multiple receipt photos per transaction, with a thumbnail gallery to add or remove them",
+          "Debt/loan tracker (Settings > Loans) — track money lent or borrowed, with an optional manual payoff schedule",
+          "Shareable split-bill links — a public, read-only page anyone can view without a Tally account",
+          "Shared/household wallets — invite a friend to view and add transactions to a wallet you own",
+          "An in-app spending assistant (Settings > Assistant) — ask questions about your spending and get answers computed from your real transactions",
+          "PDF monthly report export (Settings) — income/expense totals, spending by category, and a transaction list, downloadable as a formatted PDF",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.17.1",
     date: "2026-08-26",
     sections: [

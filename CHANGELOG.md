@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.18.0] - 2026-08-27
+
+### Added
+- Global transaction search now also matches category name, not just merchant/notes/tags
+- Merchant/payee autocomplete on the transaction form, most-recently-used first
+- A duplicate-transaction warning when saving an entry with the same date, amount, and merchant as one already on file — never blocks, just asks "save anyway?"
+- A PWA "Add expense" home-screen shortcut (long-press the installed app icon)
+- Multiple receipt photos per transaction, with a thumbnail gallery to add/remove them, instead of one photo slot
+- Debt/loan tracker (Settings > Loans) — track money lent or borrowed, with an optional manual payoff schedule; the other party can be an existing friend or just a typed name
+- Shareable split-bill links — "Copy share link" on any split generates a public, read-only page anyone can view without a Tally account, to see what they owe
+- Shared/household wallets — invite a friend to view and add transactions to a wallet you own; they see a pending-invite prompt to accept, and get a "Shared" badge instead of the owner's management controls
+- An in-app spending assistant (Settings > Assistant) — ask questions like "how much did I spend on food this month" and get an answer computed from your real transactions, not a guess
+- PDF monthly report export (Settings) — income/expense totals, spending by category, and a transaction list for the current month, downloadable as a formatted PDF
+
 ## [0.17.1] - 2026-08-26
 
 ### Added
