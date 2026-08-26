@@ -7,6 +7,7 @@ import AppHeader from "./AppHeader";
 import PullToRefresh from "./PullToRefresh";
 import Modal from "./Modal";
 import CardStack from "./CardStack";
+import CardGrid from "./CardGrid";
 import AccountCardShape from "./AccountCardShape";
 import WalletCardShape from "./WalletCardShape";
 import PassShape from "./PassShape";
@@ -231,7 +232,7 @@ export default function WalletPageView({
         <AppHeader />
 
         <main className="flex-1 px-1 py-6 sm:px-2">
-          <div className="mx-auto max-w-md">
+          <div className="mx-auto max-w-md lg:max-w-none">
             <div className="flex items-center justify-between gap-3">
               <h2 className="font-display text-2xl text-foreground">{t("nav.wallet")}</h2>
               <div className="flex items-center gap-2">
@@ -263,16 +264,35 @@ export default function WalletPageView({
               </div>
             ) : (
               <>
-                {cardsStack.length > 0 && (
-                  <div className="mt-5">
-                    <CardStack items={cardsStack} />
-                  </div>
-                )}
-                {passesStack.length > 0 && (
-                  <div className="mt-8">
-                    <CardStack items={passesStack} />
-                  </div>
-                )}
+                {/* Below lg, width is too tight for a multi-column grid to
+                    read well, so it keeps the peeking-stack "Wallet app"
+                    look, capped to max-w-md above. At lg+ there's enough
+                    room to just show every card at once instead of only
+                    the front of a stack. */}
+                <div className="lg:hidden">
+                  {cardsStack.length > 0 && (
+                    <div className="mt-5">
+                      <CardStack items={cardsStack} />
+                    </div>
+                  )}
+                  {passesStack.length > 0 && (
+                    <div className="mt-8">
+                      <CardStack items={passesStack} />
+                    </div>
+                  )}
+                </div>
+                <div className="hidden lg:block">
+                  {cardsStack.length > 0 && (
+                    <div className="mt-6">
+                      <CardGrid items={cardsStack} />
+                    </div>
+                  )}
+                  {passesStack.length > 0 && (
+                    <div className="mt-8">
+                      <CardGrid items={passesStack} />
+                    </div>
+                  )}
+                </div>
               </>
             )}
           </div>
