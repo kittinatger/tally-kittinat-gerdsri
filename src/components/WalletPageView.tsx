@@ -189,6 +189,7 @@ export default function WalletPageView({
         textColor={card.textColor}
         showChip={card.showChip}
         chipColor={card.chipColor}
+        chipPosition={card.chipPosition}
       />
     ),
     onOpen: () => setViewingCard(card),

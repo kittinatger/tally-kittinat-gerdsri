@@ -1,9 +1,11 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { cardBackgroundStyle, cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
 import { CHIP_COLOR_STOPS, DEFAULT_CHIP_COLOR, type ChipColor } from "@/lib/chip-colors";
 import { BADGE_POSITION_CLASSES, DEFAULT_BADGE_POSITION, type BadgePosition } from "@/lib/badge-position";
+import { CHIP_POSITION_CLASSES, DEFAULT_CHIP_POSITION, type ChipPosition } from "@/lib/chip-position";
 import { useT } from "@/lib/language-context";
 import type { CardNetwork } from "@/lib/wallet-cards";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -102,6 +104,7 @@ export default function WalletCardShape({
   badgePosition = DEFAULT_BADGE_POSITION,
   showChip = true,
   chipColor = DEFAULT_CHIP_COLOR,
+  chipPosition = DEFAULT_CHIP_POSITION,
 }: {
   label: string;
   holderName: string | null;
@@ -118,6 +121,10 @@ export default function WalletCardShape({
   badgePosition?: BadgePosition;
   showChip?: boolean;
   chipColor?: ChipColor;
+  /** Where the chip sits — "middleLeft" (default) keeps it inline next to
+   * the card number, exactly as it always rendered; "topLeft"/"bottomLeft"
+   * pull it out into its own corner — see chip-position.ts. */
+  chipPosition?: ChipPosition;
 }) {
   const t = useT();
   const expiry = expiryMonth && expiryYear ? `${String(expiryMonth).padStart(2, "0")}/${String(expiryYear).slice(-2)}` : null;
@@ -132,7 +139,46 @@ export default function WalletCardShape({
   // shares their row with, so long text truncates before running under it.
   const badgeOnTop = badgePosition === "topLeft" || badgePosition === "topRight";
   const badgeOnRight = badgePosition === "topRight" || badgePosition === "bottomRight";
-  const reserveClass = showNetworkBadge ? (badgeOnRight ? "pr-16" : "pl-16") : "";
+  // The chip follows the same free-floating-corner idea as the badge (see
+  // above) when pulled out of its default spot inline with the card
+  // number — "topLeft"/"bottomLeft" instead share whichever text row sits
+  // in that corner, so that row reserves space too. Both reservations are
+  // computed as plain pixel widths (not stacked Tailwind classes) since a
+  // row can need space from the badge and the chip on the same side at
+  // once, and two conflicting padding-left utility classes in one
+  // className don't reliably combine — the larger of the two wins here,
+  // which is correct since they overlap the same horizontal band rather
+  // than sitting side by side.
+  const chipInCorner = showChip && chipPosition !== "middleLeft";
+  const chipOnTop = chipPosition === "topLeft";
+  function rowReserveStyle(isTopRow: boolean): CSSProperties {
+    let left = 0;
+    let right = 0;
+    if (showNetworkBadge && badgeOnTop === isTopRow) {
+      if (badgeOnRight) right = 64;
+      else left = 64;
+    }
+    if (chipInCorner && chipOnTop === isTopRow) {
+      left = Math.max(left, 40);
+    }
+    const style: CSSProperties = {};
+    if (left) style.paddingLeft = left;
+    if (right) style.paddingRight = right;
+    return style;
+  }
+  // When both the badge and the chip land in the same top/bottom-left
+  // corner, stack the chip below (or above) the badge instead of drawing
+  // them on top of each other.
+  const chipSharesCornerWithBadge = chipInCorner && showNetworkBadge && !badgeOnRight && badgeOnTop === chipOnTop;
+  const chipCornerClass = chipInCorner
+    ? chipOnTop
+      ? chipSharesCornerWithBadge
+        ? "top-14 left-4"
+        : CHIP_POSITION_CLASSES.topLeft
+      : chipSharesCornerWithBadge
+        ? "bottom-14 left-4"
+        : CHIP_POSITION_CLASSES.bottomLeft
+    : "";
 
   return (
     <div
@@ -168,18 +214,24 @@ export default function WalletCardShape({
         </div>
       )}
 
-      <div className={`flex items-start ${badgeOnTop ? reserveClass : ""}`}>
+      {chipInCorner && (
+        <div className={`absolute ${chipCornerClass}`}>
+          <EMVChip color={chipColor} />
+        </div>
+      )}
+
+      <div className="flex items-start" style={rowReserveStyle(true)}>
         <p className="min-w-0 truncate text-sm font-semibold">{label}</p>
       </div>
 
       <div className="flex items-center gap-2">
-        {showChip && <EMVChip color={chipColor} />}
+        {showChip && !chipInCorner && <EMVChip color={chipColor} />}
         <p className="truncate text-base font-semibold tracking-[0.15em]">
           •••• •••• •••• {last4 ?? "••••"}
         </p>
       </div>
 
-      <div className={`flex items-end justify-between gap-2 ${!badgeOnTop ? reserveClass : ""}`}>
+      <div className="flex items-end justify-between gap-2" style={rowReserveStyle(false)}>
         <p className="min-w-0 truncate text-xs uppercase tracking-wide" style={{ color: fg.a85 }}>
           {holderName || " "}
         </p>

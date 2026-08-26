@@ -5,6 +5,7 @@ import { isCardNetwork } from "@/lib/wallet-cards";
 import { parseCardBackground } from "@/lib/card-backgrounds";
 import { isChipColor, DEFAULT_CHIP_COLOR } from "@/lib/chip-colors";
 import { isBadgePosition, DEFAULT_BADGE_POSITION } from "@/lib/badge-position";
+import { isChipPosition, DEFAULT_CHIP_POSITION } from "@/lib/chip-position";
 import { toMembershipCard } from "@/lib/membership-card-mapper";
 import WalletPageView from "@/components/WalletPageView";
 import type { WalletOption } from "@/types/wallet";
@@ -50,6 +51,7 @@ export default async function WalletPage() {
     textColor: c.text_color,
     showChip: c.show_chip,
     chipColor: isChipColor(c.chip_color) ? c.chip_color : DEFAULT_CHIP_COLOR,
+    chipPosition: isChipPosition(c.chip_position) ? c.chip_position : DEFAULT_CHIP_POSITION,
     notes: c.notes,
   }));
 

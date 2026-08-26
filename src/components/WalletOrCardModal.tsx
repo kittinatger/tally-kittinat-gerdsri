@@ -27,6 +27,13 @@ import {
   isBadgePosition,
   type BadgePosition,
 } from "@/lib/badge-position";
+import {
+  CHIP_POSITIONS,
+  CHIP_POSITION_LABEL_KEYS,
+  DEFAULT_CHIP_POSITION,
+  isChipPosition,
+  type ChipPosition,
+} from "@/lib/chip-position";
 import type { MessageKey } from "@/lib/i18n/messages";
 import type { WalletCard } from "@/types/wallet-card";
 
@@ -45,6 +52,7 @@ type WalletCardApiRow = {
   show_chip: boolean;
   chip_color: string;
   badge_position: string;
+  chip_position: string;
   notes: string | null;
 };
 
@@ -65,6 +73,7 @@ function toWalletCard(row: WalletCardApiRow): WalletCard {
     showChip: row.show_chip,
     chipColor: isChipColor(row.chip_color) ? row.chip_color : DEFAULT_CHIP_COLOR,
     badgePosition: isBadgePosition(row.badge_position) ? row.badge_position : DEFAULT_BADGE_POSITION,
+    chipPosition: isChipPosition(row.chip_position) ? row.chip_position : DEFAULT_CHIP_POSITION,
     notes: row.notes,
   };
 }
@@ -122,6 +131,7 @@ export default function WalletOrCardModal({
   const [cardTextColor, setCardTextColor] = useState<string | null>(null);
   const [showChip, setShowChip] = useState(true);
   const [chipColor, setChipColor] = useState<ChipColor>(DEFAULT_CHIP_COLOR);
+  const [chipPosition, setChipPosition] = useState<ChipPosition>(DEFAULT_CHIP_POSITION);
   const [notes, setNotes] = useState("");
 
   const appDefaultLabel = t("wallet.appDefault");
@@ -203,6 +213,7 @@ export default function WalletOrCardModal({
             textColor: cardTextColor,
             showChip,
             chipColor,
+            chipPosition,
             notes: notes.trim() || null,
           }),
         });
@@ -350,6 +361,7 @@ export default function WalletOrCardModal({
                 textColor={cardTextColor}
                 showChip={showChip}
                 chipColor={chipColor}
+                chipPosition={chipPosition}
               />
             </ColorGlowPreview>
 
@@ -475,6 +487,28 @@ export default function WalletOrCardModal({
                           chipColor === c ? "ring-2 ring-navy ring-offset-2 ring-offset-surface" : ""
                         }`}
                       />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {showChip && (
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.chipPositionLabel")}</label>
+                  <div className="flex gap-1.5">
+                    {CHIP_POSITIONS.map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setChipPosition(p)}
+                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                          chipPosition === p
+                            ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                            : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                        }`}
+                      >
+                        {t(CHIP_POSITION_LABEL_KEYS[p])}
+                      </button>
                     ))}
                   </div>
                 </div>

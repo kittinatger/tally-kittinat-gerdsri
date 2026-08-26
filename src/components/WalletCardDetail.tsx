@@ -44,6 +44,7 @@ export default function WalletCardDetail({
         textColor={card.textColor}
         showChip={card.showChip}
         chipColor={card.chipColor}
+        chipPosition={card.chipPosition}
       />
 
       {card.notes && (

@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 22;
+const CURRENT_SCHEMA_VERSION = 23;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -886,6 +886,10 @@ function ensureSchema(): Promise<void> {
       // Which corner the network badge sits in — see badge-position.ts.
       // Default matches the badge's original always-top-right placement.
       await sql`ALTER TABLE wallet_cards ADD COLUMN IF NOT EXISTS badge_position TEXT NOT NULL DEFAULT 'topRight';`;
+
+      // Where the EMV chip sits — see chip-position.ts. Default matches the
+      // chip's original placement (inline next to the card number).
+      await sql`ALTER TABLE wallet_cards ADD COLUMN IF NOT EXISTS chip_position TEXT NOT NULL DEFAULT 'middleLeft';`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -3463,13 +3467,14 @@ export type WalletCardRow = {
   show_chip: boolean;
   chip_color: string;
   badge_position: string;
+  chip_position: string;
   notes: string | null;
 };
 
 export async function listWalletCards(userId: number): Promise<WalletCardRow[]> {
   await ensureSchema();
   const { rows } = await sql<WalletCardRow>`
-    SELECT id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, show_chip, chip_color, badge_position, notes
+    SELECT id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, show_chip, chip_color, badge_position, chip_position, notes
     FROM wallet_cards
     WHERE user_id = ${userId}
     ORDER BY sort_order, id;
@@ -3493,6 +3498,7 @@ export async function createWalletCard(
     showChip?: boolean;
     chipColor?: string;
     badgePosition?: string;
+    chipPosition?: string;
     notes?: string | null;
   },
 ): Promise<WalletCardRow> {
@@ -3506,11 +3512,12 @@ export async function createWalletCard(
   const showChip = input.showChip ?? true;
   const chipColor = input.chipColor ?? "gold";
   const badgePosition = input.badgePosition ?? "topRight";
+  const chipPosition = input.chipPosition ?? "middleLeft";
   const { rows } = await sql<WalletCardRow>`
-    INSERT INTO wallet_cards (user_id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, show_chip, chip_color, badge_position, notes, sort_order)
+    INSERT INTO wallet_cards (user_id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, show_chip, chip_color, badge_position, chip_position, notes, sort_order)
     VALUES (${userId}, ${input.label}, ${input.holderName ?? null}, ${input.last4 ?? null}, ${input.expiryMonth ?? null},
-      ${input.expiryYear ?? null}, ${input.network}, ${input.color}, ${backgroundJson}, ${showNetworkBadge}, ${input.textColor ?? null}, ${showChip}, ${chipColor}, ${badgePosition}, ${input.notes ?? null}, ${nextSort})
-    RETURNING id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, show_chip, chip_color, badge_position, notes;
+      ${input.expiryYear ?? null}, ${input.network}, ${input.color}, ${backgroundJson}, ${showNetworkBadge}, ${input.textColor ?? null}, ${showChip}, ${chipColor}, ${badgePosition}, ${chipPosition}, ${input.notes ?? null}, ${nextSort})
+    RETURNING id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, show_chip, chip_color, badge_position, chip_position, notes;
   `;
   return rows[0];
 }
@@ -3532,12 +3539,13 @@ export async function updateWalletCard(
     showChip?: boolean;
     chipColor?: string;
     badgePosition?: string;
+    chipPosition?: string;
     notes?: string | null;
   },
 ): Promise<WalletCardRow | null> {
   await ensureSchema();
   const { rows: existingRows } = await sql<WalletCardRow>`
-    SELECT id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, show_chip, chip_color, badge_position, notes
+    SELECT id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, show_chip, chip_color, badge_position, chip_position, notes
     FROM wallet_cards WHERE id = ${id} AND user_id = ${userId};
   `;
   const existing = existingRows[0];
@@ -3556,6 +3564,7 @@ export async function updateWalletCard(
   const newShowChip = input.showChip ?? existing.show_chip;
   const newChipColor = input.chipColor ?? existing.chip_color;
   const newBadgePosition = input.badgePosition ?? existing.badge_position;
+  const newChipPosition = input.chipPosition ?? existing.chip_position;
   const newNotes = input.notes !== undefined ? input.notes : existing.notes;
 
   const { rows } = await sql<WalletCardRow>`
@@ -3564,9 +3573,10 @@ export async function updateWalletCard(
         expiry_month = ${newExpiryMonth}, expiry_year = ${newExpiryYear},
         network = ${newNetwork}, color = ${newColor}, background = ${newBackground},
         show_network_badge = ${newShowNetworkBadge}, text_color = ${newTextColor},
-        show_chip = ${newShowChip}, chip_color = ${newChipColor}, badge_position = ${newBadgePosition}, notes = ${newNotes}
+        show_chip = ${newShowChip}, chip_color = ${newChipColor}, badge_position = ${newBadgePosition},
+        chip_position = ${newChipPosition}, notes = ${newNotes}
     WHERE id = ${id} AND user_id = ${userId}
-    RETURNING id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, show_chip, chip_color, badge_position, notes;
+    RETURNING id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, show_chip, chip_color, badge_position, chip_position, notes;
   `;
   return rows[0];
 }

@@ -2,6 +2,7 @@ import type { CardNetwork } from "@/lib/wallet-cards";
 import type { CardBackground } from "@/lib/card-backgrounds";
 import type { ChipColor } from "@/lib/chip-colors";
 import type { BadgePosition } from "@/lib/badge-position";
+import type { ChipPosition } from "@/lib/chip-position";
 
 export type WalletCard = {
   id: number;
@@ -25,5 +26,7 @@ export type WalletCard = {
   showChip: boolean;
   /** Which metal finish the chip renders in — see chip-colors.ts. */
   chipColor: ChipColor;
+  /** Where the chip sits — see chip-position.ts. */
+  chipPosition: ChipPosition;
   notes: string | null;
 };
