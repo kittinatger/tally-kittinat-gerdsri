@@ -7,14 +7,23 @@ import { useT } from "@/lib/language-context";
 
 type CredentialInfo = { id: number; deviceLabel: string | null; createdAt: string; lastUsedAt: string | null };
 
+const PIN_PATTERN = /^\d{4,8}$/;
+
 export default function AppLockSettingsPanel() {
   const t = useT();
   const [loading, setLoading] = useState(true);
   const [enabled, setEnabled] = useState(false);
   const [credentials, setCredentials] = useState<CredentialInfo[]>([]);
+  const [hasPasscode, setHasPasscode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [enrolling, setEnrolling] = useState(false);
   const [supported] = useState(() => (typeof window !== "undefined" ? browserSupportsWebAuthn() : false));
+
+  const [pinForm, setPinForm] = useState(false);
+  const [pin, setPin] = useState("");
+  const [pinConfirm, setPinConfirm] = useState("");
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [savingPin, setSavingPin] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -24,6 +33,7 @@ export default function AppLockSettingsPanel() {
       if (res.ok) {
         setEnabled(data.enabled);
         setCredentials(data.credentials);
+        setHasPasscode(Boolean(data.hasPasscode));
       }
     } catch {
       // Leave the panel in its previous state; the user can retry via the
@@ -108,6 +118,54 @@ export default function AppLockSettingsPanel() {
     }
   }
 
+  async function handleSavePin() {
+    setPinError(null);
+    if (!PIN_PATTERN.test(pin)) {
+      setPinError(t("appLock.pin.invalid"));
+      return;
+    }
+    if (pin !== pinConfirm) {
+      setPinError(t("appLock.pin.mismatch"));
+      return;
+    }
+    setSavingPin(true);
+    try {
+      const res = await fetch("/api/applock/pin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPinError(data.error ?? t("appLock.pin.saveFailed"));
+        return;
+      }
+      setPin("");
+      setPinConfirm("");
+      setPinForm(false);
+      await load();
+    } catch (err) {
+      setPinError(describeFetchError(err));
+    } finally {
+      setSavingPin(false);
+    }
+  }
+
+  async function handleRemovePin() {
+    setError(null);
+    try {
+      const res = await fetch("/api/applock/pin", { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error ?? t("appLock.pin.removeFailed"));
+        return;
+      }
+      await load();
+    } catch (err) {
+      setError(describeFetchError(err));
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <h3 className="font-display text-2xl text-foreground">{t("appLock.title")}</h3>
@@ -129,7 +187,7 @@ export default function AppLockSettingsPanel() {
               role="switch"
               aria-checked={enabled}
               onClick={() => handleToggle(!enabled)}
-              disabled={credentials.length === 0}
+              disabled={credentials.length === 0 && !hasPasscode}
               className={`relative h-6 w-11 shrink-0 rounded-full border transition disabled:opacity-40 ${
                 enabled ? "border-surface-accent bg-surface-accent" : "border-line bg-bg-soft"
               }`}
@@ -170,6 +228,86 @@ export default function AppLockSettingsPanel() {
             >
               {enrolling ? t("appLock.enrolling") : t("appLock.addDevice")}
             </button>
+          </section>
+
+          <section className="rounded-card border border-line bg-surface p-4">
+            <h4 className="text-sm font-semibold text-foreground">{t("appLock.pin.title")}</h4>
+            <p className="mt-1 text-[11px] leading-snug text-ink-soft">{t("appLock.pin.description")}</p>
+
+            {hasPasscode && !pinForm ? (
+              <div className="mt-3 flex items-center justify-between gap-3 rounded-input border border-line px-3 py-2">
+                <span className="text-xs text-foreground">{t("appLock.pin.set")}</span>
+                <div className="flex shrink-0 items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPinError(null);
+                      setPinForm(true);
+                    }}
+                    className="text-xs font-semibold text-foreground hover:underline"
+                  >
+                    {t("appLock.pin.change")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRemovePin}
+                    className="text-xs font-semibold text-red-600 hover:underline dark:text-red-400"
+                  >
+                    {t("appLock.remove")}
+                  </button>
+                </div>
+              </div>
+            ) : pinForm || !hasPasscode ? (
+              <div className="mt-3 flex flex-col gap-2">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="\d*"
+                  autoComplete="off"
+                  maxLength={8}
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+                  placeholder={t("appLock.pin.newPlaceholder")}
+                  className="w-full rounded-input border border-line bg-background px-3 py-2 text-sm tracking-widest text-foreground outline-none focus:border-surface-accent"
+                />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="\d*"
+                  autoComplete="off"
+                  maxLength={8}
+                  value={pinConfirm}
+                  onChange={(e) => setPinConfirm(e.target.value.replace(/\D/g, ""))}
+                  placeholder={t("appLock.pin.confirmPlaceholder")}
+                  className="w-full rounded-input border border-line bg-background px-3 py-2 text-sm tracking-widest text-foreground outline-none focus:border-surface-accent"
+                />
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleSavePin}
+                    disabled={savingPin}
+                    className="rounded-full border border-line px-3.5 py-2 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-60"
+                  >
+                    {savingPin ? t("appLock.pin.saving") : t("appLock.pin.save")}
+                  </button>
+                  {hasPasscode && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPinForm(false);
+                        setPin("");
+                        setPinConfirm("");
+                        setPinError(null);
+                      }}
+                      className="text-xs font-semibold text-ink-soft hover:underline"
+                    >
+                      {t("appLock.pin.cancel")}
+                    </button>
+                  )}
+                </div>
+                {pinError && <p className="text-xs text-red-600 dark:text-red-400">{pinError}</p>}
+              </div>
+            ) : null}
           </section>
 
           {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}

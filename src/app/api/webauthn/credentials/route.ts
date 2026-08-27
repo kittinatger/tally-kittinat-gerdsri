@@ -1,13 +1,24 @@
 import { NextResponse } from "next/server";
 import { getUserId } from "@/lib/auth";
-import { listWebauthnCredentials, deleteWebauthnCredential, getAppLockEnabled, setAppLockEnabled } from "@/lib/db";
+import {
+  listWebauthnCredentials,
+  deleteWebauthnCredential,
+  getAppLockEnabled,
+  setAppLockEnabled,
+  getAppLockPinHash,
+} from "@/lib/db";
 import { checkMutationRateLimit } from "@/lib/mutation-rate-limit";
 
 export async function GET() {
   const userId = await getUserId();
-  const [credentials, enabled] = await Promise.all([listWebauthnCredentials(userId), getAppLockEnabled(userId)]);
+  const [credentials, enabled, pinHash] = await Promise.all([
+    listWebauthnCredentials(userId),
+    getAppLockEnabled(userId),
+    getAppLockPinHash(userId),
+  ]);
   return NextResponse.json({
     enabled,
+    hasPasscode: pinHash !== null,
     credentials: credentials.map((c) => ({
       id: c.id,
       deviceLabel: c.device_label,
@@ -24,9 +35,9 @@ export async function PATCH(req: Request) {
   }
   const { enabled } = (await req.json()) as { enabled: boolean };
   if (enabled) {
-    const credentials = await listWebauthnCredentials(userId);
-    if (credentials.length === 0) {
-      return NextResponse.json({ error: "Enroll a device before turning this on." }, { status: 400 });
+    const [credentials, pinHash] = await Promise.all([listWebauthnCredentials(userId), getAppLockPinHash(userId)]);
+    if (credentials.length === 0 && !pinHash) {
+      return NextResponse.json({ error: "Enroll a device or set a passcode before turning this on." }, { status: 400 });
     }
   }
   await setAppLockEnabled(userId, Boolean(enabled));
@@ -40,10 +51,11 @@ export async function DELETE(req: Request) {
   }
   const { id } = (await req.json()) as { id: number };
   await deleteWebauthnCredential(userId, id);
-  const remaining = await listWebauthnCredentials(userId);
-  // Auto-disable app-lock once the last enrolled device is removed — an
-  // enabled lock with nothing to unlock it would strand the user.
-  if (remaining.length === 0) {
+  const [remaining, pinHash] = await Promise.all([listWebauthnCredentials(userId), getAppLockPinHash(userId)]);
+  // Auto-disable app-lock once the last unlock method (device or passcode)
+  // is removed — an enabled lock with nothing to unlock it would strand
+  // the user.
+  if (remaining.length === 0 && !pinHash) {
     await setAppLockEnabled(userId, false);
   }
   return NextResponse.json({ ok: true });

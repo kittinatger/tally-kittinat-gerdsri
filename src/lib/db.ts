@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 28;
+const CURRENT_SCHEMA_VERSION = 29;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -996,6 +996,14 @@ function ensureSchema(): Promise<void> {
       // it yet (see AppLockSettingsPanel.tsx).
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS applock_enabled BOOLEAN NOT NULL DEFAULT false;`;
 
+      // Numeric passcode (4-8 digits), an alternative unlock method to
+      // WebAuthn for app-lock — same scrypt hash format as users.password_hash
+      // (see lib/password.ts), just a much shorter/lower-entropy input, so
+      // verification is rate-limited via the existing login_attempts table
+      // (keyed "applock:<userId>", not a real username) rather than trusted
+      // to be safe from brute-forcing on its own.
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS applock_pin_hash TEXT;`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -1774,6 +1782,17 @@ export async function getAppLockEnabled(userId: number): Promise<boolean> {
 export async function setAppLockEnabled(userId: number, enabled: boolean): Promise<void> {
   await ensureSchema();
   await sql`UPDATE app_settings SET applock_enabled = ${enabled} WHERE user_id = ${userId};`;
+}
+
+export async function getAppLockPinHash(userId: number): Promise<string | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ applock_pin_hash: string | null }>`SELECT applock_pin_hash FROM app_settings WHERE user_id = ${userId};`;
+  return rows[0]?.applock_pin_hash ?? null;
+}
+
+export async function setAppLockPinHash(userId: number, hash: string | null): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE app_settings SET applock_pin_hash = ${hash} WHERE user_id = ${userId};`;
 }
 
 export type WebauthnCredentialRow = {
