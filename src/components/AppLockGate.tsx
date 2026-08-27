@@ -4,6 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { usePathname } from "next/navigation";
 import { useT } from "@/lib/language-context";
+import PinKeypad from "./PinKeypad";
+
+function LockIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+      <rect x="4.5" y="9" width="11" height="8" rx="2" />
+      <path d="M6.5 9V6.5a3.5 3.5 0 0 1 7 0V9" />
+    </svg>
+  );
+}
 
 // Pages that never need app-lock: unauthenticated ones (a locked-out
 // session there would be meaningless) and the public split-share viewer.
@@ -36,6 +46,7 @@ export default function AppLockGate({ children }: { children: React.ReactNode })
   const [authenticating, setAuthenticating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pin, setPin] = useState("");
+  const [shake, setShake] = useState(false);
 
   // Seconds the app can sit backgrounded before returning re-locks it — 0
   // (the default) means "immediately", matching the original behavior
@@ -123,18 +134,21 @@ export default function AppLockGate({ children }: { children: React.ReactNode })
     }
   }
 
-  async function handleUnlockPin() {
+  async function handleUnlockPin(candidate: string) {
     setError(null);
     setAuthenticating(true);
     try {
       const res = await fetch("/api/applock/pin/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pin }),
+        body: JSON.stringify({ pin: candidate }),
       });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error ?? t("appLock.gate.pinFailed"));
+        setPin("");
+        setShake(true);
+        setTimeout(() => setShake(false), 350);
         return;
       }
       setPin("");
@@ -152,9 +166,16 @@ export default function AppLockGate({ children }: { children: React.ReactNode })
   const bothAvailable = hasCredentials && hasPasscode;
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-4 bg-background px-6 text-center">
-      <p className="font-display text-xl text-foreground">{t("appLock.gate.title")}</p>
-      <p className="max-w-xs text-sm text-ink-soft">{t("appLock.gate.description")}</p>
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6 bg-background px-6 text-center">
+      <div className="flex flex-col items-center gap-3">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-accent/10 text-surface-accent">
+          <LockIcon />
+        </span>
+        <div>
+          <p className="font-display text-xl text-foreground">{t("appLock.gate.title")}</p>
+          <p className="mt-1 max-w-xs text-sm text-ink-soft">{t("appLock.gate.description")}</p>
+        </div>
+      </div>
 
       {method === "biometric" ? (
         <button
@@ -166,33 +187,17 @@ export default function AppLockGate({ children }: { children: React.ReactNode })
           {authenticating ? t("appLock.gate.unlocking") : t("appLock.gate.unlock")}
         </button>
       ) : (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleUnlockPin();
-          }}
-          className="flex w-full max-w-[220px] flex-col items-center gap-3"
-        >
-          <input
-            type="password"
-            inputMode="numeric"
-            pattern="\d*"
-            autoComplete="off"
-            autoFocus
-            maxLength={8}
-            value={pin}
-            onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-            placeholder={t("appLock.gate.pinPlaceholder")}
-            className="w-full rounded-input border border-line bg-surface px-3 py-2.5 text-center text-lg tracking-[0.4em] text-foreground outline-none focus:border-surface-accent"
-          />
+        <div className="flex flex-col items-center gap-6">
+          <PinKeypad value={pin} onChange={setPin} shake={shake} />
           <button
-            type="submit"
+            type="button"
+            onClick={() => handleUnlockPin(pin)}
             disabled={authenticating || pin.length < 4}
-            className="w-full rounded-full bg-surface-accent px-5 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60"
+            className="rounded-full bg-surface-accent px-6 py-2.5 text-sm font-semibold text-white transition disabled:opacity-40"
           >
             {authenticating ? t("appLock.gate.unlocking") : t("appLock.gate.unlock")}
           </button>
-        </form>
+        </div>
       )}
 
       {bothAvailable && (
@@ -200,6 +205,7 @@ export default function AppLockGate({ children }: { children: React.ReactNode })
           type="button"
           onClick={() => {
             setError(null);
+            setPin("");
             setMethod(method === "biometric" ? "pin" : "biometric");
           }}
           className="text-xs font-semibold text-ink-soft underline"
