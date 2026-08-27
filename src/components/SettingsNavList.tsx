@@ -260,6 +260,17 @@ function LockIcon() {
   );
 }
 
+function GiftIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <rect x="3" y="8" width="14" height="9" rx="1.5" />
+      <path d="M3 11.5h14M10 8v9" />
+      <path d="M10 8C10 8 6.7 8 6.7 5.7 6.7 4.2 8 3.5 9 4c1 .5 1 4 1 4Z" />
+      <path d="M10 8c0 0 3.3 0 3.3-2.3 0-1.5-1.3-2.2-2.3-1.7-1 .5-1 4-1 4Z" />
+    </svg>
+  );
+}
+
 function AutoImportIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
@@ -419,6 +430,7 @@ export default function SettingsNavList({
       </SettingsSection>
 
       <SettingsSection title={t("settings.section.support")}>
+        <SettingsListItem icon={<GiftIcon />} label={t("settings.referFriend")} accent="pink" href="/refer-a-friend" selected={pathname === "/refer-a-friend"} />
         <SettingsListItem icon={<BookIcon />} label={t("settings.usageGuide")} href="/usage-guide" selected={pathname === "/usage-guide"} />
         <SettingsListItem icon={<QuestionIcon />} label={t("settings.faqs")} href="/faq" selected={pathname === "/faq"} />
         <SettingsListItem icon={<WrenchIcon />} label={t("settings.troubleshooting")} href="/troubleshooting" selected={pathname === "/troubleshooting"} />
