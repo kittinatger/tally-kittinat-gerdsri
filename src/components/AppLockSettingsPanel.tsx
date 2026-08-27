@@ -130,9 +130,15 @@ export default function AppLockSettingsPanel() {
               aria-checked={enabled}
               onClick={() => handleToggle(!enabled)}
               disabled={credentials.length === 0}
-              className={`relative h-6 w-11 shrink-0 rounded-full transition disabled:opacity-40 ${enabled ? "bg-surface-accent" : "bg-bg-soft"}`}
+              className={`relative h-6 w-11 shrink-0 rounded-full border transition disabled:opacity-40 ${
+                enabled ? "border-surface-accent bg-surface-accent" : "border-line bg-bg-soft"
+              }`}
             >
-              <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${enabled ? "left-5" : "left-0.5"}`} />
+              <span
+                className={`absolute top-0.5 h-5 w-5 rounded-full shadow transition ${
+                  enabled ? "left-5 bg-white" : "left-0.5 bg-white ring-1 ring-inset ring-line"
+                }`}
+              />
             </button>
           </div>
 
