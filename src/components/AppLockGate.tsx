@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { usePathname } from "next/navigation";
 import { useT } from "@/lib/language-context";
@@ -37,6 +37,16 @@ export default function AppLockGate({ children }: { children: React.ReactNode })
   const [error, setError] = useState<string | null>(null);
   const [pin, setPin] = useState("");
 
+  // Seconds the app can sit backgrounded before returning re-locks it — 0
+  // (the default) means "immediately", matching the original behavior
+  // before this was configurable. See AppLockSettingsPanel.tsx.
+  const timeoutSecondsRef = useRef(0);
+  // When the tab was last hidden — null means "not currently/recently
+  // hidden" (or hasn't been evaluated yet). Read on the next visible
+  // transition to decide whether enough inactive time has passed to
+  // warrant re-locking.
+  const hiddenAtRef = useRef<number | null>(null);
+
   useEffect(() => {
     if (exempt) return;
     let cancelled = false;
@@ -51,6 +61,7 @@ export default function AppLockGate({ children }: { children: React.ReactNode })
           setHasCredentials(credsAvailable);
           setHasPasscode(Boolean(data.hasPasscode));
           setMethod(credsAvailable ? "biometric" : "pin");
+          if (typeof data.timeoutSeconds === "number") timeoutSecondsRef.current = data.timeoutSeconds;
         }
         setChecked(true);
       })
@@ -62,13 +73,22 @@ export default function AppLockGate({ children }: { children: React.ReactNode })
     };
   }, [exempt]);
 
-  // Re-lock whenever the tab comes back from being backgrounded — this is
-  // the actual "app lock" behavior, distinct from the one-time check on
-  // load above.
+  // Re-lock when the tab returns from being backgrounded, but only once it
+  // was hidden for at least the configured timeout — this is the actual
+  // "app lock" behavior, distinct from the one-time check on load above.
   useEffect(() => {
     if (exempt || !appLockEnabled) return;
     function onVisibilityChange() {
-      if (document.visibilityState === "visible") setLocked(true);
+      if (document.visibilityState === "hidden") {
+        hiddenAtRef.current = Date.now();
+        return;
+      }
+      // visible
+      const hiddenAt = hiddenAtRef.current;
+      hiddenAtRef.current = null;
+      if (hiddenAt === null) return; // first activation — already handled by the mount check above
+      const elapsedMs = Date.now() - hiddenAt;
+      if (elapsedMs >= timeoutSecondsRef.current * 1000) setLocked(true);
     }
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => document.removeEventListener("visibilitychange", onVisibilityChange);

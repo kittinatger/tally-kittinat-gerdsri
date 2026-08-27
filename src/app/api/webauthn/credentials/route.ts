@@ -6,19 +6,24 @@ import {
   getAppLockEnabled,
   setAppLockEnabled,
   getAppLockPinHash,
+  getAppLockTimeoutSeconds,
+  setAppLockTimeoutSeconds,
 } from "@/lib/db";
 import { checkMutationRateLimit } from "@/lib/mutation-rate-limit";
+import { APPLOCK_TIMEOUT_OPTIONS } from "@/lib/applock-timeout";
 
 export async function GET() {
   const userId = await getUserId();
-  const [credentials, enabled, pinHash] = await Promise.all([
+  const [credentials, enabled, pinHash, timeoutSeconds] = await Promise.all([
     listWebauthnCredentials(userId),
     getAppLockEnabled(userId),
     getAppLockPinHash(userId),
+    getAppLockTimeoutSeconds(userId),
   ]);
   return NextResponse.json({
     enabled,
     hasPasscode: pinHash !== null,
+    timeoutSeconds,
     credentials: credentials.map((c) => ({
       id: c.id,
       deviceLabel: c.device_label,
@@ -33,14 +38,25 @@ export async function PATCH(req: Request) {
   if (!checkMutationRateLimit(userId)) {
     return NextResponse.json({ error: "Too many requests. Slow down and try again shortly." }, { status: 429 });
   }
-  const { enabled } = (await req.json()) as { enabled: boolean };
-  if (enabled) {
-    const [credentials, pinHash] = await Promise.all([listWebauthnCredentials(userId), getAppLockPinHash(userId)]);
-    if (credentials.length === 0 && !pinHash) {
-      return NextResponse.json({ error: "Enroll a device or set a passcode before turning this on." }, { status: 400 });
+  const body = (await req.json()) as { enabled?: boolean; timeoutSeconds?: number };
+
+  if (body.enabled !== undefined) {
+    if (body.enabled) {
+      const [credentials, pinHash] = await Promise.all([listWebauthnCredentials(userId), getAppLockPinHash(userId)]);
+      if (credentials.length === 0 && !pinHash) {
+        return NextResponse.json({ error: "Enroll a device or set a passcode before turning this on." }, { status: 400 });
+      }
     }
+    await setAppLockEnabled(userId, Boolean(body.enabled));
   }
-  await setAppLockEnabled(userId, Boolean(enabled));
+
+  if (body.timeoutSeconds !== undefined) {
+    if (!APPLOCK_TIMEOUT_OPTIONS.some((o) => o.seconds === body.timeoutSeconds)) {
+      return NextResponse.json({ error: "Invalid lock timeout." }, { status: 400 });
+    }
+    await setAppLockTimeoutSeconds(userId, body.timeoutSeconds);
+  }
+
   return NextResponse.json({ ok: true });
 }
 

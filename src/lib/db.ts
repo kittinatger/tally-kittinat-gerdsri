@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 29;
+const CURRENT_SCHEMA_VERSION = 30;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1004,6 +1004,12 @@ function ensureSchema(): Promise<void> {
       // to be safe from brute-forcing on its own.
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS applock_pin_hash TEXT;`;
 
+      // How long the app can sit backgrounded before AppLockGate re-locks it
+      // on return — 0 means "immediately" (the original, only behavior).
+      // Stored in seconds so the UI's minute/hour options are just simple
+      // multiples, not a second unit conversion layer.
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS applock_timeout_seconds INTEGER NOT NULL DEFAULT 0;`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -1782,6 +1788,17 @@ export async function getAppLockEnabled(userId: number): Promise<boolean> {
 export async function setAppLockEnabled(userId: number, enabled: boolean): Promise<void> {
   await ensureSchema();
   await sql`UPDATE app_settings SET applock_enabled = ${enabled} WHERE user_id = ${userId};`;
+}
+
+export async function getAppLockTimeoutSeconds(userId: number): Promise<number> {
+  await ensureSchema();
+  const { rows } = await sql<{ applock_timeout_seconds: number }>`SELECT applock_timeout_seconds FROM app_settings WHERE user_id = ${userId};`;
+  return rows[0]?.applock_timeout_seconds ?? 0;
+}
+
+export async function setAppLockTimeoutSeconds(userId: number, seconds: number): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE app_settings SET applock_timeout_seconds = ${seconds} WHERE user_id = ${userId};`;
 }
 
 export async function getAppLockPinHash(userId: number): Promise<string | null> {

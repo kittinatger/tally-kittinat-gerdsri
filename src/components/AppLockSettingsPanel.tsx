@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { startRegistration, browserSupportsWebAuthn } from "@simplewebauthn/browser";
 import { describeFetchError } from "@/lib/fetch-error";
 import { useT } from "@/lib/language-context";
+import { APPLOCK_TIMEOUT_OPTIONS } from "@/lib/applock-timeout";
 
 type CredentialInfo = { id: number; deviceLabel: string | null; createdAt: string; lastUsedAt: string | null };
 
@@ -15,6 +16,8 @@ export default function AppLockSettingsPanel() {
   const [enabled, setEnabled] = useState(false);
   const [credentials, setCredentials] = useState<CredentialInfo[]>([]);
   const [hasPasscode, setHasPasscode] = useState(false);
+  const [timeoutSeconds, setTimeoutSeconds] = useState(0);
+  const [savingTimeout, setSavingTimeout] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [enrolling, setEnrolling] = useState(false);
   const [supported] = useState(() => (typeof window !== "undefined" ? browserSupportsWebAuthn() : false));
@@ -34,6 +37,7 @@ export default function AppLockSettingsPanel() {
         setEnabled(data.enabled);
         setCredentials(data.credentials);
         setHasPasscode(Boolean(data.hasPasscode));
+        setTimeoutSeconds(typeof data.timeoutSeconds === "number" ? data.timeoutSeconds : 0);
       }
     } catch {
       // Leave the panel in its previous state; the user can retry via the
@@ -96,6 +100,31 @@ export default function AppLockSettingsPanel() {
       setEnabled(next);
     } catch (err) {
       setError(describeFetchError(err));
+    }
+  }
+
+  async function handleChangeTimeout(next: number) {
+    setError(null);
+    const previous = timeoutSeconds;
+    setTimeoutSeconds(next); // optimistic — reverted below on failure
+    setSavingTimeout(true);
+    try {
+      const res = await fetch("/api/webauthn/credentials", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ timeoutSeconds: next }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setTimeoutSeconds(previous);
+        setError(data.error ?? t("appLock.timeout.saveFailed"));
+        return;
+      }
+    } catch (err) {
+      setTimeoutSeconds(previous);
+      setError(describeFetchError(err));
+    } finally {
+      setSavingTimeout(false);
     }
   }
 
@@ -198,6 +227,25 @@ export default function AppLockSettingsPanel() {
                 }`}
               />
             </button>
+          </div>
+
+          <div className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface p-4">
+            <div className="min-w-0 pr-4">
+              <p className="text-sm font-medium text-foreground">{t("appLock.timeout.label")}</p>
+              <p className="text-[11px] leading-snug text-ink-soft">{t("appLock.timeout.hint")}</p>
+            </div>
+            <select
+              value={timeoutSeconds}
+              onChange={(e) => handleChangeTimeout(Number(e.target.value))}
+              disabled={savingTimeout}
+              className="shrink-0 rounded-full border border-line bg-background px-3 py-1.5 text-xs font-semibold text-foreground outline-none focus:border-surface-accent disabled:opacity-60"
+            >
+              {APPLOCK_TIMEOUT_OPTIONS.map((o) => (
+                <option key={o.seconds} value={o.seconds}>
+                  {t(o.labelKey)}
+                </option>
+              ))}
+            </select>
           </div>
 
           <section className="rounded-card border border-line bg-surface p-4">
