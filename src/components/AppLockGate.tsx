@@ -188,7 +188,14 @@ export default function AppLockGate({ children }: { children: React.ReactNode })
         </button>
       ) : (
         <div className="flex flex-col items-center gap-6">
-          <PinKeypad value={pin} onChange={setPin} shake={shake} />
+          <PinKeypad
+            value={pin}
+            onChange={setPin}
+            shake={shake}
+            onSubmit={() => {
+              if (!authenticating && pin.length >= 4) handleUnlockPin(pin);
+            }}
+          />
           <button
             type="button"
             onClick={() => handleUnlockPin(pin)}

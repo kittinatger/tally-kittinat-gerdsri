@@ -1,10 +1,15 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 // A tappable numeric keypad + dot progress indicator for entering a 4-8
 // digit passcode — used by AppLockGate's unlock screen. The passcode's
 // exact length isn't known in advance (it can be 4-8 digits, see
 // AppLockSettingsPanel.tsx), so the dots grow with what's been typed
-// rather than showing a fixed number of empty slots to fill.
+// rather than showing a fixed number of empty slots to fill. Also listens
+// for a physical keyboard (digit keys, Backspace, Enter) — this is the
+// unlock screen for the whole app, so it has to work on desktop too, not
+// just via tapping.
 
 const MAX_LENGTH = 8;
 
@@ -20,22 +25,68 @@ function BackspaceIcon() {
 export default function PinKeypad({
   value,
   onChange,
+  onSubmit,
   shake = false,
 }: {
   value: string;
   onChange: (next: string) => void;
+  /** Enter/Return on the keyboard — the caller decides whether the current
+   * value is submittable (e.g. long enough) and what to do with it. */
+  onSubmit?: () => void;
   /** Briefly nudges the dots — the caller sets this after a rejected
    * passcode so the "wrong" feels tactile, not just a text error. */
   shake?: boolean;
 }) {
+  // Tracks the current value synchronously, ahead of React's next render —
+  // two keystrokes (very plausible when actually typing, not just tapping)
+  // can both fire before a re-render commits, and both handlers reading
+  // the same stale `value` prop would silently drop one of them (each
+  // computing `value + digit` from the same starting point instead of
+  // stacking). Every mutation below updates this ref immediately, so the
+  // next keystroke — even one fired microseconds later — always builds on
+  // the true current value.
+  const valueRef = useRef(value);
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
+
   function press(digit: string) {
-    if (value.length >= MAX_LENGTH) return;
-    onChange(value + digit);
+    if (valueRef.current.length >= MAX_LENGTH) return;
+    valueRef.current = valueRef.current + digit;
+    onChange(valueRef.current);
   }
 
   function backspace() {
-    onChange(value.slice(0, -1));
+    valueRef.current = valueRef.current.slice(0, -1);
+    onChange(valueRef.current);
   }
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      // Ignore typing while focus is in a real text field elsewhere on the
+      // page (shouldn't normally happen on the lock screen, but this is
+      // a global window listener, so it's a cheap guard against stealing
+      // keystrokes from some other input).
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+
+      if (e.key >= "0" && e.key <= "9") {
+        e.preventDefault();
+        press(e.key);
+      } else if (e.key === "Backspace") {
+        e.preventDefault();
+        backspace();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        onSubmit?.();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+    // press/backspace read from valueRef (always current), not the `value`
+    // prop, so they don't need to be in this dependency array.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onSubmit]);
 
   return (
     <div className="flex flex-col items-center gap-6">
