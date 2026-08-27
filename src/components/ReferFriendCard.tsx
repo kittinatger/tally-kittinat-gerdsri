@@ -32,11 +32,25 @@ function ShareIcon() {
   );
 }
 
-export default function ReferFriendCard({ shareUrl }: { shareUrl: string }) {
+function CodeIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+      <path d="M7 6 3 10l4 4M13 6l4 4-4 4" />
+    </svg>
+  );
+}
+
+const EMBED_WIDTH = 320;
+const EMBED_HEIGHT = 210;
+
+export default function ReferFriendCard({ shareUrl, embedUrl }: { shareUrl: string; embedUrl: string }) {
   const t = useT();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [copied, setCopied] = useState(false);
+  const [embedCopied, setEmbedCopied] = useState(false);
   const [canShare] = useState(() => typeof navigator !== "undefined" && typeof navigator.share === "function");
+
+  const embedCode = `<iframe src="${embedUrl}" width="${EMBED_WIDTH}" height="${EMBED_HEIGHT}" style="border:0;border-radius:16px;" title="Refer a friend to Tally" loading="lazy"></iframe>`;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -60,6 +74,17 @@ export default function ReferFriendCard({ shareUrl }: { shareUrl: string }) {
     } catch {
       // Clipboard API can be unavailable (older browsers, insecure
       // context) — the link text is still visible and selectable below.
+    }
+  }
+
+  async function handleCopyEmbed() {
+    try {
+      await navigator.clipboard.writeText(embedCode);
+      setEmbedCopied(true);
+      setTimeout(() => setEmbedCopied(false), 2000);
+    } catch {
+      // Same fallback reasoning as handleCopy above — the snippet is still
+      // visible and selectable in the <pre> below.
     }
   }
 
@@ -110,6 +135,22 @@ export default function ReferFriendCard({ shareUrl }: { shareUrl: string }) {
             {t("refer.share")}
           </button>
         )}
+      </div>
+
+      <div className="flex flex-col gap-2 border-t border-line p-4">
+        <p className="text-sm font-medium text-foreground">{t("refer.embedTitle")}</p>
+        <p className="text-[11px] leading-snug text-ink-soft">{t("refer.embedHint")}</p>
+        <pre className="overflow-x-auto rounded-input border border-line bg-background p-3 text-left text-[11px] leading-snug text-ink-soft">
+          <code>{embedCode}</code>
+        </pre>
+        <button
+          type="button"
+          onClick={handleCopyEmbed}
+          className="flex w-fit items-center gap-1.5 self-start rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
+        >
+          {embedCopied ? <CheckIcon /> : <CodeIcon />}
+          {embedCopied ? t("refer.copied") : t("refer.embedCopy")}
+        </button>
       </div>
     </div>
   );

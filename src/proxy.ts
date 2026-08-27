@@ -58,7 +58,9 @@ export const config = {
     // page (app/splits/[token]/page.tsx) — distinct from api/splits, the
     // authenticated CRUD routes for the Settings splitBills panel, which
     // stay behind the normal auth gate since this prefix match doesn't
-    // touch anything starting with "api/".
-    "/((?!welcome|login|register|forgot-password|reset-password|offline|manifest.json|sw.js|api/auth/login|api/auth/register|api/auth/forgot-password|api/auth/reset-password|api/auth/github/callback|api/auth/github$|api/intake|splits|_next/static|_next/image|favicon.ico|favicon-light.svg|favicon-dark.svg).*)",
+    // touch anything starting with "api/". "embed" is the public
+    // refer-a-friend widget meant to be dropped into a third-party
+    // <iframe> (app/embed/refer/page.tsx) — no session, no user data.
+    "/((?!welcome|login|register|forgot-password|reset-password|offline|embed|manifest.json|sw.js|api/auth/login|api/auth/register|api/auth/forgot-password|api/auth/reset-password|api/auth/github/callback|api/auth/github$|api/intake|splits|_next/static|_next/image|favicon.ico|favicon-light.svg|favicon-dark.svg).*)",
   ],
 };

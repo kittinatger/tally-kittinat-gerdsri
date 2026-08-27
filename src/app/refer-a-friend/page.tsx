@@ -14,7 +14,7 @@ export default async function ReferAFriendPage() {
 
   return (
     <SettingsSubpageLayout username={user?.username ?? ""} email={user?.email ?? null} title={<T k="settings.referFriend" />}>
-      <ReferFriendCard shareUrl={`${origin}/register`} />
+      <ReferFriendCard shareUrl={`${origin}/register`} embedUrl={`${origin}/embed/refer`} />
     </SettingsSubpageLayout>
   );
 }

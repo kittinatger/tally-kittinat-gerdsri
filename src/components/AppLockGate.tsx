@@ -19,7 +19,7 @@ function LockIcon() {
 // session there would be meaningless) and the public split-share viewer.
 // The actual auth boundary is still src/proxy.ts — this is purely about
 // where the *lock overlay* should never appear.
-const EXEMPT_PREFIXES = ["/welcome", "/login", "/register", "/forgot-password", "/reset-password", "/splits/", "/offline"];
+const EXEMPT_PREFIXES = ["/welcome", "/login", "/register", "/forgot-password", "/reset-password", "/splits/", "/offline", "/embed/"];
 
 type UnlockMethod = "biometric" | "pin";
 
