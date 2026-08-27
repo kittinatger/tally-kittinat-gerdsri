@@ -9,6 +9,7 @@ import { useWallets } from "@/lib/wallets-context";
 import { useCurrency } from "@/lib/currency-context";
 import { badgeClasses } from "@/lib/category-styles";
 import { useT, useLanguage } from "@/lib/language-context";
+import { mutateFetch } from "@/lib/offline/fetch-wrapper";
 import ExpenseRow from "./ExpenseRow";
 import SplitExpenseGroup from "./SplitExpenseGroup";
 import FilterDropdown from "./FilterDropdown";
@@ -129,7 +130,7 @@ export default function ExpenseList({
     const deleted: number[] = [];
     for (const id of ids) {
       try {
-        const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+        const res = await mutateFetch(`/api/expenses/${id}`, { method: "DELETE" });
         if (res.ok) deleted.push(id);
       } catch {
         // best-effort — surfaced via the error message below if anything's left over
@@ -148,7 +149,7 @@ export default function ExpenseList({
 
   async function handleSwipeDelete(id: number) {
     try {
-      const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+      const res = await mutateFetch(`/api/expenses/${id}`, { method: "DELETE" });
       if (res.ok) onBulkDeleted([id]);
     } catch {
       // Best-effort — the row simply stays put if this fails.
@@ -166,7 +167,7 @@ export default function ExpenseList({
     for (const e of targets) {
       const newTags = e.tags.includes(tag) ? e.tags : [...e.tags, tag];
       try {
-        const res = await fetch(`/api/expenses/${e.id}`, {
+        const res = await mutateFetch(`/api/expenses/${e.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -183,9 +184,11 @@ export default function ExpenseList({
         });
         const data = await res.json();
         if (res.ok) {
+          // data.expense is absent when this was queued offline (see
+          // mutateFetch) — fall back to the tags we optimistically applied.
           updated.push({
             ...e,
-            tags: data.expense.tags ?? newTags,
+            tags: data.expense?.tags ?? newTags,
           });
         } else {
           failed++;

@@ -11,6 +11,7 @@ import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/
 import { todayInputValue } from "@/lib/format";
 import { downscaleImage } from "@/lib/image-downscale";
 import { PlusIcon, CloseIcon } from "@/lib/icons";
+import { mutateFetch } from "@/lib/offline/fetch-wrapper";
 
 const MAX_RECEIPTS_PER_EXPENSE = 10;
 
@@ -106,7 +107,7 @@ export default function EditExpenseModal({
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch(`/api/expenses/${expense.id}`, {
+      const res = await mutateFetch(`/api/expenses/${expense.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -126,21 +127,39 @@ export default function EditExpenseModal({
         setError(typeof data.error === "string" ? data.error : "Could not save changes.");
         return;
       }
-      onUpdated({
-        id: data.expense.id,
-        type: normalizeExpenseType(data.expense.type),
-        direction: normalizeDirection(data.expense.direction),
-        date: data.expense.date,
-        amount: Number(data.expense.amount),
-        merchant: data.expense.merchant,
-        category: data.expense.category,
-        notes: data.expense.notes,
-        tags: data.expense.tags ?? [],
-        hasReceipt: expense.hasReceipt,
-        walletId: data.expense.wallet_id ?? null,
-        walletName: data.expense.wallet_name ?? null,
-        splitGroupId: data.expense.split_group_id ?? null,
-      });
+      // data.expense is absent when this was queued offline (see
+      // mutateFetch) — build the optimistic version from the form values
+      // instead, so the UI reflects the edit immediately either way.
+      onUpdated(
+        data.expense
+          ? {
+              id: data.expense.id,
+              type: normalizeExpenseType(data.expense.type),
+              direction: normalizeDirection(data.expense.direction),
+              date: data.expense.date,
+              amount: Number(data.expense.amount),
+              merchant: data.expense.merchant,
+              category: data.expense.category,
+              notes: data.expense.notes,
+              tags: data.expense.tags ?? [],
+              hasReceipt: expense.hasReceipt,
+              walletId: data.expense.wallet_id ?? null,
+              walletName: data.expense.wallet_name ?? null,
+              splitGroupId: data.expense.split_group_id ?? null,
+            }
+          : {
+              ...expense,
+              type: normalizeExpenseType(values.type),
+              direction: normalizeDirection(values.type === "transfer" ? (values.direction ?? null) : null),
+              date: values.date,
+              amount: Number(values.amount),
+              merchant: values.merchant,
+              category: values.category,
+              notes: values.notes || null,
+              tags: values.tags,
+              walletId: values.walletId ?? null,
+            },
+      );
     } catch (err) {
       setError(describeFetchError(err, "Edit transaction"));
     } finally {
@@ -156,7 +175,7 @@ export default function EditExpenseModal({
     setDeleting(true);
     setError(null);
     try {
-      const res = await fetch(`/api/expenses/${expense.id}`, { method: "DELETE" });
+      const res = await mutateFetch(`/api/expenses/${expense.id}`, { method: "DELETE" });
       if (res.ok) {
         onDeleted(expense.id);
         return;

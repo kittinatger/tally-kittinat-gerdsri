@@ -3,6 +3,7 @@ import { Radley, Arimo, Noto_Sans_Thai, Noto_Sans_Arabic, Noto_Sans_Devanagari, 
 import ThemeSync from "@/components/ThemeSync";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import AppLockGate from "@/components/AppLockGate";
+import OfflineProvider from "@/components/OfflineProvider";
 import { LanguageProvider } from "@/lib/language-context";
 import "./globals.css";
 
@@ -98,7 +99,9 @@ export default function RootLayout({
         <ThemeSync />
         <ServiceWorkerRegister />
         <LanguageProvider>
-          <AppLockGate>{children}</AppLockGate>
+          <AppLockGate>
+            <OfflineProvider>{children}</OfflineProvider>
+          </AppLockGate>
         </LanguageProvider>
       </body>
     </html>

@@ -15,6 +15,7 @@ import { downscaleImage } from "@/lib/image-downscale";
 import { describeFetchError } from "@/lib/fetch-error";
 import { logAppError } from "@/lib/error-log";
 import { useT } from "@/lib/language-context";
+import { mutateFetch } from "@/lib/offline/fetch-wrapper";
 
 type Tab = "manual" | "scan" | "voice";
 type ScanStatus = "idle" | "analyzing" | "review" | "error";
@@ -708,7 +709,10 @@ export class DuplicateExpenseError extends Error {
 }
 
 async function createExpense(values: ExpenseFormValues, confirmDuplicate = false): Promise<Expense> {
-  const res = await fetch("/api/expenses", {
+  // Note: the server-side duplicate check (409) needs a live round trip, so
+  // it's simply skipped while offline — mutateFetch queues the request
+  // instead of reaching the server at all (see fetch-wrapper.ts).
+  const res = await mutateFetch("/api/expenses", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -730,6 +734,27 @@ async function createExpense(values: ExpenseFormValues, confirmDuplicate = false
   }
   if (!res.ok) {
     throw new Error(typeof data.error === "string" ? data.error : "Could not save that entry.");
+  }
+  // data.expense is absent when this was queued offline — return a
+  // placeholder with a negative temp id so the UI can show it right away;
+  // it's superseded by the real row (and its real id) the next time this
+  // account's data is refreshed after the queue syncs.
+  if (!data.expense) {
+    return {
+      id: -Date.now(),
+      type: normalizeExpenseType(values.type),
+      direction: normalizeDirection(values.type === "transfer" ? (values.direction ?? null) : null),
+      date: values.date,
+      amount: Number(values.amount),
+      merchant: values.merchant,
+      category: values.category,
+      notes: values.notes || null,
+      tags: values.tags,
+      hasReceipt: false,
+      walletId: values.walletId ?? null,
+      walletName: null,
+      splitGroupId: null,
+    };
   }
   return {
     id: data.expense.id,
