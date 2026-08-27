@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@google/genai": "^2.13.0",
+    "@simplewebauthn/browser": "^13.3.0",
+    "@simplewebauthn/server": "^13.3.3",
     "@vercel/postgres": "^0.10.0",
     "@zxing/browser": "^0.2.1",
     "bwip-js": "^4.11.2",

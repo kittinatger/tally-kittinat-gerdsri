@@ -23,6 +23,8 @@ export const PANEL_VALUES = [
   "savingsGoals",
   "autoImport",
   "errorReports",
+  "backup",
+  "appLock",
 ] as const;
 
 export type Panel = (typeof PANEL_VALUES)[number];

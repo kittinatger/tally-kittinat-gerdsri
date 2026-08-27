@@ -37,6 +37,8 @@ const AssistantPanel = dynamic(() => import("./AssistantPanel"), { ssr: false })
 const ApiTokensManager = dynamic(() => import("./ApiTokensManager"), { ssr: false });
 const AutoImportInstructions = dynamic(() => import("./AutoImportInstructions"), { ssr: false });
 const ErrorReportsPanel = dynamic(() => import("./ErrorReportsPanel"), { ssr: false });
+const BackupSettingsPanel = dynamic(() => import("./BackupSettingsPanel"), { ssr: false });
+const AppLockSettingsPanel = dynamic(() => import("./AppLockSettingsPanel"), { ssr: false });
 
 const PANEL_TITLES: Record<Panel, string> = {
   account: "Account",
@@ -58,6 +60,8 @@ const PANEL_TITLES: Record<Panel, string> = {
   savingsGoals: "Savings goals",
   autoImport: "Automatic import",
   errorReports: "Error log",
+  backup: "Backup & restore",
+  appLock: "App lock",
 };
 
 function BackIcon() {
@@ -168,6 +172,8 @@ export default function SettingsView({
         </div>
       )}
       {panel === "errorReports" && <ErrorReportsPanel />}
+      {panel === "backup" && <BackupSettingsPanel />}
+      {panel === "appLock" && <AppLockSettingsPanel />}
       {panel === "dashboardWidgets" && (
         <DashboardWidgetsSettings
           categories={categories}

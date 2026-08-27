@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 27;
+const CURRENT_SCHEMA_VERSION = 28;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -970,6 +970,32 @@ function ensureSchema(): Promise<void> {
       `;
       await sql`CREATE INDEX IF NOT EXISTS wallet_members_user_id_idx ON wallet_members (user_id) WHERE status = 'accepted';`;
 
+      // Biometric app-lock (WebAuthn/passkey credentials) — a device-local
+      // second gate shown on top of the existing cookie session, not a
+      // login replacement (see AppLockGate.tsx). credential_id/public_key
+      // are stored base64url, exactly as the browser/authenticator hands
+      // them back — see lib/webauthn.ts.
+      await sql`
+        CREATE TABLE IF NOT EXISTS webauthn_credentials (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          credential_id TEXT NOT NULL UNIQUE,
+          public_key TEXT NOT NULL,
+          counter BIGINT NOT NULL DEFAULT 0,
+          device_label TEXT,
+          transports TEXT,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          last_used_at TIMESTAMPTZ
+        );
+      `;
+      await sql`CREATE INDEX IF NOT EXISTS webauthn_credentials_user_idx ON webauthn_credentials (user_id);`;
+
+      // Per-account toggle: whether app-lock should be shown at all. Off by
+      // default — enrolling a credential doesn't turn this on by itself,
+      // since a user might register a device and decide against enforcing
+      // it yet (see AppLockSettingsPanel.tsx).
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS applock_enabled BOOLEAN NOT NULL DEFAULT false;`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -1736,6 +1762,72 @@ export async function setActivitiesDefaultWalletId(userId: number, walletId: num
     }
   }
   await sql`UPDATE app_settings SET activities_default_wallet_id = ${walletId} WHERE user_id = ${userId};`;
+}
+
+// Biometric app-lock — see AppLockGate.tsx/AppLockSettingsPanel.tsx.
+export async function getAppLockEnabled(userId: number): Promise<boolean> {
+  await ensureSchema();
+  const { rows } = await sql<{ applock_enabled: boolean }>`SELECT applock_enabled FROM app_settings WHERE user_id = ${userId};`;
+  return rows[0]?.applock_enabled ?? false;
+}
+
+export async function setAppLockEnabled(userId: number, enabled: boolean): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE app_settings SET applock_enabled = ${enabled} WHERE user_id = ${userId};`;
+}
+
+export type WebauthnCredentialRow = {
+  id: number;
+  credential_id: string;
+  public_key: string;
+  counter: number;
+  device_label: string | null;
+  transports: string | null;
+  created_at: string;
+  last_used_at: string | null;
+};
+
+export async function listWebauthnCredentials(userId: number): Promise<WebauthnCredentialRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<WebauthnCredentialRow>`
+    SELECT id, credential_id, public_key, counter, device_label, transports, created_at::text, last_used_at::text
+    FROM webauthn_credentials WHERE user_id = ${userId} ORDER BY created_at;
+  `;
+  return rows;
+}
+
+export async function getWebauthnCredentialById(credentialId: string): Promise<(WebauthnCredentialRow & { user_id: number }) | null> {
+  await ensureSchema();
+  const { rows } = await sql<WebauthnCredentialRow & { user_id: number }>`
+    SELECT id, user_id, credential_id, public_key, counter, device_label, transports, created_at::text, last_used_at::text
+    FROM webauthn_credentials WHERE credential_id = ${credentialId};
+  `;
+  return rows[0] ?? null;
+}
+
+export async function createWebauthnCredential(
+  userId: number,
+  credentialId: string,
+  publicKey: string,
+  counter: number,
+  transports: string[],
+  deviceLabel: string | null,
+): Promise<void> {
+  await ensureSchema();
+  await sql`
+    INSERT INTO webauthn_credentials (user_id, credential_id, public_key, counter, transports, device_label)
+    VALUES (${userId}, ${credentialId}, ${publicKey}, ${counter}, ${JSON.stringify(transports)}, ${deviceLabel});
+  `;
+}
+
+export async function updateWebauthnCredentialCounter(credentialId: string, counter: number): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE webauthn_credentials SET counter = ${counter}, last_used_at = now() WHERE credential_id = ${credentialId};`;
+}
+
+export async function deleteWebauthnCredential(userId: number, id: number): Promise<void> {
+  await ensureSchema();
+  await sql`DELETE FROM webauthn_credentials WHERE id = ${id} AND user_id = ${userId};`;
 }
 
 // Safety net, not real pagination: every current caller (Dashboard, Activities,

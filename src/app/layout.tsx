@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Radley, Arimo, Noto_Sans_Thai, Noto_Sans_Arabic, Noto_Sans_Devanagari, Noto_Sans_Bengali } from "next/font/google";
 import ThemeSync from "@/components/ThemeSync";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import AppLockGate from "@/components/AppLockGate";
 import { LanguageProvider } from "@/lib/language-context";
 import "./globals.css";
 
@@ -96,7 +97,9 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
         <ThemeSync />
         <ServiceWorkerRegister />
-        <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider>
+          <AppLockGate>{children}</AppLockGate>
+        </LanguageProvider>
       </body>
     </html>
   );

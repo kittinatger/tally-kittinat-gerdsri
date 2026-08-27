@@ -241,6 +241,25 @@ function GoalIcon() {
   );
 }
 
+function BackupIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <path d="M5.5 8A4 4 0 0 1 13.4 6.4 3.25 3.25 0 0 1 16.5 9.5 3 3 0 0 1 13.5 12.5H6a3.5 3.5 0 0 1-.5-6.96Z" />
+      <path d="M10 9.5v5.5M7.8 12.6l2.2 2.4 2.2-2.4" />
+    </svg>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <rect x="4.5" y="9" width="11" height="8" rx="2" />
+      <path d="M6.5 9V6.5a3.5 3.5 0 0 1 7 0V9" />
+      <circle cx="10" cy="12.75" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 function AutoImportIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
@@ -364,6 +383,7 @@ export default function SettingsNavList({
       <SettingsSection title={t("settings.section.appSettings")}>
         <SettingsListItem icon={<AccountIcon />} label={t("settings.account")} accent="slate" {...panelItemProps("account")} />
         <SettingsListItem icon={<ShieldIcon />} label={t("settings.permissions")} accent="slate" {...panelItemProps("permissions")} />
+        <SettingsListItem icon={<LockIcon />} label={t("settings.appLock")} accent="rose" {...panelItemProps("appLock")} />
       </SettingsSection>
 
       <SettingsSection title={t("settings.section.records")}>
@@ -373,6 +393,7 @@ export default function SettingsNavList({
         <ExportDataButton />
         <ImportDataButton />
         <ReportExportButton />
+        <SettingsListItem icon={<BackupIcon />} label={t("settings.backup")} accent="cyan" {...panelItemProps("backup")} />
       </SettingsSection>
 
       <SettingsSection title={t("settings.section.social")}>
