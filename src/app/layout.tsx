@@ -47,10 +47,30 @@ const notoSansBengali = Noto_Sans_Bengali({
   subsets: ["bengali"],
 });
 
+// Same "pin a canonical domain via APP_URL, fall back to the request's own
+// origin" reasoning as getAppOrigin() in lib/app-url.ts — metadataBase has
+// to be a static URL evaluated at build/module-load time though (it can't
+// read per-request headers), so this only ever uses the env var, with
+// Vercel's own auto-populated VERCEL_URL as a second fallback so preview
+// deployments still get resolvable (if not stable) og:image URLs.
+const siteUrl = process.env.APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined);
+
 export const metadata: Metadata = {
+  ...(siteUrl && { metadataBase: new URL(siteUrl) }),
   title: "Tally — Personal Expense Tracker",
   description: "A private, personal expense tracker with receipt scanning.",
   manifest: "/manifest.json",
+  openGraph: {
+    title: "Tally — Personal Expense Tracker",
+    description: "A private, personal expense tracker with receipt scanning and voice entry.",
+    siteName: "Tally",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Tally — Personal Expense Tracker",
+    description: "A private, personal expense tracker with receipt scanning and voice entry.",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

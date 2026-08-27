@@ -61,6 +61,11 @@ export const config = {
     // touch anything starting with "api/". "embed" is the public
     // refer-a-friend widget meant to be dropped into a third-party
     // <iframe> (app/embed/refer/page.tsx) — no session, no user data.
-    "/((?!welcome|login|register|forgot-password|reset-password|offline|embed|manifest.json|sw.js|api/auth/login|api/auth/register|api/auth/forgot-password|api/auth/reset-password|api/auth/github/callback|api/auth/github$|api/intake|splits|_next/static|_next/image|favicon.ico|favicon-light.svg|favicon-dark.svg).*)",
+    // "opengraph-image"/"twitter-image" are the link-preview images Next
+    // generates from app/opengraph-image.tsx — external services (Slack,
+    // iMessage, Canva's link-paste preview, etc.) fetch these with no
+    // session cookie at all, so without this exclusion they'd get
+    // redirected to /welcome instead of the actual image.
+    "/((?!welcome|login|register|forgot-password|reset-password|offline|embed|opengraph-image|twitter-image|manifest.json|sw.js|api/auth/login|api/auth/register|api/auth/forgot-password|api/auth/reset-password|api/auth/github/callback|api/auth/github$|api/intake|splits|_next/static|_next/image|favicon.ico|favicon-light.svg|favicon-dark.svg).*)",
   ],
 };
