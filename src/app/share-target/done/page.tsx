@@ -24,7 +24,7 @@ export default async function ShareTargetDonePage({
         href="/"
         className="mt-6 rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark"
       >
-        Go to Dashboard
+        Go to Activities
       </Link>
     </main>
   );

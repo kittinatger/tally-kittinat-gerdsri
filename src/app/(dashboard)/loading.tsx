@@ -5,7 +5,7 @@ import { BottomNav } from "@/components/AppHeader";
 // route can't be statically cached. Mirrors AppHeader's markup (including
 // which parts are hidden on mobile) so the nav doesn't flicker/disappear
 // during the transition.
-export default function DashboardLoading() {
+export default function HomeLoading() {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10 lg:max-w-6xl">
       <header className="sticky top-3 z-10 hidden items-center justify-between gap-2 rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] px-3 py-2 shadow-soft backdrop-blur-xl sm:flex sm:gap-3 sm:px-5 sm:py-2.5">
@@ -16,10 +16,10 @@ export default function DashboardLoading() {
         </div>
         <nav className="flex items-center gap-1 rounded-full bg-bg-soft p-1">
           <span className="rounded-full bg-surface px-2.5 py-1 text-xs font-semibold text-foreground shadow-sm sm:px-3.5 sm:py-1.5 sm:text-sm">
-            Dashboard
+            Home
           </span>
           <span className="rounded-full px-2.5 py-1 text-xs font-semibold text-ink-soft sm:px-3.5 sm:py-1.5 sm:text-sm">
-            Activities
+            Analytics
           </span>
           <span className="rounded-full px-2.5 py-1 text-xs font-semibold text-ink-soft sm:px-3.5 sm:py-1.5 sm:text-sm">
             Wallet
@@ -38,12 +38,11 @@ export default function DashboardLoading() {
       <BottomNav pathname="/" showAdd />
 
       <main className="flex-1 px-1 py-6 sm:px-2">
-        <div className="h-40 animate-pulse rounded-card border border-line bg-surface" />
-        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div className="h-[110px] animate-pulse rounded-card border border-surface-line bg-surface" />
-          <div className="h-[110px] animate-pulse rounded-card border border-surface-line bg-surface" />
-          <div className="h-[110px] animate-pulse rounded-card border border-surface-line bg-surface" />
-          <div className="h-[110px] animate-pulse rounded-card border border-surface-line bg-surface" />
+        <div className="mb-3 h-[52px] animate-pulse rounded-card border border-line bg-surface" />
+        <div className="space-y-2.5">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-16 animate-pulse rounded-card border border-line bg-surface" />
+          ))}
         </div>
       </main>
     </div>

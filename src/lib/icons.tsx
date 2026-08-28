@@ -119,6 +119,16 @@ export function ListIcon({ className }: IconProps) {
   );
 }
 
+// Bar chart glyph — used for the Analytics nav link.
+export function AnalyticsIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <path d="M3.5 16.5v-6M9.5 16.5v-10M15.5 16.5v-4" />
+      <path d="M2.5 16.5h15" />
+    </svg>
+  );
+}
+
 // A landscape photo shape (frame with a mountain/sun glyph) — used for the
 // "choose from photo gallery" action.
 export function ImageIcon({ className }: IconProps) {

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import type { Expense } from "@/types/expense";
 import type { CategoryOption } from "@/types/category";
@@ -34,6 +35,7 @@ export default function ActivitiesView({
   currency,
   wallets,
   initialWalletFilter = "all",
+  initialAddOpen = false,
 }: {
   initialExpenses: Expense[];
   categories: CategoryOption[];
@@ -43,10 +45,24 @@ export default function ActivitiesView({
    * > Wallets' "Default wallet for Activities" setting. "all" means every
    * wallet. */
   initialWalletFilter?: string;
+  /** Opens the Add-expense modal immediately — from the PWA's "Add
+   * expense" home-screen shortcut (`?add=expense`, read server-side in
+   * page.tsx), same pattern Dashboard.tsx used before Activities became
+   * the root page. */
+  initialAddOpen?: boolean;
 }) {
   const t = useT();
+  const router = useRouter();
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
-  const [addOpen, setAddOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(initialAddOpen);
+
+  // Strips the `?add=expense` param once consumed (replace, not push) so
+  // it doesn't linger in history and reopen the modal on back/refresh.
+  useEffect(() => {
+    if (!initialAddOpen) return;
+    router.replace("/", { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only
+  }, []);
   const [viewing, setViewing] = useState<Expense | null>(null);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");

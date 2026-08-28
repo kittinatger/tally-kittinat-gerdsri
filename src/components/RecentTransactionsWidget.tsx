@@ -51,7 +51,7 @@ export default function RecentTransactionsWidget({ expenses, limit = 5 }: { expe
         <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">
           Recent transactions
         </p>
-        <Link href="/activities" className="text-xs font-semibold text-surface-accent hover:underline">
+        <Link href="/" className="text-xs font-semibold text-surface-accent hover:underline">
           View all
         </Link>
       </div>

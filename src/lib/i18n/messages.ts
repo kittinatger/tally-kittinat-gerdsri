@@ -6,6 +6,7 @@
 // the fallback behavior.
 export type MessageKey =
   | "nav.dashboard"
+  | "nav.analytics"
   | "nav.home"
   | "nav.activities"
   | "nav.settings"
@@ -1288,6 +1289,7 @@ export const RTL_LANGUAGES = new Set(["ar", "ur"]);
 export const MESSAGES: Record<string, Record<MessageKey, string>> = {
   en: {
     "nav.dashboard": "Dashboard",
+    "nav.analytics": "Analytics",
     "faq.subtitle": "Tap a question to expand it, or search to jump straight to one.",
     "faq.searchPlaceholder": "Search FAQs...",
     "faq.noMatchPrefix": "No FAQs match",
@@ -1470,7 +1472,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "usageGuide.s6Title": "Split transactions",
     "usageGuide.s6Part1": "From",
     "usageGuide.s6Part2": "split one receipt across multiple categories in a single entry — it shows up as one grouped card in Activities, with each line still individually editable or deletable.",
-    "usageGuide.s7Title": "Dashboard",
+    "usageGuide.s7Title": "Analytics",
     "usageGuide.s7Body": "Fully customizable — tap the paintbrush icon to enter the live editor, then add, remove, resize, or reorder any of 50+ widgets (stat cards, trend charts, progress rings, donut charts, heatmaps, leaderboards, and more) to build your own layout. Widgets you haven't customized are updated with new sensible defaults over time; once you've arranged your own, it's yours to keep.",
     "usageGuide.s8Title": "Activities",
     "usageGuide.s8Part1": "Your full transaction log. The balance card up top shows your wallet balance, with Expense/Income/Transfer buttons that filter the list below and a wallet-scope picker to view one wallet instead of all of them. The filter icon next to search opens Category, Tag, Wallet, and Date range filters, and you can export the currently filtered list as a CSV. Tap any transaction to open a read-only detail view — its category, wallet, tags, notes, and attached receipt — with an",
@@ -2565,6 +2567,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
   },
   zh: {
     "nav.dashboard": "仪表盘",
+    "nav.analytics": "分析",
     "faq.subtitle": "点按问题即可展开，也可以搜索直接跳转到某个问题。",
     "faq.searchPlaceholder": "搜索常见问题...",
     "faq.noMatchPrefix": "没有匹配的常见问题",
@@ -2747,7 +2750,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "usageGuide.s6Title": "拆分交易",
     "usageGuide.s6Part1": "在",
     "usageGuide.s6Part2": "中，可以将一张收据拆分到多个类别、以单笔记录的形式录入 — 它会在“活动”页面中显示为一张分组卡片，其中每一行仍可单独编辑或删除。",
-    "usageGuide.s7Title": "仪表盘",
+    "usageGuide.s7Title": "分析",
     "usageGuide.s7Body": "完全可自定义 — 点击画笔图标进入实时编辑器，然后添加、移除、调整大小或重新排列 50 多种小组件（统计卡片、趋势图表、进度环、环形图、热力图、排行榜等），打造属于您自己的布局。您未自定义的小组件会随时间自动更新为新的合理默认设置；一旦您排列了自己的布局，它就会一直保留。",
     "usageGuide.s8Title": "活动",
     "usageGuide.s8Part1": "这是您的完整交易记录。顶部的余额卡片显示您的钱包余额，配有支出/收入/转账按钮，可筛选下方列表，以及一个钱包范围选择器，用于查看单个钱包而非全部钱包。搜索旁的筛选图标可打开类别、标签、钱包和日期范围筛选，您还可以将当前筛选后的列表导出为 CSV。点击任意交易可打开只读的详情视图 — 显示其类别、钱包、标签、备注和附加的收据 — 并附有一个",
@@ -3842,6 +3845,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
   },
   hi: {
     "nav.dashboard": "डैशबोर्ड",
+    "nav.analytics": "एनालिटिक्स",
     "faq.subtitle": "प्रश्न को खोलने के लिए टैप करें, या सीधे किसी प्रश्न पर जाने के लिए खोजें।",
     "faq.searchPlaceholder": "सामान्य प्रश्न खोजें...",
     "faq.noMatchPrefix": "इससे मेल खाता कोई सामान्य प्रश्न नहीं मिला",
@@ -4024,7 +4028,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "usageGuide.s6Title": "लेन-देन को विभाजित करना",
     "usageGuide.s6Part1": "से",
     "usageGuide.s6Part2": "एक ही एंट्री में एक रसीद को कई श्रेणियों में विभाजित करें — यह Activities में एक ग्रुप्ड कार्ड के रूप में दिखाई देता है, जिसमें प्रत्येक लाइन अभी भी अलग-अलग संपादन योग्य या हटाने योग्य होती है।",
-    "usageGuide.s7Title": "डैशबोर्ड",
+    "usageGuide.s7Title": "एनालिटिक्स",
     "usageGuide.s7Body": "पूरी तरह से अनुकूलन योग्य — लाइव एडिटर में जाने के लिए पेंटब्रश आइकन टैप करें, फिर अपना खुद का लेआउट बनाने के लिए 50+ विजेट्स (स्टैट कार्ड, ट्रेंड चार्ट, प्रोग्रेस रिंग, डोनट चार्ट, हीटमैप, लीडरबोर्ड, और बहुत कुछ) में से किसी को भी जोड़ें, हटाएं, आकार बदलें, या पुनर्व्यवस्थित करें। जिन विजेट्स को आपने कस्टमाइज़ नहीं किया है, वे समय के साथ नए उचित डिफ़ॉल्ट्स के साथ अपडेट होते रहते हैं; एक बार जब आप अपने खुद के व्यवस्थित कर लेते हैं, तो वे आपके पास ही रहते हैं।",
     "usageGuide.s8Title": "Activities",
     "usageGuide.s8Part1": "आपका पूरा लेन-देन लॉग। ऊपर बैलेंस कार्ड आपका वॉलेट बैलेंस दिखाता है, साथ ही Expense/Income/Transfer बटन जो नीचे की सूची को फ़िल्टर करते हैं और सभी की बजाय एक वॉलेट देखने के लिए एक वॉलेट-स्कोप पिकर। सर्च के बगल का फ़िल्टर आइकन Category, Tag, Wallet, और Date range फ़िल्टर खोलता है, और आप वर्तमान में फ़िल्टर की गई सूची को CSV के रूप में एक्सपोर्ट कर सकते हैं। किसी भी लेन-देन को टैप करके एक रीड-ओनली डिटेल व्यू खोलें — इसकी श्रेणी, वॉलेट, टैग, नोट्स, और संलग्न रसीद — साथ में एक",
@@ -5119,6 +5123,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
   },
   es: {
     "nav.dashboard": "Panel",
+    "nav.analytics": "Análisis",
     "faq.subtitle": "Toca una pregunta para expandirla, o busca para ir directo a una.",
     "faq.searchPlaceholder": "Buscar en las preguntas frecuentes...",
     "faq.noMatchPrefix": "Ninguna pregunta coincide con",
@@ -5301,7 +5306,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "usageGuide.s6Title": "Transacciones divididas",
     "usageGuide.s6Part1": "Desde",
     "usageGuide.s6Part2": "divide un recibo entre varias categorías en una sola entrada — aparece como una sola tarjeta agrupada en Actividad, y cada línea sigue siendo editable o eliminable individualmente.",
-    "usageGuide.s7Title": "Panel",
+    "usageGuide.s7Title": "Análisis",
     "usageGuide.s7Body": "Totalmente personalizable — toca el ícono del pincel para entrar al editor en vivo y luego agrega, quita, redimensiona o reordena cualquiera de los más de 50 widgets (tarjetas de estadísticas, gráficos de tendencia, anillos de progreso, gráficos de dona, mapas de calor, tablas de clasificación y más) para crear tu propio diseño. Los widgets que no has personalizado se actualizan con nuevos valores predeterminados razonables con el tiempo; una vez que organizas los tuyos, quedan tal cual los dejaste.",
     "usageGuide.s8Title": "Actividad",
     "usageGuide.s8Part1": "Tu registro completo de transacciones. La tarjeta de saldo en la parte superior muestra el saldo de tu billetera, con botones de Gasto/Ingreso/Transferencia que filtran la lista de abajo y un selector de ámbito de billetera para ver una billetera en lugar de todas. El ícono de filtro junto a la búsqueda abre los filtros de Categoría, Etiqueta, Billetera y Rango de fechas, y puedes exportar la lista filtrada actual como CSV. Toca cualquier transacción para abrir una vista de detalle de solo lectura — su categoría, billetera, etiquetas, notas y recibo adjunto — con un botón",
@@ -6396,6 +6401,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
   },
   fr: {
     "nav.dashboard": "Tableau de bord",
+    "nav.analytics": "Analyses",
     "faq.subtitle": "Touchez une question pour la développer, ou effectuez une recherche pour y accéder directement.",
     "faq.searchPlaceholder": "Rechercher dans la FAQ...",
     "faq.noMatchPrefix": "Aucune question ne correspond à",
@@ -6578,7 +6584,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "usageGuide.s6Title": "Transactions fractionnées",
     "usageGuide.s6Part1": "Depuis",
     "usageGuide.s6Part2": "répartissez un reçu sur plusieurs catégories en une seule saisie — il apparaît comme une seule carte groupée dans Activités, chaque ligne restant individuellement modifiable ou supprimable.",
-    "usageGuide.s7Title": "Tableau de bord",
+    "usageGuide.s7Title": "Analyses",
     "usageGuide.s7Body": "Entièrement personnalisable — appuyez sur l'icône du pinceau pour entrer dans l'éditeur en direct, puis ajoutez, supprimez, redimensionnez ou réorganisez n'importe lequel des plus de 50 widgets (cartes de statistiques, graphiques de tendance, anneaux de progression, graphiques en anneau, cartes de chaleur, classements, et plus encore) pour créer votre propre mise en page. Les widgets que vous n'avez pas personnalisés sont mis à jour au fil du temps avec de nouveaux réglages par défaut sensés ; une fois que vous avez organisé les vôtres, ils restent tels quels.",
     "usageGuide.s8Title": "Activités",
     "usageGuide.s8Part1": "Votre journal complet des transactions. La carte de solde en haut affiche le solde de votre portefeuille, avec des boutons Dépense/Revenu/Transfert qui filtrent la liste ci-dessous et un sélecteur de portefeuille pour n'en afficher qu'un seul au lieu de tous. L'icône de filtre à côté de la recherche ouvre les filtres Catégorie, Tag, Portefeuille et Plage de dates, et vous pouvez exporter la liste actuellement filtrée en CSV. Appuyez sur une transaction pour ouvrir une vue de détail en lecture seule — sa catégorie, son portefeuille, ses tags, ses notes et le reçu joint — avec un bouton",
@@ -7673,6 +7679,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
   },
   ar: {
     "nav.dashboard": "لوحة التحكم",
+    "nav.analytics": "التحليلات",
     "faq.subtitle": "اضغط على سؤال لعرض إجابته، أو ابحث للانتقال مباشرةً إلى أحدها.",
     "faq.searchPlaceholder": "البحث في الأسئلة الشائعة...",
     "faq.noMatchPrefix": "لا توجد أسئلة مطابقة لـ",
@@ -7855,7 +7862,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "usageGuide.s6Title": "تقسيم المعاملات",
     "usageGuide.s6Part1": "من",
     "usageGuide.s6Part2": "قسّم إيصالًا واحدًا على عدة فئات في إدخال واحد — يظهر كبطاقة واحدة مجمّعة في النشاطات، مع بقاء كل سطر قابلًا للتعديل أو الحذف بشكل مستقل.",
-    "usageGuide.s7Title": "لوحة التحكم",
+    "usageGuide.s7Title": "التحليلات",
     "usageGuide.s7Body": "قابلة للتخصيص بالكامل — اضغط على أيقونة الفرشاة للدخول إلى المحرر المباشر، ثم أضف أو أزل أو غيّر حجم أو أعد ترتيب أيًا من أكثر من 50 عنصرًا تفاعليًا (بطاقات إحصائية، رسوم بيانية للاتجاهات، حلقات تقدم، رسوم بيانية دائرية، خرائط حرارية، لوحات صدارة، والمزيد) لبناء تخطيطك الخاص. يتم تحديث العناصر التفاعلية التي لم تخصصها بإعدادات افتراضية معقولة جديدة بمرور الوقت؛ وبمجرد أن ترتب عناصرك الخاصة، تظل كما هي.",
     "usageGuide.s8Title": "النشاطات",
     "usageGuide.s8Part1": "سجل معاملاتك الكامل. تعرض بطاقة الرصيد أعلى الصفحة رصيد محفظتك، مع أزرار المصروفات/الدخل/التحويل التي تصفّي القائمة أدناه، ومحدد لنطاق المحفظة لعرض محفظة واحدة بدلًا من كلها. يفتح رمز التصفية بجانب البحث فلاتر الفئة والوسم والمحفظة ونطاق التاريخ، ويمكنك تصدير القائمة المصفّاة حاليًا كملف CSV. اضغط على أي معاملة لفتح عرض تفصيلي للقراءة فقط — فئتها ومحفظتها ووسومها وملاحظاتها والإيصال المرفق — مع زر",
@@ -8950,6 +8957,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
   },
   bn: {
     "nav.dashboard": "ড্যাশবোর্ড",
+    "nav.analytics": "অ্যানালিটিক্স",
     "faq.subtitle": "প্রশ্ন খুলতে সেটিতে ট্যাপ করুন, অথবা সরাসরি কোনো একটিতে যেতে খুঁজুন।",
     "faq.searchPlaceholder": "প্রশ্নোত্তর খুঁজুন...",
     "faq.noMatchPrefix": "এর সাথে মিলে যায় এমন কোনো প্রশ্ন নেই",
@@ -9132,7 +9140,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "usageGuide.s6Title": "লেনদেন বিভক্ত করা",
     "usageGuide.s6Part1": "থেকে",
     "usageGuide.s6Part2": "একটি এন্ট্রিতে একটি রসিদ একাধিক বিভাগে বিভক্ত করুন — এটি Activities-এ একটি গ্রুপড কার্ড হিসেবে দেখা যায়, যেখানে প্রতিটি লাইন এখনও আলাদাভাবে সম্পাদনাযোগ্য বা মুছে ফেলা যায়।",
-    "usageGuide.s7Title": "ড্যাশবোর্ড",
+    "usageGuide.s7Title": "অ্যানালিটিক্স",
     "usageGuide.s7Body": "সম্পূর্ণ কাস্টমাইজযোগ্য — লাইভ এডিটরে প্রবেশ করতে পেইন্টব্রাশ আইকনে ট্যাপ করুন, তারপর আপনার নিজস্ব লেআউট তৈরি করতে 50+ উইজেট (স্ট্যাট কার্ড, ট্রেন্ড চার্ট, প্রগ্রেস রিং, ডোনাট চার্ট, হিটম্যাপ, লিডারবোর্ড, এবং আরও অনেক কিছু) থেকে যেকোনো একটি যোগ, সরান, আকার পরিবর্তন, বা পুনর্বিন্যাস করুন। আপনি কাস্টমাইজ করেননি এমন উইজেটগুলো সময়ের সাথে নতুন সুবিবেচিত ডিফল্ট দিয়ে আপডেট হতে থাকে; একবার আপনি নিজেরটি সাজিয়ে নিলে, তা আপনারই থাকে।",
     "usageGuide.s8Title": "Activities",
     "usageGuide.s8Part1": "আপনার সম্পূর্ণ লেনদেন লগ। উপরের ব্যালেন্স কার্ডে আপনার ওয়ালেটের ব্যালেন্স দেখায়, সাথে Expense/Income/Transfer বোতাম যা নিচের তালিকা ফিল্টার করে এবং সব না দেখে একটি ওয়ালেট দেখার জন্য একটি ওয়ালেট-স্কোপ পিকার। সার্চের পাশের ফিল্টার আইকন Category, Tag, Wallet, এবং Date range ফিল্টার খোলে, এবং আপনি বর্তমানে ফিল্টার করা তালিকা CSV হিসেবে এক্সপোর্ট করতে পারেন। যেকোনো লেনদেনে ট্যাপ করে একটি রিড-অনলি ডিটেল ভিউ খুলুন — এর বিভাগ, ওয়ালেট, ট্যাগ, নোট, এবং সংযুক্ত রসিদ — সাথে একটি",
@@ -10227,6 +10235,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
   },
   pt: {
     "nav.dashboard": "Painel",
+    "nav.analytics": "Análises",
     "faq.subtitle": "Toque numa pergunta para expandi-la, ou pesquise para ir direto a uma delas.",
     "faq.searchPlaceholder": "Pesquisar nas perguntas frequentes...",
     "faq.noMatchPrefix": "Nenhuma pergunta corresponde a",
@@ -10409,7 +10418,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "usageGuide.s6Title": "Transações divididas",
     "usageGuide.s6Part1": "Em",
     "usageGuide.s6Part2": "divida um recibo entre várias categorias em um único lançamento — ele aparece como um único cartão agrupado em Atividades, com cada linha ainda editável ou excluível individualmente.",
-    "usageGuide.s7Title": "Painel",
+    "usageGuide.s7Title": "Análises",
     "usageGuide.s7Body": "Totalmente personalizável — toque no ícone do pincel para entrar no editor ao vivo, depois adicione, remova, redimensione ou reordene qualquer um dos mais de 50 widgets (cartões de estatísticas, gráficos de tendência, anéis de progresso, gráficos de rosca, mapas de calor, quadros de líderes, e muito mais) para montar seu próprio layout. Os widgets que você não personalizou são atualizados com novos padrões sensatos ao longo do tempo; depois que você organiza os seus, eles permanecem como estão.",
     "usageGuide.s8Title": "Atividades",
     "usageGuide.s8Part1": "Seu registro completo de transações. O cartão de saldo no topo mostra o saldo da sua carteira, com botões Despesa/Receita/Transferência que filtram a lista abaixo e um seletor de escopo de carteira para ver uma carteira em vez de todas. O ícone de filtro ao lado da busca abre os filtros de Categoria, Tag, Carteira e Intervalo de datas, e você pode exportar a lista filtrada atual como CSV. Toque em qualquer transação para abrir uma visualização de detalhes somente leitura — sua categoria, carteira, tags, notas e recibo anexado — com um botão",
@@ -11504,6 +11513,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
   },
   ru: {
     "nav.dashboard": "Панель",
+    "nav.analytics": "Аналитика",
     "faq.subtitle": "Нажмите на вопрос, чтобы развернуть его, или воспользуйтесь поиском, чтобы сразу перейти к нужному.",
     "faq.searchPlaceholder": "Поиск по вопросам...",
     "faq.noMatchPrefix": "Нет вопросов, соответствующих",
@@ -11686,7 +11696,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "usageGuide.s6Title": "Разделённые транзакции",
     "usageGuide.s6Part1": "В разделе",
     "usageGuide.s6Part2": "разбейте один чек на несколько категорий в рамках одной записи — она отображается как одна сгруппированная карточка в «Операциях», где каждая строка по-прежнему редактируется или удаляется отдельно.",
-    "usageGuide.s7Title": "Панель",
+    "usageGuide.s7Title": "Аналитика",
     "usageGuide.s7Body": "Полностью настраиваемая — нажмите значок кисти, чтобы войти в режим редактирования в реальном времени, а затем добавляйте, удаляйте, изменяйте размер или переставляйте любые из более чем 50 виджетов (карточки статистики, графики трендов, кольца прогресса, кольцевые диаграммы, тепловые карты, таблицы лидеров и другое), чтобы создать собственный макет. Виджеты, которые вы не настраивали, со временем обновляются новыми разумными значениями по умолчанию; как только вы расставите свои, они останутся такими.",
     "usageGuide.s8Title": "Операции",
     "usageGuide.s8Part1": "Ваш полный журнал транзакций. Карточка баланса сверху показывает баланс вашего кошелька, а кнопки «Расход/Доход/Перевод» фильтруют список ниже, вместе с выбором кошелька для просмотра одного кошелька вместо всех сразу. Значок фильтра рядом с поиском открывает фильтры по категории, тегу, кошельку и диапазону дат, а текущий отфильтрованный список можно экспортировать в CSV. Нажмите на любую транзакцию, чтобы открыть детальный вид только для чтения — её категорию, кошелёк, теги, заметки и прикреплённый чек — с кнопкой",
@@ -12781,6 +12791,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
   },
   ur: {
     "nav.dashboard": "ڈیش بورڈ",
+    "nav.analytics": "تجزیات",
     "faq.subtitle": "سوال کھولنے کے لیے اسے ٹیپ کریں، یا کسی سوال پر براہِ راست جانے کے لیے تلاش کریں۔",
     "faq.searchPlaceholder": "عمومی سوالات تلاش کریں...",
     "faq.noMatchPrefix": "اس سے ملتا کوئی سوال نہیں ملا",
@@ -12963,7 +12974,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "usageGuide.s6Title": "لین دین تقسیم کرنا",
     "usageGuide.s6Part1": "سے",
     "usageGuide.s6Part2": "ایک ہی اندراج میں ایک رسید کو متعدد زمروں میں تقسیم کریں — یہ Activities میں ایک گروپڈ کارڈ کے طور پر ظاہر ہوتا ہے، جس میں ہر لائن اب بھی الگ الگ ترمیم یا حذف کی جا سکتی ہے۔",
-    "usageGuide.s7Title": "ڈیش بورڈ",
+    "usageGuide.s7Title": "تجزیات",
     "usageGuide.s7Body": "مکمل طور پر حسب ضرورت — لائیو ایڈیٹر میں داخل ہونے کے لیے پینٹ برش آئیکن ٹیپ کریں، پھر اپنا خود کا لے آؤٹ بنانے کے لیے 50+ ویجٹس (اسٹیٹ کارڈز، ٹرینڈ چارٹس، پروگریس رِنگز، ڈونٹ چارٹس، ہیٹ میپس، لیڈر بورڈز، اور مزید) میں سے کسی کو بھی شامل، ہٹائیں، سائز تبدیل، یا دوبارہ ترتیب دیں۔ جو ویجٹس آپ نے حسب ضرورت نہیں بنائے وہ وقت کے ساتھ نئے مناسب ڈیفالٹس کے ساتھ اپ ڈیٹ ہوتے رہتے ہیں؛ ایک بار جب آپ اپنے خود کے ترتیب دے لیتے ہیں، تو وہ آپ کے پاس ہی رہتے ہیں۔",
     "usageGuide.s8Title": "Activities",
     "usageGuide.s8Part1": "آپ کا مکمل لین دین لاگ۔ اوپر بیلنس کارڈ آپ کے والٹ کا بیلنس دکھاتا ہے، ساتھ ہی Expense/Income/Transfer بٹنز جو نیچے کی فہرست کو فلٹر کرتے ہیں اور سب کے بجائے ایک والٹ دیکھنے کے لیے ایک والٹ-اسکوپ پکر۔ سرچ کے ساتھ فلٹر آئیکن Category, Tag, Wallet, اور Date range فلٹرز کھولتا ہے، اور آپ فی الحال فلٹر شدہ فہرست کو CSV کے طور پر ایکسپورٹ کر سکتے ہیں۔ کسی بھی لین دین کو ٹیپ کر کے ایک ریڈ-اونلی ڈیٹیل ویو کھولیں — اس کا زمرہ، والٹ، ٹیگز، نوٹس، اور منسلک رسید — ایک",
@@ -14058,6 +14069,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
   },
   id: {
     "nav.dashboard": "Dasbor",
+    "nav.analytics": "Analitik",
     "faq.subtitle": "Ketuk sebuah pertanyaan untuk membukanya, atau cari untuk langsung menuju ke salah satunya.",
     "faq.searchPlaceholder": "Cari FAQ...",
     "faq.noMatchPrefix": "Tidak ada FAQ yang cocok dengan",
@@ -14240,7 +14252,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "usageGuide.s6Title": "Transaksi terpisah",
     "usageGuide.s6Part1": "Dari",
     "usageGuide.s6Part2": "pisahkan satu struk ke beberapa kategori dalam satu entri — ini muncul sebagai satu kartu terkelompok di Aktivitas, dengan setiap baris masih dapat diedit atau dihapus secara individual.",
-    "usageGuide.s7Title": "Dasbor",
+    "usageGuide.s7Title": "Analitik",
     "usageGuide.s7Body": "Sepenuhnya dapat disesuaikan — ketuk ikon kuas untuk masuk ke editor langsung, lalu tambahkan, hapus, ubah ukuran, atau susun ulang lebih dari 50 widget (kartu statistik, grafik tren, cincin progres, diagram donat, peta panas, papan peringkat, dan lainnya) untuk membangun tata letak Anda sendiri. Widget yang belum Anda sesuaikan akan diperbarui dengan default masuk akal yang baru seiring waktu; setelah Anda mengatur milik Anda sendiri, itu akan tetap menjadi milik Anda.",
     "usageGuide.s8Title": "Aktivitas",
     "usageGuide.s8Part1": "Log transaksi lengkap Anda. Kartu saldo di bagian atas menunjukkan saldo dompet Anda, dengan tombol Pengeluaran/Pemasukan/Transfer yang memfilter daftar di bawahnya dan pemilih cakupan dompet untuk melihat satu dompet, bukan semuanya. Ikon filter di sebelah pencarian membuka filter Kategori, Tag, Dompet, dan Rentang tanggal, dan Anda dapat mengekspor daftar yang sedang difilter sebagai CSV. Ketuk transaksi mana pun untuk membuka tampilan detail hanya-baca — kategori, dompet, tag, catatan, dan struk yang dilampirkannya — dengan tombol",
@@ -15335,6 +15347,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
   },
   de: {
     "nav.dashboard": "Übersicht",
+    "nav.analytics": "Analysen",
     "faq.subtitle": "Tippen Sie auf eine Frage, um sie aufzuklappen, oder suchen Sie, um direkt zu einer zu springen.",
     "faq.searchPlaceholder": "FAQ durchsuchen...",
     "faq.noMatchPrefix": "Keine FAQ stimmt überein mit",
@@ -15517,7 +15530,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "usageGuide.s6Title": "Geteilte Transaktionen",
     "usageGuide.s6Part1": "Teilen Sie über",
     "usageGuide.s6Part2": "einen Beleg in einem einzigen Eintrag auf mehrere Kategorien auf — er erscheint als eine gruppierte Karte in den Aktivitäten, wobei jede Zeile weiterhin einzeln bearbeitbar oder löschbar ist.",
-    "usageGuide.s7Title": "Dashboard",
+    "usageGuide.s7Title": "Analysen",
     "usageGuide.s7Body": "Vollständig anpassbar — tippen Sie auf das Pinselsymbol, um den Live-Editor zu öffnen, und fügen Sie dann beliebige der über 50 Widgets (Statistikkarten, Trenddiagramme, Fortschrittsringe, Ringdiagramme, Heatmaps, Ranglisten und mehr) hinzu, entfernen, ändern die Größe oder ordnen sie neu an, um Ihr eigenes Layout zu erstellen. Nicht angepasste Widgets werden im Laufe der Zeit mit neuen sinnvollen Standardwerten aktualisiert; sobald Sie Ihre eigenen angeordnet haben, bleiben sie so, wie Sie sie eingerichtet haben.",
     "usageGuide.s8Title": "Aktivitäten",
     "usageGuide.s8Part1": "Ihr vollständiges Transaktionsprotokoll. Die Saldokarte oben zeigt Ihren Wallet-Saldo mit den Schaltflächen Ausgabe/Einnahme/Überweisung, die die Liste darunter filtern, sowie eine Wallet-Auswahl, um ein einzelnes statt aller Wallets anzuzeigen. Das Filtersymbol neben der Suche öffnet Filter für Kategorie, Tag, Wallet und Datumsbereich, und Sie können die aktuell gefilterte Liste als CSV exportieren. Tippen Sie auf eine beliebige Transaktion, um eine schreibgeschützte Detailansicht zu öffnen — Kategorie, Wallet, Tags, Notizen und angehängter Beleg — mit einer Schaltfläche",
@@ -16612,6 +16625,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
   },
   ja: {
     "nav.dashboard": "ダッシュボード",
+    "nav.analytics": "分析",
     "faq.subtitle": "質問をタップすると展開します。検索すれば該当する質問に直接ジャンプできます。",
     "faq.searchPlaceholder": "よくある質問を検索...",
     "faq.noMatchPrefix": "一致する質問が見つかりません：",
@@ -16794,7 +16808,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "usageGuide.s6Title": "取引の分割",
     "usageGuide.s6Part1": "から、",
     "usageGuide.s6Part2": "1つのレシートを1回の入力の中で複数のカテゴリに分割できます — Activitiesではグループ化された1つのカードとして表示され、各行は個別に編集または削除できます。",
-    "usageGuide.s7Title": "ダッシュボード",
+    "usageGuide.s7Title": "分析",
     "usageGuide.s7Body": "完全にカスタマイズ可能です — 筆アイコンをタップしてライブエディタに入り、50種類以上のウィジェット（統計カード、トレンドチャート、進捗リング、ドーナツチャート、ヒートマップ、リーダーボードなど）から自由に追加、削除、サイズ変更、並べ替えを行って、自分だけのレイアウトを作成できます。カスタマイズしていないウィジェットは、時間の経過とともに新しい妥当なデフォルト設定に更新されます。自分でレイアウトを組んだ後は、そのまま維持されます。",
     "usageGuide.s8Title": "Activities",
     "usageGuide.s8Part1": "取引の完全な記録です。上部の残高カードにはウォレットの残高が表示され、下のリストを絞り込む支出/収入/振替ボタンと、すべてではなく1つのウォレットだけを表示するウォレット範囲の選択肢があります。検索の隣にあるフィルターアイコンから、カテゴリ、タグ、ウォレット、期間の各フィルターを開くことができ、現在絞り込んでいるリストをCSVとしてエクスポートすることもできます。任意の取引をタップすると、カテゴリ、ウォレット、タグ、メモ、添付されたレシートを表示する読み取り専用の詳細ビューが開き、",
@@ -17889,6 +17903,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
   },
   vi: {
     "nav.dashboard": "Bảng điều khiển",
+    "nav.analytics": "Phân tích",
     "faq.subtitle": "Chạm vào một câu hỏi để mở rộng, hoặc tìm kiếm để đi thẳng đến câu hỏi đó.",
     "faq.searchPlaceholder": "Tìm trong câu hỏi thường gặp...",
     "faq.noMatchPrefix": "Không có câu hỏi nào khớp với",
@@ -18071,7 +18086,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "usageGuide.s6Title": "Chia nhỏ giao dịch",
     "usageGuide.s6Part1": "Từ",
     "usageGuide.s6Part2": "chia một hóa đơn thành nhiều danh mục trong cùng một lần nhập — nó hiển thị dưới dạng một thẻ được nhóm lại trong Hoạt động, với từng dòng vẫn có thể chỉnh sửa hoặc xóa riêng lẻ.",
-    "usageGuide.s7Title": "Trang tổng quan",
+    "usageGuide.s7Title": "Phân tích",
     "usageGuide.s7Body": "Hoàn toàn có thể tùy chỉnh — chạm vào biểu tượng cây cọ để vào trình chỉnh sửa trực tiếp, sau đó thêm, xóa, thay đổi kích thước, hoặc sắp xếp lại bất kỳ widget nào trong hơn 50 widget (thẻ thống kê, biểu đồ xu hướng, vòng tiến độ, biểu đồ vòng tròn, bản đồ nhiệt, bảng xếp hạng, và nhiều hơn nữa) để xây dựng bố cục của riêng bạn. Các widget bạn chưa tùy chỉnh sẽ được cập nhật với các giá trị mặc định hợp lý mới theo thời gian; một khi bạn đã sắp xếp phần của riêng mình, nó sẽ được giữ nguyên.",
     "usageGuide.s8Title": "Hoạt động",
     "usageGuide.s8Part1": "Nhật ký giao dịch đầy đủ của bạn. Thẻ số dư ở phía trên hiển thị số dư ví của bạn, cùng các nút Chi tiêu/Thu nhập/Chuyển khoản để lọc danh sách bên dưới và một bộ chọn phạm vi ví để xem một ví thay vì tất cả. Biểu tượng bộ lọc bên cạnh ô tìm kiếm mở ra các bộ lọc Danh mục, Thẻ, Ví, và Khoảng thời gian, và bạn có thể xuất danh sách đang được lọc dưới dạng CSV. Chạm vào bất kỳ giao dịch nào để mở chế độ xem chi tiết chỉ đọc — danh mục, ví, thẻ, ghi chú, và hóa đơn đính kèm của nó — cùng với nút",
@@ -19166,6 +19181,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
   },
   tr: {
     "nav.dashboard": "Pano",
+    "nav.analytics": "Analiz",
     "faq.subtitle": "Bir soruyu genişletmek için dokunun, ya da doğrudan birine gitmek için arama yapın.",
     "faq.searchPlaceholder": "SSS'de ara...",
     "faq.noMatchPrefix": "Şununla eşleşen bir SSS yok:",
@@ -19348,7 +19364,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "usageGuide.s6Title": "Bölünmüş işlemler",
     "usageGuide.s6Part1": "üzerinden",
     "usageGuide.s6Part2": "tek bir fişi tek bir kayıtta birden fazla kategoriye bölün — Etkinlikler'de tek bir gruplanmış kart olarak görünür ve her satır ayrı ayrı düzenlenebilir veya silinebilir olmaya devam eder.",
-    "usageGuide.s7Title": "Pano",
+    "usageGuide.s7Title": "Analiz",
     "usageGuide.s7Body": "Tamamen özelleştirilebilir — canlı düzenleyiciye girmek için fırça simgesine dokunun, ardından kendi düzeninizi oluşturmak için 50'den fazla widget'tan (istatistik kartları, trend grafikleri, ilerleme halkaları, halka grafikler, ısı haritaları, lider tabloları ve daha fazlası) herhangi birini ekleyin, kaldırın, yeniden boyutlandırın veya yeniden sıralayın. Özelleştirmediğiniz widget'lar zamanla yeni, mantıklı varsayılanlarla güncellenir; kendi düzeninizi ayarladıktan sonra size ait kalır.",
     "usageGuide.s8Title": "Etkinlikler",
     "usageGuide.s8Part1": "Tam işlem günlüğünüz. Üstteki bakiye kartı, aşağıdaki listeyi filtreleyen Gider/Gelir/Transfer düğmeleriyle birlikte cüzdan bakiyenizi gösterir ve tümü yerine tek bir cüzdanı görüntülemek için bir cüzdan kapsamı seçici içerir. Aramanın yanındaki filtre simgesi Kategori, Etiket, Cüzdan ve Tarih aralığı filtrelerini açar ve o anda filtrelenmiş listeyi CSV olarak dışa aktarabilirsiniz. Herhangi bir işleme dokunarak salt okunur bir ayrıntı görünümü açın — kategorisi, cüzdanı, etiketleri, notları ve eklenen fişiyle birlikte — gerçekten değiştirmek istiyorsanız bir",
@@ -20443,6 +20459,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
   },
   th: {
     "nav.dashboard": "แดชบอร์ด",
+    "nav.analytics": "การวิเคราะห์",
     "faq.subtitle": "แตะคำถามเพื่อขยายดู หรือค้นหาเพื่อไปยังคำถามที่ต้องการโดยตรง",
     "faq.searchPlaceholder": "ค้นหาคำถามที่พบบ่อย...",
     "faq.noMatchPrefix": "ไม่พบคำถามที่ตรงกับ",
@@ -20625,7 +20642,7 @@ export const MESSAGES: Record<string, Record<MessageKey, string>> = {
     "usageGuide.s6Title": "การแยกธุรกรรม",
     "usageGuide.s6Part1": "จาก",
     "usageGuide.s6Part2": "แยกใบเสร็จหนึ่งใบออกเป็นหลายหมวดหมู่ในรายการเดียว — จะแสดงเป็นการ์ดที่จัดกลุ่มเดียวใน Activities โดยแต่ละบรรทัดยังคงแก้ไขหรือลบได้แยกกัน",
-    "usageGuide.s7Title": "แดชบอร์ด",
+    "usageGuide.s7Title": "การวิเคราะห์",
     "usageGuide.s7Body": "ปรับแต่งได้อย่างเต็มที่ — แตะไอคอนพู่กันเพื่อเข้าสู่ตัวแก้ไขแบบสด จากนั้นเพิ่ม ลบ ปรับขนาด หรือจัดเรียงใหม่จากวิดเจ็ตกว่า 50 แบบ (การ์ดสถิติ กราฟแนวโน้ม วงแหวนความคืบหน้า กราฟโดนัท ฮีตแมป ตารางอันดับ และอื่น ๆ) เพื่อสร้างเลย์เอาต์ของคุณเอง วิดเจ็ตที่คุณยังไม่ได้ปรับแต่งจะได้รับการอัปเดตด้วยค่าเริ่มต้นที่เหมาะสมใหม่ ๆ ตามเวลา เมื่อคุณจัดเรียงของคุณเองแล้ว มันจะคงอยู่ตามที่คุณจัด",
     "usageGuide.s8Title": "Activities",
     "usageGuide.s8Part1": "บันทึกธุรกรรมทั้งหมดของคุณ การ์ดยอดคงเหลือด้านบนแสดงยอดคงเหลือในกระเป๋าเงินของคุณ พร้อมปุ่มรายจ่าย/รายรับ/โอนเงินที่กรองรายการด้านล่าง และตัวเลือกขอบเขตกระเป๋าเงินเพื่อดูกระเป๋าเดียวแทนที่จะดูทั้งหมด ไอคอนตัวกรองข้าง ๆ ช่องค้นหาจะเปิดตัวกรองหมวดหมู่ แท็ก กระเป๋าเงิน และช่วงวันที่ และคุณสามารถส่งออกรายการที่กรองอยู่ในปัจจุบันเป็น CSV ได้ แตะธุรกรรมใดก็ได้เพื่อเปิดมุมมองรายละเอียดแบบอ่านอย่างเดียว — หมวดหมู่ กระเป๋าเงิน แท็ก บันทึกย่อ และใบเสร็จที่แนบมา — พร้อมปุ่ม",

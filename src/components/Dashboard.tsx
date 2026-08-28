@@ -74,7 +74,7 @@ export default function Dashboard({
   // it doesn't linger in history and reopen the modal on back/refresh.
   useEffect(() => {
     if (!initialAddType) return;
-    router.replace("/", { scroll: false });
+    router.replace("/analytics", { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only
   }, []);
 
