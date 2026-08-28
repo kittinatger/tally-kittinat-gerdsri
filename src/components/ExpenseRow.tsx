@@ -240,71 +240,87 @@ export default function ExpenseRow({
           </button>
         </div>
       )}
-      <button
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        style={{ transform: `translateX(${liveX}px)`, touchAction: swipeEnabled ? "pan-y" : undefined }}
-        className={`relative flex w-full items-center justify-between gap-3 bg-surface px-4 py-3.5 text-left ${
-          gestureStartX === null ? "transition-transform" : ""
-        } hover:bg-[var(--surface-nav-hover)] ${selected ? "bg-[var(--surface-nav-hover)]" : ""} ${
-          showHoverActions ? "sm:pr-28" : ""
-        }`}
+      {/*
+       * The swipe backdrop above is always rendered, just normally hidden
+       * behind an opaque background. But the row's hover tint
+       * (--surface-nav-hover) is deliberately translucent (~12-16% alpha,
+       * see globals.css) — every other hover surface in the app wants that
+       * subtlety, but applied directly to the element responsible for
+       * hiding the backdrop, hovering let the backdrop's saturated
+       * Share/Delete colors bleed straight through on both edges. This
+       * inner solid div is a dedicated opaque occluder underneath the
+       * button: the translucent hover tint blends onto *it*, never onto
+       * the backdrop.
+       */}
+      <div
+        style={{ transform: `translateX(${liveX}px)` }}
+        className={`relative w-full ${gestureStartX === null ? "transition-transform" : ""}`}
       >
-        {selectMode && (
+        <div className="absolute inset-0 bg-surface" aria-hidden="true" />
+        <button
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          style={{ touchAction: swipeEnabled ? "pan-y" : undefined }}
+          className={`relative flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left hover:bg-[var(--surface-nav-hover)] ${
+            selected ? "bg-[var(--surface-nav-hover)]" : ""
+          } ${showHoverActions ? "sm:pr-28" : ""}`}
+        >
+          {selectMode && (
+            <span
+              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                selected ? "border-surface-accent bg-surface-accent text-white" : "border-surface-line"
+              }`}
+            >
+              {selected && (
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+                  <path d="M4 10l4 4 8-8" />
+                </svg>
+              )}
+            </span>
+          )}
           <span
-            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
-              selected ? "border-surface-accent bg-surface-accent text-white" : "border-surface-line"
-            }`}
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${badgeClasses(color)}`}
           >
-            {selected && (
-              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-                <path d="M4 10l4 4 8-8" />
-              </svg>
+            {icon && isCategoryIconKey(icon) ? (
+              <CategoryIcon iconKey={icon} className="h-5 w-5" />
+            ) : (
+              <span className="text-lg">{expense.category.charAt(0).toUpperCase()}</span>
             )}
           </span>
-        )}
-        <span
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${badgeClasses(color)}`}
-        >
-          {icon && isCategoryIconKey(icon) ? (
-            <CategoryIcon iconKey={icon} className="h-5 w-5" />
-          ) : (
-            <span className="text-lg">{expense.category.charAt(0).toUpperCase()}</span>
-          )}
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold text-surface-foreground">{expense.merchant}</p>
-          <p className="mt-0.5 truncate text-xs text-surface-foreground-soft">
-            {expense.category} · {formatDateLong(expense.date)}
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-semibold text-surface-foreground">{expense.merchant}</p>
+            <p className="mt-0.5 truncate text-xs text-surface-foreground-soft">
+              {expense.category} · {formatDateLong(expense.date)}
+            </p>
+            {expense.tags.length > 0 && (
+              <div className="mt-1 flex flex-wrap items-center gap-1">
+                {expense.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-[var(--surface-nav-hover)] px-2 py-0.5 text-[11px] font-medium text-surface-foreground-soft"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          <p
+            className={`shrink-0 font-semibold ${
+              expense.type === "income"
+                ? "text-emerald-600 dark:text-emerald-400"
+                : expense.type === "transfer"
+                  ? "text-surface-foreground-soft"
+                  : "text-red-600 dark:text-red-400"
+            }`}
+          >
+            {signedAmount(expense) >= 0 ? "+" : "-"}
+            {formatCurrency(expense.amount, currency)}
           </p>
-          {expense.tags.length > 0 && (
-            <div className="mt-1 flex flex-wrap items-center gap-1">
-              {expense.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full bg-[var(--surface-nav-hover)] px-2 py-0.5 text-[11px] font-medium text-surface-foreground-soft"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-        <p
-          className={`shrink-0 font-semibold ${
-            expense.type === "income"
-              ? "text-emerald-600 dark:text-emerald-400"
-              : expense.type === "transfer"
-                ? "text-surface-foreground-soft"
-                : "text-red-600 dark:text-red-400"
-          }`}
-        >
-          {signedAmount(expense) >= 0 ? "+" : "-"}
-          {formatCurrency(expense.amount, currency)}
-        </p>
-      </button>
+        </button>
+      </div>
       {/* Hidden whenever the row is swiped open (or mid-drag) — the swipe
        * panel and this hover cluster both anchor to the same right edge,
        * so showing both at once (e.g. a trackpad/touchscreen hybrid device
