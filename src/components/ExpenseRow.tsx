@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { signedAmount, type Expense } from "@/types/expense";
 import { formatCurrency, formatDateLong } from "@/lib/format";
 import { badgeClasses } from "@/lib/category-styles";
@@ -12,6 +12,7 @@ import { CategoryIcon, TrashIcon, EditIcon } from "@/lib/icons";
 const OPEN_DELETE = -76;
 const OPEN_SHARE = 76;
 const MOVE_THRESHOLD = 6;
+const LONG_PRESS_MS = 450;
 
 function DeleteIcon({ className = "h-5 w-5" }: { className?: string }) {
   return <TrashIcon className={className} />;
@@ -86,52 +87,100 @@ export default function ExpenseRow({
   const [liveX, setLiveX] = useState(0);
   const [gestureStartX, setGestureStartX] = useState<number | null>(null);
   const [moved, setMoved] = useState(false);
+  // Mouse users don't get the drag-to-swipe gesture — dragging with a mouse
+  // is unreliable (accidental partial drags looked like the row was stuck
+  // half-open) and isn't how desktop users expect a list row to behave.
+  // Instead, click-and-hold reveals the same action cluster used for hover.
+  const [heldOpen, setHeldOpen] = useState(false);
+  const isMouseRef = useRef(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rowRef = useRef<HTMLDivElement | null>(null);
   const swipeEnabled = Boolean(onDelete) && !selectMode;
-  // Swipe stays available everywhere (it's how touch users reach these
-  // actions), but a mouse user has no reason to know to drag a row — so
-  // sm:+ also gets a conventional hover-revealed button cluster as the
-  // discoverable path. Both can coexist since hover never fires on touch.
+  // Swipe (touch) and hover/hold (mouse) both reach the same actions, so a
+  // touchscreen-and-mouse hybrid device gets both discoverable paths.
   const showHoverActions = !selectMode && Boolean(onDelete || onEdit);
 
   // The list can tell this row to close (another row was opened instead)
   // without us ever needing to touch that other row's state directly.
-  if (!isOpen && restX !== 0) {
+  if (!isOpen && (restX !== 0 || heldOpen)) {
     setRestX(0);
     setLiveX(0);
+    setHeldOpen(false);
   }
+
+  function clearLongPress() {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }
+
+  useEffect(() => clearLongPress, []);
+
+  // Close the held-open cluster on an outside click — it has no drag gesture
+  // to close it the way swipe does, so it needs its own dismiss path.
+  useEffect(() => {
+    if (!heldOpen) return;
+    function handleOutside(e: PointerEvent) {
+      if (rowRef.current && !rowRef.current.contains(e.target as Node)) {
+        setHeldOpen(false);
+        onOpenChange?.(false);
+      }
+    }
+    document.addEventListener("pointerdown", handleOutside);
+    return () => document.removeEventListener("pointerdown", handleOutside);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [heldOpen]);
 
   function closeSwipe() {
     setRestX(0);
     setLiveX(0);
+    setHeldOpen(false);
     onOpenChange?.(false);
   }
 
   function handlePointerDown(e: React.PointerEvent) {
+    isMouseRef.current = e.pointerType === "mouse";
     setGestureStartX(e.clientX);
     setMoved(false);
     e.currentTarget.setPointerCapture(e.pointerId);
+    if (isMouseRef.current && showHoverActions && !heldOpen) {
+      clearLongPress();
+      longPressTimer.current = setTimeout(() => {
+        setHeldOpen(true);
+        setMoved(true); // consumed by the hold — pointerup shouldn't also fire onClick
+        onOpenChange?.(true);
+      }, LONG_PRESS_MS);
+    }
   }
 
   function handlePointerMove(e: React.PointerEvent) {
     if (gestureStartX === null) return;
     const delta = e.clientX - gestureStartX;
-    if (Math.abs(delta) > MOVE_THRESHOLD) setMoved(true);
-    if (swipeEnabled) {
+    if (Math.abs(delta) > MOVE_THRESHOLD) {
+      setMoved(true);
+      clearLongPress();
+    }
+    if (swipeEnabled && !isMouseRef.current) {
       setLiveX(Math.max(OPEN_DELETE, Math.min(OPEN_SHARE, restX + delta)));
     }
   }
 
   function handlePointerUp() {
+    clearLongPress();
     if (gestureStartX === null) return;
     if (!moved) {
-      if (restX !== 0) {
+      if (heldOpen) {
+        setHeldOpen(false);
+        onOpenChange?.(false);
+      } else if (restX !== 0) {
         closeSwipe();
       } else if (selectMode) {
         onToggleSelect?.();
       } else {
         onClick();
       }
-    } else if (swipeEnabled) {
+    } else if (swipeEnabled && !isMouseRef.current) {
       let next = 0;
       if (liveX <= OPEN_DELETE / 2) next = OPEN_DELETE;
       else if (liveX >= OPEN_SHARE / 2) next = OPEN_SHARE;
@@ -168,7 +217,7 @@ export default function ExpenseRow({
   }
 
   return (
-    <div className={`group relative overflow-hidden ${isLast ? "" : "border-b border-surface-line"}`}>
+    <div ref={rowRef} className={`group relative overflow-hidden ${isLast ? "" : "border-b border-surface-line"}`}>
       {swipeEnabled && (
         <div className="absolute inset-y-0 left-0 right-0 flex items-stretch justify-between">
           <button
@@ -260,9 +309,14 @@ export default function ExpenseRow({
        * panel and this hover cluster both anchor to the same right edge,
        * so showing both at once (e.g. a trackpad/touchscreen hybrid device
        * where a swiped-open row is also hovered) overlapped them into an
-       * unreadable mess of stacked icons. */}
+       * unreadable mess of stacked icons. Forced visible via `heldOpen`
+       * when a mouse user click-and-holds instead of hovering. */}
       {showHoverActions && liveX === 0 && (
-        <div className="pointer-events-none absolute inset-y-0 right-2 hidden items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto sm:flex">
+        <div
+          className={`pointer-events-none absolute inset-y-0 right-2 hidden items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto sm:flex ${
+            heldOpen ? "!opacity-100 !pointer-events-auto" : ""
+          }`}
+        >
           {onEdit && (
             <button
               type="button"
