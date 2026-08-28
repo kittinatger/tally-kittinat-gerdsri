@@ -13,6 +13,7 @@ import WalletTransferModal from "./WalletTransferModal";
 import WalletShareModal from "./WalletShareModal";
 import FilterDropdown from "./FilterDropdown";
 import { useT } from "@/lib/language-context";
+import { mutateFetch } from "@/lib/offline/fetch-wrapper";
 
 function ShareIcon() {
   return (
@@ -80,7 +81,7 @@ export default function WalletManager({
   async function respondToInvite(id: number, accept: boolean) {
     setInvitesBusyId(id);
     try {
-      await fetch(`/api/wallet-members/${id}`, {
+      await mutateFetch(`/api/wallet-members/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accept }),
@@ -95,7 +96,7 @@ export default function WalletManager({
   async function handleLeaveShared(walletId: number) {
     setBusyId(walletId);
     try {
-      await fetch(`/api/wallets/${walletId}/members/me`, { method: "DELETE" });
+      await mutateFetch(`/api/wallets/${walletId}/members/me`, { method: "DELETE" });
       router.refresh();
     } finally {
       setBusyId(null);
@@ -112,7 +113,7 @@ export default function WalletManager({
     setSavingActivitiesDefault(true);
     setActivitiesDefaultError(null);
     try {
-      const res = await fetch("/api/wallets/activities-default", {
+      const res = await mutateFetch("/api/wallets/activities-default", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ walletId }),
@@ -145,7 +146,7 @@ export default function WalletManager({
     setBusyId(id);
     setActionError(null);
     try {
-      const res = await fetch(`/api/wallets/${id}`, {
+      const res = await mutateFetch(`/api/wallets/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -167,7 +168,7 @@ export default function WalletManager({
     setBusyId(id);
     setActionError(null);
     try {
-      const res = await fetch(`/api/wallets/${id}`, {
+      const res = await mutateFetch(`/api/wallets/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ move: direction }),
@@ -194,7 +195,7 @@ export default function WalletManager({
     setDeleting(true);
     setActionError(null);
     try {
-      const res = await fetch(`/api/wallets/${id}`, { method: "DELETE" });
+      const res = await mutateFetch(`/api/wallets/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) {
         setActionError(typeof data.error === "string" ? data.error : "Could not delete that wallet.");

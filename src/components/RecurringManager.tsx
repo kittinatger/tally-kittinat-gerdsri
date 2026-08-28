@@ -13,6 +13,7 @@ import SelectDropdown from "./SelectDropdown";
 import CsvManagerButtons from "./CsvManagerButtons";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
+import { mutateFetch } from "@/lib/offline/fetch-wrapper";
 
 type RecurringCandidate = {
   key: string;
@@ -144,7 +145,7 @@ export default function RecurringManager() {
   async function handleAcceptSuggestion(c: RecurringCandidate) {
     setAcceptingKey(c.key);
     try {
-      const res = await fetch("/api/recurring", {
+      const res = await mutateFetch("/api/recurring", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -160,7 +161,22 @@ export default function RecurringManager() {
       });
       const data = await res.json();
       if (res.ok) {
-        setRules((prev) => [...(prev ?? []), data.rule]);
+        // data.rule is absent when this was queued offline — build the
+        // optimistic version from the candidate itself instead.
+        const saved: RecurringRule = data.rule ?? {
+          id: -Date.now(),
+          type: c.type,
+          direction: c.direction,
+          amount: String(c.amount),
+          merchant: c.merchant,
+          category: c.category,
+          notes: null,
+          wallet_id: c.walletId,
+          frequency: c.frequency,
+          next_run_date: c.suggestedNextRunDate,
+          active: true,
+        };
+        setRules((prev) => [...(prev ?? []), saved]);
         setDismissedKeys((prev) => new Set(prev).add(c.key));
       }
     } finally {
@@ -207,12 +223,12 @@ export default function RecurringManager() {
     try {
       const isEdit = typeof formMode === "number";
       const res = isEdit
-        ? await fetch(`/api/recurring/${formMode}`, {
+        ? await mutateFetch(`/api/recurring/${formMode}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ amount: Number(amount), merchant, category, walletId, frequency }),
           })
-        : await fetch("/api/recurring", {
+        : await mutateFetch("/api/recurring", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -231,7 +247,27 @@ export default function RecurringManager() {
         setError(typeof data.error === "string" ? data.error : "Could not save that rule.");
         return;
       }
-      const saved = isEdit ? data.rule : data.rule;
+      // data.rule is absent when this was queued offline — build the
+      // optimistic version from the form fields instead (merged onto the
+      // existing row for an edit, since only some fields are editable).
+      const existing = isEdit ? (rules ?? []).find((r) => r.id === formMode) : undefined;
+      const saved: RecurringRule =
+        data.rule ??
+        (existing
+          ? { ...existing, amount: String(Number(amount)), merchant, category, wallet_id: walletId, frequency }
+          : {
+              id: -Date.now(),
+              type,
+              direction: type === "transfer" ? direction : null,
+              amount: String(Number(amount)),
+              merchant,
+              category,
+              notes: null,
+              wallet_id: walletId,
+              frequency,
+              next_run_date: startDate,
+              active: true,
+            });
       setRules((prev) =>
         isEdit ? (prev ?? []).map((r) => (r.id === saved.id ? saved : r)) : [...(prev ?? []), saved],
       );
@@ -246,14 +282,16 @@ export default function RecurringManager() {
   async function toggleActive(rule: RecurringRule) {
     setBusyId(rule.id);
     try {
-      const res = await fetch(`/api/recurring/${rule.id}`, {
+      const res = await mutateFetch(`/api/recurring/${rule.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ active: !rule.active }),
       });
       const data = await res.json();
       if (res.ok) {
-        setRules((prev) => (prev ?? []).map((r) => (r.id === rule.id ? data.rule : r)));
+        // data.rule is absent when queued offline — the toggled flag is
+        // already known locally, so just apply it directly.
+        setRules((prev) => (prev ?? []).map((r) => (r.id === rule.id ? (data.rule ?? { ...r, active: !rule.active }) : r)));
       }
     } finally {
       setBusyId(null);
@@ -263,13 +301,16 @@ export default function RecurringManager() {
   async function handleSkip(rule: RecurringRule) {
     setBusyId(rule.id);
     try {
-      const res = await fetch(`/api/recurring/${rule.id}`, {
+      const res = await mutateFetch(`/api/recurring/${rule.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ skip: true }),
       });
       const data = await res.json();
-      if (res.ok) {
+      // The server computes the new next_run_date — if this was queued
+      // offline there's nothing to optimistically show, so just leave the
+      // row as-is until the queue syncs and a refetch picks up the change.
+      if (res.ok && data.rule) {
         setRules((prev) => (prev ?? []).map((r) => (r.id === rule.id ? data.rule : r)));
       }
     } finally {
@@ -277,6 +318,10 @@ export default function RecurringManager() {
     }
   }
 
+  // Not migrated to mutateFetch: reordering returns the server's full
+  // recomputed sort order (data.rules), which can't be reconstructed
+  // client-side — offline reordering simply fails with a normal network
+  // error, same as before this feature existed.
   async function handleMove(id: number, move: "up" | "down") {
     setBusyId(id);
     try {
@@ -300,7 +345,7 @@ export default function RecurringManager() {
     setDeleting(true);
     setBusyId(id);
     try {
-      const res = await fetch(`/api/recurring/${id}`, { method: "DELETE" });
+      const res = await mutateFetch(`/api/recurring/${id}`, { method: "DELETE" });
       if (res.ok) {
         setRules((prev) => (prev ?? []).filter((r) => r.id !== id));
         setConfirmDeleteId(null);

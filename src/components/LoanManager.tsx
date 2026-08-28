@@ -7,6 +7,7 @@ import { formatCurrency, todayInputValue } from "@/lib/format";
 import { PlusIcon, TrashIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 import type { LoanDirection } from "@/lib/loans";
+import { mutateFetch } from "@/lib/offline/fetch-wrapper";
 
 type Loan = {
   id: number;
@@ -106,13 +107,13 @@ export default function LoanManager() {
       ...prev,
       [loanId]: (prev[loanId] ?? []).map((i) => (i.id === installmentId ? { ...i, paid: !i.paid } : i)),
     }));
-    await fetch(`/api/loans/installments/${installmentId}`, { method: "PATCH" });
+    await mutateFetch(`/api/loans/installments/${installmentId}`, { method: "PATCH" });
     loadLoans();
   }
 
   async function handleDelete(loanId: number) {
     setLoans((prev) => prev.filter((l) => l.id !== loanId));
-    await fetch(`/api/loans/${loanId}`, { method: "DELETE" });
+    await mutateFetch(`/api/loans/${loanId}`, { method: "DELETE" });
   }
 
   function addInstallmentRow() {
@@ -138,7 +139,7 @@ export default function LoanManager() {
     setSubmitting(true);
     setFormError(null);
     try {
-      const res = await fetch("/api/loans", {
+      const res = await mutateFetch("/api/loans", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -10,6 +10,7 @@ import { isCategoryIconKey } from "@/lib/category-icons";
 import { CategoryIcon, TrashIcon } from "@/lib/icons";
 import SelectDropdown from "./SelectDropdown";
 import CsvManagerButtons from "./CsvManagerButtons";
+import { mutateFetch } from "@/lib/offline/fetch-wrapper";
 import { useT } from "@/lib/language-context";
 
 type Budget = { id: number; category: string; monthly_limit: string; rollover: boolean };
@@ -67,7 +68,7 @@ export default function BudgetManager() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/budgets", {
+      const res = await mutateFetch("/api/budgets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ category, monthlyLimit: Number(limit), rollover }),
@@ -77,7 +78,11 @@ export default function BudgetManager() {
         setError(typeof data.error === "string" ? data.error : "Could not save that budget.");
         return;
       }
-      setBudgets((prev) => [...(prev ?? []).filter((b) => b.category !== data.budget.category), data.budget]);
+      // data.budget is absent when this was queued offline — build the
+      // optimistic version from the form values instead, with a
+      // placeholder negative id superseded once the queue syncs.
+      const saved: Budget = data.budget ?? { id: -Date.now(), category, monthly_limit: String(Number(limit)), rollover };
+      setBudgets((prev) => [...(prev ?? []).filter((b) => b.category !== saved.category), saved]);
       setAdding(false);
       setLimit("");
       setRollover(false);
@@ -95,7 +100,7 @@ export default function BudgetManager() {
     }
     setBusyId(id);
     try {
-      const res = await fetch(`/api/budgets/${id}`, { method: "DELETE" });
+      const res = await mutateFetch(`/api/budgets/${id}`, { method: "DELETE" });
       if (res.ok) {
         setBudgets((prev) => (prev ?? []).filter((b) => b.id !== id));
       }

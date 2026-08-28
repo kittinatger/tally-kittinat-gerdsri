@@ -10,6 +10,7 @@ import { PlusIcon } from "@/lib/icons";
 import CsvManagerButtons from "./CsvManagerButtons";
 import ColorPicker from "./ColorPicker";
 import { useT } from "@/lib/language-context";
+import { mutateFetch } from "@/lib/offline/fetch-wrapper";
 
 type SavingsGoal = { id: number; name: string; color: string; target_amount: string; current_amount: string };
 type Contribution = { id: number; delta: string; created_at: string };
@@ -82,10 +83,13 @@ export default function SavingsGoalsManager() {
   async function handleDeleteContribution(goalId: number, contributionId: number) {
     setBusyId(goalId);
     try {
-      const res = await fetch(`/api/savings-goals/${goalId}/contributions/${contributionId}`, { method: "DELETE" });
+      const res = await mutateFetch(`/api/savings-goals/${goalId}/contributions/${contributionId}`, { method: "DELETE" });
       const data = await res.json();
       if (res.ok) {
-        setGoals((prev) => (prev ?? []).map((g) => (g.id === goalId ? data.goal : g)));
+        // data.goal (with its recomputed current_amount) is absent when
+        // queued offline — leave the goal's total as-is until the queue
+        // syncs, but still drop the contribution from the visible history.
+        if (data.goal) setGoals((prev) => (prev ?? []).map((g) => (g.id === goalId ? data.goal : g)));
         setHistoryByGoal((prev) => ({
           ...prev,
           [goalId]: (prev[goalId] ?? []).filter((c) => c.id !== contributionId),
@@ -116,7 +120,7 @@ export default function SavingsGoalsManager() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/savings-goals", {
+      const res = await mutateFetch("/api/savings-goals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, color, targetAmount: Number(target) }),
@@ -126,7 +130,10 @@ export default function SavingsGoalsManager() {
         setError(typeof data.error === "string" ? data.error : "Could not save that goal.");
         return;
       }
-      setGoals((prev) => [...(prev ?? []), data.goal]);
+      // data.goal is absent when queued offline — build the optimistic
+      // version from the form values, with a placeholder negative id.
+      const saved: SavingsGoal = data.goal ?? { id: -Date.now(), name, color, target_amount: String(Number(target)), current_amount: "0" };
+      setGoals((prev) => [...(prev ?? []), saved]);
       setAdding(false);
       setName("");
       setTarget("");
@@ -141,14 +148,17 @@ export default function SavingsGoalsManager() {
     if (!delta) return;
     setBusyId(goal.id);
     try {
-      const res = await fetch(`/api/savings-goals/${goal.id}`, {
+      const res = await mutateFetch(`/api/savings-goals/${goal.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contributeDelta: delta }),
       });
       const data = await res.json();
       if (res.ok) {
-        setGoals((prev) => (prev ?? []).map((g) => (g.id === goal.id ? data.goal : g)));
+        // data.goal is absent when queued offline — apply the delta
+        // optimistically to the goal's current known total instead.
+        const saved: SavingsGoal = data.goal ?? { ...goal, current_amount: String(Number(goal.current_amount) + delta) };
+        setGoals((prev) => (prev ?? []).map((g) => (g.id === goal.id ? saved : g)));
         setContributeAmount((prev) => ({ ...prev, [goal.id]: "" }));
         // Invalidate the cached history so reopening it fetches the entry
         // that contribution just added.
@@ -166,7 +176,7 @@ export default function SavingsGoalsManager() {
     }
     setBusyId(id);
     try {
-      const res = await fetch(`/api/savings-goals/${id}`, { method: "DELETE" });
+      const res = await mutateFetch(`/api/savings-goals/${id}`, { method: "DELETE" });
       if (res.ok) {
         setGoals((prev) => (prev ?? []).filter((g) => g.id !== id));
       }
