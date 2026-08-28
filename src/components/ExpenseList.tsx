@@ -96,6 +96,12 @@ export default function ExpenseList({
   const [dateTo, setDateTo] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
 
+  // Tracks which single expense row (if any) currently has its swipe
+  // Share/Delete panel open, so opening one row always closes any other —
+  // otherwise each row's swipe state was fully independent and two rows
+  // could show their action panels open at the same time.
+  const [openRowId, setOpenRowId] = useState<number | null>(null);
+
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
@@ -556,6 +562,8 @@ export default function ExpenseList({
                             onDelete={handleSwipeDelete}
                             onEdit={onEdit}
                             isLast={i === arr.length - 1}
+                            isOpen={openRowId === row.expense.id}
+                            onOpenChange={(open) => setOpenRowId(open ? row.expense.id : null)}
                           />
                         ),
                       )}

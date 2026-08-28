@@ -53,6 +53,8 @@ export default function ExpenseRow({
   selectMode = false,
   selected = false,
   onToggleSelect,
+  isOpen = false,
+  onOpenChange,
 }: {
   expense: Expense;
   onClick: () => void;
@@ -66,6 +68,15 @@ export default function ExpenseRow({
   selectMode?: boolean;
   selected?: boolean;
   onToggleSelect?: () => void;
+  /** Whether the list considers *this* row the one currently swiped open.
+   * The list only ever tracks one open row id — see onOpenChange. */
+  isOpen?: boolean;
+  /** Reports this row's swipe-open state up to the list so it can close any
+   * other row that was left open. Without this, each row kept fully
+   * independent state: swiping row A open then swiping/tapping row B left
+   * A's Share/Delete panel open too, so two different rows could show their
+   * action panels at once — the "overlapping icons" bug. */
+  onOpenChange?: (open: boolean) => void;
 }) {
   const color = useCategoryColor(expense.type, expense.category);
   const icon = useCategoryIcon(expense.type, expense.category);
@@ -82,9 +93,17 @@ export default function ExpenseRow({
   // discoverable path. Both can coexist since hover never fires on touch.
   const showHoverActions = !selectMode && Boolean(onDelete || onEdit);
 
+  // The list can tell this row to close (another row was opened instead)
+  // without us ever needing to touch that other row's state directly.
+  if (!isOpen && restX !== 0) {
+    setRestX(0);
+    setLiveX(0);
+  }
+
   function closeSwipe() {
     setRestX(0);
     setLiveX(0);
+    onOpenChange?.(false);
   }
 
   function handlePointerDown(e: React.PointerEvent) {
@@ -118,6 +137,7 @@ export default function ExpenseRow({
       else if (liveX >= OPEN_SHARE / 2) next = OPEN_SHARE;
       setRestX(next);
       setLiveX(next);
+      onOpenChange?.(next !== 0);
     }
     setGestureStartX(null);
   }
