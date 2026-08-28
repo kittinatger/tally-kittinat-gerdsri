@@ -6,6 +6,7 @@ import {
   getAppLockEnabled,
   setAppLockEnabled,
   getAppLockPinHash,
+  getAppLockPinLength,
   getAppLockTimeoutSeconds,
   setAppLockTimeoutSeconds,
 } from "@/lib/db";
@@ -14,15 +15,17 @@ import { APPLOCK_TIMEOUT_OPTIONS } from "@/lib/applock-timeout";
 
 export async function GET() {
   const userId = await getUserId();
-  const [credentials, enabled, pinHash, timeoutSeconds] = await Promise.all([
+  const [credentials, enabled, pinHash, pinLength, timeoutSeconds] = await Promise.all([
     listWebauthnCredentials(userId),
     getAppLockEnabled(userId),
     getAppLockPinHash(userId),
+    getAppLockPinLength(userId),
     getAppLockTimeoutSeconds(userId),
   ]);
   return NextResponse.json({
     enabled,
     hasPasscode: pinHash !== null,
+    pinLength,
     timeoutSeconds,
     credentials: credentials.map((c) => ({
       id: c.id,

@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 32;
+const CURRENT_SCHEMA_VERSION = 33;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1061,6 +1061,13 @@ function ensureSchema(): Promise<void> {
       // Guards against re-notifying about the same installment every day
       // the cron job runs until it's paid off.
       await sql`ALTER TABLE loan_installments ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMPTZ;`;
+
+      // Not secret — just lets the unlock screen show the right number of
+      // dot slots for this account's passcode (4-8) instead of a vague
+      // "grows as you type" indicator. Set/cleared alongside
+      // applock_pin_hash, never derived from it (the hash alone doesn't
+      // reveal length).
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS applock_pin_length SMALLINT;`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -1943,9 +1950,15 @@ export async function getAppLockPinHash(userId: number): Promise<string | null> 
   return rows[0]?.applock_pin_hash ?? null;
 }
 
-export async function setAppLockPinHash(userId: number, hash: string | null): Promise<void> {
+export async function setAppLockPinHash(userId: number, hash: string | null, length: number | null): Promise<void> {
   await ensureSchema();
-  await sql`UPDATE app_settings SET applock_pin_hash = ${hash} WHERE user_id = ${userId};`;
+  await sql`UPDATE app_settings SET applock_pin_hash = ${hash}, applock_pin_length = ${length} WHERE user_id = ${userId};`;
+}
+
+export async function getAppLockPinLength(userId: number): Promise<number | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ applock_pin_length: number | null }>`SELECT applock_pin_length FROM app_settings WHERE user_id = ${userId};`;
+  return rows[0]?.applock_pin_length ?? null;
 }
 
 export type WebauthnCredentialRow = {

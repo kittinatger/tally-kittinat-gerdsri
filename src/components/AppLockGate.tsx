@@ -41,6 +41,7 @@ export default function AppLockGate({ children }: { children: React.ReactNode })
   const [appLockEnabled, setAppLockEnabled] = useState(false);
   const [hasCredentials, setHasCredentials] = useState(false);
   const [hasPasscode, setHasPasscode] = useState(false);
+  const [pinLength, setPinLength] = useState<number | null>(null);
   const [locked, setLocked] = useState(false);
   const [method, setMethod] = useState<UnlockMethod>("biometric");
   const [authenticating, setAuthenticating] = useState(false);
@@ -71,6 +72,7 @@ export default function AppLockGate({ children }: { children: React.ReactNode })
           const credsAvailable = Array.isArray(data.credentials) && data.credentials.length > 0;
           setHasCredentials(credsAvailable);
           setHasPasscode(Boolean(data.hasPasscode));
+          setPinLength(typeof data.pinLength === "number" ? data.pinLength : null);
           setMethod(credsAvailable ? "biometric" : "pin");
           if (typeof data.timeoutSeconds === "number") timeoutSecondsRef.current = data.timeoutSeconds;
         }
@@ -192,18 +194,21 @@ export default function AppLockGate({ children }: { children: React.ReactNode })
             value={pin}
             onChange={setPin}
             shake={shake}
-            onSubmit={() => {
-              if (!authenticating && pin.length >= 4) handleUnlockPin(pin);
+            length={pinLength}
+            onSubmit={(candidate) => {
+              if (!authenticating && candidate.length >= (pinLength ?? 4)) handleUnlockPin(candidate);
             }}
           />
-          <button
-            type="button"
-            onClick={() => handleUnlockPin(pin)}
-            disabled={authenticating || pin.length < 4}
-            className="rounded-full bg-surface-accent px-6 py-2.5 text-sm font-semibold text-white transition disabled:opacity-40"
-          >
-            {authenticating ? t("appLock.gate.unlocking") : t("appLock.gate.unlock")}
-          </button>
+          {pinLength === null && (
+            <button
+              type="button"
+              onClick={() => handleUnlockPin(pin)}
+              disabled={authenticating || pin.length < 4}
+              className="rounded-full bg-surface-accent px-6 py-2.5 text-sm font-semibold text-white transition disabled:opacity-40"
+            >
+              {authenticating ? t("appLock.gate.unlocking") : t("appLock.gate.unlock")}
+            </button>
+          )}
         </div>
       )}
 

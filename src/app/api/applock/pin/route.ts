@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   }
 
   const hash = await hashPassword(pin);
-  await setAppLockPinHash(userId, hash);
+  await setAppLockPinHash(userId, hash, pin.length);
   return NextResponse.json({ ok: true });
 }
 
@@ -28,7 +28,7 @@ export async function DELETE() {
     return NextResponse.json({ error: "Too many requests. Slow down and try again shortly." }, { status: 429 });
   }
 
-  await setAppLockPinHash(userId, null);
+  await setAppLockPinHash(userId, null, null);
 
   // Auto-disable app-lock if that was the only unlock method configured —
   // an enabled lock with nothing left to unlock it would strand the user

@@ -3,15 +3,17 @@
 import { useEffect, useRef } from "react";
 
 // A tappable numeric keypad + dot progress indicator for entering a 4-8
-// digit passcode — used by AppLockGate's unlock screen. The passcode's
-// exact length isn't known in advance (it can be 4-8 digits, see
-// AppLockSettingsPanel.tsx), so the dots grow with what's been typed
-// rather than showing a fixed number of empty slots to fill. Also listens
-// for a physical keyboard (digit keys, Backspace, Enter) — this is the
+// digit passcode — used by AppLockGate's unlock screen. When the caller
+// knows the account's actual passcode length (the unlock screen does,
+// once it's loaded — see AppLockGate.tsx), the dots render as that many
+// fixed slots, filled in as you type, like a normal PIN entry screen.
+// Without a known length (shouldn't normally happen here, but kept as a
+// fallback) the dots just grow with what's been typed. Also listens for
+// a physical keyboard (digit keys, Backspace, Enter) — this is the
 // unlock screen for the whole app, so it has to work on desktop too, not
 // just via tapping.
 
-const MAX_LENGTH = 8;
+const DEFAULT_MAX_LENGTH = 8;
 
 function BackspaceIcon() {
   return (
@@ -27,16 +29,26 @@ export default function PinKeypad({
   onChange,
   onSubmit,
   shake = false,
+  length = null,
 }: {
   value: string;
   onChange: (next: string) => void;
-  /** Enter/Return on the keyboard — the caller decides whether the current
-   * value is submittable (e.g. long enough) and what to do with it. */
-  onSubmit?: () => void;
+  /** Enter/Return on the keyboard, or (when `length` is known) reaching
+   * that many digits — called with the exact value at that instant (from
+   * the internal ref, not the `value` prop), since several keystrokes can
+   * fire before React re-renders and hands this component a fresh `value`
+   * — reading the caller's own state inside this callback would risk
+   * submitting a stale, truncated pin. */
+  onSubmit?: (value: string) => void;
   /** Briefly nudges the dots — the caller sets this after a rejected
    * passcode so the "wrong" feels tactile, not just a text error. */
   shake?: boolean;
+  /** The account's actual passcode length, if known — renders that many
+   * fixed dot slots instead of an open-ended growing row, and auto-submits
+   * once reached (see press() below). */
+  length?: number | null;
 }) {
+  const maxLength = length ?? DEFAULT_MAX_LENGTH;
   // Tracks the current value synchronously, ahead of React's next render —
   // two keystrokes (very plausible when actually typing, not just tapping)
   // can both fire before a re-render commits, and both handlers reading
@@ -51,9 +63,10 @@ export default function PinKeypad({
   }, [value]);
 
   function press(digit: string) {
-    if (valueRef.current.length >= MAX_LENGTH) return;
+    if (valueRef.current.length >= maxLength) return;
     valueRef.current = valueRef.current + digit;
     onChange(valueRef.current);
+    if (length !== null && valueRef.current.length === length) onSubmit?.(valueRef.current);
   }
 
   function backspace() {
@@ -78,7 +91,7 @@ export default function PinKeypad({
         backspace();
       } else if (e.key === "Enter") {
         e.preventDefault();
-        onSubmit?.();
+        onSubmit?.(valueRef.current);
       }
     }
     window.addEventListener("keydown", onKeyDown);
@@ -91,7 +104,16 @@ export default function PinKeypad({
   return (
     <div className="flex flex-col items-center gap-6">
       <div className={`flex items-center gap-2.5 ${shake ? "animate-[pin-shake_0.35s_ease-in-out]" : ""}`}>
-        {value.length === 0 ? (
+        {length !== null ? (
+          // Known length: a fixed row of slots, filled left to right —
+          // reads as a normal PIN entry screen instead of an open-ended count.
+          Array.from({ length }).map((_, i) => (
+            <span
+              key={i}
+              className={`h-3 w-3 rounded-full border ${i < value.length ? "border-surface-accent bg-surface-accent" : "border-line"}`}
+            />
+          ))
+        ) : value.length === 0 ? (
           <span className="h-3 w-3 rounded-full border border-line" />
         ) : (
           Array.from({ length: value.length }).map((_, i) => (
