@@ -435,6 +435,7 @@ export default function SettingsNavList({
         <SettingsListItem icon={<QuestionIcon />} label={t("settings.faqs")} href="/faq" selected={pathname === "/faq"} />
         <SettingsListItem icon={<WrenchIcon />} label={t("settings.troubleshooting")} href="/troubleshooting" selected={pathname === "/troubleshooting"} />
         <SettingsListItem icon={<WarningIcon />} label={t("settings.errorLog")} {...panelItemProps("errorReports")} />
+        <SettingsListItem icon={<RecurringIcon />} label={t("settings.pendingChanges")} {...panelItemProps("pendingChanges")} />
         <SettingsListItem icon={<MailIcon />} label={t("settings.contact")} href="/contact" selected={pathname === "/contact"} />
         <SettingsListItem icon={<FlagIcon />} label={t("settings.reportIssue")} href="/report-issue" selected={pathname === "/report-issue"} />
         <SettingsListItem icon={<ClockIcon />} label={t("settings.changelog")} href="/changelog" selected={pathname === "/changelog"} />

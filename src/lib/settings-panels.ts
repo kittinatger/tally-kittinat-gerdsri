@@ -25,6 +25,7 @@ export const PANEL_VALUES = [
   "errorReports",
   "backup",
   "appLock",
+  "pendingChanges",
 ] as const;
 
 export type Panel = (typeof PANEL_VALUES)[number];

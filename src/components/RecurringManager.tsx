@@ -14,6 +14,19 @@ import CsvManagerButtons from "./CsvManagerButtons";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 
+type RecurringCandidate = {
+  key: string;
+  type: string;
+  direction: string | null;
+  merchant: string;
+  category: string;
+  amount: number;
+  frequency: string;
+  suggestedNextRunDate: string;
+  occurrenceCount: number;
+  walletId: number | null;
+};
+
 type RecurringRule = {
   id: number;
   type: string;
@@ -89,6 +102,9 @@ export default function RecurringManager() {
   const currency = useCurrency();
 
   const [rules, setRules] = useState<RecurringRule[] | null>(null);
+  const [suggestions, setSuggestions] = useState<RecurringCandidate[]>([]);
+  const [dismissedKeys, setDismissedKeys] = useState<Set<string>>(new Set());
+  const [acceptingKey, setAcceptingKey] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [formMode, setFormMode] = useState<"closed" | "add" | number>("closed");
   const [submitting, setSubmitting] = useState(false);
@@ -116,7 +132,41 @@ export default function RecurringManager() {
 
   useEffect(() => {
     refetch();
+    fetch("/api/recurring/suggestions")
+      .then((res) => res.json())
+      .then((data) => setSuggestions(data.candidates ?? []))
+      .catch(() => {
+        // Non-critical — the suggestions section just stays empty rather
+        // than blocking the rest of the page.
+      });
   }, [refetch]);
+
+  async function handleAcceptSuggestion(c: RecurringCandidate) {
+    setAcceptingKey(c.key);
+    try {
+      const res = await fetch("/api/recurring", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: c.type,
+          direction: c.type === "transfer" ? (c.direction ?? "out") : undefined,
+          amount: c.amount,
+          merchant: c.merchant,
+          category: c.category,
+          walletId: c.walletId,
+          frequency: c.frequency,
+          startDate: c.suggestedNextRunDate,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRules((prev) => [...(prev ?? []), data.rule]);
+        setDismissedKeys((prev) => new Set(prev).add(c.key));
+      }
+    } finally {
+      setAcceptingKey(null);
+    }
+  }
 
   const categories = allCategories.filter((c) => c.type === type);
   const defaultWallet = wallets.find((w) => w.isDefault) ?? wallets[0];
@@ -279,6 +329,43 @@ export default function RecurringManager() {
       <div className="mt-3">
         <CsvManagerButtons exportHref="/api/recurring/export" importUrl="/api/recurring/import" onImported={refetch} />
       </div>
+
+      {suggestions.filter((c) => !dismissedKeys.has(c.key)).length > 0 && (
+        <div className="mt-4 rounded-card border border-dashed border-line bg-surface p-4">
+          <p className="text-sm font-semibold text-foreground">{t("recurring.suggestions.title")}</p>
+          <p className="mt-1 text-[11px] leading-snug text-ink-soft">{t("recurring.suggestions.hint")}</p>
+          <div className="mt-3 flex flex-col gap-2">
+            {suggestions
+              .filter((c) => !dismissedKeys.has(c.key))
+              .map((c) => (
+                <div key={c.key} className="flex items-center gap-3 rounded-input border border-line px-3 py-2.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{c.merchant}</p>
+                    <p className="text-xs text-ink-soft">
+                      {formatCurrency(c.amount, currency)} · {FREQUENCY_LABELS[c.frequency] ?? c.frequency} ·{" "}
+                      {t("recurring.suggestions.seenTimes").replace("{count}", String(c.occurrenceCount))}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setDismissedKeys((prev) => new Set(prev).add(c.key))}
+                    className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
+                  >
+                    {t("recurring.suggestions.dismiss")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAcceptSuggestion(c)}
+                    disabled={acceptingKey === c.key}
+                    className="shrink-0 rounded-full bg-navy px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-60"
+                  >
+                    {acceptingKey === c.key ? t("common.saving") : t("recurring.suggestions.add")}
+                  </button>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
 
       {adding && (
         <form onSubmit={handleSubmitForm} className="mt-4 space-y-3 rounded-card border border-line bg-surface p-4">

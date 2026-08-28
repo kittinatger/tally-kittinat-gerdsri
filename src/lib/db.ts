@@ -3701,6 +3701,48 @@ export async function leaveOrDeleteSplit(userId: number, splitId: number): Promi
   }
 }
 
+// Net "who owes whom" across every split and loan with each friend, in one
+// pass — combines split_participants (only splits I created, or splits a
+// friend created that I'm in — a 3+ person split has no single well-defined
+// pairwise debt otherwise, so those are deliberately excluded rather than
+// guessed at) and loans (counterparty_friend_id). Positive = they owe me;
+// negative = I owe them. Only counts accepted, unsettled split shares —
+// a pending (unconfirmed) split isn't a real commitment yet.
+export async function getFriendNetBalances(userId: number): Promise<Map<number, number>> {
+  await ensureSchema();
+  const net = new Map<number, number>();
+  const add = (friendId: number, amount: number) => net.set(friendId, (net.get(friendId) ?? 0) + amount);
+
+  const { rows: owedToMe } = await sql<{ friend_id: number; amt: string }>`
+    SELECT sp.user_id AS friend_id, SUM(sp.owed_amount - sp.paid_amount) AS amt
+    FROM splits s JOIN split_participants sp ON sp.split_id = s.id
+    WHERE s.creator_id = ${userId} AND sp.user_id != ${userId} AND sp.confirm_status = 'accepted' AND sp.settled = false
+    GROUP BY sp.user_id;
+  `;
+  for (const r of owedToMe) add(r.friend_id, Number(r.amt));
+
+  const { rows: iOwe } = await sql<{ friend_id: number; amt: string }>`
+    SELECT s.creator_id AS friend_id, SUM(sp.owed_amount - sp.paid_amount) AS amt
+    FROM splits s JOIN split_participants sp ON sp.split_id = s.id
+    WHERE sp.user_id = ${userId} AND s.creator_id != ${userId} AND sp.confirm_status = 'accepted' AND sp.settled = false
+    GROUP BY s.creator_id;
+  `;
+  for (const r of iOwe) add(r.friend_id, -Number(r.amt));
+
+  const { rows: loans } = await sql<{ friend_id: number; direction: "lent" | "borrowed"; principal: string; paid: string }>`
+    SELECT l.counterparty_friend_id AS friend_id, l.direction, l.principal::text AS principal,
+      COALESCE((SELECT SUM(li.amount) FROM loan_installments li WHERE li.loan_id = l.id AND li.paid = true), 0)::text AS paid
+    FROM loans l
+    WHERE l.user_id = ${userId} AND l.counterparty_friend_id IS NOT NULL;
+  `;
+  for (const r of loans) {
+    const remaining = Number(r.principal) - Number(r.paid);
+    add(r.friend_id, r.direction === "lent" ? remaining : -remaining);
+  }
+
+  return net;
+}
+
 // ---- Loans (debt tracker) --------------------------------------------------
 // See the schema-v25 comment above for why this is a standalone ledger like
 // splits, not linked to expenses.

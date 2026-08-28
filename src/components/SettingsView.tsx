@@ -37,6 +37,7 @@ const AssistantPanel = dynamic(() => import("./AssistantPanel"), { ssr: false })
 const ApiTokensManager = dynamic(() => import("./ApiTokensManager"), { ssr: false });
 const AutoImportInstructions = dynamic(() => import("./AutoImportInstructions"), { ssr: false });
 const ErrorReportsPanel = dynamic(() => import("./ErrorReportsPanel"), { ssr: false });
+const PendingChangesPanel = dynamic(() => import("./PendingChangesPanel"), { ssr: false });
 const BackupSettingsPanel = dynamic(() => import("./BackupSettingsPanel"), { ssr: false });
 const AppLockSettingsPanel = dynamic(() => import("./AppLockSettingsPanel"), { ssr: false });
 
@@ -60,6 +61,7 @@ const PANEL_TITLES: Record<Panel, string> = {
   savingsGoals: "Savings goals",
   autoImport: "Automatic import",
   errorReports: "Error log",
+  pendingChanges: "Pending changes",
   backup: "Backup & restore",
   appLock: "App lock",
 };
@@ -172,6 +174,7 @@ export default function SettingsView({
         </div>
       )}
       {panel === "errorReports" && <ErrorReportsPanel />}
+      {panel === "pendingChanges" && <PendingChangesPanel />}
       {panel === "backup" && <BackupSettingsPanel />}
       {panel === "appLock" && <AppLockSettingsPanel />}
       {panel === "dashboardWidgets" && (

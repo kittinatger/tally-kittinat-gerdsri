@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { badgeClasses } from "@/lib/category-styles";
 import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
 import { useT } from "@/lib/language-context";
+import { useCurrency } from "@/lib/currency-context";
+import { formatCurrency } from "@/lib/format";
 
 type Friend = { id: number; username: string; is_family: boolean };
 type FriendRequest = { id: number; username: string; created_at: string };
@@ -15,7 +17,35 @@ type FriendsData = {
   family: Friend[];
   incoming: FriendRequest[];
   outgoing: FriendRequest[];
+  /** Net "who owes whom" across every split + loan with each friend —
+   * positive means they owe the current user, negative means the current
+   * user owes them. Keyed by friend id (as a string, from JSON). See
+   * getFriendNetBalances in lib/db.ts for exactly what this does and
+   * doesn't account for (3+ person splits are excluded — no single
+   * well-defined pairwise debt there). */
+  balances: Record<string, number>;
 };
+
+// A small "owes you $X" / "you owe $X" pill — shared by the friends and
+// family tabs. Renders nothing at exactly zero (or when the friend has no
+// splits/loans on record at all), so most rows stay uncluttered.
+function BalancePill({ amount }: { amount: number }) {
+  const currency = useCurrency();
+  const t = useT();
+  if (Math.abs(amount) < 0.005) return null;
+  const owesYou = amount > 0;
+  return (
+    <span
+      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+        owesYou
+          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
+          : "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
+      }`}
+    >
+      {owesYou ? t("friends.owesYou") : t("friends.youOwe")} {formatCurrency(Math.abs(amount), currency)}
+    </span>
+  );
+}
 
 type Tab = "friends" | "family" | "requests";
 
@@ -338,7 +368,10 @@ export default function FriendsManager() {
             {data.friends.map((f, i) => (
               <div key={f.id} className={`flex items-center gap-3 px-4 py-3 ${i === 0 ? "" : "border-t border-line"}`}>
                 <Avatar username={f.username} />
-                <p className="min-w-0 flex-1 truncate font-medium text-foreground">{f.username}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-foreground">{f.username}</p>
+                  <BalancePill amount={data.balances[f.id] ?? 0} />
+                </div>
                 <div className="flex shrink-0 items-center gap-1">
                   <button
                     type="button"
