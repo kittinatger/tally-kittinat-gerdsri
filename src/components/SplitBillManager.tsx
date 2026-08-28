@@ -9,6 +9,7 @@ import { formatCurrency, todayInputValue } from "@/lib/format";
 import { SPLIT_METHODS, SPLIT_PAYMENT_METHODS, type SplitMethod, type SplitPaymentMethod } from "@/lib/splits";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
+import RecurringSplitsSection from "./RecurringSplitsSection";
 
 type Split = {
   id: number;
@@ -405,6 +406,8 @@ export default function SplitBillManager() {
           />
         </button>
       </label>
+
+      <RecurringSplitsSection myId={myId} friends={friends} />
 
       <div className="flex items-center justify-between gap-3">
         <div className="flex gap-1 rounded-full bg-bg-soft p-1">

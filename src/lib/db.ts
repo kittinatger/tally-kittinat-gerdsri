@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 30;
+const CURRENT_SCHEMA_VERSION = 31;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1009,6 +1009,30 @@ function ensureSchema(): Promise<void> {
       // Stored in seconds so the UI's minute/hour options are just simple
       // multiples, not a second unit conversion layer.
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS applock_timeout_seconds INTEGER NOT NULL DEFAULT 0;`;
+
+      // Recurring splits: a template (like recurring_rules is for
+      // expenses) that materializes a real `splits` row via createSplit()
+      // whenever next_run_date comes due — see processDueRecurringSplits.
+      // participant_ids is stored as a JSON array of user ids rather than
+      // a child table, matching the same TEXT-not-a-real-relation
+      // convention as dashboard_widgets/membership_cards.fields elsewhere
+      // in this file, since it's always read/written as one whole list,
+      // never queried row-by-row.
+      await sql`
+        CREATE TABLE IF NOT EXISTS recurring_splits (
+          id SERIAL PRIMARY KEY,
+          creator_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          title TEXT NOT NULL,
+          total_amount NUMERIC(12,2) NOT NULL,
+          split_method TEXT NOT NULL,
+          participant_ids TEXT NOT NULL,
+          frequency TEXT NOT NULL,
+          next_run_date DATE NOT NULL,
+          active BOOLEAN NOT NULL DEFAULT true,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `;
+      await sql`CREATE INDEX IF NOT EXISTS recurring_splits_creator_idx ON recurring_splits (creator_id);`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -3699,6 +3723,124 @@ export async function leaveOrDeleteSplit(userId: number, splitId: number): Promi
   } else {
     await sql`DELETE FROM split_participants WHERE split_id = ${splitId} AND user_id = ${userId};`;
   }
+}
+
+// ---- Recurring splits (a recurring_rules-style template for splits) -------
+
+export type RecurringSplitRow = {
+  id: number;
+  title: string;
+  total_amount: string;
+  split_method: SplitMethod;
+  participant_ids: number[];
+  frequency: string;
+  next_run_date: string;
+  active: boolean;
+};
+
+function parseParticipantIds(raw: string): number[] {
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((v) => typeof v === "number") : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function listRecurringSplits(userId: number): Promise<RecurringSplitRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<{
+    id: number;
+    title: string;
+    total_amount: string;
+    split_method: SplitMethod;
+    participant_ids: string;
+    frequency: string;
+    next_run_date: string;
+    active: boolean;
+  }>`
+    SELECT id, title, total_amount::text AS total_amount, split_method, participant_ids, frequency,
+           to_char(next_run_date, 'YYYY-MM-DD') AS next_run_date, active
+    FROM recurring_splits WHERE creator_id = ${userId} ORDER BY id DESC;
+  `;
+  return rows.map((r) => ({ ...r, participant_ids: parseParticipantIds(r.participant_ids) }));
+}
+
+export async function createRecurringSplit(
+  creatorId: number,
+  input: { title: string; totalAmount: number; splitMethod: SplitMethod; participantIds: number[]; frequency: string; startDate: string },
+): Promise<{ row: RecurringSplitRow } | { error: string }> {
+  await ensureSchema();
+  const others = [...new Set(input.participantIds)].filter((id) => id !== creatorId);
+  for (const id of others) {
+    if (!(await areFriends(creatorId, id))) return { error: "You can only split a bill with friends." };
+  }
+  const allIds = [creatorId, ...others];
+  const { rows } = await sql<{ id: number }>`
+    INSERT INTO recurring_splits (creator_id, title, total_amount, split_method, participant_ids, frequency, next_run_date)
+    VALUES (${creatorId}, ${input.title}, ${input.totalAmount}, ${input.splitMethod}, ${JSON.stringify(allIds)}, ${input.frequency}, ${input.startDate})
+    RETURNING id;
+  `;
+  const rows2 = await listRecurringSplits(creatorId);
+  const row = rows2.find((r) => r.id === rows[0].id);
+  return row ? { row } : { error: "Could not create that recurring split." };
+}
+
+export async function deleteRecurringSplit(userId: number, id: number): Promise<void> {
+  await ensureSchema();
+  await sql`DELETE FROM recurring_splits WHERE id = ${id} AND creator_id = ${userId};`;
+}
+
+export async function setRecurringSplitActive(userId: number, id: number, active: boolean): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE recurring_splits SET active = ${active} WHERE id = ${id} AND creator_id = ${userId};`;
+}
+
+// Materializes every due recurring split into a real `splits` row (via the
+// same createSplit() a manually-created split goes through — equal-share
+// only, single payer = the template's creator, matching the common "I pay
+// rent, everyone else owes their share" case), then advances next_run_date
+// past today — mirrors processDueRecurringRules' loop for expenses.
+export async function processDueRecurringSplits(userId: number): Promise<number> {
+  await ensureSchema();
+  const today = new Date().toISOString().slice(0, 10);
+  const { rows } = await sql<{
+    id: number;
+    title: string;
+    total_amount: string;
+    split_method: SplitMethod;
+    participant_ids: string;
+    frequency: string;
+    next_run_date: string;
+  }>`
+    SELECT id, title, total_amount::text AS total_amount, split_method, participant_ids, frequency,
+           to_char(next_run_date, 'YYYY-MM-DD') AS next_run_date
+    FROM recurring_splits WHERE creator_id = ${userId} AND active = true AND next_run_date <= ${today};
+  `;
+
+  let created = 0;
+  for (const rule of rows) {
+    let nextRunDate = rule.next_run_date;
+    // A rule left untouched for a long stretch (app not opened) can be due
+    // many times over — catch it up to today in one pass rather than only
+    // ever materializing a single occurrence per dashboard load, same
+    // safety behavior as processDueRecurringRules.
+    while (nextRunDate <= today) {
+      const result = await createSplit(userId, {
+        title: rule.title,
+        totalAmount: Number(rule.total_amount),
+        splitMethod: rule.split_method,
+        paymentMethod: "single_payer",
+        date: nextRunDate,
+        participantIds: parseParticipantIds(rule.participant_ids),
+      });
+      if ("error" in result) break; // e.g. no longer friends with a participant — stop advancing this rule
+      created++;
+      nextRunDate = advanceDate(nextRunDate, rule.frequency);
+    }
+    await sql`UPDATE recurring_splits SET next_run_date = ${nextRunDate} WHERE id = ${rule.id};`;
+  }
+  return created;
 }
 
 // Net "who owes whom" across every split and loan with each friend, in one

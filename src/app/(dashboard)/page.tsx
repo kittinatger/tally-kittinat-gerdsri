@@ -7,6 +7,7 @@ import {
   listWallets,
   getDashboardWidgets,
   processDueRecurringRules,
+  processDueRecurringSplits,
   listBudgets,
   listSavingsGoals,
   getUserById,
@@ -35,6 +36,7 @@ export default async function HomePage({
   const { add } = await searchParams;
   const userId = await getUserId();
   const loggedRecurring = await processDueRecurringRules(userId);
+  await processDueRecurringSplits(userId);
   const [rows, remaining, categoryRows, currency, walletRows, widgets, budgetRows, savingsGoalRows, convertEnabled, user] =
     await Promise.all([
       listExpenses(userId),
