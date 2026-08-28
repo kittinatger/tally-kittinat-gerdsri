@@ -16,7 +16,7 @@ export default function WalletLoading() {
         </div>
         <nav className="flex items-center gap-1 rounded-full bg-bg-soft p-1">
           <span className="rounded-full px-2.5 py-1 text-xs font-semibold text-ink-soft sm:px-3.5 sm:py-1.5 sm:text-sm">
-            Home
+            Activities
           </span>
           <span className="rounded-full px-2.5 py-1 text-xs font-semibold text-ink-soft sm:px-3.5 sm:py-1.5 sm:text-sm">
             Analytics

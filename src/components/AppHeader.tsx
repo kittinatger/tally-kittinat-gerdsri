@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HomeIcon, AnalyticsIcon, GearIcon, PlusIcon, MembershipCardIcon } from "@/lib/icons";
+import { ListIcon, AnalyticsIcon, GearIcon, PlusIcon, MembershipCardIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 
 function AddIcon() {
@@ -29,7 +29,7 @@ export function BottomNav({
 }) {
   const t = useT();
   const bottomNavLinks = [
-    { href: "/", label: t("nav.home"), icon: <HomeIcon className="h-5 w-5 shrink-0" /> },
+    { href: "/", label: t("nav.activities"), icon: <ListIcon className="h-5 w-5 shrink-0" /> },
     { href: "/analytics", label: t("nav.analytics"), icon: <AnalyticsIcon className="h-5 w-5 shrink-0" /> },
     { href: "/wallet", label: t("nav.wallet"), icon: <MembershipCardIcon className="h-5 w-5 shrink-0" /> },
     { href: "/settings", label: t("nav.settings"), icon: <GearIcon className="h-5 w-5 shrink-0" /> },
@@ -78,7 +78,7 @@ export default function AppHeader({ onAddClick }: { onAddClick?: () => void }) {
   const pathname = usePathname();
   const t = useT();
   const navLinks = [
-    { href: "/", label: t("nav.home") },
+    { href: "/", label: t("nav.activities") },
     { href: "/analytics", label: t("nav.analytics") },
     { href: "/wallet", label: t("nav.wallet") },
     { href: "/settings", label: t("nav.settings") },
