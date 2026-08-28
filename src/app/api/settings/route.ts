@@ -7,6 +7,7 @@ import {
   getConvertWalletBalances,
   getNotifyRecurringEmail,
   getNotifyBudgetEmail,
+  getNotifyPushReminders,
   getRequireSplitConfirmation,
   setAutoConvertCurrency,
   setCurrency,
@@ -15,6 +16,7 @@ import {
   setConvertWalletBalances,
   setNotifyRecurringEmail,
   setNotifyBudgetEmail,
+  setNotifyPushReminders,
   setRequireSplitConfirmation,
 } from "@/lib/db";
 import { settingsInputSchema } from "@/lib/validation";
@@ -30,6 +32,7 @@ export async function GET() {
     convertWalletBalances,
     notifyRecurringEmail,
     notifyBudgetEmail,
+    notifyPushReminders,
     requireSplitConfirmation,
   ] = await Promise.all([
     getRemaining(userId),
@@ -39,6 +42,7 @@ export async function GET() {
     getConvertWalletBalances(userId),
     getNotifyRecurringEmail(userId),
     getNotifyBudgetEmail(userId),
+    getNotifyPushReminders(userId),
     getRequireSplitConfirmation(userId),
   ]);
   return NextResponse.json({
@@ -49,6 +53,7 @@ export async function GET() {
     convertWalletBalances,
     notifyRecurringEmail,
     notifyBudgetEmail,
+    notifyPushReminders,
     requireSplitConfirmation,
   });
 }
@@ -68,6 +73,7 @@ export async function PATCH(req: NextRequest) {
     convertWalletBalances,
     notifyRecurringEmail,
     notifyBudgetEmail,
+    notifyPushReminders,
     requireSplitConfirmation,
   ] = await Promise.all([
     parsed.data.remaining !== undefined ? setRemaining(userId, parsed.data.remaining) : getRemaining(userId),
@@ -85,6 +91,9 @@ export async function PATCH(req: NextRequest) {
     parsed.data.notifyBudgetEmail !== undefined
       ? setNotifyBudgetEmail(userId, parsed.data.notifyBudgetEmail)
       : getNotifyBudgetEmail(userId),
+    parsed.data.notifyPushReminders !== undefined
+      ? setNotifyPushReminders(userId, parsed.data.notifyPushReminders)
+      : getNotifyPushReminders(userId),
     parsed.data.requireSplitConfirmation !== undefined
       ? setRequireSplitConfirmation(userId, parsed.data.requireSplitConfirmation)
       : getRequireSplitConfirmation(userId),
@@ -97,6 +106,7 @@ export async function PATCH(req: NextRequest) {
     convertWalletBalances,
     notifyRecurringEmail,
     notifyBudgetEmail,
+    notifyPushReminders,
     requireSplitConfirmation,
   });
 }

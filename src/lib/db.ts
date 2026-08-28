@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 31;
+const CURRENT_SCHEMA_VERSION = 32;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1034,10 +1034,122 @@ function ensureSchema(): Promise<void> {
       `;
       await sql`CREATE INDEX IF NOT EXISTS recurring_splits_creator_idx ON recurring_splits (creator_id);`;
 
+      // Web Push subscriptions — one row per browser/device that's opted
+      // in (a user can have several, e.g. phone + laptop). endpoint is the
+      // push service's unique per-subscription URL; p256dh/auth are the
+      // subscription's own encryption keys the browser hands back from
+      // PushSubscription.toJSON().keys — see lib/push.ts. Deleted
+      // automatically once the push service reports it as gone (410/404),
+      // not just when the user manually disables the setting.
+      await sql`
+        CREATE TABLE IF NOT EXISTS push_subscriptions (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          endpoint TEXT NOT NULL UNIQUE,
+          p256dh TEXT NOT NULL,
+          auth TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `;
+      await sql`CREATE INDEX IF NOT EXISTS push_subscriptions_user_idx ON push_subscriptions (user_id);`;
+
+      // Per-account opt-in for push reminders (loan installments coming
+      // due) — separate from having a subscription at all, so disabling
+      // this doesn't require the browser to actually unsubscribe.
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS notify_push_reminders BOOLEAN NOT NULL DEFAULT false;`;
+
+      // Guards against re-notifying about the same installment every day
+      // the cron job runs until it's paid off.
+      await sql`ALTER TABLE loan_installments ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMPTZ;`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
   return schemaReady;
+}
+
+// ---- Push notifications -----------------------------------------------
+
+export type PushSubscriptionRow = { id: number; endpoint: string; p256dh: string; auth: string };
+
+export async function savePushSubscription(userId: number, endpoint: string, p256dh: string, auth: string): Promise<void> {
+  await ensureSchema();
+  await sql`
+    INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth)
+    VALUES (${userId}, ${endpoint}, ${p256dh}, ${auth})
+    ON CONFLICT (endpoint) DO UPDATE SET user_id = ${userId}, p256dh = ${p256dh}, auth = ${auth};
+  `;
+}
+
+export async function deletePushSubscription(endpoint: string): Promise<void> {
+  await ensureSchema();
+  await sql`DELETE FROM push_subscriptions WHERE endpoint = ${endpoint};`;
+}
+
+export async function listPushSubscriptionsForUser(userId: number): Promise<PushSubscriptionRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<PushSubscriptionRow>`SELECT id, endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ${userId};`;
+  return rows;
+}
+
+export async function getNotifyPushReminders(userId: number): Promise<boolean> {
+  await ensureSchema();
+  const { rows } = await sql<{ notify_push_reminders: boolean }>`SELECT notify_push_reminders FROM app_settings WHERE user_id = ${userId};`;
+  return rows[0]?.notify_push_reminders ?? false;
+}
+
+export async function setNotifyPushReminders(userId: number, enabled: boolean): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE app_settings SET notify_push_reminders = ${enabled} WHERE user_id = ${userId};`;
+}
+
+export type DueInstallmentReminder = {
+  userId: number;
+  installmentId: number;
+  amount: string;
+  direction: "lent" | "borrowed";
+  counterpartyName: string;
+};
+
+// Every unpaid, un-reminded installment due today or earlier, for a user
+// who both has push notifications on and at least one live subscription
+// (no point building the reminder list for someone who can't receive it).
+// Called only from the daily cron job (api/cron/push-reminders) — nothing
+// else in the app triggers this, since there's no background worker
+// otherwise (see the same "no background worker" note on the email
+// notification toggles this mirrors).
+export async function listDueInstallmentReminders(): Promise<DueInstallmentReminder[]> {
+  await ensureSchema();
+  const today = new Date().toISOString().slice(0, 10);
+  const { rows } = await sql<{
+    user_id: number;
+    installment_id: number;
+    amount: string;
+    direction: "lent" | "borrowed";
+    counterparty_name: string | null;
+    counterparty_username: string | null;
+  }>`
+    SELECT l.user_id, li.id AS installment_id, li.amount::text AS amount, l.direction,
+           l.counterparty_name, u.username AS counterparty_username
+    FROM loan_installments li
+    JOIN loans l ON l.id = li.loan_id
+    LEFT JOIN users u ON u.id = l.counterparty_friend_id
+    WHERE li.paid = false AND li.reminder_sent_at IS NULL AND li.due_date <= ${today}
+      AND EXISTS (SELECT 1 FROM app_settings s WHERE s.user_id = l.user_id AND s.notify_push_reminders = true)
+      AND EXISTS (SELECT 1 FROM push_subscriptions ps WHERE ps.user_id = l.user_id);
+  `;
+  return rows.map((r) => ({
+    userId: r.user_id,
+    installmentId: r.installment_id,
+    amount: r.amount,
+    direction: r.direction,
+    counterpartyName: r.counterparty_name ?? r.counterparty_username ?? "someone",
+  }));
+}
+
+export async function markInstallmentReminderSent(installmentId: number): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE loan_installments SET reminder_sent_at = now() WHERE id = ${installmentId};`;
 }
 
 export type CategoryRow = {

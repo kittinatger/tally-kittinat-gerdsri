@@ -41,6 +41,41 @@ self.addEventListener("fetch", (event) => {
   }
 });
 
+// Web Push — the browser delivers a push message here even when no tab is
+// open, which is the entire point; see lib/push.ts (sends) and
+// lib/push-subscribe.ts (subscribes). Payload is always our own JSON
+// (title/body/url), never trusted beyond that shape.
+self.addEventListener("push", (event) => {
+  let data = { title: "Tally", body: "" };
+  try {
+    if (event.data) data = { ...data, ...event.data.json() };
+  } catch {
+    // Malformed payload — fall back to the generic title/empty body above
+    // rather than dropping the notification entirely.
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      data: { url: data.url || "/" },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || "/";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if (client.url.includes(url) && "focus" in client) return client.focus();
+      }
+      return self.clients.openWindow(url);
+    }),
+  );
+});
+
 async function staleWhileRevalidate(req) {
   const cache = await caches.open(API_CACHE_NAME);
   const cached = await cache.match(req);

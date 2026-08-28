@@ -65,7 +65,11 @@ export const config = {
     // generates from app/opengraph-image.tsx — external services (Slack,
     // iMessage, Canva's link-paste preview, etc.) fetch these with no
     // session cookie at all, so without this exclusion they'd get
-    // redirected to /welcome instead of the actual image.
-    "/((?!welcome|login|register|forgot-password|reset-password|offline|embed|opengraph-image|twitter-image|manifest.json|sw.js|api/auth/login|api/auth/register|api/auth/forgot-password|api/auth/reset-password|api/auth/github/callback|api/auth/github$|api/intake|splits|_next/static|_next/image|favicon.ico|favicon-light.svg|favicon-dark.svg).*)",
+    // redirected to /welcome instead of the actual image. api/cron/* is
+    // invoked by Vercel Cron (see vercel.json), which has no session
+    // cookie either — it authenticates itself via a CRON_SECRET bearer
+    // token instead (checked inside the route), same reasoning as
+    // api/intake above.
+    "/((?!welcome|login|register|forgot-password|reset-password|offline|embed|opengraph-image|twitter-image|manifest.json|sw.js|api/auth/login|api/auth/register|api/auth/forgot-password|api/auth/reset-password|api/auth/github/callback|api/auth/github$|api/intake|api/cron|splits|_next/static|_next/image|favicon.ico|favicon-light.svg|favicon-dark.svg).*)",
   ],
 };

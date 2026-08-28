@@ -116,6 +116,7 @@ export const settingsInputSchema = z
     convertWalletBalances: z.boolean().optional(),
     notifyRecurringEmail: z.boolean().optional(),
     notifyBudgetEmail: z.boolean().optional(),
+    notifyPushReminders: z.boolean().optional(),
     requireSplitConfirmation: z.boolean().optional(),
     language: z.string().refine(isLanguageCode, { message: "Unsupported language" }).optional(),
   })
