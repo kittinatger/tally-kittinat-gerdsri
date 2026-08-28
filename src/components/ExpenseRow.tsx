@@ -236,7 +236,12 @@ export default function ExpenseRow({
           {formatCurrency(expense.amount, currency)}
         </p>
       </button>
-      {showHoverActions && (
+      {/* Hidden whenever the row is swiped open (or mid-drag) — the swipe
+       * panel and this hover cluster both anchor to the same right edge,
+       * so showing both at once (e.g. a trackpad/touchscreen hybrid device
+       * where a swiped-open row is also hovered) overlapped them into an
+       * unreadable mess of stacked icons. */}
+      {showHoverActions && liveX === 0 && (
         <div className="pointer-events-none absolute inset-y-0 right-2 hidden items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto sm:flex">
           {onEdit && (
             <button
