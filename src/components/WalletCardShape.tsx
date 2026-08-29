@@ -21,6 +21,15 @@ const NETWORK_LABEL_KEYS: Record<CardNetwork, MessageKey> = {
   other: "wallet.networkOther",
 };
 
+// Badge asset file extension per network — all raster/vector, all .svg,
+// except Apple Pay's, which is actually a .webp (renamed from a
+// mis-extensioned .svg that failed to render: an <img>/mask-image request
+// for *.svg gets served with Content-Type: image/svg+xml regardless of the
+// bytes inside, and a browser strictly parsing WEBP bytes as SVG XML fails).
+const BADGE_EXTENSIONS: Partial<Record<CardNetwork, string>> = {
+  "apple-pay": "webp",
+};
+
 // A generic 2-letter monogram per network, not the real initials/shapes any
 // brand uses — see NetworkBadge below for why.
 const NETWORK_MONOGRAMS: Record<CardNetwork, string> = {
@@ -216,7 +225,11 @@ export default function WalletCardShape({
               }}
             />
           ) : network !== "other" ? (
-            <img src={`/badges/${network}.svg`} alt={network} className="h-6 w-auto object-contain" />
+            <img
+              src={`/badges/${network}.${BADGE_EXTENSIONS[network] ?? "svg"}`}
+              alt={network}
+              className="h-6 w-auto object-contain"
+            />
           ) : (
             <>
               <NetworkBadge network={network} />
