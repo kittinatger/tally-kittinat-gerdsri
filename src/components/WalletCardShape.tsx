@@ -21,6 +21,22 @@ const NETWORK_LABEL_KEYS: Record<CardNetwork, MessageKey> = {
   other: "wallet.networkOther",
 };
 
+// Networks whose badge is recolorable (via CSS mask-image, so it always
+// matches iconColor/text color) rather than rendered as a fixed-color brand
+// logo image — each entry's aspect ratio is its source SVG's own
+// width/height, so the masked shape doesn't stretch. Adding a network here
+// only makes sense for a single-color-silhouette-friendly mark: mask-image
+// uses the source's alpha channel only, discarding any of its own colors
+// (fine for JCB's tricolor logo — it reads clearly as a plain silhouette
+// too — but would lose real detail on a mark that depends on distinct
+// colored regions to read at all).
+const RECOLORABLE_BADGE_ASPECT: Partial<Record<CardNetwork, string>> = {
+  visa: "3840/1247",
+  discover: "3660/835",
+  jcb: "3000/2315",
+  "apple-pay": "6655/3153",
+};
+
 // A generic 2-letter monogram per network, not the real initials/shapes any
 // brand uses — see NetworkBadge below for why.
 const NETWORK_MONOGRAMS: Record<CardNetwork, string> = {
@@ -211,11 +227,12 @@ export default function WalletCardShape({
     >
       {showNetworkBadge && (
         <div className={`absolute flex items-center gap-1.5 ${BADGE_POSITION_CLASSES[badgePosition]}`} style={{ color: iconFg.a85 }}>
-          {network === "visa" || network === "discover" ? (
+          {RECOLORABLE_BADGE_ASPECT[network] ? (
             <div
               aria-label={network}
-              className={`h-5 ${network === "visa" ? "aspect-[3840/1247]" : "aspect-[3660/835]"}`}
+              className="h-5"
               style={{
+                aspectRatio: RECOLORABLE_BADGE_ASPECT[network],
                 backgroundColor: "currentColor",
                 maskImage: `url(/badges/${network}.svg)`,
                 maskSize: "contain",
