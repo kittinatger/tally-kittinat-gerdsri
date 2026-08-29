@@ -2262,6 +2262,40 @@ export async function listExpenses(userId: number): Promise<Expense[]> {
   return rows;
 }
 
+// Powers the "Latest Transactions" list on a wallet's detail view (see
+// AccountDetail.tsx) — a small, wallet-scoped, capped slice rather than
+// making the client fetch and filter the full (up to 10,000-row) list
+// above just to show a handful of rows.
+export async function listRecentWalletExpenses(userId: number, walletId: number, limit: number): Promise<Expense[]> {
+  await ensureSchema();
+  const { rows } = await sql<Expense>`
+    SELECT
+      e.id,
+      e.type,
+      e.direction,
+      to_char(e.date, 'YYYY-MM-DD') AS date,
+      e.amount::text AS amount,
+      e.merchant,
+      e.category,
+      e.notes,
+      e.tags,
+      (e.receipt_image IS NOT NULL OR EXISTS (SELECT 1 FROM expense_receipts er WHERE er.expense_id = e.id)) AS has_receipt,
+      e.wallet_id,
+      w.name AS wallet_name,
+      e.split_group_id
+    FROM expenses e
+    LEFT JOIN wallets w ON w.id = e.wallet_id
+    WHERE e.wallet_id = ${walletId}
+      AND (
+        w.user_id = ${userId}
+        OR e.wallet_id IN (SELECT wallet_id FROM wallet_members WHERE user_id = ${userId} AND status = 'accepted')
+      )
+    ORDER BY e.date DESC, e.id DESC
+    LIMIT ${limit};
+  `;
+  return rows;
+}
+
 // Powers the merchant-field autocomplete in ExpenseForm.tsx — every
 // merchant the user has typed before, most-recently-used first, so
 // retyping "Starbucks" for the tenth time is one tap instead of a retype.
