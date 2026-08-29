@@ -41,5 +41,6 @@ export function toWalletOption(w: WalletRow): WalletOption {
     showCurrency: w.show_currency,
     showCardNumber: w.show_card_number,
     showName: w.show_name,
+    locked: w.locked,
   };
 }

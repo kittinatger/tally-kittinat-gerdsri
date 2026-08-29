@@ -3,6 +3,7 @@
 import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
 import Modal from "./Modal";
+import { LockIcon } from "@/lib/icons";
 import SelectDropdown from "./SelectDropdown";
 import FormSection from "./FormSection";
 import ColorGlowPreview from "./ColorGlowPreview";
@@ -89,6 +90,8 @@ export default function WalletModal({
   const [showCurrency, setShowCurrency] = useState(wallet?.showCurrency ?? true);
   const [showCardNumber, setShowCardNumber] = useState(wallet?.showCardNumber ?? true);
   const [showName, setShowName] = useState(wallet?.showName ?? true);
+  const [locked, setLocked] = useState(wallet?.locked ?? false);
+  const [unlocking, setUnlocking] = useState(false);
 
   const month = expiryMonth ? Number(expiryMonth) : null;
   const year = expiryYear ? Number(expiryYear) : null;
@@ -127,7 +130,31 @@ export default function WalletModal({
     showCurrency,
     showCardNumber,
     showName,
+    locked,
   };
+
+  async function handleUnlock() {
+    if (!wallet) return;
+    setUnlocking(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/wallets/${wallet.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ locked: false }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(typeof data.error === "string" ? data.error : "Could not unlock.");
+        return;
+      }
+      setLocked(false);
+    } catch (err) {
+      setError(describeFetchError(err));
+    } finally {
+      setUnlocking(false);
+    }
+  }
 
   function handleCurrencyChange(label: string) {
     if (label.startsWith(appDefaultLabel)) {
@@ -159,6 +186,7 @@ export default function WalletModal({
         showCurrency,
         showCardNumber,
         showName,
+        locked,
       };
       const res = isEdit
         ? await fetch(`/api/wallets/${wallet!.id}`, {
@@ -199,6 +227,75 @@ export default function WalletModal({
     } finally {
       setSubmitting(false);
     }
+  }
+
+  // A locked wallet is a "premade card" — its look is meant to stay fixed,
+  // so the editor doesn't offer the full form at all here, just the
+  // preview, an explanation, and the one way out (Unlock). Server-side
+  // enforcement in updateWallet is the real guard; this is just the UI
+  // reflecting it up front instead of letting someone fill out the whole
+  // form and then hit a rejected save.
+  if (isEdit && locked) {
+    return (
+      <Modal onClose={onClose} title={t("wallet.editTitle")}>
+        <div className="space-y-4">
+          <ColorGlowPreview color={backgroundGlowColor(background, color)}>
+            {hasCardLook ? (
+              <WalletCardShape
+                label={name}
+                holderName={holderName || null}
+                last4={last4 || null}
+                expiryMonth={month}
+                expiryYear={year}
+                network={network}
+                color={color}
+                background={background}
+                showNetworkBadge={showNetworkBadge}
+                badgePosition={badgePosition}
+                textColor={textColor}
+                iconColor={iconColor}
+                showChip={showChip}
+                chipColor={chipColor}
+                chipPosition={chipPosition}
+                balance={Number(startingBalance) || 0}
+                currency={currency ?? appCurrency}
+                showBalance={showBalance}
+                showCurrency={showCurrency}
+                showCardNumber={showCardNumber}
+                showName={showName}
+              />
+            ) : (
+              <AccountCardShape wallet={previewWallet} currency={appCurrency} />
+            )}
+          </ColorGlowPreview>
+
+          <div className="flex items-start gap-2.5 rounded-card border border-line bg-bg-soft px-3.5 py-3">
+            <LockIcon className="mt-0.5 h-4 w-4 shrink-0 text-ink-soft" />
+            <p className="text-xs text-ink-soft">{t("wallet.lockedDesc")}</p>
+          </div>
+
+          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full px-4 py-2.5 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
+            >
+              {t("common.cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={handleUnlock}
+              disabled={unlocking}
+              className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+            >
+              {unlocking ? t("common.saving") : t("wallet.unlockCard")}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    );
   }
 
   return (
@@ -717,6 +814,30 @@ export default function WalletModal({
             />
           </FormSection>
         )}
+
+        <FormSection icon={<LockIcon className="h-4 w-4" />} title={t("wallet.lockCardLabel")}>
+          <button
+            type="button"
+            onClick={() => setLocked((v) => !v)}
+            className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+          >
+            <span>
+              <span className="block text-sm font-medium text-foreground">{t("wallet.lockCardLabel")}</span>
+              <span className="block text-xs text-ink-soft">{t("wallet.lockCardDesc")}</span>
+            </span>
+            <span
+              role="switch"
+              aria-checked={locked}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${locked ? "bg-navy" : "bg-line"}`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                  locked ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </span>
+          </button>
+        </FormSection>
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 

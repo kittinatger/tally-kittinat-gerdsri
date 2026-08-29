@@ -204,6 +204,7 @@ export const walletInputSchema = z.object({
   textColor: cardTextColorSchema.optional(),
   kind: z.enum(WALLET_KINDS).default("cash"),
   currency: walletCurrencySchema.optional(),
+  locked: z.boolean().optional(),
   ...walletCardVisualFields,
 });
 
@@ -218,6 +219,7 @@ export const walletUpdateSchema = z
     isDefault: z.literal(true).optional(),
     archived: z.boolean().optional(),
     startingBalance: z.number().finite().optional(),
+    locked: z.boolean().optional(),
     ...walletCardVisualFields,
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
