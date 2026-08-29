@@ -84,29 +84,32 @@ function TransactionRow({ expense, currency }: { expense: Expense; currency: str
   );
 }
 
-// Same two-click delete-confirm pattern as MembershipCardDetail —
-// rendered with key={wallet.id} by the caller so switching accounts
-// resets `confirming`. Deleting is only safe to expose here because
-// deleteWallet (db.ts) itself already refuses to delete a wallet with
-// transactions on it — this just surfaces that as an inline error rather
-// than blocking the button from being tappable at all. Renders as a
-// payment card (WalletCardShape) when the wallet has a network set, or a
-// plain account (AccountCardShape) otherwise — see WalletPageView. Edit
-// lives in the Modal header's overflow menu (see WalletPageView), not as
-// a button here — only Delete, which still needs its own two-click
-// confirm, stays in the body.
+// Deleting is only safe to expose here because deleteWallet (db.ts) itself
+// already refuses to delete a wallet with transactions on it — this just
+// surfaces that as an inline error rather than blocking the button from
+// being tappable at all. Renders as a payment card (WalletCardShape) when
+// the wallet has a network set, or a plain account (AccountCardShape)
+// otherwise — see WalletPageView. Edit and the Delete *trigger* both live
+// in the Modal header's overflow menu now — nothing destructive sits as a
+// permanently-visible button any more, so a stray tap can't reach either
+// one. Delete's own confirm step (confirmDelete/onCancelDelete, owned by
+// the caller so it can reset when a different wallet is opened) still
+// renders here in the body, one deliberate step further from the trigger.
 export default function AccountDetail({
   wallet,
   onDelete,
   deleteError,
+  confirmDelete,
+  onCancelDelete,
 }: {
   wallet: WalletOption;
   onDelete: () => void;
   deleteError: string | null;
+  confirmDelete: boolean;
+  onCancelDelete: () => void;
 }) {
   const t = useT();
   const appCurrency = useCurrency();
-  const [confirming, setConfirming] = useState(false);
   const [recent, setRecent] = useState<Expense[] | null>(null);
 
   useEffect(() => {
@@ -130,14 +133,6 @@ export default function AccountDetail({
       cancelled = true;
     };
   }, [wallet.id]);
-
-  function handleDeleteClick() {
-    if (!confirming) {
-      setConfirming(true);
-      return;
-    }
-    onDelete();
-  }
 
   const walletCurrency = wallet.currency ?? appCurrency;
 
@@ -216,21 +211,30 @@ export default function AccountDetail({
 
       {deleteError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{deleteError}</p>}
 
-      <div className="mt-4">
-        <button
-          type="button"
-          onClick={handleDeleteClick}
-          aria-label={confirming ? t("common.confirmDelete") : t("common.delete")}
-          className={`flex h-10 w-full items-center justify-center gap-1.5 rounded-full border px-3 text-sm font-semibold transition ${
-            confirming
-              ? "border-red-300 bg-red-600 text-white hover:bg-red-700"
-              : "border-line text-ink-soft hover:border-red-300 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-          }`}
-        >
-          <TrashIcon />
-          {confirming ? t("common.confirmDelete") : t("common.delete")}
-        </button>
-      </div>
+      {/* Only rendered once "..." → Delete has actually been tapped (see
+       * WalletPageView) — no destructive control is ever just sitting here
+       * by default. */}
+      {confirmDelete && (
+        <div className="mt-4 space-y-2 rounded-card border border-red-200 bg-red-50 p-3.5 dark:border-red-900/40 dark:bg-red-900/20">
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-red-700 dark:text-red-300">
+            <TrashIcon className="h-4 w-4" />
+            {t("wallet.confirmDeleteTitle")}
+          </p>
+          <p className="text-xs text-red-700/80 dark:text-red-300/80">{t("wallet.confirmDeleteDesc")}</p>
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              type="button"
+              onClick={onCancelDelete}
+              className="flex-1 rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-foreground transition hover:border-navy"
+            >
+              {t("common.cancel")}
+            </button>
+            <button type="button" onClick={onDelete} className="flex-1 rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700">
+              {t("common.confirmDelete")}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
