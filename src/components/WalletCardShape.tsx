@@ -329,16 +329,16 @@ export default function WalletCardShape({
 
       {/* Grouped into one block (rather than the balance being its own
        * top-level row) so mt-auto below pushes both down together as one
-       * unit, flush to the card's bottom edge. */}
+       * unit, flush to the card's bottom edge. The holder/expiry row comes
+       * BEFORE the balance here (not after) so the balance is genuinely the
+       * last thing in the block — with it last, nothing sits below it and
+       * its baseline lands flush against the card's bottom edge exactly
+       * like AccountCardShape's balance (which has nothing below it
+       * either). Balance-after-holder looked reasonable on its own but put
+       * the holder/expiry row below the balance, which meant the balance
+       * text itself never reached the bottom edge and sat visibly higher
+       * than AccountCardShape's. */}
       <div className="mt-auto">
-        {showBalance && balance !== null && (
-          <div className="mb-2">
-            <p className="text-[10px] uppercase tracking-wide" style={{ color: fg.a70 }}>
-              {t("wallet.balanceLabel")}
-            </p>
-            <p className="truncate text-2xl font-bold">{showCurrency ? formatCurrency(balance, currency) : balance.toFixed(2)}</p>
-          </div>
-        )}
         <div className="flex items-end justify-between gap-2" style={rowReserveStyle(false)}>
           <p className="min-w-0 truncate text-xs uppercase tracking-wide" style={{ color: fg.a85 }}>
             {holderName || " "}
@@ -349,6 +349,14 @@ export default function WalletCardShape({
             </p>
           )}
         </div>
+        {showBalance && balance !== null && (
+          <div className="mt-2">
+            <p className="text-[10px] uppercase tracking-wide" style={{ color: fg.a70 }}>
+              {t("wallet.balanceLabel")}
+            </p>
+            <p className="truncate text-2xl font-bold">{showCurrency ? formatCurrency(balance, currency) : balance.toFixed(2)}</p>
+          </div>
+        )}
       </div>
     </div>
   );
