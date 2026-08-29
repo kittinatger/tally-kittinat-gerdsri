@@ -34,7 +34,7 @@ export const RECOLORABLE_BADGE_ASPECT: Partial<Record<CardNetwork, string>> = {
   visa: "3840/1247",
   discover: "3660/835",
   jcb: "3000/2315",
-  "apple-pay": "6655/3153",
+  "apple-pay": "513/211.2",
 };
 
 // The sentinel iconColor value meaning "don't recolor this badge at all —
