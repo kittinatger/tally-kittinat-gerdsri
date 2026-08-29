@@ -23,6 +23,7 @@ import type { MembershipCodeFormat } from "@/lib/memberships";
 
 // None of these are needed on first paint — every one requires a tap first.
 const WalletModal = dynamic(() => import("./WalletModal"), { ssr: false });
+const AddExpenseModal = dynamic(() => import("./AddExpenseModal"), { ssr: false });
 const MembershipCardModal = dynamic(() => import("./MembershipCardModal"), { ssr: false });
 const MembershipCardDetail = dynamic(() => import("./MembershipCardDetail"), { ssr: false });
 const AccountDetail = dynamic(() => import("./AccountDetail"), { ssr: false });
@@ -75,6 +76,13 @@ export default function WalletPageView({
   // accounts, which still offers a real delete for when that's what's
   // actually wanted.
   const [confirmArchiveAccount, setConfirmArchiveAccount] = useState(false);
+  // "Add Money" on a wallet's "..." menu — opens the normal add-transaction
+  // flow pre-filled as an income into that specific wallet, rather than a
+  // dedicated top-up mechanism (this app has no real payment processing —
+  // see the wallet_cards table comment in db.ts — so "adding money" is
+  // just logging an income transaction, the same as anywhere else in the
+  // app).
+  const [addMoneyWallet, setAddMoneyWallet] = useState<WalletOption | null>(null);
   const [passEntryOpen, setPassEntryOpen] = useState(false);
   const [passScanOpen, setPassScanOpen] = useState(false);
 
@@ -325,6 +333,14 @@ export default function WalletPageView({
             <OverflowMenu
               items={[
                 {
+                  label: t("wallet.addMoney"),
+                  icon: <PlusIcon className="h-4 w-4" />,
+                  onClick: () => {
+                    setAddMoneyWallet(viewingAccount);
+                    setViewingAccount(null);
+                  },
+                },
+                {
                   label: t("common.edit"),
                   icon: <EditIcon className="h-4 w-4" />,
                   onClick: () => {
@@ -354,6 +370,18 @@ export default function WalletPageView({
             onArchive={() => handleArchiveAccount(viewingAccount.id)}
           />
         </Modal>
+      )}
+
+      {addMoneyWallet && (
+        <AddExpenseModal
+          initialType="income"
+          initialWalletId={addMoneyWallet.id}
+          onClose={() => setAddMoneyWallet(null)}
+          onCreated={() => {
+            setAddMoneyWallet(null);
+            router.refresh();
+          }}
+        />
       )}
 
       {viewingPass && (

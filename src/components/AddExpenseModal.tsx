@@ -50,10 +50,15 @@ export default function AddExpenseModal({
   onClose,
   onCreated,
   initialType = "expense",
+  initialWalletId = null,
 }: {
   onClose: () => void;
   onCreated: (expense: Expense) => void;
   initialType?: TransactionType;
+  /** Pre-selects a wallet — e.g. "Add Money" on a wallet's detail view
+   * opens this pre-filled as an income into that specific wallet, rather
+   * than whatever wallet happens to be default. */
+  initialWalletId?: number | null;
 }) {
   const allCategories = useAllCategories();
   const wallets = useWallets();
@@ -441,7 +446,7 @@ export default function AddExpenseModal({
             </div>
           )}
           <ExpenseForm
-            initialValues={{ ...emptyExpenseFormValues, type: initialType }}
+            initialValues={{ ...emptyExpenseFormValues, type: initialType, walletId: initialWalletId }}
             submitLabel={t("form.addTransaction")}
             onSubmit={handleManualSubmit}
             submitting={submitting}
