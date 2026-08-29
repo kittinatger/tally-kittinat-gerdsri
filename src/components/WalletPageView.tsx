@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AppHeader from "./AppHeader";
 import PullToRefresh from "./PullToRefresh";
@@ -21,7 +22,6 @@ import type { MembershipCard } from "@/types/membership";
 import type { MembershipCodeFormat } from "@/lib/memberships";
 
 // None of these are needed on first paint — every one requires a tap first.
-const WalletManager = dynamic(() => import("./WalletManager"), { ssr: false });
 const WalletModal = dynamic(() => import("./WalletModal"), { ssr: false });
 const MembershipCardModal = dynamic(() => import("./MembershipCardModal"), { ssr: false });
 const MembershipCardDetail = dynamic(() => import("./MembershipCardDetail"), { ssr: false });
@@ -42,12 +42,10 @@ type PassCategory = "pass" | "membership";
 // flow WalletManager already used.
 export default function WalletPageView({
   wallets,
-  activitiesDefaultWalletId,
   passes: initialPasses,
   memberships: initialMemberships,
 }: {
   wallets: WalletOption[];
-  activitiesDefaultWalletId: number | null;
   passes: MembershipCard[];
   memberships: MembershipCard[];
 }) {
@@ -60,7 +58,6 @@ export default function WalletPageView({
   const [error, setError] = useState<string | null>(null);
 
   const [entryOpen, setEntryOpen] = useState(false);
-  const [manageAccountsOpen, setManageAccountsOpen] = useState(false);
   const [accountModal, setAccountModal] = useState<{ mode: "edit"; wallet: WalletOption } | { mode: "add" } | null>(null);
   const [passModal, setPassModal] = useState<
     | { mode: "add"; scannedValue?: { value: string; format: MembershipCodeFormat } | null }
@@ -228,14 +225,17 @@ export default function WalletPageView({
             <div className="flex items-center justify-between gap-3">
               <h2 className="font-display text-2xl text-foreground">{t("nav.wallet")}</h2>
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setManageAccountsOpen(true)}
+                {/* Manage accounts (incl. archived wallets + restoring one)
+                 * now lives in Settings > Wallets — WalletManager used to
+                 * also render here in its own modal, a second, redundant
+                 * place to find the same archive/restore controls. */}
+                <Link
+                  href="/settings?panel=wallets"
                   aria-label={t("wallet.manageAccounts")}
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-ink-soft transition hover:border-navy hover:text-foreground"
                 >
                   <GearIcon className="h-4.5 w-4.5" />
-                </button>
+                </Link>
                 <button
                   type="button"
                   onClick={() => setEntryOpen(true)}
@@ -316,11 +316,6 @@ export default function WalletPageView({
         />
       )}
 
-      {manageAccountsOpen && (
-        <Modal onClose={() => setManageAccountsOpen(false)} title={t("wallet.manageAccounts")}>
-          <WalletManager wallets={wallets} initialActivitiesDefaultWalletId={activitiesDefaultWalletId} />
-        </Modal>
-      )}
 
       {viewingAccount && (
         <Modal
