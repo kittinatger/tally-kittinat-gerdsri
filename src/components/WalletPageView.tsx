@@ -161,6 +161,7 @@ export default function WalletPageView({
           showBalance={wallet.showBalance}
           showCurrency={wallet.showCurrency}
           showCardNumber={wallet.showCardNumber}
+          showName={wallet.showName}
         />
       ) : (
         <AccountCardShape wallet={wallet} currency={currency} />

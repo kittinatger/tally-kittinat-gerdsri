@@ -147,6 +147,7 @@ export default function WalletCardShape({
   showBalance = false,
   showCurrency = true,
   showCardNumber = true,
+  showName = true,
 }: {
   label: string;
   holderName: string | null;
@@ -192,6 +193,8 @@ export default function WalletCardShape({
    * (no last4 set) it's an all-dots placeholder some users would rather
    * not show. */
   showCardNumber?: boolean;
+  /** Whether the wallet's name renders on the card face at all. */
+  showName?: boolean;
 }) {
   const t = useT();
   const expiry = expiryMonth && expiryYear ? `${String(expiryMonth).padStart(2, "0")}/${String(expiryYear).slice(-2)}` : null;
@@ -298,8 +301,11 @@ export default function WalletCardShape({
         </div>
       )}
 
+      {/* Kept as one row even when the name itself is hidden, same reasoning
+       * as the card-number row below — dropping it outright would change
+       * how many top-level rows the outer flex justify-between distributes. */}
       <div className="flex items-start" style={rowReserveStyle(true)}>
-        <p className="min-w-0 truncate text-sm font-semibold">{label}</p>
+        {showName && <p className="min-w-0 truncate text-sm font-semibold">{label}</p>}
       </div>
 
       {/* Kept as one row even when the number itself is hidden (rather than

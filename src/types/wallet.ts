@@ -48,4 +48,6 @@ export type WalletOption = {
   showCurrency: boolean;
   /** Whether the masked "•••• •••• •••• 1234" card-number row shows at all. */
   showCardNumber: boolean;
+  /** Whether the wallet's name renders on the card face at all. */
+  showName: boolean;
 };

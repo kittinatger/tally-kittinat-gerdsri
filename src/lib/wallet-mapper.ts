@@ -40,5 +40,6 @@ export function toWalletOption(w: WalletRow): WalletOption {
     showBalance: w.show_balance,
     showCurrency: w.show_currency,
     showCardNumber: w.show_card_number,
+    showName: w.show_name,
   };
 }
