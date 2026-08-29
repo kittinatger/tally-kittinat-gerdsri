@@ -7,7 +7,7 @@ import SelectDropdown from "./SelectDropdown";
 import FormSection from "./FormSection";
 import ColorGlowPreview from "./ColorGlowPreview";
 import AccountCardShape from "./AccountCardShape";
-import WalletCardShape from "./WalletCardShape";
+import WalletCardShape, { RECOLORABLE_BADGE_ASPECT, ICON_COLOR_ORIGINAL } from "./WalletCardShape";
 import CardBackgroundPicker from "./CardBackgroundPicker";
 import CardTextColorPicker from "./CardTextColorPicker";
 import { CATEGORY_PALETTE } from "@/lib/categories";
@@ -393,7 +393,11 @@ export default function WalletOrCardModal({
                     <button
                       key={n}
                       type="button"
-                      onClick={() => setNetwork(n)}
+                      onClick={() => {
+                        setNetwork(n);
+                        // See the matching comment in WalletCardModal.tsx.
+                        if (cardIconColor === ICON_COLOR_ORIGINAL && !RECOLORABLE_BADGE_ASPECT[n]) setCardIconColor(null);
+                      }}
                       className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                         network === n
                           ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
@@ -600,11 +604,35 @@ export default function WalletOrCardModal({
                 <div className="border-t border-line pt-3">
                   <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.iconColorLabel")}</label>
                   <p className="mb-1.5 text-[11px] text-ink-soft">{t("wallet.iconColorDesc")}</p>
-                  <CardTextColorPicker
-                    value={cardIconColor}
-                    onChange={setCardIconColor}
-                    autoColor={cardForegroundFor(cardTextColor, cardBackground, cardColor).full}
-                  />
+                  {cardIconColor === ICON_COLOR_ORIGINAL ? (
+                    <div className="flex items-center justify-between gap-2 rounded-card border border-line bg-bg-soft px-3.5 py-2.5">
+                      <span className="text-xs text-ink-soft">{t("wallet.iconColorOriginalActive")}</span>
+                      <button
+                        type="button"
+                        onClick={() => setCardIconColor(null)}
+                        className="shrink-0 text-xs font-semibold text-navy underline dark:text-blue-300"
+                      >
+                        {t("wallet.iconColorCustomize")}
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <CardTextColorPicker
+                        value={cardIconColor}
+                        onChange={setCardIconColor}
+                        autoColor={cardForegroundFor(cardTextColor, cardBackground, cardColor).full}
+                      />
+                      {RECOLORABLE_BADGE_ASPECT[network] && (
+                        <button
+                          type="button"
+                          onClick={() => setCardIconColor(ICON_COLOR_ORIGINAL)}
+                          className="mt-1.5 text-xs font-semibold text-ink-soft underline"
+                        >
+                          {t("wallet.iconColorUseOriginal")}
+                        </button>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
             </FormSection>

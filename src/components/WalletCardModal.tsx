@@ -3,7 +3,7 @@
 import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
 import Modal from "./Modal";
-import WalletCardShape from "./WalletCardShape";
+import WalletCardShape, { RECOLORABLE_BADGE_ASPECT, ICON_COLOR_ORIGINAL } from "./WalletCardShape";
 import FormSection from "./FormSection";
 import ColorGlowPreview from "./ColorGlowPreview";
 import { CATEGORY_PALETTE } from "@/lib/categories";
@@ -207,7 +207,16 @@ export default function WalletCardModal({
                 <button
                   key={n}
                   type="button"
-                  onClick={() => setNetwork(n)}
+                  onClick={() => {
+                    setNetwork(n);
+                    // "original colors" only means something for a network
+                    // that's actually recolorable — carrying it over to a
+                    // fixed-logo network would silently do nothing (that
+                    // network already always renders its original colors)
+                    // while leaving stale, confusing "showing original
+                    // colors" UI behind.
+                    if (iconColor === ICON_COLOR_ORIGINAL && !RECOLORABLE_BADGE_ASPECT[n]) setIconColor(null);
+                  }}
                   className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                     network === n
                       ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
@@ -410,11 +419,35 @@ export default function WalletCardModal({
             <div className="border-t border-line pt-3">
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.iconColorLabel")}</label>
               <p className="mb-1.5 text-[11px] text-ink-soft">{t("wallet.iconColorDesc")}</p>
-              <CardTextColorPicker
-                value={iconColor}
-                onChange={setIconColor}
-                autoColor={cardForegroundFor(textColor, background, color).full}
-              />
+              {iconColor === ICON_COLOR_ORIGINAL ? (
+                <div className="flex items-center justify-between gap-2 rounded-card border border-line bg-bg-soft px-3.5 py-2.5">
+                  <span className="text-xs text-ink-soft">{t("wallet.iconColorOriginalActive")}</span>
+                  <button
+                    type="button"
+                    onClick={() => setIconColor(null)}
+                    className="shrink-0 text-xs font-semibold text-navy underline dark:text-blue-300"
+                  >
+                    {t("wallet.iconColorCustomize")}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <CardTextColorPicker
+                    value={iconColor}
+                    onChange={setIconColor}
+                    autoColor={cardForegroundFor(textColor, background, color).full}
+                  />
+                  {RECOLORABLE_BADGE_ASPECT[network] && (
+                    <button
+                      type="button"
+                      onClick={() => setIconColor(ICON_COLOR_ORIGINAL)}
+                      className="mt-1.5 text-xs font-semibold text-ink-soft underline"
+                    >
+                      {t("wallet.iconColorUseOriginal")}
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           )}
         </FormSection>

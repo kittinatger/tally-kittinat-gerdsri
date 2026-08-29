@@ -58,6 +58,16 @@ const cardTextColorSchema = z
   .regex(/^#[0-9a-fA-F]{6}$/, "Must be a 6-digit hex color")
   .nullable();
 
+// Same shape as cardTextColorSchema, plus one extra sentinel: the wallet
+// card badge/icon color can also be explicitly set to "original", meaning
+// "render the network's real brand-color artwork, not a recolored mask" —
+// see RECOLORABLE_BADGE_ASPECT in WalletCardShape.tsx.
+const cardIconColorSchema = z
+  .string()
+  .trim()
+  .refine((v) => v === "original" || /^#[0-9a-fA-F]{6}$/.test(v), 'Must be a 6-digit hex color or "original"')
+  .nullable();
+
 export const forgotPasswordInputSchema = z.object({
   email: z.string().trim().email().max(255),
 });
@@ -376,7 +386,7 @@ export const walletCardInputSchema = z.object({
   color: z.string().trim().min(1).max(30),
   background: cardBackgroundSchema.optional(),
   textColor: cardTextColorSchema.optional(),
-  iconColor: cardTextColorSchema.optional(),
+  iconColor: cardIconColorSchema.optional(),
   showNetworkBadge: z.boolean().default(true),
   badgePosition: z.enum(BADGE_POSITIONS).default("topRight"),
   showChip: z.boolean().default(true),
@@ -401,7 +411,7 @@ export const walletCardUpdateSchema = z
     color: z.string().trim().min(1).max(30).optional(),
     background: cardBackgroundSchema.optional(),
     textColor: cardTextColorSchema.optional(),
-    iconColor: cardTextColorSchema.optional(),
+    iconColor: cardIconColorSchema.optional(),
     showNetworkBadge: z.boolean().optional(),
     badgePosition: z.enum(BADGE_POSITIONS).optional(),
     showChip: z.boolean().optional(),

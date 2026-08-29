@@ -30,12 +30,19 @@ const NETWORK_LABEL_KEYS: Record<CardNetwork, MessageKey> = {
 // (fine for JCB's tricolor logo — it reads clearly as a plain silhouette
 // too — but would lose real detail on a mark that depends on distinct
 // colored regions to read at all).
-const RECOLORABLE_BADGE_ASPECT: Partial<Record<CardNetwork, string>> = {
+export const RECOLORABLE_BADGE_ASPECT: Partial<Record<CardNetwork, string>> = {
   visa: "3840/1247",
   discover: "3660/835",
   jcb: "3000/2315",
   "apple-pay": "6655/3153",
 };
+
+// The sentinel iconColor value meaning "don't recolor this badge at all —
+// render its real brand-color artwork" — see cardIconColorSchema in
+// validation.ts. Only meaningful for a network in RECOLORABLE_BADGE_ASPECT;
+// a fixed-logo network (mastercard, amex, unionpay) already always renders
+// its original colors, recolorable or not.
+export const ICON_COLOR_ORIGINAL = "original";
 
 // A generic 2-letter monogram per network, not the real initials/shapes any
 // brand uses — see NetworkBadge below for why.
@@ -146,9 +153,11 @@ export default function WalletCardShape({
   /** Manual text-color override — null means auto-contrast against the background. */
   textColor?: string | null;
   /** Manual network-badge/icon color override — null means it follows
-   * textColor's resolved color. Only visible on visa/discover (mask-
-   * recolored) and the generic monogram badge; other networks render a
-   * fixed-color brand logo that isn't tintable at all. */
+   * textColor's resolved color; ICON_COLOR_ORIGINAL ("original") means
+   * render the network's real brand-color artwork instead of recoloring it
+   * at all. Only visible on visa/discover/jcb/apple-pay (mask-recolored)
+   * and the generic monogram badge; other networks render a fixed-color
+   * brand logo that isn't tintable at all. */
   iconColor?: string | null;
   showNetworkBadge?: boolean;
   /** Which corner the network badge sits in — see badge-position.ts. */
@@ -167,8 +176,12 @@ export default function WalletCardShape({
   // or the manual textColor override) rather than its own independent
   // auto-contrast pass — so leaving it unset keeps the badge visually tied
   // to the text the way it always was, and setting it is a deliberate
-  // departure from that, not a second unrelated "auto" guess.
-  const iconFg = iconColor ? cardForegroundFor(iconColor, background, color) : fg;
+  // departure from that, not a second unrelated "auto" guess. "original"
+  // isn't a real color at all — it skips recoloring entirely (see the
+  // badge render below) — so it's excluded here rather than fed into
+  // cardForegroundFor, which expects a hex color or null.
+  const isOriginalIcon = iconColor === ICON_COLOR_ORIGINAL;
+  const iconFg = iconColor && !isOriginalIcon ? cardForegroundFor(iconColor, background, color) : fg;
   // The badge floats free of the label/holder/expiry text rows (absolute,
   // anchored to whichever corner is picked) rather than sharing a flex row
   // with them, since any of the 4 corners can coincide with text that's
@@ -227,7 +240,7 @@ export default function WalletCardShape({
     >
       {showNetworkBadge && (
         <div className={`absolute flex items-center gap-1.5 ${BADGE_POSITION_CLASSES[badgePosition]}`} style={{ color: iconFg.a85 }}>
-          {RECOLORABLE_BADGE_ASPECT[network] ? (
+          {RECOLORABLE_BADGE_ASPECT[network] && !isOriginalIcon ? (
             <div
               aria-label={network}
               className="h-5"
