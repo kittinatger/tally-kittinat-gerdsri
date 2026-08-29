@@ -7,7 +7,7 @@ import { badgeClasses, colorDotStyle } from "@/lib/category-styles";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency } from "@/lib/format";
 import type { WalletOption } from "@/types/wallet";
-import { EditIcon, TrashIcon, PlusIcon } from "@/lib/icons";
+import { EditIcon, TrashIcon, PlusIcon, ArchiveIcon } from "@/lib/icons";
 import WalletModal from "./WalletModal";
 import WalletTransferModal from "./WalletTransferModal";
 import WalletShareModal from "./WalletShareModal";
@@ -32,15 +32,6 @@ function WalletGlyphIcon() {
       <path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h9A1.5 1.5 0 0 1 15 6.5v8A1.5 1.5 0 0 1 13.5 16h-9A1.5 1.5 0 0 1 3 14.5Z" />
       <path d="M3 8.5h13.5A1.5 1.5 0 0 1 18 10v4a1.5 1.5 0 0 1-1.5 1.5" />
       <circle cx="13.5" cy="11.5" r="1" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
-function ArchiveIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <rect x="3" y="4" width="18" height="4" rx="1" />
-      <path d="M5 8v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M10 12h4" />
     </svg>
   );
 }

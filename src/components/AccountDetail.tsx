@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TrashIcon, CategoryIcon } from "@/lib/icons";
+import { ArchiveIcon, CategoryIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 import { useCurrency } from "@/lib/currency-context";
 import { useCategoryColor, useCategoryIcon } from "@/lib/categories-context";
@@ -84,29 +84,31 @@ function TransactionRow({ expense, currency }: { expense: Expense; currency: str
   );
 }
 
-// Deleting is only safe to expose here because deleteWallet (db.ts) itself
-// already refuses to delete a wallet with transactions on it — this just
-// surfaces that as an inline error rather than blocking the button from
-// being tappable at all. Renders as a payment card (WalletCardShape) when
-// the wallet has a network set, or a plain account (AccountCardShape)
-// otherwise — see WalletPageView. Edit and the Delete *trigger* both live
-// in the Modal header's overflow menu now — nothing destructive sits as a
-// permanently-visible button any more, so a stray tap can't reach either
-// one. Delete's own confirm step (confirmDelete/onCancelDelete, owned by
-// the caller so it can reset when a different wallet is opened) still
-// renders here in the body, one deliberate step further from the trigger.
+// A wallet is archived here, never hard-deleted — reversible any time from
+// Manage accounts (WalletManager still has a real, permanent delete for
+// when that's actually wanted). updateWallet (db.ts) itself already
+// refuses to archive the last active wallet, which surfaces here as an
+// inline error rather than blocking the trigger from being tappable at
+// all. Renders as a payment card (WalletCardShape) when the wallet has a
+// network set, or a plain account (AccountCardShape) otherwise — see
+// WalletPageView. Edit and the Archive *trigger* both live in the Modal
+// header's overflow menu now — nothing sits as a permanently-visible
+// button any more, so a stray tap can't reach either one. Archive's own
+// confirm step (confirmArchive/onCancelArchive, owned by the caller so it
+// can reset when a different wallet is opened) still renders here in the
+// body, one deliberate step further from the trigger.
 export default function AccountDetail({
   wallet,
-  onDelete,
-  deleteError,
-  confirmDelete,
-  onCancelDelete,
+  onArchive,
+  archiveError,
+  confirmArchive,
+  onCancelArchive,
 }: {
   wallet: WalletOption;
-  onDelete: () => void;
-  deleteError: string | null;
-  confirmDelete: boolean;
-  onCancelDelete: () => void;
+  onArchive: () => void;
+  archiveError: string | null;
+  confirmArchive: boolean;
+  onCancelArchive: () => void;
 }) {
   const t = useT();
   const appCurrency = useCurrency();
@@ -209,28 +211,29 @@ export default function AccountDetail({
         )}
       </div>
 
-      {deleteError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{deleteError}</p>}
+      {archiveError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{archiveError}</p>}
 
-      {/* Only rendered once "..." → Delete has actually been tapped (see
-       * WalletPageView) — no destructive control is ever just sitting here
-       * by default. */}
-      {confirmDelete && (
-        <div className="mt-4 space-y-2 rounded-card border border-red-200 bg-red-50 p-3.5 dark:border-red-900/40 dark:bg-red-900/20">
-          <p className="flex items-center gap-1.5 text-sm font-semibold text-red-700 dark:text-red-300">
-            <TrashIcon className="h-4 w-4" />
-            {t("wallet.confirmDeleteTitle")}
+      {/* Only rendered once "..." → Archive has actually been tapped (see
+       * WalletPageView) — no control is ever just sitting here by default.
+       * Not styled as a destructive/red warning — archiving is reversible
+       * from Manage accounts, unlike a real delete. */}
+      {confirmArchive && (
+        <div className="mt-4 space-y-2 rounded-card border border-line bg-bg-soft p-3.5">
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+            <ArchiveIcon className="h-4 w-4" />
+            {t("wallet.confirmArchiveTitle")}
           </p>
-          <p className="text-xs text-red-700/80 dark:text-red-300/80">{t("wallet.confirmDeleteDesc")}</p>
+          <p className="text-xs text-ink-soft">{t("wallet.confirmArchiveDesc")}</p>
           <div className="flex items-center gap-2 pt-1">
             <button
               type="button"
-              onClick={onCancelDelete}
+              onClick={onCancelArchive}
               className="flex-1 rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-foreground transition hover:border-navy"
             >
               {t("common.cancel")}
             </button>
-            <button type="button" onClick={onDelete} className="flex-1 rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700">
-              {t("common.confirmDelete")}
+            <button type="button" onClick={onArchive} className="flex-1 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white transition hover:bg-navy-dark">
+              {t("wallet.archive")}
             </button>
           </div>
         </div>

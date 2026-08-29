@@ -15,7 +15,7 @@ import PassShape from "./PassShape";
 import { useT } from "@/lib/language-context";
 import { useCurrency } from "@/lib/currency-context";
 import { describeFetchError } from "@/lib/fetch-error";
-import { PlusIcon, GearIcon, EditIcon, TrashIcon } from "@/lib/icons";
+import { PlusIcon, GearIcon, EditIcon, ArchiveIcon } from "@/lib/icons";
 import type { WalletOption } from "@/types/wallet";
 import type { MembershipCard } from "@/types/membership";
 import type { MembershipCodeFormat } from "@/lib/memberships";
@@ -69,12 +69,15 @@ export default function WalletPageView({
   >(null);
   const [viewingPass, setViewingPass] = useState<MembershipCard | null>(null);
   const [viewingAccount, setViewingAccount] = useState<WalletOption | null>(null);
-  const [accountDeleteError, setAccountDeleteError] = useState<string | null>(null);
-  // Delete lives behind the "..." menu (see headerRight below), not as a
-  // permanently-visible button — this still gates the actual delete behind
-  // its own explicit confirm step in the body, so it takes "..." → Delete
-  // → Confirm delete, not a single easy-to-misclick tap.
-  const [confirmDeleteAccount, setConfirmDeleteAccount] = useState(false);
+  const [accountArchiveError, setAccountArchiveError] = useState<string | null>(null);
+  // Archive lives behind the "..." menu (see headerRight below), not as a
+  // permanently-visible button — this still gates it behind its own
+  // explicit confirm step in the body, so it takes "..." → Archive →
+  // Confirm, not a single easy-to-misclick tap. Archiving (not a real
+  // delete) from this quick card-detail view is reversible via Manage
+  // accounts, which still offers a real delete for when that's what's
+  // actually wanted.
+  const [confirmArchiveAccount, setConfirmArchiveAccount] = useState(false);
   const [passEntryOpen, setPassEntryOpen] = useState(false);
   const [passScanOpen, setPassScanOpen] = useState(false);
 
@@ -117,22 +120,28 @@ export default function WalletPageView({
     }
   }
 
-  // deleteWallet (db.ts) refuses to delete a wallet with transactions on
-  // it, so the error is shown inline in AccountDetail rather than closing
-  // the modal — same as WalletManager's own delete flow.
-  async function handleDeleteAccount(id: number) {
-    setAccountDeleteError(null);
+  // Archiving (not deleting) from the quick card-detail view — reversible
+  // via Manage accounts, unlike the real delete WalletManager still offers
+  // there. updateWallet (db.ts) refuses to archive the last active wallet,
+  // so that error is shown inline in AccountDetail rather than closing the
+  // modal, same as the old delete flow did.
+  async function handleArchiveAccount(id: number) {
+    setAccountArchiveError(null);
     try {
-      const res = await fetch(`/api/wallets/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/wallets/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archived: true }),
+      });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        setAccountDeleteError(typeof data?.error === "string" ? data.error : "Could not delete that wallet.");
+        setAccountArchiveError(typeof data?.error === "string" ? data.error : "Could not archive that wallet.");
         return;
       }
       setViewingAccount(null);
       router.refresh();
     } catch (err) {
-      setAccountDeleteError(describeFetchError(err));
+      setAccountArchiveError(describeFetchError(err));
     }
   }
 
@@ -173,8 +182,8 @@ export default function WalletPageView({
         <AccountCardShape wallet={wallet} currency={currency} />
       ),
       onOpen: () => {
-        setAccountDeleteError(null);
-        setConfirmDeleteAccount(false);
+        setAccountArchiveError(null);
+        setConfirmArchiveAccount(false);
         setViewingAccount(wallet);
       },
       ariaLabel: wallet.name,
@@ -329,13 +338,13 @@ export default function WalletPageView({
                   },
                 },
                 {
-                  label: t("common.delete"),
-                  icon: <TrashIcon className="h-4 w-4" />,
-                  destructive: true,
-                  // Doesn't delete on this tap — just reveals the body's own
-                  // confirm step (see AccountDetail), the same way it used
-                  // to need a second tap on the old always-visible button.
-                  onClick: () => setConfirmDeleteAccount(true),
+                  label: t("wallet.archive"),
+                  icon: <ArchiveIcon className="h-4 w-4" />,
+                  // Doesn't archive on this tap — just reveals the body's
+                  // own confirm step (see AccountDetail). Not marked
+                  // destructive: archiving is reversible from Manage
+                  // accounts, unlike the real delete that used to live here.
+                  onClick: () => setConfirmArchiveAccount(true),
                 },
               ]}
             />
@@ -344,10 +353,10 @@ export default function WalletPageView({
           <AccountDetail
             key={viewingAccount.id}
             wallet={viewingAccount}
-            deleteError={accountDeleteError}
-            confirmDelete={confirmDeleteAccount}
-            onCancelDelete={() => setConfirmDeleteAccount(false)}
-            onDelete={() => handleDeleteAccount(viewingAccount.id)}
+            archiveError={accountArchiveError}
+            confirmArchive={confirmArchiveAccount}
+            onCancelArchive={() => setConfirmArchiveAccount(false)}
+            onArchive={() => handleArchiveAccount(viewingAccount.id)}
           />
         </Modal>
       )}

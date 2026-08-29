@@ -172,6 +172,15 @@ export function MembershipCardIcon({ className }: IconProps) {
   );
 }
 
+export function ArchiveIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <rect x="3" y="4" width="18" height="4" rx="1" />
+      <path d="M5 8v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M10 12h4" />
+    </svg>
+  );
+}
+
 export function MoreIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 20 20" fill="currentColor" className={base(className, "h-4 w-4")}>
