@@ -146,6 +146,7 @@ export default function WalletCardShape({
   currency = "",
   showBalance = false,
   showCurrency = true,
+  showCardNumber = true,
 }: {
   label: string;
   holderName: string | null;
@@ -186,6 +187,11 @@ export default function WalletCardShape({
   /** Whether that row's amount is currency-formatted (localized, symbol)
    * or shown as a bare number — both only apply when showBalance is true. */
   showCurrency?: boolean;
+  /** Whether the masked "•••• •••• •••• 1234" row shows at all — no full
+   * PAN is ever stored, so at best this is the last4 digits and at worst
+   * (no last4 set) it's an all-dots placeholder some users would rather
+   * not show. */
+  showCardNumber?: boolean;
 }) {
   const t = useT();
   const expiry = expiryMonth && expiryYear ? `${String(expiryMonth).padStart(2, "0")}/${String(expiryYear).slice(-2)}` : null;
@@ -296,11 +302,18 @@ export default function WalletCardShape({
         <p className="min-w-0 truncate text-sm font-semibold">{label}</p>
       </div>
 
+      {/* Kept as one row even when the number itself is hidden (rather than
+       * omitting the row outright) — same reasoning as the balance/holder
+       * grouping below: the outer card's flex justify-between distributes
+       * however many top-level rows it has, so dropping this one entirely
+       * would shift every other row's position depending on the toggle. */}
       <div className="flex items-center gap-2">
         {showChip && !chipInCorner && <EMVChip color={chipColor} />}
-        <p className="truncate text-base font-semibold tracking-[0.15em]">
-          •••• •••• •••• {last4 ?? "••••"}
-        </p>
+        {showCardNumber && (
+          <p className="truncate text-base font-semibold tracking-[0.15em]">
+            •••• •••• •••• {last4 ?? "••••"}
+          </p>
+        )}
       </div>
 
       {/* Grouped into one bottom block (rather than each being its own

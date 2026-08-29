@@ -46,4 +46,6 @@ export type WalletOption = {
   showBalance: boolean;
   /** Whether the currency shows/is selectable on the card face. */
   showCurrency: boolean;
+  /** Whether the masked "•••• •••• •••• 1234" card-number row shows at all. */
+  showCardNumber: boolean;
 };

@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 35;
+const CURRENT_SCHEMA_VERSION = 36;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -537,11 +537,18 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS notes TEXT;`;
 
       // Per-wallet toggles for what shows on the card face — independent of
-      // whether it has a card look at all (network IS NOT NULL). Both
+      // whether it has a card look at all (network IS NOT NULL). All
       // default true so every existing wallet (and every migrated card, see
       // below) keeps rendering exactly as it did before these existed.
       await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS show_balance BOOLEAN NOT NULL DEFAULT true;`;
       await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS show_currency BOOLEAN NOT NULL DEFAULT true;`;
+
+      // Whether the masked "•••• •••• •••• 1234" card-number row shows at
+      // all — since no full PAN is ever stored (see the wallet_cards
+      // comment below), that row is always the last4 digits at best and
+      // an all-dots placeholder at worst, which some users would rather
+      // just not show.
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS show_card_number BOOLEAN NOT NULL DEFAULT true;`;
 
       // Which wallet the Activities page's balance card is scoped to on
       // load — separate from is_default (which wallet new transactions fall
@@ -1372,6 +1379,7 @@ export type WalletRow = {
   notes: string | null;
   show_balance: boolean;
   show_currency: boolean;
+  show_card_number: boolean;
 };
 
 // The full column list every wallet-returning query below selects — one
@@ -1380,7 +1388,7 @@ const WALLET_COLUMNS = `
   w.id, w.name, w.color, w.background, w.text_color, w.kind, w.currency, w.is_default, w.archived,
   w.holder_name, w.last4, w.expiry_month, w.expiry_year, w.network,
   w.show_network_badge, w.badge_position, w.icon_color, w.show_chip, w.chip_color,
-  w.chip_position, w.notes, w.show_balance, w.show_currency
+  w.chip_position, w.notes, w.show_balance, w.show_currency, w.show_card_number
 `;
 const WALLET_BALANCE_EXPR = `
   (
@@ -1444,6 +1452,7 @@ export async function createWallet(
     notes?: string | null;
     showBalance?: boolean;
     showCurrency?: boolean;
+    showCardNumber?: boolean;
   },
 ): Promise<WalletRow> {
   await ensureSchema();
@@ -1459,6 +1468,7 @@ export async function createWallet(
   const chipPosition = input.chipPosition ?? "middleLeft";
   const showBalance = input.showBalance ?? true;
   const showCurrency = input.showCurrency ?? true;
+  const showCardNumber = input.showCardNumber ?? true;
   const { rows } = await sql<{
     id: number;
     name: string;
@@ -1481,24 +1491,25 @@ export async function createWallet(
     notes: string | null;
     show_balance: boolean;
     show_currency: boolean;
+    show_card_number: boolean;
   }>`
     INSERT INTO wallets (
       user_id, name, color, background, text_color, kind, currency, sort_order,
       holder_name, last4, expiry_month, expiry_year, network,
       show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
-      show_balance, show_currency
+      show_balance, show_currency, show_card_number
     )
     VALUES (
       ${userId}, ${input.name}, ${input.color}, ${backgroundJson}, ${input.textColor ?? null}, ${input.kind}, ${input.currency ?? null}, ${nextSort},
       ${input.holderName ?? null}, ${input.last4 ?? null}, ${input.expiryMonth ?? null}, ${input.expiryYear ?? null}, ${input.network ?? null},
       ${showNetworkBadge}, ${badgePosition}, ${input.iconColor ?? null}, ${showChip}, ${chipColor}, ${chipPosition}, ${input.notes ?? null},
-      ${showBalance}, ${showCurrency}
+      ${showBalance}, ${showCurrency}, ${showCardNumber}
     )
     RETURNING
       id, name, color, background, text_color, kind, currency,
       holder_name, last4, expiry_month, expiry_year, network,
       show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
-      show_balance, show_currency;
+      show_balance, show_currency, show_card_number;
   `;
   return { ...rows[0], is_default: false, archived: false, balance: "0", is_owner: true };
 }
@@ -1530,6 +1541,7 @@ export async function updateWallet(
     notes?: string | null;
     showBalance?: boolean;
     showCurrency?: boolean;
+    showCardNumber?: boolean;
   },
 ): Promise<WalletRow | { ok: false; error: string } | null> {
   await ensureSchema();
@@ -1556,12 +1568,13 @@ export async function updateWallet(
     notes: string | null;
     show_balance: boolean;
     show_currency: boolean;
+    show_card_number: boolean;
   }>`
     SELECT
       name, color, background, text_color, kind, currency, is_default, archived,
       holder_name, last4, expiry_month, expiry_year, network,
       show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
-      show_balance, show_currency
+      show_balance, show_currency, show_card_number
     FROM wallets WHERE id = ${id} AND user_id = ${userId};
   `;
   const existing = existingRows[0];
@@ -1598,6 +1611,7 @@ export async function updateWallet(
   const newNotes = input.notes !== undefined ? input.notes : existing.notes;
   const newShowBalance = input.showBalance ?? existing.show_balance;
   const newShowCurrency = input.showCurrency ?? existing.show_currency;
+  const newShowCardNumber = input.showCardNumber ?? existing.show_card_number;
 
   const client = await db.connect();
   try {
@@ -1611,7 +1625,7 @@ export async function updateWallet(
             holder_name = ${newHolderName}, last4 = ${newLast4}, expiry_month = ${newExpiryMonth}, expiry_year = ${newExpiryYear}, network = ${newNetwork},
             show_network_badge = ${newShowNetworkBadge}, badge_position = ${newBadgePosition}, icon_color = ${newIconColor},
             show_chip = ${newShowChip}, chip_color = ${newChipColor}, chip_position = ${newChipPosition}, notes = ${newNotes},
-            show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}
+            show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}, show_card_number = ${newShowCardNumber}
         WHERE id = ${id} AND user_id = ${userId};
       `;
     } else {
@@ -1621,7 +1635,7 @@ export async function updateWallet(
             holder_name = ${newHolderName}, last4 = ${newLast4}, expiry_month = ${newExpiryMonth}, expiry_year = ${newExpiryYear}, network = ${newNetwork},
             show_network_badge = ${newShowNetworkBadge}, badge_position = ${newBadgePosition}, icon_color = ${newIconColor},
             show_chip = ${newShowChip}, chip_color = ${newChipColor}, chip_position = ${newChipPosition}, notes = ${newNotes},
-            show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}
+            show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}, show_card_number = ${newShowCardNumber}
         WHERE id = ${id} AND user_id = ${userId};
       `;
     }

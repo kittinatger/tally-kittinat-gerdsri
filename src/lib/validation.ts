@@ -193,6 +193,7 @@ const walletCardVisualFields = {
   // whether it has a card look at all.
   showBalance: z.boolean().optional(),
   showCurrency: z.boolean().optional(),
+  showCardNumber: z.boolean().optional(),
 };
 
 export const walletInputSchema = z.object({

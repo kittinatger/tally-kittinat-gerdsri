@@ -87,6 +87,7 @@ export default function WalletModal({
   // on separately.
   const [showBalance, setShowBalance] = useState(wallet?.showBalance ?? true);
   const [showCurrency, setShowCurrency] = useState(wallet?.showCurrency ?? true);
+  const [showCardNumber, setShowCardNumber] = useState(wallet?.showCardNumber ?? true);
 
   const month = expiryMonth ? Number(expiryMonth) : null;
   const year = expiryYear ? Number(expiryYear) : null;
@@ -123,6 +124,7 @@ export default function WalletModal({
     notes: cardNotes || null,
     showBalance,
     showCurrency,
+    showCardNumber,
   };
 
   function handleCurrencyChange(label: string) {
@@ -153,6 +155,7 @@ export default function WalletModal({
         notes: cardNotes.trim() || null,
         showBalance,
         showCurrency,
+        showCardNumber,
       };
       const res = isEdit
         ? await fetch(`/api/wallets/${wallet!.id}`, {
@@ -220,6 +223,7 @@ export default function WalletModal({
               currency={currency ?? appCurrency}
               showBalance={showBalance}
               showCurrency={showCurrency}
+              showCardNumber={showCardNumber}
             />
           ) : (
             <AccountCardShape wallet={previewWallet} currency={appCurrency} />
@@ -432,6 +436,32 @@ export default function WalletModal({
                 ))}
               </div>
             </div>
+          )}
+
+          {hasCardLook && (
+            <button
+              type="button"
+              onClick={() => setShowCardNumber((v) => !v)}
+              className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+            >
+              <span>
+                <span className="block text-sm font-medium text-foreground">{t("wallet.showCardNumberLabel")}</span>
+                <span className="block text-xs text-ink-soft">{t("wallet.showCardNumberDesc")}</span>
+              </span>
+              <span
+                role="switch"
+                aria-checked={showCardNumber}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                  showCardNumber ? "bg-navy" : "bg-line"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                    showCardNumber ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </span>
+            </button>
           )}
 
           {hasCardLook && (
