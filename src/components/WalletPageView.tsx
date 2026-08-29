@@ -21,9 +21,25 @@ import type { WalletOption } from "@/types/wallet";
 import type { MembershipCard } from "@/types/membership";
 import type { MembershipCodeFormat } from "@/lib/memberships";
 
+// Same glyph as WalletManager's own local ShareIcon — this app keeps
+// ShareIcon defined per-file rather than as one shared icons.tsx export
+// (ExpenseRow and WalletCardShape each have their own too, for a
+// different "share to app" meaning), so this follows that convention.
+function ShareIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <circle cx="15" cy="5" r="2.25" />
+      <circle cx="5" cy="10" r="2.25" />
+      <circle cx="15" cy="15" r="2.25" />
+      <path d="M7 8.9l6-2.8M7 11.1l6 2.8" />
+    </svg>
+  );
+}
+
 // None of these are needed on first paint — every one requires a tap first.
 const WalletModal = dynamic(() => import("./WalletModal"), { ssr: false });
 const AddExpenseModal = dynamic(() => import("./AddExpenseModal"), { ssr: false });
+const WalletShareModal = dynamic(() => import("./WalletShareModal"), { ssr: false });
 const MembershipCardModal = dynamic(() => import("./MembershipCardModal"), { ssr: false });
 const MembershipCardDetail = dynamic(() => import("./MembershipCardDetail"), { ssr: false });
 const AccountDetail = dynamic(() => import("./AccountDetail"), { ssr: false });
@@ -83,6 +99,12 @@ export default function WalletPageView({
   // just logging an income transaction, the same as anywhere else in the
   // app).
   const [addMoneyWallet, setAddMoneyWallet] = useState<WalletOption | null>(null);
+  // "Share" on a wallet's "..." menu — invites a friend to co-operate on
+  // it (same wallet_members flow WalletManager already offered). Only
+  // meaningful for a wallet this account actually owns — a member of a
+  // wallet shared *with* them can't invite further members themselves,
+  // same restriction WalletManager already enforces.
+  const [sharingWallet, setSharingWallet] = useState<WalletOption | null>(null);
   const [passEntryOpen, setPassEntryOpen] = useState(false);
   const [passScanOpen, setPassScanOpen] = useState(false);
 
@@ -324,6 +346,9 @@ export default function WalletPageView({
         />
       )}
 
+      {sharingWallet && (
+        <WalletShareModal walletId={sharingWallet.id} walletName={sharingWallet.name} onClose={() => setSharingWallet(null)} />
+      )}
 
       {viewingAccount && (
         <Modal
@@ -340,6 +365,18 @@ export default function WalletPageView({
                     setViewingAccount(null);
                   },
                 },
+                ...(viewingAccount.isOwner
+                  ? [
+                      {
+                        label: t("wallet.shareWallet"),
+                        icon: <ShareIcon className="h-4 w-4" />,
+                        onClick: () => {
+                          setSharingWallet(viewingAccount);
+                          setViewingAccount(null);
+                        },
+                      },
+                    ]
+                  : []),
                 {
                   label: t("common.edit"),
                   icon: <EditIcon className="h-4 w-4" />,
