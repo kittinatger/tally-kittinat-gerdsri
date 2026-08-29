@@ -22,6 +22,11 @@ export type WalletCard = {
   badgePosition: BadgePosition;
   /** Manual text-color override — null means auto-contrast against the background. */
   textColor: string | null;
+  /** Manual network-badge/icon color override — null means it follows
+   * textColor's auto-contrast color. Only visible on visa/discover (mask-
+   * recolored) and the generic monogram badge; other networks render a
+   * fixed-color brand logo that isn't tintable. */
+  iconColor: string | null;
   /** Whether the EMV contact-chip visual shows on the card. */
   showChip: boolean;
   /** Which metal finish the chip renders in — see chip-colors.ts. */

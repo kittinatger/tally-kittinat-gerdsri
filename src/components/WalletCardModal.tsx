@@ -43,6 +43,7 @@ type WalletCardApiRow = {
   background: string | null;
   show_network_badge: boolean;
   text_color: string | null;
+  icon_color: string | null;
   show_chip: boolean;
   chip_color: string;
   badge_position: string;
@@ -64,6 +65,7 @@ function toWalletCard(row: WalletCardApiRow): WalletCard {
     background: parseCardBackground(row.background),
     showNetworkBadge: row.show_network_badge,
     textColor: row.text_color,
+    iconColor: row.icon_color,
     showChip: row.show_chip,
     chipColor: isChipColor(row.chip_color) ? row.chip_color : DEFAULT_CHIP_COLOR,
     badgePosition: isBadgePosition(row.badge_position) ? row.badge_position : DEFAULT_BADGE_POSITION,
@@ -105,6 +107,7 @@ export default function WalletCardModal({
   const [showNetworkBadge, setShowNetworkBadge] = useState(card?.showNetworkBadge ?? true);
   const [badgePosition, setBadgePosition] = useState<BadgePosition>(card?.badgePosition ?? DEFAULT_BADGE_POSITION);
   const [textColor, setTextColor] = useState<string | null>(card?.textColor ?? null);
+  const [iconColor, setIconColor] = useState<string | null>(card?.iconColor ?? null);
   const [showChip, setShowChip] = useState(card?.showChip ?? true);
   const [chipColor, setChipColor] = useState<ChipColor>(card?.chipColor ?? DEFAULT_CHIP_COLOR);
   const [chipPosition, setChipPosition] = useState<ChipPosition>(card?.chipPosition ?? DEFAULT_CHIP_POSITION);
@@ -132,6 +135,7 @@ export default function WalletCardModal({
         showNetworkBadge,
         badgePosition,
         textColor,
+        iconColor,
         showChip,
         chipColor,
         chipPosition,
@@ -177,6 +181,7 @@ export default function WalletCardModal({
             showNetworkBadge={showNetworkBadge}
             badgePosition={badgePosition}
             textColor={textColor}
+            iconColor={iconColor}
             showChip={showChip}
             chipColor={chipColor}
             chipPosition={chipPosition}
@@ -401,6 +406,17 @@ export default function WalletCardModal({
             <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("background.textColorLabel")}</label>
             <CardTextColorPicker value={textColor} onChange={setTextColor} autoColor={cardForegroundFor(null, background, color).full} />
           </div>
+          {showNetworkBadge && (
+            <div className="border-t border-line pt-3">
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.iconColorLabel")}</label>
+              <p className="mb-1.5 text-[11px] text-ink-soft">{t("wallet.iconColorDesc")}</p>
+              <CardTextColorPicker
+                value={iconColor}
+                onChange={setIconColor}
+                autoColor={cardForegroundFor(textColor, background, color).full}
+              />
+            </div>
+          )}
         </FormSection>
 
         <FormSection icon={<FileIcon className="h-4 w-4" />} title={t("membership.notesLabel")}>

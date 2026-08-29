@@ -112,6 +112,7 @@ export default function WalletCardShape({
   color,
   background = null,
   textColor = null,
+  iconColor = null,
   showNetworkBadge = true,
   badgePosition = DEFAULT_BADGE_POSITION,
   showChip = true,
@@ -128,6 +129,11 @@ export default function WalletCardShape({
   background?: CardBackground | null;
   /** Manual text-color override — null means auto-contrast against the background. */
   textColor?: string | null;
+  /** Manual network-badge/icon color override — null means it follows
+   * textColor's resolved color. Only visible on visa/discover (mask-
+   * recolored) and the generic monogram badge; other networks render a
+   * fixed-color brand logo that isn't tintable at all. */
+  iconColor?: string | null;
   showNetworkBadge?: boolean;
   /** Which corner the network badge sits in — see badge-position.ts. */
   badgePosition?: BadgePosition;
@@ -141,6 +147,12 @@ export default function WalletCardShape({
   const t = useT();
   const expiry = expiryMonth && expiryYear ? `${String(expiryMonth).padStart(2, "0")}/${String(expiryYear).slice(-2)}` : null;
   const fg = cardForegroundFor(textColor, background, color);
+  // iconColor defaults to whatever the text is resolving to (auto-contrast
+  // or the manual textColor override) rather than its own independent
+  // auto-contrast pass — so leaving it unset keeps the badge visually tied
+  // to the text the way it always was, and setting it is a deliberate
+  // departure from that, not a second unrelated "auto" guess.
+  const iconFg = iconColor ? cardForegroundFor(iconColor, background, color) : fg;
   // The badge floats free of the label/holder/expiry text rows (absolute,
   // anchored to whichever corner is picked) rather than sharing a flex row
   // with them, since any of the 4 corners can coincide with text that's
@@ -198,7 +210,7 @@ export default function WalletCardShape({
       style={{ color: fg.full, ...(background ? cardBackgroundStyle(background) : colorHeroStyle(color)) }}
     >
       {showNetworkBadge && (
-        <div className={`absolute flex items-center gap-1.5 ${BADGE_POSITION_CLASSES[badgePosition]}`} style={{ color: fg.a85 }}>
+        <div className={`absolute flex items-center gap-1.5 ${BADGE_POSITION_CLASSES[badgePosition]}`} style={{ color: iconFg.a85 }}>
           {network === "visa" || network === "discover" ? (
             <div
               aria-label={network}

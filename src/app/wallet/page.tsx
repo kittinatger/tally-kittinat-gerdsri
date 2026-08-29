@@ -50,6 +50,7 @@ export default async function WalletPage() {
     showNetworkBadge: c.show_network_badge,
     badgePosition: isBadgePosition(c.badge_position) ? c.badge_position : DEFAULT_BADGE_POSITION,
     textColor: c.text_color,
+    iconColor: c.icon_color,
     showChip: c.show_chip,
     chipColor: isChipColor(c.chip_color) ? c.chip_color : DEFAULT_CHIP_COLOR,
     chipPosition: isChipPosition(c.chip_position) ? c.chip_position : DEFAULT_CHIP_POSITION,

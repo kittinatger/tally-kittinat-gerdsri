@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 33;
+const CURRENT_SCHEMA_VERSION = 34;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -890,6 +890,16 @@ function ensureSchema(): Promise<void> {
       // Where the EMV chip sits — see chip-position.ts. Default matches the
       // chip's original placement (inline next to the card number).
       await sql`ALTER TABLE wallet_cards ADD COLUMN IF NOT EXISTS chip_position TEXT NOT NULL DEFAULT 'middleLeft';`;
+
+      // A manual color override for the network badge/logo specifically —
+      // separate from text_color, so the badge can be recolored (or kept
+      // its own brand color) independently of the label/holder/expiry
+      // text. Null means auto: same computed contrast color the text uses.
+      // Only affects the visa/discover mask-recolored badge and the
+      // generic NetworkBadge monogram (see WalletCardShape.tsx) — the
+      // other networks render a fixed-color brand logo image that isn't
+      // tintable at all.
+      await sql`ALTER TABLE wallet_cards ADD COLUMN IF NOT EXISTS icon_color TEXT;`;
 
       // Multiple receipt photos per expense. expenses.receipt_image/
       // receipt_image_type (the original single-image columns) are left
@@ -4363,6 +4373,7 @@ export type WalletCardRow = {
   background: string | null;
   show_network_badge: boolean;
   text_color: string | null;
+  icon_color: string | null;
   show_chip: boolean;
   chip_color: string;
   badge_position: string;
@@ -4373,7 +4384,7 @@ export type WalletCardRow = {
 export async function listWalletCards(userId: number): Promise<WalletCardRow[]> {
   await ensureSchema();
   const { rows } = await sql<WalletCardRow>`
-    SELECT id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, show_chip, chip_color, badge_position, chip_position, notes
+    SELECT id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, icon_color, show_chip, chip_color, badge_position, chip_position, notes
     FROM wallet_cards
     WHERE user_id = ${userId}
     ORDER BY sort_order, id;
@@ -4394,6 +4405,7 @@ export async function createWalletCard(
     background?: unknown;
     showNetworkBadge?: boolean;
     textColor?: string | null;
+    iconColor?: string | null;
     showChip?: boolean;
     chipColor?: string;
     badgePosition?: string;
@@ -4413,10 +4425,10 @@ export async function createWalletCard(
   const badgePosition = input.badgePosition ?? "topRight";
   const chipPosition = input.chipPosition ?? "middleLeft";
   const { rows } = await sql<WalletCardRow>`
-    INSERT INTO wallet_cards (user_id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, show_chip, chip_color, badge_position, chip_position, notes, sort_order)
+    INSERT INTO wallet_cards (user_id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, icon_color, show_chip, chip_color, badge_position, chip_position, notes, sort_order)
     VALUES (${userId}, ${input.label}, ${input.holderName ?? null}, ${input.last4 ?? null}, ${input.expiryMonth ?? null},
-      ${input.expiryYear ?? null}, ${input.network}, ${input.color}, ${backgroundJson}, ${showNetworkBadge}, ${input.textColor ?? null}, ${showChip}, ${chipColor}, ${badgePosition}, ${chipPosition}, ${input.notes ?? null}, ${nextSort})
-    RETURNING id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, show_chip, chip_color, badge_position, chip_position, notes;
+      ${input.expiryYear ?? null}, ${input.network}, ${input.color}, ${backgroundJson}, ${showNetworkBadge}, ${input.textColor ?? null}, ${input.iconColor ?? null}, ${showChip}, ${chipColor}, ${badgePosition}, ${chipPosition}, ${input.notes ?? null}, ${nextSort})
+    RETURNING id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, icon_color, show_chip, chip_color, badge_position, chip_position, notes;
   `;
   return rows[0];
 }
@@ -4435,6 +4447,7 @@ export async function updateWalletCard(
     background?: unknown;
     showNetworkBadge?: boolean;
     textColor?: string | null;
+    iconColor?: string | null;
     showChip?: boolean;
     chipColor?: string;
     badgePosition?: string;
@@ -4444,7 +4457,7 @@ export async function updateWalletCard(
 ): Promise<WalletCardRow | null> {
   await ensureSchema();
   const { rows: existingRows } = await sql<WalletCardRow>`
-    SELECT id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, show_chip, chip_color, badge_position, chip_position, notes
+    SELECT id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, icon_color, show_chip, chip_color, badge_position, chip_position, notes
     FROM wallet_cards WHERE id = ${id} AND user_id = ${userId};
   `;
   const existing = existingRows[0];
@@ -4460,6 +4473,7 @@ export async function updateWalletCard(
   const newBackground = input.background !== undefined ? (input.background ? JSON.stringify(input.background) : null) : existing.background;
   const newShowNetworkBadge = input.showNetworkBadge ?? existing.show_network_badge;
   const newTextColor = input.textColor !== undefined ? input.textColor : existing.text_color;
+  const newIconColor = input.iconColor !== undefined ? input.iconColor : existing.icon_color;
   const newShowChip = input.showChip ?? existing.show_chip;
   const newChipColor = input.chipColor ?? existing.chip_color;
   const newBadgePosition = input.badgePosition ?? existing.badge_position;
@@ -4471,11 +4485,11 @@ export async function updateWalletCard(
     SET label = ${newLabel}, holder_name = ${newHolderName}, last4 = ${newLast4},
         expiry_month = ${newExpiryMonth}, expiry_year = ${newExpiryYear},
         network = ${newNetwork}, color = ${newColor}, background = ${newBackground},
-        show_network_badge = ${newShowNetworkBadge}, text_color = ${newTextColor},
+        show_network_badge = ${newShowNetworkBadge}, text_color = ${newTextColor}, icon_color = ${newIconColor},
         show_chip = ${newShowChip}, chip_color = ${newChipColor}, badge_position = ${newBadgePosition},
         chip_position = ${newChipPosition}, notes = ${newNotes}
     WHERE id = ${id} AND user_id = ${userId}
-    RETURNING id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, show_chip, chip_color, badge_position, chip_position, notes;
+    RETURNING id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, icon_color, show_chip, chip_color, badge_position, chip_position, notes;
   `;
   return rows[0];
 }
