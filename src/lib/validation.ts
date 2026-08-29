@@ -300,6 +300,13 @@ export const reorderMoveSchema = z.object({
   move: z.enum(["up", "down"]),
 });
 
+// Drag-to-reorder on the Wallet page — see reorderWallets in db.ts, which
+// itself re-validates this is exactly the caller's full active-wallet id
+// set before applying it.
+export const walletReorderInputSchema = z.object({
+  orderedIds: z.array(z.number().int().positive()).min(1).max(200),
+});
+
 export const skipRecurringSchema = z.object({
   skip: z.literal(true),
 });

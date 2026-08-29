@@ -147,6 +147,34 @@ export default function WalletPageView({
     }
   }
 
+  // Click-and-hold-to-drag on the wallets/cards stack (see CardStack/
+  // CardGrid's onReorder) — the hook already reordered its own local copy
+  // optimistically the moment the drag ended, so this just persists that
+  // final order; on failure it falls back to router.refresh(), which feeds
+  // the (unchanged, server-truth) `wallets` prop back down and the hook
+  // re-syncs to it since no drag is in progress any more.
+  async function handleReorderWallets(orderedKeys: string[]) {
+    const orderedIds = orderedKeys
+      .map((k) => Number(k.replace("wallet-", "")))
+      .filter((id) => Number.isInteger(id));
+    try {
+      const res = await fetch("/api/wallets/reorder", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderedIds }),
+      });
+      if (!res.ok) {
+        setError("Could not save that order — refreshing.");
+        router.refresh();
+        return;
+      }
+      router.refresh();
+    } catch (err) {
+      setError(describeFetchError(err));
+      router.refresh();
+    }
+  }
+
   // Archiving (not deleting) from the quick card-detail view — reversible
   // via Manage accounts, unlike the real delete WalletManager still offers
   // there. updateWallet (db.ts) refuses to archive the last active wallet,
@@ -294,7 +322,7 @@ export default function WalletPageView({
                 <div className="lg:hidden">
                   {cardsStack.length > 0 && (
                     <div className="mt-5">
-                      <CardStack items={cardsStack} />
+                      <CardStack items={cardsStack} onReorder={handleReorderWallets} />
                     </div>
                   )}
                   {passesStack.length > 0 && (
@@ -306,7 +334,7 @@ export default function WalletPageView({
                 <div className="hidden lg:block">
                   {cardsStack.length > 0 && (
                     <div className="mt-6">
-                      <CardGrid items={cardsStack} />
+                      <CardGrid items={cardsStack} onReorder={handleReorderWallets} />
                     </div>
                   )}
                   {passesStack.length > 0 && (

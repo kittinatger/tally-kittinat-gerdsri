@@ -1755,6 +1755,43 @@ export async function moveWallet(userId: number, id: number, direction: "up" | "
   }
 }
 
+// Sets an explicit full order in one shot — powers drag-to-reorder on the
+// Wallet page's card stack/grid (see useReorderableList.ts), where the
+// user can drop an item anywhere rather than only ever swapping one step
+// up/down (moveWallet, above). `orderedIds` must be exactly the set of
+// this user's active (non-archived) wallet ids — anything else (an id
+// that isn't theirs, isn't active, or a partial/incomplete list) is
+// rejected outright rather than silently reordering a subset, since a
+// stale client-side list (e.g. a wallet archived in another tab
+// mid-drag) could otherwise scramble sort_order for wallets the request
+// never even mentioned.
+export async function reorderWallets(userId: number, orderedIds: number[]): Promise<{ ok: true } | { ok: false; error: string }> {
+  await ensureSchema();
+  const { rows } = await sql<{ id: number }>`
+    SELECT id FROM wallets WHERE user_id = ${userId} AND archived = false ORDER BY sort_order, id;
+  `;
+  const actualIds = new Set(rows.map((r) => r.id));
+  const givenIds = new Set(orderedIds);
+  if (givenIds.size !== orderedIds.length || actualIds.size !== givenIds.size || [...actualIds].some((id) => !givenIds.has(id))) {
+    return { ok: false, error: "That list of wallets is out of date — refresh and try again." };
+  }
+
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    for (let i = 0; i < orderedIds.length; i++) {
+      await client.sql`UPDATE wallets SET sort_order = ${i} WHERE id = ${orderedIds[i]} AND user_id = ${userId};`;
+    }
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+  return { ok: true };
+}
+
 // ---- Wallet members (shared/household wallets) ----------------------------
 // See the schema-v27 comment above for the design: ownership stays a
 // single wallets.user_id column; this table only adds view+post access
