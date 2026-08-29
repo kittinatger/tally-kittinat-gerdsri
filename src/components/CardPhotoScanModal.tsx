@@ -194,7 +194,7 @@ export default function CardPhotoScanModal({
 
   // Portaled to document.body — this modal is opened from inside
   // CardBackgroundPicker, which is itself always inside another modal's own
-  // glass sheet (WalletModal/WalletCardModal/MembershipCardModal). That
+  // glass sheet (WalletModal/MembershipCardModal). That
   // ancestor's backdrop-blur creates a new containing block for `position:
   // fixed` descendants, so without the portal this modal's fixed overlay
   // would be confined to the parent modal's panel instead of the viewport

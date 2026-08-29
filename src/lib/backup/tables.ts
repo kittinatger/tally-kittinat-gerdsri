@@ -81,6 +81,22 @@ export const BACKUP_TABLES: BackupTable[] = [
       // is_default is deliberately excluded — the importing account
       // already has its own default wallet; a restored wallet never
       // silently takes over that role.
+      // Payment-card visuals — folded in from the old standalone
+      // wallet_cards table (see the wallets migration comments in db.ts).
+      { name: "holder_name" },
+      { name: "last4" },
+      { name: "expiry_month" },
+      { name: "expiry_year" },
+      { name: "network" },
+      { name: "show_network_badge" },
+      { name: "badge_position" },
+      { name: "icon_color" },
+      { name: "show_chip" },
+      { name: "chip_color" },
+      { name: "chip_position" },
+      { name: "notes" },
+      { name: "show_balance" },
+      { name: "show_currency" },
     ],
   },
   {
@@ -177,27 +193,10 @@ export const BACKUP_TABLES: BackupTable[] = [
       { name: "text_color" },
     ],
   },
-  {
-    name: "wallet_cards",
-    columns: [
-      { name: "label" },
-      { name: "holder_name" },
-      { name: "last4" },
-      { name: "expiry_month" },
-      { name: "expiry_year" },
-      { name: "network" },
-      { name: "color" },
-      { name: "notes" },
-      { name: "sort_order" },
-      { name: "background" },
-      { name: "show_network_badge" },
-      { name: "text_color" },
-      { name: "show_chip" },
-      { name: "chip_color" },
-      { name: "badge_position" },
-      { name: "chip_position" },
-    ],
-  },
+  // wallet_cards is deliberately not exported — it's retired (see the
+  // wallets migration comments in db.ts); every row it ever had was
+  // one-time-copied onto `wallets`, which is backed up above, so exporting
+  // it too would just duplicate the same cards under two table names.
 ];
 
 export const BACKUP_TABLE_NAMES = new Set(BACKUP_TABLES.map((t) => t.name));

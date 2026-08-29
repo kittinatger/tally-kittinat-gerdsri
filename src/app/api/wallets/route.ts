@@ -17,13 +17,6 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
-  const wallet = await createWallet(
-    userId,
-    parsed.data.name,
-    parsed.data.color,
-    parsed.data.kind,
-    parsed.data.currency,
-    parsed.data.background,
-  );
+  const wallet = await createWallet(userId, parsed.data);
   return NextResponse.json({ wallet }, { status: 201 });
 }

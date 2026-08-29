@@ -3,8 +3,7 @@ import { getUserId } from "@/lib/auth";
 import ActivitiesView from "@/components/ActivitiesView";
 import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
 import { isTransactionType } from "@/lib/categories";
-import { isWalletKind } from "@/lib/wallets";
-import { parseCardBackground } from "@/lib/card-backgrounds";
+import { toWalletOption } from "@/lib/wallet-mapper";
 import type { CategoryOption } from "@/types/category";
 import type { WalletOption } from "@/types/wallet";
 
@@ -53,19 +52,7 @@ export default async function HomePage({
     color: c.color,
     icon: c.icon,
   }));
-  const wallets: WalletOption[] = walletRows.map((w) => ({
-    id: w.id,
-    name: w.name,
-    color: w.color,
-    background: parseCardBackground(w.background),
-    textColor: w.text_color,
-    kind: isWalletKind(w.kind) ? w.kind : "cash",
-    currency: w.currency,
-    isDefault: w.is_default,
-    archived: w.archived,
-    balance: Number(w.balance),
-    isOwner: w.is_owner,
-  }));
+  const wallets: WalletOption[] = walletRows.map(toWalletOption);
 
   const initialWalletFilter = wallets.find((w) => w.id === activitiesDefaultWalletId && !w.archived)
     ? String(activitiesDefaultWalletId)

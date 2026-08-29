@@ -5,14 +5,17 @@ import { EditIcon, TrashIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 import { useCurrency } from "@/lib/currency-context";
 import AccountCardShape from "./AccountCardShape";
+import WalletCardShape from "./WalletCardShape";
 import type { WalletOption } from "@/types/wallet";
 
-// Same two-click delete-confirm pattern as MembershipCardDetail/
-// WalletCardDetail — rendered with key={wallet.id} by the caller so
-// switching accounts resets `confirming`. Deleting is only safe to expose
-// here because deleteWallet (db.ts) itself already refuses to delete a
-// wallet with transactions on it — this just surfaces that as an inline
-// error rather than blocking the button from being tappable at all.
+// Same two-click delete-confirm pattern as MembershipCardDetail —
+// rendered with key={wallet.id} by the caller so switching accounts
+// resets `confirming`. Deleting is only safe to expose here because
+// deleteWallet (db.ts) itself already refuses to delete a wallet with
+// transactions on it — this just surfaces that as an inline error rather
+// than blocking the button from being tappable at all. Renders as a
+// payment card (WalletCardShape) when the wallet has a network set, or a
+// plain account (AccountCardShape) otherwise — see WalletPageView.
 export default function AccountDetail({
   wallet,
   onEdit,
@@ -38,7 +41,31 @@ export default function AccountDetail({
 
   return (
     <div>
-      <AccountCardShape wallet={wallet} currency={appCurrency} />
+      {wallet.network ? (
+        <WalletCardShape
+          label={wallet.name}
+          holderName={wallet.holderName}
+          last4={wallet.last4}
+          expiryMonth={wallet.expiryMonth}
+          expiryYear={wallet.expiryYear}
+          network={wallet.network}
+          color={wallet.color}
+          background={wallet.background}
+          showNetworkBadge={wallet.showNetworkBadge}
+          badgePosition={wallet.badgePosition}
+          textColor={wallet.textColor}
+          iconColor={wallet.iconColor}
+          showChip={wallet.showChip}
+          chipColor={wallet.chipColor}
+          chipPosition={wallet.chipPosition}
+          balance={wallet.balance}
+          currency={wallet.currency ?? appCurrency}
+          showBalance={wallet.showBalance}
+          showCurrency={wallet.showCurrency}
+        />
+      ) : (
+        <AccountCardShape wallet={wallet} currency={appCurrency} />
+      )}
 
       <div className="mt-4 space-y-2 rounded-card border border-line bg-surface p-3.5 text-sm">
         <div className="flex items-center justify-between">

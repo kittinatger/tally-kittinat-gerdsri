@@ -3,6 +3,7 @@
 import { useId, type CSSProperties } from "react";
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { cardBackgroundStyle, cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
+import { formatCurrency } from "@/lib/format";
 import { CHIP_COLOR_STOPS, DEFAULT_CHIP_COLOR, type ChipColor } from "@/lib/chip-colors";
 import { BADGE_POSITION_CLASSES, DEFAULT_BADGE_POSITION, type BadgePosition } from "@/lib/badge-position";
 import { CHIP_POSITION_CLASSES, DEFAULT_CHIP_POSITION, type ChipPosition } from "@/lib/chip-position";
@@ -141,6 +142,10 @@ export default function WalletCardShape({
   showChip = true,
   chipColor = DEFAULT_CHIP_COLOR,
   chipPosition = DEFAULT_CHIP_POSITION,
+  balance = null,
+  currency = "",
+  showBalance = false,
+  showCurrency = true,
 }: {
   label: string;
   holderName: string | null;
@@ -168,6 +173,19 @@ export default function WalletCardShape({
    * the card number, exactly as it always rendered; "topLeft"/"bottomLeft"
    * pull it out into its own corner — see chip-position.ts. */
   chipPosition?: ChipPosition;
+  /** Balance to preview on the card face — only rendered when showBalance
+   * is true AND a number is actually passed (so a purely decorative card
+   * with no real account behind it, the default, shows nothing extra). */
+  balance?: number | null;
+  /** Currency code for the balance preview — the caller resolves
+   * `wallet.currency ?? appCurrency` before passing this in, same as
+   * AccountCardShape's `currency` prop; only read when balance is shown. */
+  currency?: string;
+  /** Whether the balance preview row shows at all. */
+  showBalance?: boolean;
+  /** Whether that row's amount is currency-formatted (localized, symbol)
+   * or shown as a bare number — both only apply when showBalance is true. */
+  showCurrency?: boolean;
 }) {
   const t = useT();
   const expiry = expiryMonth && expiryYear ? `${String(expiryMonth).padStart(2, "0")}/${String(expiryYear).slice(-2)}` : null;
@@ -284,6 +302,15 @@ export default function WalletCardShape({
           •••• •••• •••• {last4 ?? "••••"}
         </p>
       </div>
+
+      {showBalance && balance !== null && (
+        <div>
+          <p className="text-[10px] uppercase tracking-wide" style={{ color: fg.a70 }}>
+            {t("wallet.balanceLabel")}
+          </p>
+          <p className="truncate text-2xl font-bold">{showCurrency ? formatCurrency(balance, currency) : balance.toFixed(2)}</p>
+        </div>
+      )}
 
       <div className="flex items-end justify-between gap-2" style={rowReserveStyle(false)}>
         <p className="min-w-0 truncate text-xs uppercase tracking-wide" style={{ color: fg.a85 }}>

@@ -21,7 +21,7 @@ import { BADGE_POSITIONS } from "@/lib/badge-position";
 import { CHIP_POSITIONS } from "@/lib/chip-position";
 import { isLanguageCode } from "@/lib/languages";
 
-// Shared by wallets, wallet_cards, and membership_cards' optional background
+// Shared by wallets and membership_cards' optional background
 // pattern/gradient — see card-backgrounds.ts. Colors are always plain hex
 // (never a named palette token), since these render as raw CSS gradients.
 // Length isn't cross-checked against PATTERN_COLOR_COUNT here — a short
@@ -166,6 +166,35 @@ const walletCurrencySchema = z
   .transform((v) => v.toUpperCase())
   .nullable();
 
+// Payment-card visual fields, shared by both wallet schemas below — every
+// wallet can now optionally also look like a payment card (network badge,
+// chip, holder/last4/expiry), folded in from the old standalone
+// wallet_cards feature. All optional: a plain account simply never sets
+// `network`, and WalletCardShape isn't rendered for it.
+const walletCardVisualFields = {
+  holderName: z.string().trim().max(60).nullable().optional(),
+  last4: z
+    .string()
+    .trim()
+    .regex(/^\d{4}$/, "Must be exactly 4 digits")
+    .nullable()
+    .optional(),
+  expiryMonth: z.number().int().min(1).max(12).nullable().optional(),
+  expiryYear: z.number().int().min(2000).max(2200).nullable().optional(),
+  network: z.enum(CARD_NETWORKS).nullable().optional(),
+  showNetworkBadge: z.boolean().optional(),
+  badgePosition: z.enum(BADGE_POSITIONS).optional(),
+  iconColor: cardIconColorSchema.optional(),
+  showChip: z.boolean().optional(),
+  chipColor: z.enum(CHIP_COLORS).optional(),
+  chipPosition: z.enum(CHIP_POSITIONS).optional(),
+  notes: z.string().trim().max(500).nullable().optional(),
+  // Per-card toggles for what shows on the card face, independent of
+  // whether it has a card look at all.
+  showBalance: z.boolean().optional(),
+  showCurrency: z.boolean().optional(),
+};
+
 export const walletInputSchema = z.object({
   name: z.string().trim().min(1).max(40),
   color: z.string().trim().min(1).max(30),
@@ -173,6 +202,7 @@ export const walletInputSchema = z.object({
   textColor: cardTextColorSchema.optional(),
   kind: z.enum(WALLET_KINDS).default("cash"),
   currency: walletCurrencySchema.optional(),
+  ...walletCardVisualFields,
 });
 
 export const walletUpdateSchema = z
@@ -186,6 +216,7 @@ export const walletUpdateSchema = z
     isDefault: z.literal(true).optional(),
     archived: z.boolean().optional(),
     startingBalance: z.number().finite().optional(),
+    ...walletCardVisualFields,
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
     message: "Provide at least one field to update",
@@ -364,60 +395,6 @@ export const membershipUpdateSchema = z
     background: cardBackgroundSchema.optional(),
     textColor: cardTextColorSchema.optional(),
     category: membershipCategorySchema.optional(),
-  })
-  .refine((data) => Object.values(data).some((v) => v !== undefined), {
-    message: "Provide at least one field to update",
-  });
-
-// Payment-card visuals — see the wallet_cards table comment in db.ts for
-// why this only ever collects the last 4 digits, never a full PAN.
-export const walletCardInputSchema = z.object({
-  label: z.string().trim().min(1).max(60),
-  holderName: z.string().trim().max(60).nullable().optional(),
-  last4: z
-    .string()
-    .trim()
-    .regex(/^\d{4}$/, "Must be exactly 4 digits")
-    .nullable()
-    .optional(),
-  expiryMonth: z.number().int().min(1).max(12).nullable().optional(),
-  expiryYear: z.number().int().min(2000).max(2200).nullable().optional(),
-  network: z.enum(CARD_NETWORKS).default("other"),
-  color: z.string().trim().min(1).max(30),
-  background: cardBackgroundSchema.optional(),
-  textColor: cardTextColorSchema.optional(),
-  iconColor: cardIconColorSchema.optional(),
-  showNetworkBadge: z.boolean().default(true),
-  badgePosition: z.enum(BADGE_POSITIONS).default("topRight"),
-  showChip: z.boolean().default(true),
-  chipColor: z.enum(CHIP_COLORS).default("gold"),
-  chipPosition: z.enum(CHIP_POSITIONS).default("middleLeft"),
-  notes: z.string().trim().max(500).nullable().optional(),
-});
-
-export const walletCardUpdateSchema = z
-  .object({
-    label: z.string().trim().min(1).max(60).optional(),
-    holderName: z.string().trim().max(60).nullable().optional(),
-    last4: z
-      .string()
-      .trim()
-      .regex(/^\d{4}$/, "Must be exactly 4 digits")
-      .nullable()
-      .optional(),
-    expiryMonth: z.number().int().min(1).max(12).nullable().optional(),
-    expiryYear: z.number().int().min(2000).max(2200).nullable().optional(),
-    network: z.enum(CARD_NETWORKS).optional(),
-    color: z.string().trim().min(1).max(30).optional(),
-    background: cardBackgroundSchema.optional(),
-    textColor: cardTextColorSchema.optional(),
-    iconColor: cardIconColorSchema.optional(),
-    showNetworkBadge: z.boolean().optional(),
-    badgePosition: z.enum(BADGE_POSITIONS).optional(),
-    showChip: z.boolean().optional(),
-    chipColor: z.enum(CHIP_COLORS).optional(),
-    chipPosition: z.enum(CHIP_POSITIONS).optional(),
-    notes: z.string().trim().max(500).nullable().optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
     message: "Provide at least one field to update",

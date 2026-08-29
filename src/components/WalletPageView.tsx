@@ -16,41 +16,37 @@ import { useCurrency } from "@/lib/currency-context";
 import { describeFetchError } from "@/lib/fetch-error";
 import { PlusIcon, GearIcon } from "@/lib/icons";
 import type { WalletOption } from "@/types/wallet";
-import type { WalletCard } from "@/types/wallet-card";
 import type { MembershipCard } from "@/types/membership";
 import type { MembershipCodeFormat } from "@/lib/memberships";
 
 // None of these are needed on first paint — every one requires a tap first.
 const WalletManager = dynamic(() => import("./WalletManager"), { ssr: false });
 const WalletModal = dynamic(() => import("./WalletModal"), { ssr: false });
-const WalletCardModal = dynamic(() => import("./WalletCardModal"), { ssr: false });
 const MembershipCardModal = dynamic(() => import("./MembershipCardModal"), { ssr: false });
 const MembershipCardDetail = dynamic(() => import("./MembershipCardDetail"), { ssr: false });
 const AccountDetail = dynamic(() => import("./AccountDetail"), { ssr: false });
-const WalletCardDetail = dynamic(() => import("./WalletCardDetail"), { ssr: false });
 const WalletEntryModal = dynamic(() => import("./WalletEntryModal"), { ssr: false });
-const WalletOrCardModal = dynamic(() => import("./WalletOrCardModal"), { ssr: false });
 const AddCardEntryModal = dynamic(() => import("./AddCardEntryModal"), { ssr: false });
 const ScanCardModal = dynamic(() => import("./ScanCardModal"), { ssr: false });
 
 type PassCategory = "pass" | "membership";
 
 // The merged "Wallet" page — a single Apple-Wallet-style stack combining
-// money accounts, payment-card visuals, passes, and memberships, replacing
-// the earlier four-tab layout. Accounts still use router.refresh() after
-// a save (same as WalletManager already did as a Settings panel — it has
-// no local list of its own to patch); wallet cards and passes/memberships
-// keep locally-patched state so adding/editing one feels instant.
+// money accounts, payment-card visuals, passes, and memberships. Accounts
+// and payment cards used to be two separate lists (wallets vs. a purely
+// decorative wallet_cards table); they're one list now — see the wallets
+// migration comments in db.ts — so this component no longer needs its own
+// locally-patched card list at all: every wallet, card-look or not, comes
+// from the same `wallets` prop and the same router.refresh()-after-save
+// flow WalletManager already used.
 export default function WalletPageView({
   wallets,
   activitiesDefaultWalletId,
-  walletCards: initialWalletCards,
   passes: initialPasses,
   memberships: initialMemberships,
 }: {
   wallets: WalletOption[];
   activitiesDefaultWalletId: number | null;
-  walletCards: WalletCard[];
   passes: MembershipCard[];
   memberships: MembershipCard[];
 }) {
@@ -58,16 +54,13 @@ export default function WalletPageView({
   const router = useRouter();
   const currency = useCurrency();
 
-  const [walletCards, setWalletCards] = useState(initialWalletCards);
   const [passes, setPasses] = useState(initialPasses);
   const [memberships, setMemberships] = useState(initialMemberships);
   const [error, setError] = useState<string | null>(null);
 
   const [entryOpen, setEntryOpen] = useState(false);
-  const [walletOrCardOpen, setWalletOrCardOpen] = useState(false);
   const [manageAccountsOpen, setManageAccountsOpen] = useState(false);
   const [accountModal, setAccountModal] = useState<{ mode: "edit"; wallet: WalletOption } | { mode: "add" } | null>(null);
-  const [cardModal, setCardModal] = useState<{ mode: "edit"; card: WalletCard } | { mode: "add" } | null>(null);
   const [passModal, setPassModal] = useState<
     | { mode: "add"; scannedValue?: { value: string; format: MembershipCodeFormat } | null }
     | { mode: "edit"; card: MembershipCard }
@@ -76,7 +69,6 @@ export default function WalletPageView({
   const [viewingPass, setViewingPass] = useState<MembershipCard | null>(null);
   const [viewingAccount, setViewingAccount] = useState<WalletOption | null>(null);
   const [accountDeleteError, setAccountDeleteError] = useState<string | null>(null);
-  const [viewingCard, setViewingCard] = useState<WalletCard | null>(null);
   const [passEntryOpen, setPassEntryOpen] = useState(false);
   const [passScanOpen, setPassScanOpen] = useState(false);
 
@@ -119,30 +111,6 @@ export default function WalletPageView({
     }
   }
 
-  function handleCardSaved(card: WalletCard) {
-    setWalletCards((prev) => {
-      const exists = prev.some((c) => c.id === card.id);
-      return exists ? prev.map((c) => (c.id === card.id ? card : c)) : [...prev, card];
-    });
-    setCardModal(null);
-  }
-
-  async function handleDeleteCard(id: number) {
-    setError(null);
-    try {
-      const res = await fetch(`/api/wallet-cards/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        setError(typeof data?.error === "string" ? data.error : "Could not delete that card.");
-        return;
-      }
-      setWalletCards((prev) => prev.filter((c) => c.id !== id));
-      setViewingCard(null);
-    } catch (err) {
-      setError(describeFetchError(err));
-    }
-  }
-
   // deleteWallet (db.ts) refuses to delete a wallet with transactions on
   // it, so the error is shown inline in AccountDetail rather than closing
   // the modal — same as WalletManager's own delete flow.
@@ -162,41 +130,47 @@ export default function WalletPageView({
     }
   }
 
+  // A wallet with a network set gets the payment-card visual
+  // (WalletCardShape, including its own balance/currency preview per
+  // showBalance/showCurrency); one without renders as a plain account
+  // (AccountCardShape, which always shows its balance — that's the whole
+  // point of an account, not something the card-only toggles apply to).
   const accountItems = wallets
     .filter((w) => !w.archived)
     .map((wallet) => ({
-      key: `account-${wallet.id}`,
-      node: <AccountCardShape wallet={wallet} currency={currency} />,
+      key: `wallet-${wallet.id}`,
+      node: wallet.network ? (
+        <WalletCardShape
+          label={wallet.name}
+          holderName={wallet.holderName}
+          last4={wallet.last4}
+          expiryMonth={wallet.expiryMonth}
+          expiryYear={wallet.expiryYear}
+          network={wallet.network}
+          color={wallet.color}
+          background={wallet.background}
+          showNetworkBadge={wallet.showNetworkBadge}
+          badgePosition={wallet.badgePosition}
+          textColor={wallet.textColor}
+          iconColor={wallet.iconColor}
+          showChip={wallet.showChip}
+          chipColor={wallet.chipColor}
+          chipPosition={wallet.chipPosition}
+          balance={wallet.balance}
+          currency={wallet.currency ?? currency}
+          showBalance={wallet.showBalance}
+          showCurrency={wallet.showCurrency}
+        />
+      ) : (
+        <AccountCardShape wallet={wallet} currency={currency} />
+      ),
       onOpen: () => {
         setAccountDeleteError(null);
         setViewingAccount(wallet);
       },
       ariaLabel: wallet.name,
     }));
-  const cardItems = walletCards.map((card) => ({
-    key: `card-${card.id}`,
-    node: (
-      <WalletCardShape
-        label={card.label}
-        holderName={card.holderName}
-        last4={card.last4}
-        expiryMonth={card.expiryMonth}
-        expiryYear={card.expiryYear}
-        network={card.network}
-        color={card.color}
-        background={card.background}
-        showNetworkBadge={card.showNetworkBadge}
-        badgePosition={card.badgePosition}
-        textColor={card.textColor}
-        showChip={card.showChip}
-        chipColor={card.chipColor}
-        chipPosition={card.chipPosition}
-      />
-    ),
-    onOpen: () => setViewingCard(card),
-    ariaLabel: card.label,
-  }));
-  const cardsStack = [...accountItems, ...cardItems];
+  const cardsStack = accountItems;
 
   function passStackItem(card: MembershipCard) {
     return {
@@ -304,25 +278,11 @@ export default function WalletPageView({
           onClose={() => setEntryOpen(false)}
           onAddWallet={() => {
             setEntryOpen(false);
-            setWalletOrCardOpen(true);
+            setAccountModal({ mode: "add" });
           }}
           onAddPass={() => {
             setEntryOpen(false);
             setPassEntryOpen(true);
-          }}
-        />
-      )}
-
-      {walletOrCardOpen && (
-        <WalletOrCardModal
-          onClose={() => setWalletOrCardOpen(false)}
-          onSavedAccount={() => {
-            setWalletOrCardOpen(false);
-            router.refresh();
-          }}
-          onSavedCard={(card) => {
-            setWalletOrCardOpen(false);
-            handleCardSaved(card);
           }}
         />
       )}
@@ -335,14 +295,6 @@ export default function WalletPageView({
             setAccountModal(null);
             router.refresh();
           }}
-        />
-      )}
-
-      {cardModal && (
-        <WalletCardModal
-          card={cardModal.mode === "edit" ? cardModal.card : undefined}
-          onClose={() => setCardModal(null)}
-          onSaved={handleCardSaved}
         />
       )}
 
@@ -363,20 +315,6 @@ export default function WalletPageView({
               setViewingAccount(null);
             }}
             onDelete={() => handleDeleteAccount(viewingAccount.id)}
-          />
-        </Modal>
-      )}
-
-      {viewingCard && (
-        <Modal onClose={() => setViewingCard(null)} title={viewingCard.label}>
-          <WalletCardDetail
-            key={viewingCard.id}
-            card={viewingCard}
-            onEdit={() => {
-              setCardModal({ mode: "edit", card: viewingCard });
-              setViewingCard(null);
-            }}
-            onDelete={() => handleDeleteCard(viewingCard.id)}
           />
         </Modal>
       )}

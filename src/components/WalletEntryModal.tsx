@@ -33,14 +33,15 @@ function Row({ icon, label, desc, onClick }: { icon: React.ReactNode; label: str
 }
 
 // The "+" entry menu on the merged Wallet page. Used to be four rows (bank
-// account / payment card / pass / loyalty card), but "payment card" reads
-// as basically "wallet" to a user picking a top-level category, and "pass"
-// vs "loyalty card" is the same underlying flow already (MembershipCardModal
-// derives which one a saved card actually is from its template — see
-// CATEGORY_BY_TEMPLATE there) — so both pairs collapse to one row apiece.
-// "Add wallet" and "Add pass" both go straight into one combined form now
-// (WalletOrCardModal / AddCardEntryModal+MembershipCardModal) — no
-// separate bank-vs-card or pass-vs-loyalty question modal in between.
+// account / payment card / pass / loyalty card), but a payment card is now
+// just a wallet with a card look (see WalletModal's "give this wallet a
+// payment-card look" toggle), and "pass" vs "loyalty card" is the same
+// underlying flow already (MembershipCardModal derives which one a saved
+// card actually is from its template — see CATEGORY_BY_TEMPLATE there) —
+// so both pairs collapse to one row apiece. "Add wallet" and "Add pass"
+// both go straight into one form now (WalletModal /
+// AddCardEntryModal+MembershipCardModal) — no separate bank-vs-card or
+// pass-vs-loyalty question modal in between.
 export default function WalletEntryModal({
   onClose,
   onAddWallet,

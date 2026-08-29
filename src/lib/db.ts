@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 34;
+const CURRENT_SCHEMA_VERSION = 35;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -513,6 +513,35 @@ function ensureSchema(): Promise<void> {
       // auto-contrast against the background (see cardForegroundFor in
       // card-backgrounds.ts).
       await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS text_color TEXT;`;
+
+      // Payment-card visuals, folded in from the old standalone wallet_cards
+      // table (see the data migration below) — every wallet can now
+      // optionally *also* look like a payment card, rather than "accounts"
+      // and "cards" being two separate lists. NULL network means "no card
+      // look" — render as a plain account (AccountCardShape), same as
+      // every wallet before this existed. Column meanings otherwise mirror
+      // wallet_cards' identically-named columns exactly (see the comments
+      // on that table, still below, kept only as the migration's source of
+      // truth and a rollback safety net — the app no longer reads from it).
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS holder_name TEXT;`;
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS last4 TEXT;`;
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS expiry_month SMALLINT;`;
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS expiry_year SMALLINT;`;
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS network TEXT;`;
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS show_network_badge BOOLEAN NOT NULL DEFAULT true;`;
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS badge_position TEXT NOT NULL DEFAULT 'topRight';`;
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS icon_color TEXT;`;
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS show_chip BOOLEAN NOT NULL DEFAULT true;`;
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS chip_color TEXT NOT NULL DEFAULT 'gold';`;
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS chip_position TEXT NOT NULL DEFAULT 'middleLeft';`;
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS notes TEXT;`;
+
+      // Per-wallet toggles for what shows on the card face — independent of
+      // whether it has a card look at all (network IS NOT NULL). Both
+      // default true so every existing wallet (and every migrated card, see
+      // below) keeps rendering exactly as it did before these existed.
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS show_balance BOOLEAN NOT NULL DEFAULT true;`;
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS show_currency BOOLEAN NOT NULL DEFAULT true;`;
 
       // Which wallet the Activities page's balance card is scoped to on
       // load — separate from is_default (which wallet new transactions fall
@@ -844,11 +873,16 @@ function ensureSchema(): Promise<void> {
       // Same manual text-color override as wallets.text_color.
       await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS text_color TEXT;`;
 
-      // Payment-card *visuals* for the /wallet page's "Cards" tab — purely
-      // decorative pass-style art (like Apple Wallet's card display), not a
-      // real payment method: only the last 4 digits are ever stored, never
-      // a full card number, since this app has no payment processing and
-      // storing a full PAN would just be an unnecessary liability.
+      // RETIRED as of schema v35 — its rows were one-time-copied onto
+      // wallets (see the wallets.network/holder_name/... columns and the
+      // migration below) so the app's "accounts" and "cards" lists could
+      // become one unified list. Nothing in the app reads or writes this
+      // table any more; it's kept only as the migration's data source and
+      // an easy rollback path, not dropped outright. Original comment,
+      // still accurate for the columns below: payment-card *visuals*,
+      // purely decorative pass-style art (like Apple Wallet's card
+      // display), not a real payment method — only the last 4 digits were
+      // ever stored, never a full card number.
       await sql`
         CREATE TABLE IF NOT EXISTS wallet_cards (
           id SERIAL PRIMARY KEY,
@@ -900,6 +934,40 @@ function ensureSchema(): Promise<void> {
       // other networks render a fixed-color brand logo image that isn't
       // tintable at all.
       await sql`ALTER TABLE wallet_cards ADD COLUMN IF NOT EXISTS icon_color TEXT;`;
+
+      // Wallets absorbed wallet_cards' purely-decorative payment-card
+      // visuals (see the new wallets.network/holder_name/last4/... columns
+      // above) so "accounts" and "cards" are one unified list instead of
+      // two. This one-time copy makes every existing wallet_cards row a
+      // real wallet — kind defaults to 'digital' (a payment card was never
+      // physical cash), balance starts at 0 (wallet_cards never tracked
+      // one), and show_balance/show_currency default to false so a
+      // migrated card keeps looking exactly like it did as a purely
+      // decorative visual, not suddenly sprouting a "$0.00" balance nobody
+      // asked for — the toggles are right there if the user wants to turn
+      // it into a real tracked account afterward. wallet_cards itself is
+      // deliberately left in place (unused by the app from here on) rather
+      // than dropped, as a rollback safety net; migrated_from_card_id
+      // makes this copy idempotent if the migration ever has to re-run
+      // (e.g. a crash mid-migration on a cold start).
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS migrated_from_card_id INTEGER;`;
+      await sql`
+        INSERT INTO wallets (
+          user_id, name, color, background, text_color, kind, sort_order,
+          holder_name, last4, expiry_month, expiry_year, network,
+          show_network_badge, badge_position, icon_color, show_chip, chip_color,
+          chip_position, notes, show_balance, show_currency, migrated_from_card_id
+        )
+        SELECT
+          wc.user_id, wc.label, wc.color, wc.background, wc.text_color, 'digital',
+          COALESCE((SELECT MAX(w2.sort_order) FROM wallets w2 WHERE w2.user_id = wc.user_id), -1)
+            + ROW_NUMBER() OVER (PARTITION BY wc.user_id ORDER BY wc.sort_order, wc.id),
+          wc.holder_name, wc.last4, wc.expiry_month, wc.expiry_year, wc.network,
+          wc.show_network_badge, wc.badge_position, wc.icon_color, wc.show_chip, wc.chip_color,
+          wc.chip_position, wc.notes, false, false, wc.id
+        FROM wallet_cards wc
+        WHERE NOT EXISTS (SELECT 1 FROM wallets w WHERE w.migrated_from_card_id = wc.id);
+      `;
 
       // Multiple receipt photos per expense. expenses.receipt_image/
       // receipt_image_type (the original single-image columns) are left
@@ -1287,74 +1355,110 @@ export type WalletRow = {
    * set default, invite another member) should be offered at all;
    * viewing and posting transactions works the same either way. */
   is_owner: boolean;
+  // Payment-card visuals, folded in from the old wallet_cards table — see
+  // the wallets migration comments above. network null means "no card
+  // look", i.e. render as a plain account.
+  holder_name: string | null;
+  last4: string | null;
+  expiry_month: number | null;
+  expiry_year: number | null;
+  network: string | null;
+  show_network_badge: boolean;
+  badge_position: string;
+  icon_color: string | null;
+  show_chip: boolean;
+  chip_color: string;
+  chip_position: string;
+  notes: string | null;
+  show_balance: boolean;
+  show_currency: boolean;
 };
+
+// The full column list every wallet-returning query below selects — one
+// place to keep in sync rather than four near-identical copies drifting.
+const WALLET_COLUMNS = `
+  w.id, w.name, w.color, w.background, w.text_color, w.kind, w.currency, w.is_default, w.archived,
+  w.holder_name, w.last4, w.expiry_month, w.expiry_year, w.network,
+  w.show_network_badge, w.badge_position, w.icon_color, w.show_chip, w.chip_color,
+  w.chip_position, w.notes, w.show_balance, w.show_currency
+`;
+const WALLET_BALANCE_EXPR = `
+  (
+    w.starting_balance + COALESCE((
+      SELECT SUM(
+        CASE
+          WHEN e.type = 'income' THEN e.amount
+          WHEN e.type = 'transfer' AND e.direction = 'in' THEN e.amount
+          ELSE -e.amount
+        END
+      )
+      FROM expenses e
+      WHERE e.wallet_id = w.id AND e.created_at > w.starting_balance_set_at
+    ), 0)
+  )::text AS balance
+`;
 
 export async function listWallets(userId: number, opts: { includeArchived?: boolean } = {}): Promise<WalletRow[]> {
   await ensureSchema();
   const { rows } = opts.includeArchived
-    ? await sql<WalletRow>`
-        SELECT
-          w.id, w.name, w.color, w.background, w.text_color, w.kind, w.currency, w.is_default, w.archived,
-          (
-            w.starting_balance + COALESCE((
-              SELECT SUM(
-                CASE
-                  WHEN e.type = 'income' THEN e.amount
-                  WHEN e.type = 'transfer' AND e.direction = 'in' THEN e.amount
-                  ELSE -e.amount
-                END
-              )
-              FROM expenses e
-              WHERE e.wallet_id = w.id AND e.created_at > w.starting_balance_set_at
-            ), 0)
-          )::text AS balance,
-          (w.user_id = ${userId}) AS is_owner
-        FROM wallets w
-        WHERE w.user_id = ${userId}
-           OR w.id IN (SELECT wallet_id FROM wallet_members WHERE user_id = ${userId} AND status = 'accepted')
-        ORDER BY w.archived, w.sort_order, w.id;
-      `
-    : await sql<WalletRow>`
-        SELECT
-          w.id, w.name, w.color, w.background, w.text_color, w.kind, w.currency, w.is_default, w.archived,
-          (
-            w.starting_balance + COALESCE((
-              SELECT SUM(
-                CASE
-                  WHEN e.type = 'income' THEN e.amount
-                  WHEN e.type = 'transfer' AND e.direction = 'in' THEN e.amount
-                  ELSE -e.amount
-                END
-              )
-              FROM expenses e
-              WHERE e.wallet_id = w.id AND e.created_at > w.starting_balance_set_at
-            ), 0)
-          )::text AS balance,
-          (w.user_id = ${userId}) AS is_owner
-        FROM wallets w
-        WHERE (w.user_id = ${userId}
-           OR w.id IN (SELECT wallet_id FROM wallet_members WHERE user_id = ${userId} AND status = 'accepted'))
-          AND w.archived = false
-        ORDER BY w.sort_order, w.id;
-      `;
+    ? await sql.query<WalletRow>(
+        `SELECT ${WALLET_COLUMNS}, ${WALLET_BALANCE_EXPR}, (w.user_id = $1) AS is_owner
+         FROM wallets w
+         WHERE w.user_id = $1
+            OR w.id IN (SELECT wallet_id FROM wallet_members WHERE user_id = $1 AND status = 'accepted')
+         ORDER BY w.archived, w.sort_order, w.id;`,
+        [userId],
+      )
+    : await sql.query<WalletRow>(
+        `SELECT ${WALLET_COLUMNS}, ${WALLET_BALANCE_EXPR}, (w.user_id = $1) AS is_owner
+         FROM wallets w
+         WHERE (w.user_id = $1
+            OR w.id IN (SELECT wallet_id FROM wallet_members WHERE user_id = $1 AND status = 'accepted'))
+           AND w.archived = false
+         ORDER BY w.sort_order, w.id;`,
+        [userId],
+      );
   return rows;
 }
 
 export async function createWallet(
   userId: number,
-  name: string,
-  color: string,
-  kind: string,
-  currency?: string | null,
-  background?: unknown,
-  textColor?: string | null,
+  input: {
+    name: string;
+    color: string;
+    kind: string;
+    currency?: string | null;
+    background?: unknown;
+    textColor?: string | null;
+    holderName?: string | null;
+    last4?: string | null;
+    expiryMonth?: number | null;
+    expiryYear?: number | null;
+    network?: string | null;
+    showNetworkBadge?: boolean;
+    badgePosition?: string;
+    iconColor?: string | null;
+    showChip?: boolean;
+    chipColor?: string;
+    chipPosition?: string;
+    notes?: string | null;
+    showBalance?: boolean;
+    showCurrency?: boolean;
+  },
 ): Promise<WalletRow> {
   await ensureSchema();
   const { rows: maxRows } = await sql<{ max: number | null }>`
     SELECT MAX(sort_order) AS max FROM wallets WHERE user_id = ${userId};
   `;
   const nextSort = (maxRows[0]?.max ?? -1) + 1;
-  const backgroundJson = background ? JSON.stringify(background) : null;
+  const backgroundJson = input.background ? JSON.stringify(input.background) : null;
+  const showNetworkBadge = input.showNetworkBadge ?? true;
+  const badgePosition = input.badgePosition ?? "topRight";
+  const showChip = input.showChip ?? true;
+  const chipColor = input.chipColor ?? "gold";
+  const chipPosition = input.chipPosition ?? "middleLeft";
+  const showBalance = input.showBalance ?? true;
+  const showCurrency = input.showCurrency ?? true;
   const { rows } = await sql<{
     id: number;
     name: string;
@@ -1363,10 +1467,38 @@ export async function createWallet(
     text_color: string | null;
     kind: string;
     currency: string | null;
+    holder_name: string | null;
+    last4: string | null;
+    expiry_month: number | null;
+    expiry_year: number | null;
+    network: string | null;
+    show_network_badge: boolean;
+    badge_position: string;
+    icon_color: string | null;
+    show_chip: boolean;
+    chip_color: string;
+    chip_position: string;
+    notes: string | null;
+    show_balance: boolean;
+    show_currency: boolean;
   }>`
-    INSERT INTO wallets (user_id, name, color, background, text_color, kind, currency, sort_order)
-    VALUES (${userId}, ${name}, ${color}, ${backgroundJson}, ${textColor ?? null}, ${kind}, ${currency ?? null}, ${nextSort})
-    RETURNING id, name, color, background, text_color, kind, currency;
+    INSERT INTO wallets (
+      user_id, name, color, background, text_color, kind, currency, sort_order,
+      holder_name, last4, expiry_month, expiry_year, network,
+      show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
+      show_balance, show_currency
+    )
+    VALUES (
+      ${userId}, ${input.name}, ${input.color}, ${backgroundJson}, ${input.textColor ?? null}, ${input.kind}, ${input.currency ?? null}, ${nextSort},
+      ${input.holderName ?? null}, ${input.last4 ?? null}, ${input.expiryMonth ?? null}, ${input.expiryYear ?? null}, ${input.network ?? null},
+      ${showNetworkBadge}, ${badgePosition}, ${input.iconColor ?? null}, ${showChip}, ${chipColor}, ${chipPosition}, ${input.notes ?? null},
+      ${showBalance}, ${showCurrency}
+    )
+    RETURNING
+      id, name, color, background, text_color, kind, currency,
+      holder_name, last4, expiry_month, expiry_year, network,
+      show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
+      show_balance, show_currency;
   `;
   return { ...rows[0], is_default: false, archived: false, balance: "0", is_owner: true };
 }
@@ -1384,6 +1516,20 @@ export async function updateWallet(
     isDefault?: boolean;
     archived?: boolean;
     startingBalance?: number;
+    holderName?: string | null;
+    last4?: string | null;
+    expiryMonth?: number | null;
+    expiryYear?: number | null;
+    network?: string | null;
+    showNetworkBadge?: boolean;
+    badgePosition?: string;
+    iconColor?: string | null;
+    showChip?: boolean;
+    chipColor?: string;
+    chipPosition?: string;
+    notes?: string | null;
+    showBalance?: boolean;
+    showCurrency?: boolean;
   },
 ): Promise<WalletRow | { ok: false; error: string } | null> {
   await ensureSchema();
@@ -1396,8 +1542,27 @@ export async function updateWallet(
     currency: string | null;
     is_default: boolean;
     archived: boolean;
+    holder_name: string | null;
+    last4: string | null;
+    expiry_month: number | null;
+    expiry_year: number | null;
+    network: string | null;
+    show_network_badge: boolean;
+    badge_position: string;
+    icon_color: string | null;
+    show_chip: boolean;
+    chip_color: string;
+    chip_position: string;
+    notes: string | null;
+    show_balance: boolean;
+    show_currency: boolean;
   }>`
-    SELECT name, color, background, text_color, kind, currency, is_default, archived FROM wallets WHERE id = ${id} AND user_id = ${userId};
+    SELECT
+      name, color, background, text_color, kind, currency, is_default, archived,
+      holder_name, last4, expiry_month, expiry_year, network,
+      show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
+      show_balance, show_currency
+    FROM wallets WHERE id = ${id} AND user_id = ${userId};
   `;
   const existing = existingRows[0];
   if (!existing) return null;
@@ -1419,6 +1584,20 @@ export async function updateWallet(
   const newKind = input.kind ?? existing.kind;
   const newCurrency = input.currency !== undefined ? input.currency : existing.currency;
   const newArchived = input.archived ?? existing.archived;
+  const newHolderName = input.holderName !== undefined ? input.holderName : existing.holder_name;
+  const newLast4 = input.last4 !== undefined ? input.last4 : existing.last4;
+  const newExpiryMonth = input.expiryMonth !== undefined ? input.expiryMonth : existing.expiry_month;
+  const newExpiryYear = input.expiryYear !== undefined ? input.expiryYear : existing.expiry_year;
+  const newNetwork = input.network !== undefined ? input.network : existing.network;
+  const newShowNetworkBadge = input.showNetworkBadge ?? existing.show_network_badge;
+  const newBadgePosition = input.badgePosition ?? existing.badge_position;
+  const newIconColor = input.iconColor !== undefined ? input.iconColor : existing.icon_color;
+  const newShowChip = input.showChip ?? existing.show_chip;
+  const newChipColor = input.chipColor ?? existing.chip_color;
+  const newChipPosition = input.chipPosition ?? existing.chip_position;
+  const newNotes = input.notes !== undefined ? input.notes : existing.notes;
+  const newShowBalance = input.showBalance ?? existing.show_balance;
+  const newShowCurrency = input.showCurrency ?? existing.show_currency;
 
   const client = await db.connect();
   try {
@@ -1428,13 +1607,21 @@ export async function updateWallet(
       await client.sql`
         UPDATE wallets
         SET name = ${newName}, color = ${newColor}, background = ${newBackground}, text_color = ${newTextColor}, kind = ${newKind}, currency = ${newCurrency},
-            archived = ${newArchived}, starting_balance = ${input.startingBalance}, starting_balance_set_at = now()
+            archived = ${newArchived}, starting_balance = ${input.startingBalance}, starting_balance_set_at = now(),
+            holder_name = ${newHolderName}, last4 = ${newLast4}, expiry_month = ${newExpiryMonth}, expiry_year = ${newExpiryYear}, network = ${newNetwork},
+            show_network_badge = ${newShowNetworkBadge}, badge_position = ${newBadgePosition}, icon_color = ${newIconColor},
+            show_chip = ${newShowChip}, chip_color = ${newChipColor}, chip_position = ${newChipPosition}, notes = ${newNotes},
+            show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}
         WHERE id = ${id} AND user_id = ${userId};
       `;
     } else {
       await client.sql`
         UPDATE wallets
-        SET name = ${newName}, color = ${newColor}, background = ${newBackground}, text_color = ${newTextColor}, kind = ${newKind}, currency = ${newCurrency}, archived = ${newArchived}
+        SET name = ${newName}, color = ${newColor}, background = ${newBackground}, text_color = ${newTextColor}, kind = ${newKind}, currency = ${newCurrency}, archived = ${newArchived},
+            holder_name = ${newHolderName}, last4 = ${newLast4}, expiry_month = ${newExpiryMonth}, expiry_year = ${newExpiryYear}, network = ${newNetwork},
+            show_network_badge = ${newShowNetworkBadge}, badge_position = ${newBadgePosition}, icon_color = ${newIconColor},
+            show_chip = ${newShowChip}, chip_color = ${newChipColor}, chip_position = ${newChipPosition}, notes = ${newNotes},
+            show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}
         WHERE id = ${id} AND user_id = ${userId};
       `;
     }
@@ -1465,25 +1652,12 @@ export async function updateWallet(
     client.release();
   }
 
-  const { rows } = await sql<WalletRow>`
-    SELECT
-      w.id, w.name, w.color, w.background, w.kind, w.currency, w.is_default, w.archived,
-      (
-        w.starting_balance + COALESCE((
-          SELECT SUM(
-            CASE
-              WHEN e.type = 'income' THEN e.amount
-              WHEN e.type = 'transfer' AND e.direction = 'in' THEN e.amount
-              ELSE -e.amount
-            END
-          )
-          FROM expenses e
-          WHERE e.wallet_id = w.id AND e.created_at > w.starting_balance_set_at
-        ), 0)
-      )::text AS balance
-    FROM wallets w
-    WHERE w.id = ${id} AND w.user_id = ${userId};
-  `;
+  const { rows } = await sql.query<WalletRow>(
+    `SELECT ${WALLET_COLUMNS}, ${WALLET_BALANCE_EXPR}, true AS is_owner
+     FROM wallets w
+     WHERE w.id = $1 AND w.user_id = $2;`,
+    [id, userId],
+  );
   return rows[0] ?? null;
 }
 
@@ -4359,168 +4533,10 @@ export async function moveMembershipCard(userId: number, id: number, direction: 
   }
 }
 
-// ---- Wallet cards (payment-card visuals) -----------------------------------
+// The wallet_cards CRUD that used to live here (listWalletCards,
+// createWalletCard, updateWalletCard, deleteWalletCard, moveWalletCard) is
+// retired — payment-card visuals are now just fields on `wallets` (see the
+// wallets schema migration comments and listWallets/createWallet/
+// updateWallet above). The wallet_cards table itself is still there, kept
+// only as that migration's data source and a rollback safety net.
 
-export type WalletCardRow = {
-  id: number;
-  label: string;
-  holder_name: string | null;
-  last4: string | null;
-  expiry_month: number | null;
-  expiry_year: number | null;
-  network: string;
-  color: string;
-  background: string | null;
-  show_network_badge: boolean;
-  text_color: string | null;
-  icon_color: string | null;
-  show_chip: boolean;
-  chip_color: string;
-  badge_position: string;
-  chip_position: string;
-  notes: string | null;
-};
-
-export async function listWalletCards(userId: number): Promise<WalletCardRow[]> {
-  await ensureSchema();
-  const { rows } = await sql<WalletCardRow>`
-    SELECT id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, icon_color, show_chip, chip_color, badge_position, chip_position, notes
-    FROM wallet_cards
-    WHERE user_id = ${userId}
-    ORDER BY sort_order, id;
-  `;
-  return rows;
-}
-
-export async function createWalletCard(
-  userId: number,
-  input: {
-    label: string;
-    holderName?: string | null;
-    last4?: string | null;
-    expiryMonth?: number | null;
-    expiryYear?: number | null;
-    network: string;
-    color: string;
-    background?: unknown;
-    showNetworkBadge?: boolean;
-    textColor?: string | null;
-    iconColor?: string | null;
-    showChip?: boolean;
-    chipColor?: string;
-    badgePosition?: string;
-    chipPosition?: string;
-    notes?: string | null;
-  },
-): Promise<WalletCardRow> {
-  await ensureSchema();
-  const { rows: maxRows } = await sql<{ max: number | null }>`
-    SELECT MAX(sort_order) AS max FROM wallet_cards WHERE user_id = ${userId};
-  `;
-  const nextSort = (maxRows[0]?.max ?? -1) + 1;
-  const backgroundJson = input.background ? JSON.stringify(input.background) : null;
-  const showNetworkBadge = input.showNetworkBadge ?? true;
-  const showChip = input.showChip ?? true;
-  const chipColor = input.chipColor ?? "gold";
-  const badgePosition = input.badgePosition ?? "topRight";
-  const chipPosition = input.chipPosition ?? "middleLeft";
-  const { rows } = await sql<WalletCardRow>`
-    INSERT INTO wallet_cards (user_id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, icon_color, show_chip, chip_color, badge_position, chip_position, notes, sort_order)
-    VALUES (${userId}, ${input.label}, ${input.holderName ?? null}, ${input.last4 ?? null}, ${input.expiryMonth ?? null},
-      ${input.expiryYear ?? null}, ${input.network}, ${input.color}, ${backgroundJson}, ${showNetworkBadge}, ${input.textColor ?? null}, ${input.iconColor ?? null}, ${showChip}, ${chipColor}, ${badgePosition}, ${chipPosition}, ${input.notes ?? null}, ${nextSort})
-    RETURNING id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, icon_color, show_chip, chip_color, badge_position, chip_position, notes;
-  `;
-  return rows[0];
-}
-
-export async function updateWalletCard(
-  userId: number,
-  id: number,
-  input: {
-    label?: string;
-    holderName?: string | null;
-    last4?: string | null;
-    expiryMonth?: number | null;
-    expiryYear?: number | null;
-    network?: string;
-    color?: string;
-    background?: unknown;
-    showNetworkBadge?: boolean;
-    textColor?: string | null;
-    iconColor?: string | null;
-    showChip?: boolean;
-    chipColor?: string;
-    badgePosition?: string;
-    chipPosition?: string;
-    notes?: string | null;
-  },
-): Promise<WalletCardRow | null> {
-  await ensureSchema();
-  const { rows: existingRows } = await sql<WalletCardRow>`
-    SELECT id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, icon_color, show_chip, chip_color, badge_position, chip_position, notes
-    FROM wallet_cards WHERE id = ${id} AND user_id = ${userId};
-  `;
-  const existing = existingRows[0];
-  if (!existing) return null;
-
-  const newLabel = input.label?.trim() ?? existing.label;
-  const newHolderName = input.holderName !== undefined ? input.holderName : existing.holder_name;
-  const newLast4 = input.last4 !== undefined ? input.last4 : existing.last4;
-  const newExpiryMonth = input.expiryMonth !== undefined ? input.expiryMonth : existing.expiry_month;
-  const newExpiryYear = input.expiryYear !== undefined ? input.expiryYear : existing.expiry_year;
-  const newNetwork = input.network ?? existing.network;
-  const newColor = input.color ?? existing.color;
-  const newBackground = input.background !== undefined ? (input.background ? JSON.stringify(input.background) : null) : existing.background;
-  const newShowNetworkBadge = input.showNetworkBadge ?? existing.show_network_badge;
-  const newTextColor = input.textColor !== undefined ? input.textColor : existing.text_color;
-  const newIconColor = input.iconColor !== undefined ? input.iconColor : existing.icon_color;
-  const newShowChip = input.showChip ?? existing.show_chip;
-  const newChipColor = input.chipColor ?? existing.chip_color;
-  const newBadgePosition = input.badgePosition ?? existing.badge_position;
-  const newChipPosition = input.chipPosition ?? existing.chip_position;
-  const newNotes = input.notes !== undefined ? input.notes : existing.notes;
-
-  const { rows } = await sql<WalletCardRow>`
-    UPDATE wallet_cards
-    SET label = ${newLabel}, holder_name = ${newHolderName}, last4 = ${newLast4},
-        expiry_month = ${newExpiryMonth}, expiry_year = ${newExpiryYear},
-        network = ${newNetwork}, color = ${newColor}, background = ${newBackground},
-        show_network_badge = ${newShowNetworkBadge}, text_color = ${newTextColor}, icon_color = ${newIconColor},
-        show_chip = ${newShowChip}, chip_color = ${newChipColor}, badge_position = ${newBadgePosition},
-        chip_position = ${newChipPosition}, notes = ${newNotes}
-    WHERE id = ${id} AND user_id = ${userId}
-    RETURNING id, label, holder_name, last4, expiry_month, expiry_year, network, color, background, show_network_badge, text_color, icon_color, show_chip, chip_color, badge_position, chip_position, notes;
-  `;
-  return rows[0];
-}
-
-export async function deleteWalletCard(userId: number, id: number): Promise<boolean> {
-  await ensureSchema();
-  const { rowCount } = await sql`DELETE FROM wallet_cards WHERE id = ${id} AND user_id = ${userId};`;
-  return (rowCount ?? 0) > 0;
-}
-
-// Same adjacent-swap approach as moveMembershipCard.
-export async function moveWalletCard(userId: number, id: number, direction: "up" | "down"): Promise<void> {
-  await ensureSchema();
-  const { rows } = await sql<{ id: number; sort_order: number }>`
-    SELECT id, sort_order FROM wallet_cards WHERE user_id = ${userId} ORDER BY sort_order, id;
-  `;
-  const idx = rows.findIndex((r) => r.id === id);
-  const swapIdx = direction === "up" ? idx - 1 : idx + 1;
-  if (idx === -1 || swapIdx < 0 || swapIdx >= rows.length) return;
-  const a = rows[idx];
-  const b = rows[swapIdx];
-  const client = await db.connect();
-  try {
-    await client.query("BEGIN");
-    await client.sql`UPDATE wallet_cards SET sort_order = ${b.sort_order} WHERE id = ${a.id} AND user_id = ${userId};`;
-    await client.sql`UPDATE wallet_cards SET sort_order = ${a.sort_order} WHERE id = ${b.id} AND user_id = ${userId};`;
-    await client.query("COMMIT");
-  } catch (err) {
-    await client.query("ROLLBACK");
-    throw err;
-  } finally {
-    client.release();
-  }
-}

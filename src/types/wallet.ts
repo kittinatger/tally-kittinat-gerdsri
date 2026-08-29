@@ -1,5 +1,9 @@
 import type { WalletKind } from "@/lib/wallets";
 import type { CardBackground } from "@/lib/card-backgrounds";
+import type { CardNetwork } from "@/lib/wallet-cards";
+import type { ChipColor } from "@/lib/chip-colors";
+import type { BadgePosition } from "@/lib/badge-position";
+import type { ChipPosition } from "@/lib/chip-position";
 
 export type WalletOption = {
   id: number;
@@ -19,4 +23,27 @@ export type WalletOption = {
    * management actions (archive, delete, rename, invite another member)
    * are only offered when true; viewing/posting works either way. */
   isOwner: boolean;
+  // Payment-card visuals — folded in from the old standalone wallet-cards
+  // feature, so any wallet can optionally *also* look like a payment card
+  // rather than accounts and cards being two separate lists. `network`
+  // null means "no card look", i.e. render as a plain account
+  // (AccountCardShape); non-null renders WalletCardShape instead.
+  holderName: string | null;
+  last4: string | null;
+  expiryMonth: number | null;
+  expiryYear: number | null;
+  network: CardNetwork | null;
+  showNetworkBadge: boolean;
+  badgePosition: BadgePosition;
+  /** Manual network-badge/icon color override — see WalletCardShape.tsx. */
+  iconColor: string | null;
+  showChip: boolean;
+  chipColor: ChipColor;
+  chipPosition: ChipPosition;
+  notes: string | null;
+  /** Whether the balance amount renders on the card face — independent of
+   * whether the wallet has a card look at all. */
+  showBalance: boolean;
+  /** Whether the currency shows/is selectable on the card face. */
+  showCurrency: boolean;
 };
