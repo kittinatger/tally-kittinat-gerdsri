@@ -262,7 +262,7 @@ export default function WalletCardShape({
 
   return (
     <div
-      className={`relative flex aspect-[1.586/1] min-h-[190px] w-full flex-col justify-between rounded-2xl p-4 shadow-soft ${background ? "" : heroGradientClasses(color)}`}
+      className={`relative flex aspect-[1.586/1] min-h-[190px] w-full flex-col rounded-2xl p-4 shadow-soft ${background ? "" : heroGradientClasses(color)}`}
       style={{ color: fg.full, ...(background ? cardBackgroundStyle(background) : colorHeroStyle(color)) }}
     >
       {showNetworkBadge && (
@@ -301,28 +301,24 @@ export default function WalletCardShape({
         </div>
       )}
 
-      {/* Kept as one row even when the name itself is hidden, same reasoning
-       * as the card-number row below — dropping it outright would change
-       * how many top-level rows the outer flex justify-between distributes.
-       * min-h-5 (its text's own line-height) keeps that row's *height*
-       * constant too — an empty row still counts as a flex child for
-       * justify-between's spacing either way, but with no min-height it
-       * physically collapsed to 0px whenever showName was off, which left
-       * justify-between more leftover space to redistribute and visibly
-       * pushed the balance/holder block below it up the card. */}
+      {/* Top content stacks tightly from the top (no justify-between any
+       * more — see the outer div) rather than being evenly spaced against
+       * the balance/holder block below: with justify-between, every toggle
+       * that changes how many rows have real content (showName,
+       * showCardNumber/showChip, showBalance) changed how much space was
+       * "left over" to distribute, which visibly moved the balance block
+       * up or down depending on which toggles were on — most obviously,
+       * a payment-card-look wallet's balance never sat as low as a plain
+       * account's (AccountCardShape, a simple 2-child justify-between)
+       * because this card always has more top-level rows above it. Now
+       * the balance/holder block is pushed to the bottom explicitly
+       * (mt-auto, below) regardless of how much or how little sits above
+       * it, matching AccountCardShape's flush-bottom balance exactly. */}
       <div className="flex min-h-5 items-start" style={rowReserveStyle(true)}>
         {showName && <p className="min-w-0 truncate text-sm font-semibold">{label}</p>}
       </div>
 
-      {/* Kept as one row even when the number itself is hidden (rather than
-       * omitting the row outright) — same reasoning as the balance/holder
-       * grouping below: the outer card's flex justify-between distributes
-       * however many top-level rows it has, so dropping this one entirely
-       * would shift every other row's position depending on the toggle.
-       * min-h-6 matches the EMV chip's own height, for the same reason as
-       * min-h-5 on the label row above — without it, a card with both the
-       * chip and the number hidden collapsed this row to 0px too. */}
-      <div className="flex min-h-6 items-center gap-2">
+      <div className="mt-2 flex min-h-6 items-center gap-2">
         {showChip && !chipInCorner && <EMVChip color={chipColor} />}
         {showCardNumber && (
           <p className="truncate text-base font-semibold tracking-[0.15em]">
@@ -331,13 +327,10 @@ export default function WalletCardShape({
         )}
       </div>
 
-      {/* Grouped into one bottom block (rather than each being its own
-       * top-level row) so the outer card's flex justify-between still only
-       * ever distributes 3 rows total (label, chip/number, this group) —
-       * adding the balance preview as a 4th top-level row pushed every row
-       * up out of its usual spacing, since justify-between redistributes
-       * evenly across however many direct children it has. */}
-      <div>
+      {/* Grouped into one block (rather than the balance being its own
+       * top-level row) so mt-auto below pushes both down together as one
+       * unit, flush to the card's bottom edge. */}
+      <div className="mt-auto">
         {showBalance && balance !== null && (
           <div className="mb-2">
             <p className="text-[10px] uppercase tracking-wide" style={{ color: fg.a70 }}>
