@@ -204,7 +204,6 @@ export const walletInputSchema = z.object({
   textColor: cardTextColorSchema.optional(),
   kind: z.enum(WALLET_KINDS).default("cash"),
   currency: walletCurrencySchema.optional(),
-  locked: z.boolean().optional(),
   ...walletCardVisualFields,
 });
 
@@ -219,12 +218,24 @@ export const walletUpdateSchema = z
     isDefault: z.literal(true).optional(),
     archived: z.boolean().optional(),
     startingBalance: z.number().finite().optional(),
-    locked: z.boolean().optional(),
     ...walletCardVisualFields,
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
     message: "Provide at least one field to update",
   });
+
+// A submitted "premade card" design — just the visual skin (background +
+// colors), no balance/network/holder/etc. See card_templates in db.ts.
+export const cardTemplateInputSchema = z.object({
+  name: z.string().trim().min(1).max(40),
+  color: z.string().trim().min(1).max(30),
+  background: cardBackgroundSchema.optional(),
+  textColor: cardTextColorSchema.optional(),
+});
+
+export const cardTemplateReviewSchema = z.object({
+  status: z.enum(["approved", "rejected"]),
+});
 
 export const walletTransferInputSchema = z
   .object({

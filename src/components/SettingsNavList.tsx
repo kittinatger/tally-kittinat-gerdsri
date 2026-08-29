@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { SunMoonIcon } from "@/lib/icons";
+import { SunMoonIcon, UploadIcon } from "@/lib/icons";
 import { type Panel } from "@/lib/settings-panels";
+import { ADMIN_EMAIL } from "@/lib/admin-constants";
 import { useT } from "@/lib/language-context";
 import SettingsSection from "./SettingsSection";
 import SettingsListItem from "./SettingsListItem";
@@ -372,6 +373,7 @@ export default function SettingsNavList({
 }: { username: string; email: string | null } & PanelItemProps) {
   const pathname = usePathname();
   const t = useT();
+  const isAdmin = Boolean(email) && email!.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
   function panelItemProps(panel: Panel) {
     if (panelProps.mode === "panel") {
@@ -405,6 +407,9 @@ export default function SettingsNavList({
         <ImportDataButton />
         <ReportExportButton />
         <SettingsListItem icon={<BackupIcon />} label={t("settings.backup")} accent="cyan" {...panelItemProps("backup")} />
+        {isAdmin && (
+          <SettingsListItem icon={<UploadIcon className="h-5 w-5" />} label={t("wallet.templateReviewTitle")} accent="indigo" {...panelItemProps("templateReviews")} />
+        )}
       </SettingsSection>
 
       <SettingsSection title={t("settings.section.social")}>

@@ -181,20 +181,20 @@ export function ArchiveIcon({ className }: IconProps) {
   );
 }
 
-export function LockIcon({ className }: IconProps) {
+export function CheckCircleIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
-      <rect x="4.5" y="11" width="15" height="9" rx="2" />
-      <path d="M7.5 11V7.5a4.5 4.5 0 0 1 9 0V11" />
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8.5 12.5 11 15l4.5-6" />
     </svg>
   );
 }
 
-export function UnlockIcon({ className }: IconProps) {
+export function XCircleIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
-      <rect x="4.5" y="11" width="15" height="9" rx="2" />
-      <path d="M7.5 11V7.5a4.5 4.5 0 0 1 8.6-1.8" />
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9.5l5 5M14.5 9.5l-5 5" />
     </svg>
   );
 }

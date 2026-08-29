@@ -1,5 +1,6 @@
-import type { WalletRow } from "@/lib/db";
+import type { WalletRow, CardTemplateRow } from "@/lib/db";
 import type { WalletOption } from "@/types/wallet";
+import type { CardTemplateOption } from "@/types/card-template";
 import { isWalletKind } from "@/lib/wallets";
 import { isCardNetwork } from "@/lib/wallet-cards";
 import { parseCardBackground } from "@/lib/card-backgrounds";
@@ -41,6 +42,18 @@ export function toWalletOption(w: WalletRow): WalletOption {
     showCurrency: w.show_currency,
     showCardNumber: w.show_card_number,
     showName: w.show_name,
-    locked: w.locked,
+  };
+}
+
+export function toCardTemplateOption(t: CardTemplateRow): CardTemplateOption {
+  return {
+    id: t.id,
+    name: t.name,
+    color: t.color,
+    background: parseCardBackground(t.background),
+    textColor: t.text_color,
+    status: t.status,
+    submittedByUsername: t.submitted_by_username,
+    createdAt: t.created_at,
   };
 }

@@ -3,7 +3,7 @@
 import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
 import Modal from "./Modal";
-import { LockIcon } from "@/lib/icons";
+import { UploadIcon } from "@/lib/icons";
 import SelectDropdown from "./SelectDropdown";
 import FormSection from "./FormSection";
 import ColorGlowPreview from "./ColorGlowPreview";
@@ -11,6 +11,7 @@ import AccountCardShape from "./AccountCardShape";
 import WalletCardShape, { RECOLORABLE_BADGE_ASPECT, ICON_COLOR_ORIGINAL } from "./WalletCardShape";
 import CardBackgroundPicker from "./CardBackgroundPicker";
 import CardTextColorPicker from "./CardTextColorPicker";
+import PremadeCardPicker from "./PremadeCardPicker";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import { CARD_NETWORKS, type CardNetwork } from "@/lib/wallet-cards";
 import { backgroundGlowColor, cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
@@ -90,8 +91,16 @@ export default function WalletModal({
   const [showCurrency, setShowCurrency] = useState(wallet?.showCurrency ?? true);
   const [showCardNumber, setShowCardNumber] = useState(wallet?.showCardNumber ?? true);
   const [showName, setShowName] = useState(wallet?.showName ?? true);
-  const [locked, setLocked] = useState(wallet?.locked ?? false);
-  const [unlocking, setUnlocking] = useState(false);
+
+  // "Upload as template" submits the current background/color/textColor
+  // (only the visual skin, nothing balance/identity-related) for review —
+  // see card_templates in db.ts. Separate submitting/submitted state from
+  // the wallet form's own submitting/error, since this is an independent
+  // side action, not part of saving the wallet itself.
+  const [templateName, setTemplateName] = useState("");
+  const [templateSubmitting, setTemplateSubmitting] = useState(false);
+  const [templateSubmitted, setTemplateSubmitted] = useState(false);
+  const [templateError, setTemplateError] = useState<string | null>(null);
 
   const month = expiryMonth ? Number(expiryMonth) : null;
   const year = expiryYear ? Number(expiryYear) : null;
@@ -130,29 +139,27 @@ export default function WalletModal({
     showCurrency,
     showCardNumber,
     showName,
-    locked,
   };
 
-  async function handleUnlock() {
-    if (!wallet) return;
-    setUnlocking(true);
-    setError(null);
+  async function handleUploadTemplate() {
+    setTemplateSubmitting(true);
+    setTemplateError(null);
     try {
-      const res = await fetch(`/api/wallets/${wallet.id}`, {
-        method: "PATCH",
+      const res = await fetch("/api/card-templates", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ locked: false }),
+        body: JSON.stringify({ name: templateName.trim() || name || t("wallet.namePlaceholder"), color, background, textColor }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(typeof data.error === "string" ? data.error : "Could not unlock.");
+        setTemplateError(typeof data.error === "string" ? data.error : "Could not submit.");
         return;
       }
-      setLocked(false);
+      setTemplateSubmitted(true);
     } catch (err) {
-      setError(describeFetchError(err));
+      setTemplateError(describeFetchError(err));
     } finally {
-      setUnlocking(false);
+      setTemplateSubmitting(false);
     }
   }
 
@@ -186,7 +193,6 @@ export default function WalletModal({
         showCurrency,
         showCardNumber,
         showName,
-        locked,
       };
       const res = isEdit
         ? await fetch(`/api/wallets/${wallet!.id}`, {
@@ -227,75 +233,6 @@ export default function WalletModal({
     } finally {
       setSubmitting(false);
     }
-  }
-
-  // A locked wallet is a "premade card" — its look is meant to stay fixed,
-  // so the editor doesn't offer the full form at all here, just the
-  // preview, an explanation, and the one way out (Unlock). Server-side
-  // enforcement in updateWallet is the real guard; this is just the UI
-  // reflecting it up front instead of letting someone fill out the whole
-  // form and then hit a rejected save.
-  if (isEdit && locked) {
-    return (
-      <Modal onClose={onClose} title={t("wallet.editTitle")}>
-        <div className="space-y-4">
-          <ColorGlowPreview color={backgroundGlowColor(background, color)}>
-            {hasCardLook ? (
-              <WalletCardShape
-                label={name}
-                holderName={holderName || null}
-                last4={last4 || null}
-                expiryMonth={month}
-                expiryYear={year}
-                network={network}
-                color={color}
-                background={background}
-                showNetworkBadge={showNetworkBadge}
-                badgePosition={badgePosition}
-                textColor={textColor}
-                iconColor={iconColor}
-                showChip={showChip}
-                chipColor={chipColor}
-                chipPosition={chipPosition}
-                balance={Number(startingBalance) || 0}
-                currency={currency ?? appCurrency}
-                showBalance={showBalance}
-                showCurrency={showCurrency}
-                showCardNumber={showCardNumber}
-                showName={showName}
-              />
-            ) : (
-              <AccountCardShape wallet={previewWallet} currency={appCurrency} />
-            )}
-          </ColorGlowPreview>
-
-          <div className="flex items-start gap-2.5 rounded-card border border-line bg-bg-soft px-3.5 py-3">
-            <LockIcon className="mt-0.5 h-4 w-4 shrink-0 text-ink-soft" />
-            <p className="text-xs text-ink-soft">{t("wallet.lockedDesc")}</p>
-          </div>
-
-          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-
-          <div className="flex items-center justify-end gap-2 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-full px-4 py-2.5 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
-            >
-              {t("common.cancel")}
-            </button>
-            <button
-              type="button"
-              onClick={handleUnlock}
-              disabled={unlocking}
-              className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
-            >
-              {unlocking ? t("common.saving") : t("wallet.unlockCard")}
-            </button>
-          </div>
-        </div>
-      </Modal>
-    );
   }
 
   return (
@@ -760,6 +697,13 @@ export default function WalletModal({
         </FormSection>
 
         <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("wallet.colorLabel")}>
+          <PremadeCardPicker
+            onSelect={(tpl) => {
+              setBackground(tpl.background);
+              setColor(tpl.color);
+              setTextColor(tpl.textColor);
+            }}
+          />
           <CardBackgroundPicker value={background} onChange={setBackground} plainColor={color} onPlainColorChange={setColor} />
           <div className="border-t border-line pt-3">
             <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("background.textColorLabel")}</label>
@@ -815,28 +759,31 @@ export default function WalletModal({
           </FormSection>
         )}
 
-        <FormSection icon={<LockIcon className="h-4 w-4" />} title={t("wallet.lockCardLabel")}>
-          <button
-            type="button"
-            onClick={() => setLocked((v) => !v)}
-            className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
-          >
-            <span>
-              <span className="block text-sm font-medium text-foreground">{t("wallet.lockCardLabel")}</span>
-              <span className="block text-xs text-ink-soft">{t("wallet.lockCardDesc")}</span>
-            </span>
-            <span
-              role="switch"
-              aria-checked={locked}
-              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${locked ? "bg-navy" : "bg-line"}`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                  locked ? "translate-x-6" : "translate-x-1"
-                }`}
+        <FormSection icon={<UploadIcon className="h-4 w-4" />} title={t("wallet.uploadTemplateLabel")}>
+          {templateSubmitted ? (
+            <p className="text-xs text-ink-soft">{t("wallet.templateSubmittedDesc")}</p>
+          ) : (
+            <>
+              <p className="text-xs text-ink-soft">{t("wallet.uploadTemplateDesc")}</p>
+              <input
+                type="text"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder={name || t("wallet.namePlaceholder")}
+                aria-label={t("wallet.templateNameLabel")}
+                className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
               />
-            </span>
-          </button>
+              {templateError && <p className="text-sm text-red-600 dark:text-red-400">{templateError}</p>}
+              <button
+                type="button"
+                onClick={handleUploadTemplate}
+                disabled={templateSubmitting}
+                className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-60"
+              >
+                {templateSubmitting ? t("common.saving") : t("wallet.uploadTemplateLabel")}
+              </button>
+            </>
+          )}
         </FormSection>
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}

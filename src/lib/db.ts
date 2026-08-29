@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 38;
+const CURRENT_SCHEMA_VERSION = 39;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1167,6 +1167,35 @@ function ensureSchema(): Promise<void> {
       // reveal length).
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS applock_pin_length SMALLINT;`;
 
+      // wallets.locked (a v37→v38 "lock this card" toggle) got replaced by
+      // the template-submission flow below before it ever shipped a UI
+      // that used it, so it's dropped again here rather than carried
+      // forward unused — the only DROP COLUMN in this file, everything
+      // else above is additive-only, but there's no real data to lose.
+      await sql`ALTER TABLE wallets DROP COLUMN IF EXISTS locked;`;
+
+      // User-submitted card-face designs (background + colors, the same
+      // shape WalletCardShape/AccountCardShape already render) pending
+      // review before they become selectable by everyone as a "premade
+      // card" — see isAdminUser (admin.ts) for who can approve/reject.
+      // submitted_by is nullable-on-delete rather than cascading: an
+      // already-approved template stays available to everyone even if the
+      // submitter's account is later removed.
+      await sql`
+        CREATE TABLE IF NOT EXISTS card_templates (
+          id SERIAL PRIMARY KEY,
+          submitted_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+          name TEXT NOT NULL,
+          color TEXT NOT NULL,
+          background TEXT,
+          text_color TEXT,
+          status TEXT NOT NULL DEFAULT 'pending',
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          reviewed_at TIMESTAMPTZ
+        );
+      `;
+      await sql`CREATE INDEX IF NOT EXISTS card_templates_status_idx ON card_templates (status);`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -1394,7 +1423,6 @@ export type WalletRow = {
   show_currency: boolean;
   show_card_number: boolean;
   show_name: boolean;
-  locked: boolean;
 };
 
 // The full column list every wallet-returning query below selects — one
@@ -1403,7 +1431,7 @@ const WALLET_COLUMNS = `
   w.id, w.name, w.color, w.background, w.text_color, w.kind, w.currency, w.is_default, w.archived,
   w.holder_name, w.last4, w.expiry_month, w.expiry_year, w.network,
   w.show_network_badge, w.badge_position, w.icon_color, w.show_chip, w.chip_color,
-  w.chip_position, w.notes, w.show_balance, w.show_currency, w.show_card_number, w.show_name, w.locked
+  w.chip_position, w.notes, w.show_balance, w.show_currency, w.show_card_number, w.show_name
 `;
 const WALLET_BALANCE_EXPR = `
   (
@@ -1469,7 +1497,6 @@ export async function createWallet(
     showCurrency?: boolean;
     showCardNumber?: boolean;
     showName?: boolean;
-    locked?: boolean;
   },
 ): Promise<WalletRow> {
   await ensureSchema();
@@ -1487,7 +1514,6 @@ export async function createWallet(
   const showCurrency = input.showCurrency ?? true;
   const showCardNumber = input.showCardNumber ?? true;
   const showName = input.showName ?? true;
-  const locked = input.locked ?? false;
   const { rows } = await sql<{
     id: number;
     name: string;
@@ -1512,25 +1538,24 @@ export async function createWallet(
     show_currency: boolean;
     show_card_number: boolean;
     show_name: boolean;
-    locked: boolean;
   }>`
     INSERT INTO wallets (
       user_id, name, color, background, text_color, kind, currency, sort_order,
       holder_name, last4, expiry_month, expiry_year, network,
       show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
-      show_balance, show_currency, show_card_number, show_name, locked
+      show_balance, show_currency, show_card_number, show_name
     )
     VALUES (
       ${userId}, ${input.name}, ${input.color}, ${backgroundJson}, ${input.textColor ?? null}, ${input.kind}, ${input.currency ?? null}, ${nextSort},
       ${input.holderName ?? null}, ${input.last4 ?? null}, ${input.expiryMonth ?? null}, ${input.expiryYear ?? null}, ${input.network ?? null},
       ${showNetworkBadge}, ${badgePosition}, ${input.iconColor ?? null}, ${showChip}, ${chipColor}, ${chipPosition}, ${input.notes ?? null},
-      ${showBalance}, ${showCurrency}, ${showCardNumber}, ${showName}, ${locked}
+      ${showBalance}, ${showCurrency}, ${showCardNumber}, ${showName}
     )
     RETURNING
       id, name, color, background, text_color, kind, currency,
       holder_name, last4, expiry_month, expiry_year, network,
       show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
-      show_balance, show_currency, show_card_number, show_name, locked;
+      show_balance, show_currency, show_card_number, show_name;
   `;
   return { ...rows[0], is_default: false, archived: false, balance: "0", is_owner: true };
 }
@@ -1564,7 +1589,6 @@ export async function updateWallet(
     showCurrency?: boolean;
     showCardNumber?: boolean;
     showName?: boolean;
-    locked?: boolean;
   },
 ): Promise<WalletRow | { ok: false; error: string } | null> {
   await ensureSchema();
@@ -1593,35 +1617,16 @@ export async function updateWallet(
     show_currency: boolean;
     show_card_number: boolean;
     show_name: boolean;
-    locked: boolean;
   }>`
     SELECT
       name, color, background, text_color, kind, currency, is_default, archived,
       holder_name, last4, expiry_month, expiry_year, network,
       show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
-      show_balance, show_currency, show_card_number, show_name, locked
+      show_balance, show_currency, show_card_number, show_name
     FROM wallets WHERE id = ${id} AND user_id = ${userId};
   `;
   const existing = existingRows[0];
   if (!existing) return null;
-
-  // A locked wallet only allows archiving/unarchiving and unlocking itself
-  // — every visual/identity field is frozen. Checked against the *raw*
-  // input keys (not the resolved new* values below, which would always
-  // equal existing when nothing was actually sent) so a PATCH that simply
-  // omits every card field still passes, but one that tries to sneak a
-  // real change through gets rejected instead of silently doing nothing.
-  if (existing.locked && input.locked !== false) {
-    const protectedKeys: (keyof typeof input)[] = [
-      "name", "color", "background", "textColor", "kind", "currency", "startingBalance",
-      "holderName", "last4", "expiryMonth", "expiryYear", "network",
-      "showNetworkBadge", "badgePosition", "iconColor", "showChip", "chipColor", "chipPosition", "notes",
-      "showBalance", "showCurrency", "showCardNumber", "showName",
-    ];
-    if (protectedKeys.some((k) => input[k] !== undefined)) {
-      return { ok: false, error: "This card is locked — unlock it first to make changes." };
-    }
-  }
 
   const archiving = input.archived === true && !existing.archived;
   if (archiving) {
@@ -1656,7 +1661,6 @@ export async function updateWallet(
   const newShowCurrency = input.showCurrency ?? existing.show_currency;
   const newShowCardNumber = input.showCardNumber ?? existing.show_card_number;
   const newShowName = input.showName ?? existing.show_name;
-  const newLocked = input.locked ?? existing.locked;
 
   const client = await db.connect();
   try {
@@ -1670,7 +1674,7 @@ export async function updateWallet(
             holder_name = ${newHolderName}, last4 = ${newLast4}, expiry_month = ${newExpiryMonth}, expiry_year = ${newExpiryYear}, network = ${newNetwork},
             show_network_badge = ${newShowNetworkBadge}, badge_position = ${newBadgePosition}, icon_color = ${newIconColor},
             show_chip = ${newShowChip}, chip_color = ${newChipColor}, chip_position = ${newChipPosition}, notes = ${newNotes},
-            show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}, show_card_number = ${newShowCardNumber}, show_name = ${newShowName}, locked = ${newLocked}
+            show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}, show_card_number = ${newShowCardNumber}, show_name = ${newShowName}
         WHERE id = ${id} AND user_id = ${userId};
       `;
     } else {
@@ -1680,7 +1684,7 @@ export async function updateWallet(
             holder_name = ${newHolderName}, last4 = ${newLast4}, expiry_month = ${newExpiryMonth}, expiry_year = ${newExpiryYear}, network = ${newNetwork},
             show_network_badge = ${newShowNetworkBadge}, badge_position = ${newBadgePosition}, icon_color = ${newIconColor},
             show_chip = ${newShowChip}, chip_color = ${newChipColor}, chip_position = ${newChipPosition}, notes = ${newNotes},
-            show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}, show_card_number = ${newShowCardNumber}, show_name = ${newShowName}, locked = ${newLocked}
+            show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}, show_card_number = ${newShowCardNumber}, show_name = ${newShowName}
         WHERE id = ${id} AND user_id = ${userId};
       `;
     }
@@ -1823,6 +1827,84 @@ export async function reorderWallets(userId: number, orderedIds: number[]): Prom
     client.release();
   }
   return { ok: true };
+}
+
+// ---- Card templates (user-submitted "premade card" designs) ---------------
+// Any user can submit a card's look (background + colors — the same shape
+// WalletCardShape/AccountCardShape already render) for review; once
+// approved by the admin (see isAdminUser in admin.ts), it becomes
+// selectable by everyone via listApprovedCardTemplates, same as the
+// built-in CARD_PATTERNS gallery. No balance/network/holder/etc — a
+// template is purely the visual skin, applied on top of whatever wallet
+// the picking user is editing.
+
+export type CardTemplateRow = {
+  id: number;
+  submitted_by: number | null;
+  submitted_by_username: string | null;
+  name: string;
+  color: string;
+  background: string | null;
+  text_color: string | null;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+  reviewed_at: string | null;
+};
+
+export async function createCardTemplate(
+  userId: number,
+  input: { name: string; color: string; background?: unknown; textColor?: string | null },
+): Promise<CardTemplateRow> {
+  await ensureSchema();
+  const backgroundJson = input.background ? JSON.stringify(input.background) : null;
+  const { rows } = await sql<CardTemplateRow>`
+    INSERT INTO card_templates (submitted_by, name, color, background, text_color, status)
+    VALUES (${userId}, ${input.name}, ${input.color}, ${backgroundJson}, ${input.textColor ?? null}, 'pending')
+    RETURNING id, submitted_by, NULL AS submitted_by_username, name, color, background, text_color, status, created_at, reviewed_at;
+  `;
+  return rows[0];
+}
+
+// Public — every user picking a premade card sees the same approved list,
+// newest-approved first.
+export async function listApprovedCardTemplates(): Promise<CardTemplateRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<CardTemplateRow>`
+    SELECT ct.id, ct.submitted_by, u.username AS submitted_by_username, ct.name, ct.color, ct.background, ct.text_color, ct.status, ct.created_at, ct.reviewed_at
+    FROM card_templates ct
+    LEFT JOIN users u ON u.id = ct.submitted_by
+    WHERE ct.status = 'approved'
+    ORDER BY ct.reviewed_at DESC NULLS LAST, ct.created_at DESC;
+  `;
+  return rows;
+}
+
+// Admin-only (enforced by the caller via isAdminUser) — oldest-first, so
+// the review queue works through submissions in the order they arrived.
+export async function listPendingCardTemplates(): Promise<CardTemplateRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<CardTemplateRow>`
+    SELECT ct.id, ct.submitted_by, u.username AS submitted_by_username, ct.name, ct.color, ct.background, ct.text_color, ct.status, ct.created_at, ct.reviewed_at
+    FROM card_templates ct
+    LEFT JOIN users u ON u.id = ct.submitted_by
+    WHERE ct.status = 'pending'
+    ORDER BY ct.created_at ASC;
+  `;
+  return rows;
+}
+
+// Only moves a still-pending submission — reviewing an already-decided one
+// again (e.g. two admin tabs open) is a no-op rather than silently
+// overwriting the first decision's reviewed_at.
+export async function reviewCardTemplate(id: number, status: "approved" | "rejected"): Promise<CardTemplateRow | null> {
+  await ensureSchema();
+  const { rows } = await sql<CardTemplateRow>`
+    UPDATE card_templates
+    SET status = ${status}, reviewed_at = now()
+    WHERE id = ${id} AND status = 'pending'
+    RETURNING id, submitted_by, NULL AS submitted_by_username, name, color, background, text_color, status, created_at, reviewed_at;
+  `;
+  return rows[0] ?? null;
 }
 
 // ---- Wallet members (shared/household wallets) ----------------------------

@@ -50,7 +50,4 @@ export type WalletOption = {
   showCardNumber: boolean;
   /** Whether the wallet's name renders on the card face at all. */
   showName: boolean;
-  /** A "premade card" flag — once true, the editor only lets you unlock or
-   * archive/unarchive it; every other field is server-rejected too. */
-  locked: boolean;
 };

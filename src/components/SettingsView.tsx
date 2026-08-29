@@ -40,6 +40,7 @@ const ErrorReportsPanel = dynamic(() => import("./ErrorReportsPanel"), { ssr: fa
 const PendingChangesPanel = dynamic(() => import("./PendingChangesPanel"), { ssr: false });
 const BackupSettingsPanel = dynamic(() => import("./BackupSettingsPanel"), { ssr: false });
 const AppLockSettingsPanel = dynamic(() => import("./AppLockSettingsPanel"), { ssr: false });
+const TemplateReviewPanel = dynamic(() => import("./TemplateReviewPanel"), { ssr: false });
 
 const PANEL_TITLES: Record<Panel, string> = {
   account: "Account",
@@ -64,6 +65,7 @@ const PANEL_TITLES: Record<Panel, string> = {
   pendingChanges: "Pending changes",
   backup: "Backup & restore",
   appLock: "App lock",
+  templateReviews: "Template Reviews",
 };
 
 function BackIcon() {
@@ -177,6 +179,7 @@ export default function SettingsView({
       {panel === "pendingChanges" && <PendingChangesPanel />}
       {panel === "backup" && <BackupSettingsPanel />}
       {panel === "appLock" && <AppLockSettingsPanel />}
+      {panel === "templateReviews" && <TemplateReviewPanel />}
       {panel === "dashboardWidgets" && (
         <DashboardWidgetsSettings
           categories={categories}
