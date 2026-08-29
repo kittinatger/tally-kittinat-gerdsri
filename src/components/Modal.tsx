@@ -9,6 +9,7 @@ export default function Modal({
   title,
   children,
   wide = false,
+  headerRight,
 }: {
   onClose: () => void;
   title: string;
@@ -18,6 +19,10 @@ export default function Modal({
    * transaction form. No effect below the sm breakpoint, where every modal
    * is a full-width bottom sheet regardless. */
   wide?: boolean;
+  /** Extra control rendered in the header row, between the title and the
+   * close button — e.g. an overflow ("...") menu button for actions like
+   * Edit that shouldn't be a permanently-visible button in the body. */
+  headerRight?: React.ReactNode;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const t = useT();
@@ -93,15 +98,18 @@ export default function Modal({
          * overflow-hidden on the outer div clips it back to the rounded
          * shape. */}
         <div ref={panelRef} className="max-h-[92dvh] overflow-y-auto p-5 sm:p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-display text-xl text-surface-foreground">{title}</h2>
-            <button
-              onClick={onClose}
-              aria-label={t("common.close")}
-              className="rounded-full p-1.5 text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
-            >
-              <CloseIcon className="h-3.5 w-3.5" />
-            </button>
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <h2 className="min-w-0 truncate font-display text-xl text-surface-foreground">{title}</h2>
+            <div className="flex shrink-0 items-center gap-1">
+              {headerRight}
+              <button
+                onClick={onClose}
+                aria-label={t("common.close")}
+                className="rounded-full p-1.5 text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
+              >
+                <CloseIcon className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
           {children}
         </div>

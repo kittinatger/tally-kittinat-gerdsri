@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { EditIcon, TrashIcon } from "@/lib/icons";
+import { TrashIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 import { useCurrency } from "@/lib/currency-context";
 import AccountCardShape from "./AccountCardShape";
@@ -15,15 +15,16 @@ import type { WalletOption } from "@/types/wallet";
 // transactions on it — this just surfaces that as an inline error rather
 // than blocking the button from being tappable at all. Renders as a
 // payment card (WalletCardShape) when the wallet has a network set, or a
-// plain account (AccountCardShape) otherwise — see WalletPageView.
+// plain account (AccountCardShape) otherwise — see WalletPageView. Edit
+// lives in the Modal header's overflow menu (see WalletPageView), not as
+// a button here — only Delete, which still needs its own two-click
+// confirm, stays in the body.
 export default function AccountDetail({
   wallet,
-  onEdit,
   onDelete,
   deleteError,
 }: {
   wallet: WalletOption;
-  onEdit: () => void;
   onDelete: () => void;
   deleteError: string | null;
 }) {
@@ -88,27 +89,19 @@ export default function AccountDetail({
 
       {deleteError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{deleteError}</p>}
 
-      <div className="mt-4 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={onEdit}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-foreground transition hover:border-navy"
-        >
-          <EditIcon className="h-4 w-4" />
-          {t("common.edit")}
-        </button>
+      <div className="mt-4">
         <button
           type="button"
           onClick={handleDeleteClick}
           aria-label={confirming ? t("common.confirmDelete") : t("common.delete")}
-          className={`flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-semibold transition ${
+          className={`flex h-10 w-full items-center justify-center gap-1.5 rounded-full border px-3 text-sm font-semibold transition ${
             confirming
               ? "border-red-300 bg-red-600 text-white hover:bg-red-700"
               : "border-line text-ink-soft hover:border-red-300 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
           }`}
         >
           <TrashIcon />
-          {confirming && <span>{t("common.confirmDelete")}</span>}
+          {confirming ? t("common.confirmDelete") : t("common.delete")}
         </button>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import AppHeader from "./AppHeader";
 import PullToRefresh from "./PullToRefresh";
 import Modal from "./Modal";
+import OverflowMenu from "./OverflowMenu";
 import CardStack from "./CardStack";
 import CardGrid from "./CardGrid";
 import AccountCardShape from "./AccountCardShape";
@@ -14,7 +15,7 @@ import PassShape from "./PassShape";
 import { useT } from "@/lib/language-context";
 import { useCurrency } from "@/lib/currency-context";
 import { describeFetchError } from "@/lib/fetch-error";
-import { PlusIcon, GearIcon } from "@/lib/icons";
+import { PlusIcon, GearIcon, EditIcon } from "@/lib/icons";
 import type { WalletOption } from "@/types/wallet";
 import type { MembershipCard } from "@/types/membership";
 import type { MembershipCodeFormat } from "@/lib/memberships";
@@ -307,15 +308,28 @@ export default function WalletPageView({
       )}
 
       {viewingAccount && (
-        <Modal onClose={() => setViewingAccount(null)} title={viewingAccount.name}>
+        <Modal
+          onClose={() => setViewingAccount(null)}
+          title={viewingAccount.name}
+          headerRight={
+            <OverflowMenu
+              items={[
+                {
+                  label: t("common.edit"),
+                  icon: <EditIcon className="h-4 w-4" />,
+                  onClick: () => {
+                    setAccountModal({ mode: "edit", wallet: viewingAccount });
+                    setViewingAccount(null);
+                  },
+                },
+              ]}
+            />
+          }
+        >
           <AccountDetail
             key={viewingAccount.id}
             wallet={viewingAccount}
             deleteError={accountDeleteError}
-            onEdit={() => {
-              setAccountModal({ mode: "edit", wallet: viewingAccount });
-              setViewingAccount(null);
-            }}
             onDelete={() => handleDeleteAccount(viewingAccount.id)}
           />
         </Modal>
