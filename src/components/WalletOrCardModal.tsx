@@ -83,6 +83,9 @@ const NETWORK_LABEL_KEYS: Record<CardNetwork, MessageKey> = {
   mastercard: "wallet.networkMastercard",
   amex: "wallet.networkAmex",
   discover: "wallet.networkDiscover",
+  jcb: "wallet.networkJcb",
+  unionpay: "wallet.networkUnionPay",
+  "apple-pay": "wallet.networkApplePay",
   other: "wallet.networkOther",
 };
 
