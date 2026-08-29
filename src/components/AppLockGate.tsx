@@ -23,6 +23,42 @@ const EXEMPT_PREFIXES = ["/welcome", "/login", "/register", "/forgot-password", 
 
 type UnlockMethod = "biometric" | "pin";
 
+// sessionStorage (not localStorage) deliberately: it survives a refresh —
+// the whole point here — but still clears when the tab/window actually
+// closes, so "5 minute timeout" can't be stretched indefinitely by closing
+// and reopening the browser. Wrapped since sessionStorage access can throw
+// in some contexts (private browsing, storage disabled) — the fallback is
+// just always re-locking, the safe direction to fail in.
+const HIDDEN_AT_KEY = "tally.applock.hiddenAt";
+
+function readHiddenAt(): number | null {
+  try {
+    const raw = sessionStorage.getItem(HIDDEN_AT_KEY);
+    if (!raw) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeHiddenAt(value: number) {
+  try {
+    sessionStorage.setItem(HIDDEN_AT_KEY, String(value));
+  } catch {
+    // Storage unavailable — the mount check simply won't find a stamp and
+    // will lock, same as before this fix existed.
+  }
+}
+
+function clearHiddenAt() {
+  try {
+    sessionStorage.removeItem(HIDDEN_AT_KEY);
+  } catch {
+    // Nothing to do — see writeHiddenAt.
+  }
+}
+
 // A client-rendered gate mounted above the routed app content, additive to
 // (never a replacement for) the server-side cookie session check in
 // proxy.ts. Shows a full-screen overlay on first mount and whenever the
@@ -56,7 +92,13 @@ export default function AppLockGate({ children }: { children: React.ReactNode })
   // When the tab was last hidden — null means "not currently/recently
   // hidden" (or hasn't been evaluated yet). Read on the next visible
   // transition to decide whether enough inactive time has passed to
-  // warrant re-locking.
+  // warrant re-locking. Mirrored into sessionStorage (see HIDDEN_AT_KEY)
+  // so the same "how long was it away" check survives a full page
+  // refresh/reload, not just a tab switch within one page load — a reload
+  // tears down this whole component (and every React ref with it), so
+  // without the persisted copy every reload looked identical to "just
+  // opened the app from cold" and always re-locked regardless of the
+  // configured timeout.
   const hiddenAtRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -68,13 +110,22 @@ export default function AppLockGate({ children }: { children: React.ReactNode })
         if (cancelled) return;
         if (data?.enabled) {
           setAppLockEnabled(true);
-          setLocked(true);
           const credsAvailable = Array.isArray(data.credentials) && data.credentials.length > 0;
           setHasCredentials(credsAvailable);
           setHasPasscode(Boolean(data.hasPasscode));
           setPinLength(typeof data.pinLength === "number" ? data.pinLength : null);
           setMethod(credsAvailable ? "biometric" : "pin");
-          if (typeof data.timeoutSeconds === "number") timeoutSecondsRef.current = data.timeoutSeconds;
+          const timeoutSeconds = typeof data.timeoutSeconds === "number" ? data.timeoutSeconds : 0;
+          timeoutSecondsRef.current = timeoutSeconds;
+
+          // A prior tab-hide or page unload (see below) may have stamped
+          // when the app was last put away — if that was recent enough to
+          // be within the configured timeout, this reload shouldn't lock
+          // any more than a same-page tab-switch-back would have.
+          const storedHiddenAt = readHiddenAt();
+          const withinTimeout = storedHiddenAt !== null && Date.now() - storedHiddenAt < timeoutSeconds * 1000;
+          clearHiddenAt();
+          setLocked(!withinTimeout);
         }
         setChecked(true);
       })
@@ -91,20 +142,34 @@ export default function AppLockGate({ children }: { children: React.ReactNode })
   // "app lock" behavior, distinct from the one-time check on load above.
   useEffect(() => {
     if (exempt || !appLockEnabled) return;
+    function stampHidden() {
+      const now = Date.now();
+      hiddenAtRef.current = now;
+      writeHiddenAt(now);
+    }
     function onVisibilityChange() {
       if (document.visibilityState === "hidden") {
-        hiddenAtRef.current = Date.now();
+        stampHidden();
         return;
       }
       // visible
       const hiddenAt = hiddenAtRef.current;
       hiddenAtRef.current = null;
+      clearHiddenAt();
       if (hiddenAt === null) return; // first activation — already handled by the mount check above
       const elapsedMs = Date.now() - hiddenAt;
       if (elapsedMs >= timeoutSecondsRef.current * 1000) setLocked(true);
     }
+    // A refresh or tab close doesn't fire visibilitychange at all (the
+    // document is torn down outright, not merely hidden) — pagehide is
+    // what actually fires in that case, so the "last put away at" stamp
+    // above (read back on the next mount) still gets written.
     document.addEventListener("visibilitychange", onVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("pagehide", stampHidden);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pagehide", stampHidden);
+    };
   }, [exempt, appLockEnabled]);
 
   async function handleUnlockBiometric() {
