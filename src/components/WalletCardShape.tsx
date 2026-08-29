@@ -303,24 +303,31 @@ export default function WalletCardShape({
         </p>
       </div>
 
-      {showBalance && balance !== null && (
-        <div>
-          <p className="text-[10px] uppercase tracking-wide" style={{ color: fg.a70 }}>
-            {t("wallet.balanceLabel")}
-          </p>
-          <p className="truncate text-2xl font-bold">{showCurrency ? formatCurrency(balance, currency) : balance.toFixed(2)}</p>
-        </div>
-      )}
-
-      <div className="flex items-end justify-between gap-2" style={rowReserveStyle(false)}>
-        <p className="min-w-0 truncate text-xs uppercase tracking-wide" style={{ color: fg.a85 }}>
-          {holderName || " "}
-        </p>
-        {expiry && (
-          <p className="shrink-0 text-xs font-semibold" style={{ color: fg.a85 }}>
-            {expiry}
-          </p>
+      {/* Grouped into one bottom block (rather than each being its own
+       * top-level row) so the outer card's flex justify-between still only
+       * ever distributes 3 rows total (label, chip/number, this group) —
+       * adding the balance preview as a 4th top-level row pushed every row
+       * up out of its usual spacing, since justify-between redistributes
+       * evenly across however many direct children it has. */}
+      <div>
+        {showBalance && balance !== null && (
+          <div className="mb-2">
+            <p className="text-[10px] uppercase tracking-wide" style={{ color: fg.a70 }}>
+              {t("wallet.balanceLabel")}
+            </p>
+            <p className="truncate text-2xl font-bold">{showCurrency ? formatCurrency(balance, currency) : balance.toFixed(2)}</p>
+          </div>
         )}
+        <div className="flex items-end justify-between gap-2" style={rowReserveStyle(false)}>
+          <p className="min-w-0 truncate text-xs uppercase tracking-wide" style={{ color: fg.a85 }}>
+            {holderName || " "}
+          </p>
+          {expiry && (
+            <p className="shrink-0 text-xs font-semibold" style={{ color: fg.a85 }}>
+              {expiry}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
