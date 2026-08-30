@@ -21,6 +21,10 @@ export type CardTemplateOption = {
   /** Which currency code to force the wallet itself onto — distinct from
    * forceShowCurrency above (whether it renders at all, not which one). */
   forceCurrency: string | null;
+  /** Which country this template is grouped under in PremadeCardPicker —
+   * null lands it in an "Other" bucket. Metadata only, never applied to
+   * the picking wallet. */
+  country: string | null;
   status: "pending" | "approved" | "rejected";
   submittedByUsername: string | null;
   createdAt: string;

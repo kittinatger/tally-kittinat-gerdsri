@@ -13,6 +13,7 @@ import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import { CURRENCIES } from "@/lib/currencies";
 import { useCurrency } from "@/lib/currency-context";
+import { countryForCurrency, KNOWN_COUNTRIES } from "@/lib/currency-country";
 import { PaletteIcon, TrashIcon } from "@/lib/icons";
 import { describeFetchError } from "@/lib/fetch-error";
 import { useT } from "@/lib/language-context";
@@ -50,6 +51,7 @@ export default function TemplateEditModal({
   const [background, setBackground] = useState<CardBackground | null>(template.background);
   const [textColor, setTextColor] = useState<string | null>(template.textColor);
   const [status, setStatus] = useState(template.status);
+  const [country, setCountry] = useState(template.country ?? "");
   const [force, setForce] = useState({
     forceShowName: template.forceShowName,
     forceShowNetworkBadge: template.forceShowNetworkBadge,
@@ -83,6 +85,7 @@ export default function TemplateEditModal({
           background,
           textColor,
           status,
+          country: country.trim() || null,
           ...force,
           forceCurrency: currencyLocked ? forceCurrencyValue : null,
         }),
@@ -144,6 +147,23 @@ export default function TemplateEditModal({
           />
 
           <div>
+            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.templateCountryLabel")}</label>
+            <input
+              type="text"
+              list="templateCountryOptionsEdit"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              placeholder={t("wallet.templateCountryPlaceholder")}
+              className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+            />
+            <datalist id="templateCountryOptionsEdit">
+              {KNOWN_COUNTRIES.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+          </div>
+
+          <div>
             <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("common.status")}</label>
             <div className="flex gap-1 rounded-full bg-bg-soft p-1">
               {STATUSES.map((s) => (
@@ -187,7 +207,13 @@ export default function TemplateEditModal({
         <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("wallet.lockCurrencyLabel")}>
           <button
             type="button"
-            onClick={() => setCurrencyLocked((v) => !v)}
+            onClick={() => {
+              setCurrencyLocked((v) => !v);
+              if (!currencyLocked && !country.trim()) {
+                const suggested = countryForCurrency(forceCurrencyValue);
+                if (suggested) setCountry(suggested);
+              }
+            }}
             className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
           >
             <span>
@@ -214,7 +240,14 @@ export default function TemplateEditModal({
             <SelectDropdown
               value={CURRENCIES.find((c) => c.code === forceCurrencyValue) ? `${forceCurrencyValue} — ${CURRENCIES.find((c) => c.code === forceCurrencyValue)!.name}` : forceCurrencyValue}
               options={CURRENCIES.map((c) => `${c.code} — ${c.name}`)}
-              onChange={(label) => setForceCurrencyValue(label.split(" — ")[0])}
+              onChange={(label) => {
+                const code = label.split(" — ")[0];
+                setForceCurrencyValue(code);
+                if (!country.trim()) {
+                  const suggested = countryForCurrency(code);
+                  if (suggested) setCountry(suggested);
+                }
+              }}
             />
           )}
         </FormSection>

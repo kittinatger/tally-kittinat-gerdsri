@@ -105,7 +105,10 @@ export default function TemplateReviewPanel() {
                     {tpl.status}
                   </span>
                 </div>
-                <p className="truncate text-xs text-ink-soft">{tpl.submittedByUsername ?? t("wallet.unknownSubmitter")}</p>
+                <p className="truncate text-xs text-ink-soft">
+                  {tpl.submittedByUsername ?? t("wallet.unknownSubmitter")}
+                  {tpl.country ? ` · ${tpl.country}` : ""}
+                </p>
                 {forcedSummary(tpl) && <p className="truncate text-[11px] text-ink-soft">{forcedSummary(tpl)}</p>}
               </div>
               {tpl.status === "pending" && (

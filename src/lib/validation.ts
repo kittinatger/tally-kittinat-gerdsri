@@ -244,6 +244,10 @@ export const cardTemplateInputSchema = z.object({
   // Which currency code to force the wallet itself onto — distinct from
   // forceShowCurrency above (whether it renders at all, not which one).
   forceCurrency: walletCurrencySchema.optional(),
+  // Free-text, nullable — which country this template belongs under in
+  // PremadeCardPicker's grouping. Not a real force_* field: it isn't
+  // applied to the picking wallet at all, just metadata for the gallery.
+  country: z.string().trim().max(60).nullable().optional(),
 });
 
 // Admin-only edit — every field optional (at least one required), used for
@@ -262,6 +266,7 @@ export const cardTemplateUpdateSchema = z
     forceShowBalance: z.boolean().nullable().optional(),
     forceShowCurrency: z.boolean().nullable().optional(),
     forceCurrency: walletCurrencySchema.optional(),
+    country: z.string().trim().max(60).nullable().optional(),
     status: z.enum(["pending", "approved", "rejected"]).optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {

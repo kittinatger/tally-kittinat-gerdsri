@@ -22,6 +22,7 @@ import { CHIP_POSITIONS, CHIP_POSITION_LABEL_KEYS, DEFAULT_CHIP_POSITION, type C
 import { CategoryIcon, PaletteIcon, FileIcon } from "@/lib/icons";
 import { useCurrency } from "@/lib/currency-context";
 import { CURRENCIES } from "@/lib/currencies";
+import { countryForCurrency, KNOWN_COUNTRIES } from "@/lib/currency-country";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 import type { WalletKind } from "@/lib/wallets";
@@ -101,6 +102,12 @@ export default function WalletModal({
   // the wallet form's own submitting/error, since this is an independent
   // side action, not part of saving the wallet itself.
   const [templateName, setTemplateName] = useState("");
+  // Prefilled once from whatever currency the wallet already has, via the
+  // currency->country map (see currency-country.ts) — a starting guess,
+  // not tied to lockCurrency below, since the author can change either
+  // independently (a template can be locked to JPY without necessarily
+  // being filed under Japan, or vice versa). Left editable either way.
+  const [templateCountry, setTemplateCountry] = useState(() => countryForCurrency(currency) ?? "");
   const [templateSubmitting, setTemplateSubmitting] = useState(false);
   const [templateSubmitted, setTemplateSubmitted] = useState(false);
   const [templateError, setTemplateError] = useState<string | null>(null);
@@ -185,6 +192,7 @@ export default function WalletModal({
           color,
           background,
           textColor,
+          country: templateCountry.trim() || null,
           forceShowName: forceToggles.showName,
           forceShowNetworkBadge: forceToggles.showNetworkBadge,
           forceShowChip: forceToggles.showChip,
@@ -891,6 +899,20 @@ export default function WalletModal({
                 aria-label={t("wallet.templateNameLabel")}
                 className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
               />
+              <input
+                type="text"
+                list="templateCountryOptions"
+                value={templateCountry}
+                onChange={(e) => setTemplateCountry(e.target.value)}
+                placeholder={t("wallet.templateCountryPlaceholder")}
+                aria-label={t("wallet.templateCountryLabel")}
+                className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+              />
+              <datalist id="templateCountryOptions">
+                {KNOWN_COUNTRIES.map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
 
               {hasCardLook && (
                 <div className="rounded-card border border-line bg-bg-soft p-3">
@@ -920,7 +942,16 @@ export default function WalletModal({
 
               <button
                 type="button"
-                onClick={() => setLockCurrency((v) => !v)}
+                onClick={() => {
+                  setLockCurrency((v) => !v);
+                  // A nudge, not a sync — only fills an still-empty country
+                  // field, never overwrites something the author already
+                  // typed or edited away from the suggestion.
+                  if (!lockCurrency && !templateCountry.trim()) {
+                    const suggested = countryForCurrency(currency);
+                    if (suggested) setTemplateCountry(suggested);
+                  }
+                }}
                 className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
               >
                 <span>

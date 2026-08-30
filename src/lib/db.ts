@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 44;
+const CURRENT_SCHEMA_VERSION = 45;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1234,6 +1234,16 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE card_templates DROP COLUMN IF EXISTS orientation;`;
       await sql`ALTER TABLE membership_cards DROP COLUMN IF EXISTS orientation;`;
 
+      // Which country a premade card template represents — lets
+      // PremadeCardPicker group an increasingly long list by country
+      // instead of one flat gallery. Nullable/free-text: either the
+      // submitter or the admin reviewer can set/override it (see
+      // countryForCurrency in currency-country.ts for the auto-suggestion
+      // from a locked currency, in both places it's edited), and a
+      // template with no country just lands in an "Other" bucket rather
+      // than being required to have one.
+      await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS country TEXT;`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -1913,6 +1923,8 @@ export type CardTemplateRow = {
   // force_show_currency above, which only forces whether a currency
   // renders at all, not which one. NULL means "don't touch it".
   force_currency: string | null;
+  // Free-text, nullable — see the ensureSchema comment for country.
+  country: string | null;
   status: "pending" | "approved" | "rejected";
   created_at: string;
   reviewed_at: string | null;
@@ -1924,7 +1936,7 @@ export type CardTemplateRow = {
 // against the users join), bare column names for INSERT/UPDATE...RETURNING
 // where there's no alias to strip.
 const CARD_TEMPLATE_COLUMNS =
-  "id, submitted_by, name, color, background, text_color, force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency, status, created_at, reviewed_at";
+  "id, submitted_by, name, color, background, text_color, force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency, country, status, created_at, reviewed_at";
 
 export async function createCardTemplate(
   userId: number,
@@ -1940,6 +1952,7 @@ export async function createCardTemplate(
     forceShowBalance?: boolean | null;
     forceShowCurrency?: boolean | null;
     forceCurrency?: string | null;
+    country?: string | null;
   },
 ): Promise<CardTemplateRow> {
   await ensureSchema();
@@ -1948,9 +1961,9 @@ export async function createCardTemplate(
     `INSERT INTO card_templates (
        submitted_by, name, color, background, text_color,
        force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency,
-       status
+       country, status
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending')
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'pending')
      RETURNING ${CARD_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
     [
       userId,
@@ -1965,6 +1978,7 @@ export async function createCardTemplate(
       input.forceShowBalance ?? null,
       input.forceShowCurrency ?? null,
       input.forceCurrency ?? null,
+      input.country ?? null,
     ],
   );
   return rows[0];
@@ -2019,6 +2033,7 @@ export async function updateCardTemplate(
     forceShowBalance?: boolean | null;
     forceShowCurrency?: boolean | null;
     forceCurrency?: string | null;
+    country?: string | null;
     status?: "pending" | "approved" | "rejected";
   },
 ): Promise<CardTemplateRow | null> {
@@ -2035,11 +2050,12 @@ export async function updateCardTemplate(
     force_show_balance: boolean | null;
     force_show_currency: boolean | null;
     force_currency: string | null;
+    country: string | null;
     status: "pending" | "approved" | "rejected";
   }>`
     SELECT name, color, background, text_color,
            force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency,
-           status
+           country, status
     FROM card_templates WHERE id = ${id};
   `;
   const existing = existingRows[0];
@@ -2056,6 +2072,7 @@ export async function updateCardTemplate(
   const newForceShowBalance = input.forceShowBalance !== undefined ? input.forceShowBalance : existing.force_show_balance;
   const newForceShowCurrency = input.forceShowCurrency !== undefined ? input.forceShowCurrency : existing.force_show_currency;
   const newForceCurrency = input.forceCurrency !== undefined ? input.forceCurrency : existing.force_currency;
+  const newCountry = input.country !== undefined ? input.country : existing.country;
   const newStatus = input.status ?? existing.status;
   const bumpReviewedAt = input.status !== undefined;
 
@@ -2063,8 +2080,8 @@ export async function updateCardTemplate(
     `UPDATE card_templates
      SET name = $1, color = $2, background = $3, text_color = $4,
          force_show_name = $5, force_show_network_badge = $6, force_show_chip = $7, force_show_card_number = $8, force_show_balance = $9, force_show_currency = $10,
-         force_currency = $11, status = $12, reviewed_at = ${bumpReviewedAt ? "now()" : "reviewed_at"}
-     WHERE id = $13
+         force_currency = $11, country = $12, status = $13, reviewed_at = ${bumpReviewedAt ? "now()" : "reviewed_at"}
+     WHERE id = $14
      RETURNING ${CARD_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
     [
       newName,
@@ -2078,6 +2095,7 @@ export async function updateCardTemplate(
       newForceShowBalance,
       newForceShowCurrency,
       newForceCurrency,
+      newCountry,
       newStatus,
       id,
     ],
