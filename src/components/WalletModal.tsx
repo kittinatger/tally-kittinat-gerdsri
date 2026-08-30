@@ -74,7 +74,7 @@ export default function WalletModal({
   // three tabs keeps each screenful focused; the live preview and the
   // submit/cancel row stay outside the tabs so switching never loses sight
   // of either.
-  const [tab, setTab] = useState<"basics" | "card" | "look">("basics");
+  const [tab, setTab] = useState<"basics" | "card" | "look" | "template">("basics");
 
   // Card-look fields — always part of the form now (see the comment above).
   const [network, setNetwork] = useState<CardNetwork>(wallet?.network ?? "other");
@@ -226,6 +226,18 @@ export default function WalletModal({
     !forcedFields.showCardNumber ||
     !forcedFields.showName ||
     !forcedFields.hideCardInfo;
+
+  // The "Template" tab (Upload as template) hides once a premade card's
+  // already been picked this session — see templateApplied's own comment
+  // above; there's nothing left there to show.
+  const tabs = (
+    [
+      ["basics", "wallet.tabBasics"],
+      ["card", "wallet.tabCardDetails"],
+      ["look", "wallet.tabLook"],
+      ["template", "wallet.tabTemplate"],
+    ] as const
+  ).filter(([key]) => key !== "template" || !templateApplied);
 
   const appDefaultLabel = t("wallet.appDefault");
   const currencyOptions = [`${appDefaultLabel} (${appCurrency})`, ...CURRENCIES.map((c) => `${c.code} — ${c.name}`)];
@@ -381,13 +393,7 @@ export default function WalletModal({
         </ColorGlowPreview>
 
         <div className="flex gap-1 rounded-full bg-bg-soft p-1">
-          {(
-            [
-              ["basics", "wallet.tabBasics"],
-              ["card", "wallet.tabCardDetails"],
-              ["look", "wallet.tabLook"],
-            ] as const
-          ).map(([key, labelKey]) => (
+          {tabs.map(([key, labelKey]) => (
             <button
               key={key}
               type="button"
@@ -920,7 +926,6 @@ export default function WalletModal({
         )}
 
         {tab === "look" && (
-        <>
         <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("wallet.colorLabel")}>
           <PremadeCardPicker
             onSelect={(tpl) => {
@@ -1008,8 +1013,9 @@ export default function WalletModal({
             </div>
           )}
         </FormSection>
+        )}
 
-        {!templateApplied && (
+        {tab === "template" && !templateApplied && (
         <FormSection icon={<UploadIcon className="h-4 w-4" />} title={t("wallet.uploadTemplateLabel")}>
           {templateSubmitted ? (
             <p className="text-xs text-ink-soft">{t("wallet.templateSubmittedDesc")}</p>
@@ -1251,8 +1257,6 @@ export default function WalletModal({
             </>
           )}
         </FormSection>
-        )}
-        </>
         )}
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
