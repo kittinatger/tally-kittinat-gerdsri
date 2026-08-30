@@ -424,10 +424,8 @@ export default function SettingsNavList({
 
       {/* Everything that moves data in/out of the app rather than being a
        * feature you use day to day — export/import/backup, automatic
-       * import, the error log and pending-changes queue (both diagnostic,
-       * not "support" in the FAQ/contact sense below), and the admin-only
-       * template review/manage pages, which are fundamentally about
-       * curating shared data too. */}
+       * import, and the error log and pending-changes queue (both
+       * diagnostic, not "support" in the FAQ/contact sense below). */}
       <SettingsSection title={t("settings.section.data")}>
         <ExportDataButton />
         <ImportDataButton />
@@ -436,10 +434,19 @@ export default function SettingsNavList({
         <SettingsListItem icon={<BackupIcon />} label={t("settings.backup")} accent="cyan" {...panelItemProps("backup")} />
         <SettingsListItem icon={<WarningIcon />} label={t("settings.errorLog")} accent="amber" {...panelItemProps("errorReports")} />
         <SettingsListItem icon={<RecurringIcon />} label={t("settings.pendingChanges")} accent="teal" {...panelItemProps("pendingChanges")} />
-        {isAdmin && (
-          <SettingsListItem icon={<UploadIcon className="h-5 w-5" />} label={t("wallet.templateReviewTitle")} accent="indigo" {...panelItemProps("templateReviews")} />
-        )}
       </SettingsSection>
+
+      {/* Admin-only — hidden entirely for every other account, not just its
+       * items grayed out, so it never advertises a capability that account
+       * doesn't have. Currently just template moderation, but a dedicated
+       * section (rather than folding it into Data & Backup) gives future
+       * admin-only tools a home without cluttering the regular sections
+       * every user sees. */}
+      {isAdmin && (
+        <SettingsSection title={t("settings.section.admin")}>
+          <SettingsListItem icon={<UploadIcon className="h-5 w-5" />} label={t("wallet.templateReviewTitle")} accent="indigo" {...panelItemProps("templateReviews")} />
+        </SettingsSection>
+      )}
 
       <SettingsSection title={t("settings.section.display")}>
         <SettingsListItem icon={<DashboardWidgetsIcon />} label={t("settings.dashboardWidgets")} accent="fuchsia" {...panelItemProps("dashboardWidgets")} />
