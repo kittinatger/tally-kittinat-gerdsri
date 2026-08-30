@@ -43,14 +43,12 @@ export default function CardStack({
               marginTop: i === 0 ? 0 : isLast ? -16 : -8,
               zIndex: isDragging ? 50 : i + 1,
               // pan-y lets the page scroll normally through a quick swipe or
-              // while the long-press timer is still pending — but once a
-              // drag actually starts (isDragging), it has to flip to "none".
-              // Left at "pan-y" the whole time, the browser keeps treating
-              // every vertical finger move as a page scroll even after
-              // setPointerCapture, since pan-y explicitly reserves vertical
-              // panning for the browser — so the item's own onPointerMove
-              // reorder logic never got a real chance against the page
-              // scrolling out from under it.
+              // while the long-press timer is still pending. The hook
+              // itself flips this to "none" imperatively, directly on the
+              // DOM node, the instant a long-press actually arms (see
+              // use-reorderable-list.ts) — this style prop just keeps
+              // React's own idea of the value in sync on the next render,
+              // it isn't what actually stops the scroll in time.
               touchAction: isDragging ? "none" : reorderable ? "pan-y" : undefined,
               transform: isDragging ? `translate(${dragOffset.x}px, ${dragOffset.y}px) scale(1.03)` : undefined,
               transition: isDragging ? "none" : "transform 0.15s ease, margin-top 0.15s ease",
