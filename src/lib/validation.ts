@@ -231,6 +231,14 @@ export const cardTemplateInputSchema = z.object({
   color: z.string().trim().min(1).max(30),
   background: cardBackgroundSchema.optional(),
   textColor: cardTextColorSchema.optional(),
+  // Author-forced toggle overrides — omitted/null means "don't force this
+  // one", see the force_* column comments in db.ts.
+  forceShowName: z.boolean().nullable().optional(),
+  forceShowNetworkBadge: z.boolean().nullable().optional(),
+  forceShowChip: z.boolean().nullable().optional(),
+  forceShowCardNumber: z.boolean().nullable().optional(),
+  forceShowBalance: z.boolean().nullable().optional(),
+  forceShowCurrency: z.boolean().nullable().optional(),
 });
 
 export const cardTemplateReviewSchema = z.object({

@@ -51,6 +51,25 @@ export default function TemplateReviewPanel() {
     }
   }
 
+  // A short "Forces: X off, Y on" line so the reviewer can see what a
+  // template does to a picker's toggles before approving it, not just its
+  // background/color — null fields (the common case: no forced toggles at
+  // all) are skipped entirely, so this returns "" for a plain-look template.
+  function forcedSummary(tpl: CardTemplateOption): string {
+    const entries: [boolean | null, string][] = [
+      [tpl.forceShowName, t("wallet.showNameOnCardLabel")],
+      [tpl.forceShowNetworkBadge, t("wallet.showNetworkBadgeLabel")],
+      [tpl.forceShowChip, t("wallet.showChipLabel")],
+      [tpl.forceShowCardNumber, t("wallet.showCardNumberLabel")],
+      [tpl.forceShowBalance, t("wallet.showBalanceOnCardLabel")],
+      [tpl.forceShowCurrency, t("wallet.showCurrencyOnCardLabel")],
+    ];
+    const parts = entries
+      .filter(([value]) => value !== null)
+      .map(([value, label]) => `${label}: ${value ? t("wallet.forceOn") : t("wallet.forceOff")}`);
+    return parts.length ? parts.join(", ") : "";
+  }
+
   return (
     <div>
       <h2 className="mb-5 font-display text-2xl text-foreground">{t("wallet.templateReviewTitle")}</h2>
@@ -74,6 +93,7 @@ export default function TemplateReviewPanel() {
                 <p className="truncate text-xs text-ink-soft">
                   {tpl.submittedByUsername ?? t("wallet.unknownSubmitter")}
                 </p>
+                {forcedSummary(tpl) && <p className="truncate text-[11px] text-ink-soft">{forcedSummary(tpl)}</p>}
               </div>
               <button
                 type="button"

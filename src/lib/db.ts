@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 39;
+const CURRENT_SCHEMA_VERSION = 40;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1196,6 +1196,22 @@ function ensureSchema(): Promise<void> {
       `;
       await sql`CREATE INDEX IF NOT EXISTS card_templates_status_idx ON card_templates (status);`;
 
+      // Optional per-toggle overrides the template's author can opt into —
+      // NULL means "don't touch this toggle, leave whatever the person
+      // applying the template already had"; true/false means "force it to
+      // this value" (e.g. an author submitting an official logo card might
+      // force show_network_badge=false and show_name=false since the
+      // artwork already makes the network/name obvious). Applied client-
+      // side by PremadeCardPicker's caller alongside background/color/
+      // textColor — these aren't part of the visual skin exactly, but they
+      // travel with the template the same way.
+      await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS force_show_name BOOLEAN;`;
+      await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS force_show_network_badge BOOLEAN;`;
+      await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS force_show_chip BOOLEAN;`;
+      await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS force_show_card_number BOOLEAN;`;
+      await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS force_show_balance BOOLEAN;`;
+      await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS force_show_currency BOOLEAN;`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -1846,22 +1862,66 @@ export type CardTemplateRow = {
   color: string;
   background: string | null;
   text_color: string | null;
+  // NULL means "don't touch this toggle" — see the force_* column comments
+  // in ensureSchema above.
+  force_show_name: boolean | null;
+  force_show_network_badge: boolean | null;
+  force_show_chip: boolean | null;
+  force_show_card_number: boolean | null;
+  force_show_balance: boolean | null;
+  force_show_currency: boolean | null;
   status: "pending" | "approved" | "rejected";
   created_at: string;
   reviewed_at: string | null;
 };
 
+// Shared by every query below so the six force_* columns can't drift out
+// of one of them the way the wallets-merge fields once nearly did (see
+// WALLET_COLUMNS' own comment) — `ct.` for the SELECT queries (aliased
+// against the users join), bare column names for INSERT/UPDATE...RETURNING
+// where there's no alias to strip.
+const CARD_TEMPLATE_COLUMNS =
+  "id, submitted_by, name, color, background, text_color, force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, status, created_at, reviewed_at";
+
 export async function createCardTemplate(
   userId: number,
-  input: { name: string; color: string; background?: unknown; textColor?: string | null },
+  input: {
+    name: string;
+    color: string;
+    background?: unknown;
+    textColor?: string | null;
+    forceShowName?: boolean | null;
+    forceShowNetworkBadge?: boolean | null;
+    forceShowChip?: boolean | null;
+    forceShowCardNumber?: boolean | null;
+    forceShowBalance?: boolean | null;
+    forceShowCurrency?: boolean | null;
+  },
 ): Promise<CardTemplateRow> {
   await ensureSchema();
   const backgroundJson = input.background ? JSON.stringify(input.background) : null;
-  const { rows } = await sql<CardTemplateRow>`
-    INSERT INTO card_templates (submitted_by, name, color, background, text_color, status)
-    VALUES (${userId}, ${input.name}, ${input.color}, ${backgroundJson}, ${input.textColor ?? null}, 'pending')
-    RETURNING id, submitted_by, NULL AS submitted_by_username, name, color, background, text_color, status, created_at, reviewed_at;
-  `;
+  const { rows } = await sql.query<CardTemplateRow>(
+    `INSERT INTO card_templates (
+       submitted_by, name, color, background, text_color,
+       force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency,
+       status
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending')
+     RETURNING ${CARD_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
+    [
+      userId,
+      input.name,
+      input.color,
+      backgroundJson,
+      input.textColor ?? null,
+      input.forceShowName ?? null,
+      input.forceShowNetworkBadge ?? null,
+      input.forceShowChip ?? null,
+      input.forceShowCardNumber ?? null,
+      input.forceShowBalance ?? null,
+      input.forceShowCurrency ?? null,
+    ],
+  );
   return rows[0];
 }
 
@@ -1869,13 +1929,13 @@ export async function createCardTemplate(
 // newest-approved first.
 export async function listApprovedCardTemplates(): Promise<CardTemplateRow[]> {
   await ensureSchema();
-  const { rows } = await sql<CardTemplateRow>`
-    SELECT ct.id, ct.submitted_by, u.username AS submitted_by_username, ct.name, ct.color, ct.background, ct.text_color, ct.status, ct.created_at, ct.reviewed_at
-    FROM card_templates ct
-    LEFT JOIN users u ON u.id = ct.submitted_by
-    WHERE ct.status = 'approved'
-    ORDER BY ct.reviewed_at DESC NULLS LAST, ct.created_at DESC;
-  `;
+  const { rows } = await sql.query<CardTemplateRow>(
+    `SELECT ${CARD_TEMPLATE_COLUMNS.split(", ").map((c) => "ct." + c).join(", ")}, u.username AS submitted_by_username
+     FROM card_templates ct
+     LEFT JOIN users u ON u.id = ct.submitted_by
+     WHERE ct.status = 'approved'
+     ORDER BY ct.reviewed_at DESC NULLS LAST, ct.created_at DESC;`,
+  );
   return rows;
 }
 
@@ -1883,13 +1943,13 @@ export async function listApprovedCardTemplates(): Promise<CardTemplateRow[]> {
 // the review queue works through submissions in the order they arrived.
 export async function listPendingCardTemplates(): Promise<CardTemplateRow[]> {
   await ensureSchema();
-  const { rows } = await sql<CardTemplateRow>`
-    SELECT ct.id, ct.submitted_by, u.username AS submitted_by_username, ct.name, ct.color, ct.background, ct.text_color, ct.status, ct.created_at, ct.reviewed_at
-    FROM card_templates ct
-    LEFT JOIN users u ON u.id = ct.submitted_by
-    WHERE ct.status = 'pending'
-    ORDER BY ct.created_at ASC;
-  `;
+  const { rows } = await sql.query<CardTemplateRow>(
+    `SELECT ${CARD_TEMPLATE_COLUMNS.split(", ").map((c) => "ct." + c).join(", ")}, u.username AS submitted_by_username
+     FROM card_templates ct
+     LEFT JOIN users u ON u.id = ct.submitted_by
+     WHERE ct.status = 'pending'
+     ORDER BY ct.created_at ASC;`,
+  );
   return rows;
 }
 
@@ -1898,12 +1958,13 @@ export async function listPendingCardTemplates(): Promise<CardTemplateRow[]> {
 // overwriting the first decision's reviewed_at.
 export async function reviewCardTemplate(id: number, status: "approved" | "rejected"): Promise<CardTemplateRow | null> {
   await ensureSchema();
-  const { rows } = await sql<CardTemplateRow>`
-    UPDATE card_templates
-    SET status = ${status}, reviewed_at = now()
-    WHERE id = ${id} AND status = 'pending'
-    RETURNING id, submitted_by, NULL AS submitted_by_username, name, color, background, text_color, status, created_at, reviewed_at;
-  `;
+  const { rows } = await sql.query<CardTemplateRow>(
+    `UPDATE card_templates
+     SET status = $1, reviewed_at = now()
+     WHERE id = $2 AND status = 'pending'
+     RETURNING ${CARD_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
+    [status, id],
+  );
   return rows[0] ?? null;
 }
 
