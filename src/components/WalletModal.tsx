@@ -1050,247 +1050,264 @@ export default function WalletModal({
         )}
 
         {tab === "template" && !templateApplied && (
+        <>
+        {templateSubmitted ? (
         <FormSection icon={<UploadIcon className="h-4 w-4" />} title={t("wallet.uploadTemplateLabel")}>
-          {templateSubmitted ? (
-            <p className="text-xs text-ink-soft">{t("wallet.templateSubmittedDesc")}</p>
-          ) : (
-            <>
-              <p className="text-xs text-ink-soft">{t("wallet.uploadTemplateDesc")}</p>
-              <input
-                type="text"
-                value={templateName}
-                onChange={(e) => setTemplateName(e.target.value)}
-                placeholder={name || t("wallet.namePlaceholder")}
-                aria-label={t("wallet.templateNameLabel")}
-                className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+          <p className="text-xs text-ink-soft">{t("wallet.templateSubmittedDesc")}</p>
+        </FormSection>
+        ) : (
+        <>
+        <p className="text-xs text-ink-soft">{t("wallet.uploadTemplateDesc")}</p>
+
+        <FormSection icon={<CategoryIcon iconKey="bank" className="h-4 w-4" />} title={t("wallet.templateDetailsLabel")}>
+          <div>
+            <label htmlFor="templateNameInput" className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              {t("wallet.templateNameLabel")}
+            </label>
+            <input
+              id="templateNameInput"
+              type="text"
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              placeholder={name || t("wallet.namePlaceholder")}
+              className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="templateCountryInput" className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              {t("wallet.templateCountryLabel")}
+            </label>
+            <input
+              id="templateCountryInput"
+              type="text"
+              list="templateCountryOptions"
+              value={templateCountry}
+              onChange={(e) => setTemplateCountry(e.target.value)}
+              placeholder={t("wallet.templateCountryPlaceholder")}
+              className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+            />
+            <datalist id="templateCountryOptions">
+              {KNOWN_COUNTRIES.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.templateCategoryLabel")}</label>
+            <div className="flex flex-wrap gap-1.5">
+              {CARD_TEMPLATE_CATEGORIES.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setTemplateCategory((prev) => (prev === c ? null : c))}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    templateCategory === c
+                      ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                      : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                  }`}
+                >
+                  {t(CARD_TEMPLATE_CATEGORY_LABEL_KEYS[c])}
+                </button>
+              ))}
+            </div>
+          </div>
+        </FormSection>
+
+        <FormSection icon={<CategoryIcon iconKey="shield" className="h-4 w-4" />} title={t("wallet.forceTogglesLabel")}>
+          <p className="text-xs text-ink-soft">{t("wallet.forceTogglesDesc")}</p>
+          <div className="space-y-1.5">
+            {(
+              [
+                ["showName", "wallet.forceLabelName"],
+                ["showNetworkBadge", "wallet.forceLabelNetworkBadge"],
+                ["showChip", "wallet.forceLabelChip"],
+                ["showCardNumber", "wallet.forceLabelCardNumber"],
+                ["showBalance", "wallet.forceLabelBalance"],
+                ["showCurrency", "wallet.forceLabelCurrency"],
+              ] as const
+            ).map(([key, labelKey]) => (
+              <ForceToggleField
+                key={key}
+                label={t(labelKey)}
+                value={forceToggles[key]}
+                onChange={(v) => setForceToggles((prev) => ({ ...prev, [key]: v }))}
               />
-              <input
-                type="text"
-                list="templateCountryOptions"
-                value={templateCountry}
-                onChange={(e) => setTemplateCountry(e.target.value)}
-                placeholder={t("wallet.templateCountryPlaceholder")}
-                aria-label={t("wallet.templateCountryLabel")}
-                className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setTemplateForceHideCardInfo((v) => !v)}
+            className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+          >
+            <span>
+              <span className="block text-sm font-medium text-foreground">{t("wallet.forceHideCardInfoLabel")}</span>
+              <span className="block text-xs text-ink-soft">{t("wallet.forceHideCardInfoDesc")}</span>
+            </span>
+            <span
+              role="switch"
+              aria-checked={templateForceHideCardInfo}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                templateForceHideCardInfo ? "bg-navy" : "bg-line"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                  templateForceHideCardInfo ? "translate-x-6" : "translate-x-1"
+                }`}
               />
-              <datalist id="templateCountryOptions">
-                {KNOWN_COUNTRIES.map((c) => (
-                  <option key={c} value={c} />
-                ))}
-              </datalist>
+            </span>
+          </button>
+        </FormSection>
 
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.templateCategoryLabel")}</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {CARD_TEMPLATE_CATEGORIES.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setTemplateCategory((prev) => (prev === c ? null : c))}
-                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                        templateCategory === c
-                          ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
-                          : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
-                      }`}
-                    >
-                      {t(CARD_TEMPLATE_CATEGORY_LABEL_KEYS[c])}
-                    </button>
-                  ))}
-                </div>
-              </div>
+        <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("wallet.templateLocksLabel")}>
+          <button
+            type="button"
+            onClick={() => {
+              setLockCurrency((v) => !v);
+              // A nudge, not a sync — only fills an still-empty country
+              // field, never overwrites something the author already
+              // typed or edited away from the suggestion.
+              if (!lockCurrency && !templateCountry.trim()) {
+                const suggested = countryForCurrency(currency);
+                if (suggested) setTemplateCountry(suggested);
+              }
+            }}
+            className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+          >
+            <span>
+              <span className="block text-sm font-medium text-foreground">{t("wallet.lockCurrencyLabel")}</span>
+              <span className="block text-xs text-ink-soft">
+                {lockCurrency ? t("wallet.lockCurrencyDesc").replace("{currency}", currency ?? appCurrency) : t("wallet.lockCurrencyOffDesc")}
+              </span>
+            </span>
+            <span
+              role="switch"
+              aria-checked={lockCurrency}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                lockCurrency ? "bg-navy" : "bg-line"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                  lockCurrency ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </span>
+          </button>
 
-                <div className="rounded-card border border-line bg-bg-soft p-3">
-                  <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceTogglesLabel")}</p>
-                  <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceTogglesDesc")}</p>
-                  <div className="space-y-1.5">
-                    {(
-                      [
-                        ["showName", "wallet.forceLabelName"],
-                        ["showNetworkBadge", "wallet.forceLabelNetworkBadge"],
-                        ["showChip", "wallet.forceLabelChip"],
-                        ["showCardNumber", "wallet.forceLabelCardNumber"],
-                        ["showBalance", "wallet.forceLabelBalance"],
-                        ["showCurrency", "wallet.forceLabelCurrency"],
-                      ] as const
-                    ).map(([key, labelKey]) => (
-                      <ForceToggleField
-                        key={key}
-                        label={t(labelKey)}
-                        value={forceToggles[key]}
-                        onChange={(v) => setForceToggles((prev) => ({ ...prev, [key]: v }))}
-                      />
-                    ))}
-                  </div>
+          <button
+            type="button"
+            onClick={() => setTemplateLockTextColor((v) => !v)}
+            className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+          >
+            <span>
+              <span className="block text-sm font-medium text-foreground">{t("wallet.lockTextColorLabel")}</span>
+              <span className="block text-xs text-ink-soft">{t("wallet.lockTextColorDesc")}</span>
+            </span>
+            <span
+              role="switch"
+              aria-checked={templateLockTextColor}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                templateLockTextColor ? "bg-navy" : "bg-line"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                  templateLockTextColor ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </span>
+          </button>
 
+          {/* Positioning holder-name text makes no sense once "Name on
+           * card" is itself forced off — see the matching guard on force
+           * network below. */}
+          {forceToggles.showName !== false && (
+            <div className="border-t border-line pt-3">
+              <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceNamePositionLabel")}</p>
+              <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceNamePositionDesc")}</p>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setTemplateForceNamePosition(null)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    templateForceNamePosition === null
+                      ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                      : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                  }`}
+                >
+                  {t("wallet.forceAuto")}
+                </button>
+                {NAME_POSITIONS.map((p) => (
                   <button
+                    key={p}
                     type="button"
-                    onClick={() => setTemplateForceHideCardInfo((v) => !v)}
-                    className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+                    onClick={() => setTemplateForceNamePosition(p)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                      templateForceNamePosition === p
+                        ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                        : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                    }`}
                   >
-                    <span>
-                      <span className="block text-sm font-medium text-foreground">{t("wallet.forceHideCardInfoLabel")}</span>
-                      <span className="block text-xs text-ink-soft">{t("wallet.forceHideCardInfoDesc")}</span>
-                    </span>
-                    <span
-                      role="switch"
-                      aria-checked={templateForceHideCardInfo}
-                      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
-                        templateForceHideCardInfo ? "bg-navy" : "bg-line"
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                          templateForceHideCardInfo ? "translate-x-6" : "translate-x-1"
-                        }`}
-                      />
-                    </span>
+                    {t(NAME_POSITION_LABEL_KEYS[p])}
                   </button>
-                </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-              <button
-                type="button"
-                onClick={() => {
-                  setLockCurrency((v) => !v);
-                  // A nudge, not a sync — only fills an still-empty country
-                  // field, never overwrites something the author already
-                  // typed or edited away from the suggestion.
-                  if (!lockCurrency && !templateCountry.trim()) {
-                    const suggested = countryForCurrency(currency);
-                    if (suggested) setTemplateCountry(suggested);
-                  }
-                }}
-                className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
-              >
-                <span>
-                  <span className="block text-sm font-medium text-foreground">{t("wallet.lockCurrencyLabel")}</span>
-                  <span className="block text-xs text-ink-soft">
-                    {lockCurrency ? t("wallet.lockCurrencyDesc").replace("{currency}", currency ?? appCurrency) : t("wallet.lockCurrencyOffDesc")}
-                  </span>
-                </span>
-                <span
-                  role="switch"
-                  aria-checked={lockCurrency}
-                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
-                    lockCurrency ? "bg-navy" : "bg-line"
+          {/* Forcing a network makes no sense once the badge that would
+           * show it is itself forced off. */}
+          {forceToggles.showNetworkBadge !== false && (
+            <div className="border-t border-line pt-3">
+              <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceNetworkLabel")}</p>
+              <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceNetworkDesc")}</p>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setTemplateForceNetwork(null)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    templateForceNetwork === null
+                      ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                      : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
                   }`}
                 >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                      lockCurrency ? "translate-x-6" : "translate-x-1"
+                  {t("wallet.forceAuto")}
+                </button>
+                {CARD_NETWORKS.map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setTemplateForceNetwork(n)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                      templateForceNetwork === n
+                        ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                        : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
                     }`}
-                  />
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setTemplateLockTextColor((v) => !v)}
-                className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
-              >
-                <span>
-                  <span className="block text-sm font-medium text-foreground">{t("wallet.lockTextColorLabel")}</span>
-                  <span className="block text-xs text-ink-soft">{t("wallet.lockTextColorDesc")}</span>
-                </span>
-                <span
-                  role="switch"
-                  aria-checked={templateLockTextColor}
-                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
-                    templateLockTextColor ? "bg-navy" : "bg-line"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                      templateLockTextColor ? "translate-x-6" : "translate-x-1"
-                    }`}
-                  />
-                </span>
-              </button>
-
-              {/* Positioning holder-name text makes no sense once "Name on
-               * card" is itself forced off — see the matching guard on
-               * force network below. */}
-              {forceToggles.showName !== false && (
-                <div className="rounded-card border border-line bg-bg-soft p-3">
-                  <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceNamePositionLabel")}</p>
-                  <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceNamePositionDesc")}</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setTemplateForceNamePosition(null)}
-                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                        templateForceNamePosition === null
-                          ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
-                          : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
-                      }`}
-                    >
-                      {t("wallet.forceAuto")}
-                    </button>
-                    {NAME_POSITIONS.map((p) => (
-                      <button
-                        key={p}
-                        type="button"
-                        onClick={() => setTemplateForceNamePosition(p)}
-                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                          templateForceNamePosition === p
-                            ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
-                            : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
-                        }`}
-                      >
-                        {t(NAME_POSITION_LABEL_KEYS[p])}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Forcing a network makes no sense once the badge that
-               * would show it is itself forced off. */}
-              {forceToggles.showNetworkBadge !== false && (
-                <div className="rounded-card border border-line bg-bg-soft p-3">
-                  <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceNetworkLabel")}</p>
-                  <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceNetworkDesc")}</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setTemplateForceNetwork(null)}
-                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                        templateForceNetwork === null
-                          ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
-                          : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
-                      }`}
-                    >
-                      {t("wallet.forceAuto")}
-                    </button>
-                    {CARD_NETWORKS.map((n) => (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() => setTemplateForceNetwork(n)}
-                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                          templateForceNetwork === n
-                            ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
-                            : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
-                        }`}
-                      >
-                        {t(NETWORK_LABEL_KEYS[n])}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {templateError && <p className="text-sm text-red-600 dark:text-red-400">{templateError}</p>}
-              <button
-                type="button"
-                onClick={handleUploadTemplate}
-                disabled={templateSubmitting}
-                className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-60"
-              >
-                {templateSubmitting ? t("common.saving") : t("wallet.uploadTemplateLabel")}
-              </button>
-            </>
+                  >
+                    {t(NETWORK_LABEL_KEYS[n])}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
         </FormSection>
+
+        {templateError && <p className="text-sm text-red-600 dark:text-red-400">{templateError}</p>}
+        <button
+          type="button"
+          onClick={handleUploadTemplate}
+          disabled={templateSubmitting}
+          className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-60"
+        >
+          {templateSubmitting ? t("common.saving") : t("wallet.uploadTemplateLabel")}
+        </button>
+        </>
+        )}
+        </>
         )}
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
