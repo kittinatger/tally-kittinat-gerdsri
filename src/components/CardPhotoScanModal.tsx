@@ -67,16 +67,61 @@ export default function CardPhotoScanModal({
   const [aiImage, setAiImage] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  // Set only when the uploaded file was an SVG — a vector card face (like
+  // an official transit-card logo/artwork someone downloaded) is already a
+  // flat, undistorted rectangle, so there's no perspective to correct and
+  // skipping straight to "result" instead of "adjust" avoids rasterizing
+  // it into a lossy JPEG crop just to draw a corner-drag guide over it.
+  // "Use this photo" applies this original data URL (keeping the vector
+  // crisp at any size) rather than resultCanvas's rasterized copy, which
+  // still gets built here purely to extract a palette / feed the AI option.
+  const [svgDataUrl, setSvgDataUrl] = useState<string | null>(null);
 
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const dragIndexRef = useRef<number | null>(null);
 
+  async function handleSvgFile(file: File) {
+    const dataUrl: string = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+    // Rasterize at the card's real aspect ratio purely to get pixels for
+    // extractPalette/the AI option below — the SVG itself (dataUrl, kept
+    // separately) is what actually gets applied as the background.
+    const img = new Image();
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("SVG failed to decode"));
+      img.src = dataUrl;
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = OUT_WIDTH;
+    canvas.height = OUT_HEIGHT;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("2D context unavailable");
+    ctx.drawImage(img, 0, 0, OUT_WIDTH, OUT_HEIGHT);
+    const extracted = extractPalette(canvas, PALETTE_SIZE);
+    setSvgDataUrl(dataUrl);
+    setResultCanvas(canvas);
+    setPalette(extracted);
+    setPattern("diagonal");
+    setColors(fitColors(extracted, PATTERN_COLOR_COUNT.diagonal));
+    setStep("result");
+  }
+
   async function handleFile(file: File) {
     setError(null);
     setLoading(true);
+    setSvgDataUrl(null);
     try {
+      if (file.type === "image/svg+xml" || file.name.toLowerCase().endsWith(".svg")) {
+        await handleSvgFile(file);
+        return;
+      }
       const downscaled = await downscaleImage(file);
       const bitmap = await createImageBitmap(downscaled);
       const scale = Math.min(1, WORK_WIDTH / bitmap.width);
@@ -155,6 +200,10 @@ export default function CardPhotoScanModal({
   }
 
   function useDirectPhoto() {
+    if (svgDataUrl) {
+      onApply({ pattern: "photo", photoDataUrl: svgDataUrl });
+      return;
+    }
     if (!resultCanvas) return;
     onApply({ pattern: "photo", photoDataUrl: resultCanvas.toDataURL("image/jpeg", 0.85) });
   }
@@ -211,7 +260,17 @@ export default function CardPhotoScanModal({
           <p className="text-sm text-ink-soft">{t("background.scanHint")}</p>
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleInputChange} className="hidden" />
-          <input ref={galleryInputRef} type="file" accept="image/*" onChange={handleInputChange} className="hidden" />
+          {/* image/* alone doesn't reliably include SVGs in every browser's
+           * file-picker filter, so .svg/image/svg+xml are listed explicitly
+           * — a camera capture can't produce one anyway, so only this
+           * (gallery/file-picker) input needs it. */}
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*,.svg,image/svg+xml"
+            onChange={handleInputChange}
+            className="hidden"
+          />
           <button
             type="button"
             onClick={() => cameraInputRef.current?.click()}
@@ -383,10 +442,13 @@ export default function CardPhotoScanModal({
             )}
           </div>
 
+          {/* The SVG path skips "adjust" entirely (no quad/workCanvas to go
+           * back to — see handleSvgFile), so its only way back is "capture"
+           * to pick a different file. */}
           <div className="flex items-center justify-start pt-1">
             <button
               type="button"
-              onClick={() => setStep("adjust")}
+              onClick={() => setStep(svgDataUrl ? "capture" : "adjust")}
               className="rounded-full px-4 py-2 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)]"
             >
               {t("background.back")}
