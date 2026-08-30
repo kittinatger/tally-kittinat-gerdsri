@@ -1,4 +1,5 @@
 import type { CardBackground } from "@/lib/card-backgrounds";
+import type { CardOrientation } from "@/lib/card-orientation";
 
 // A user-submitted "premade card" design — see card_templates in db.ts.
 // Purely the visual skin (background + colors); a picker applies these
@@ -21,6 +22,9 @@ export type CardTemplateOption = {
   /** Which currency code to force the wallet itself onto — distinct from
    * forceShowCurrency above (whether it renders at all, not which one). */
   forceCurrency: string | null;
+  /** Plain field (not a force_* override) — a template's orientation is
+   * inherent to its own artwork, same as its background/color. */
+  orientation: CardOrientation;
   status: "pending" | "approved" | "rejected";
   submittedByUsername: string | null;
   createdAt: string;

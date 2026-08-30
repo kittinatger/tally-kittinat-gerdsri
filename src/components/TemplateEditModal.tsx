@@ -13,6 +13,7 @@ import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import { CURRENCIES } from "@/lib/currencies";
 import { useCurrency } from "@/lib/currency-context";
+import { CARD_ASPECT_CLASSES, CARD_MIN_SIZE_CLASSES, type CardOrientation } from "@/lib/card-orientation";
 import { PaletteIcon, TrashIcon } from "@/lib/icons";
 import { describeFetchError } from "@/lib/fetch-error";
 import { useT } from "@/lib/language-context";
@@ -50,6 +51,7 @@ export default function TemplateEditModal({
   const [background, setBackground] = useState<CardBackground | null>(template.background);
   const [textColor, setTextColor] = useState<string | null>(template.textColor);
   const [status, setStatus] = useState(template.status);
+  const [orientation, setOrientation] = useState<CardOrientation>(template.orientation);
   const [force, setForce] = useState({
     forceShowName: template.forceShowName,
     forceShowNetworkBadge: template.forceShowNetworkBadge,
@@ -83,6 +85,7 @@ export default function TemplateEditModal({
           background,
           textColor,
           status,
+          orientation,
           ...force,
           forceCurrency: currencyLocked ? forceCurrencyValue : null,
         }),
@@ -129,7 +132,7 @@ export default function TemplateEditModal({
          * text), reading as a rendering bug. */}
         <ColorGlowPreview color={backgroundGlowColor(background, color)}>
           <div
-            className={`aspect-[1.586/1] min-h-[190px] w-full rounded-2xl shadow-soft ${background ? "" : heroGradientClasses(color)}`}
+            className={`${CARD_ASPECT_CLASSES[orientation]} ${CARD_MIN_SIZE_CLASSES[orientation]} w-full rounded-2xl shadow-soft ${background ? "" : heroGradientClasses(color)}`}
             style={background ? cardBackgroundStyle(background) : colorHeroStyle(color)}
           />
         </ColorGlowPreview>
@@ -142,6 +145,30 @@ export default function TemplateEditModal({
             onChange={(e) => setName(e.target.value)}
             className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
+
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.orientationLabel")}</label>
+            <div className="flex gap-1 rounded-full bg-bg-soft p-1">
+              <button
+                type="button"
+                onClick={() => setOrientation("landscape")}
+                className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+                  orientation === "landscape" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+                }`}
+              >
+                {t("wallet.orientationLandscape")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setOrientation("portrait")}
+                className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+                  orientation === "portrait" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+                }`}
+              >
+                {t("wallet.orientationPortrait")}
+              </button>
+            </div>
+          </div>
 
           <div>
             <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("common.status")}</label>

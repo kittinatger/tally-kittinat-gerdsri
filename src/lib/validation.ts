@@ -19,6 +19,7 @@ import { CARD_PATTERNS, PATTERN_COLOR_COUNT } from "@/lib/card-backgrounds";
 import { CHIP_COLORS } from "@/lib/chip-colors";
 import { BADGE_POSITIONS } from "@/lib/badge-position";
 import { CHIP_POSITIONS } from "@/lib/chip-position";
+import { CARD_ORIENTATIONS } from "@/lib/card-orientation";
 import { isLanguageCode } from "@/lib/languages";
 
 // Shared by wallets and membership_cards' optional background
@@ -206,6 +207,10 @@ export const walletInputSchema = z.object({
   textColor: cardTextColorSchema.optional(),
   kind: z.enum(WALLET_KINDS).default("cash"),
   currency: walletCurrencySchema.optional(),
+  // Landscape/portrait — applies to both AccountCardShape and
+  // WalletCardShape, so it's a plain field here alongside kind, not part
+  // of walletCardVisualFields (which only matters once hasCardLook is on).
+  orientation: z.enum(CARD_ORIENTATIONS).default("landscape"),
   ...walletCardVisualFields,
 });
 
@@ -220,6 +225,7 @@ export const walletUpdateSchema = z
     isDefault: z.literal(true).optional(),
     archived: z.boolean().optional(),
     startingBalance: z.number().finite().optional(),
+    orientation: z.enum(CARD_ORIENTATIONS).optional(),
     ...walletCardVisualFields,
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
@@ -244,6 +250,9 @@ export const cardTemplateInputSchema = z.object({
   // Which currency code to force the wallet itself onto — distinct from
   // forceShowCurrency above (whether it renders at all, not which one).
   forceCurrency: walletCurrencySchema.optional(),
+  // Plain field (not a force_* override) — see db.ts's ensureSchema
+  // comment for why orientation is direct here like background/color.
+  orientation: z.enum(CARD_ORIENTATIONS).default("landscape"),
 });
 
 // Admin-only edit — every field optional (at least one required), used for
@@ -262,6 +271,7 @@ export const cardTemplateUpdateSchema = z
     forceShowBalance: z.boolean().nullable().optional(),
     forceShowCurrency: z.boolean().nullable().optional(),
     forceCurrency: walletCurrencySchema.optional(),
+    orientation: z.enum(CARD_ORIENTATIONS).optional(),
     status: z.enum(["pending", "approved", "rejected"]).optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
@@ -432,6 +442,7 @@ export const membershipInputSchema = z.object({
   background: cardBackgroundSchema.optional(),
   textColor: cardTextColorSchema.optional(),
   category: membershipCategorySchema.default("membership"),
+  orientation: z.enum(CARD_ORIENTATIONS).default("landscape"),
 });
 
 export const membershipUpdateSchema = z
@@ -448,6 +459,7 @@ export const membershipUpdateSchema = z
     background: cardBackgroundSchema.optional(),
     textColor: cardTextColorSchema.optional(),
     category: membershipCategorySchema.optional(),
+    orientation: z.enum(CARD_ORIENTATIONS).optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
     message: "Provide at least one field to update",

@@ -25,6 +25,7 @@ import {
   type PassZone,
 } from "@/lib/membership-templates";
 import { toMembershipCard, type MembershipCardApiRow } from "@/lib/membership-card-mapper";
+import { DEFAULT_CARD_ORIENTATION, type CardOrientation } from "@/lib/card-orientation";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 import type { MembershipCard } from "@/types/membership";
@@ -136,6 +137,7 @@ export default function MembershipCardModal({
   const [template, setTemplate] = useState<PassTemplate>(card?.template ?? "generic");
   const [fields, setFields] = useState<Record<string, string>>(card?.fields ?? {});
   const [layout, setLayout] = useState(card?.layout ?? defaultLayoutFor(template));
+  const [orientation, setOrientation] = useState<CardOrientation>(card?.orientation ?? DEFAULT_CARD_ORIENTATION);
   const [editorMode, setEditorMode] = useState<"guided" | "custom">("guided");
   const [selectedFieldKey, setSelectedFieldKey] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -266,6 +268,7 @@ export default function MembershipCardModal({
         fields,
         layout,
         category,
+        orientation,
       };
       const res = isEdit
         ? await fetch(`/api/memberships/${card!.id}`, {
@@ -330,6 +333,7 @@ export default function MembershipCardModal({
             codeSize="small"
             logoUrl={logoPreviewUrl}
             bannerUrl={bannerPreviewUrl}
+            orientation={orientation}
           />
         </ColorGlowPreview>
 
@@ -362,6 +366,30 @@ export default function MembershipCardModal({
                   {t(TEMPLATE_LABEL_KEYS[tpl])}
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.orientationLabel")}</label>
+            <div className="flex gap-1 rounded-full bg-bg-soft p-1">
+              <button
+                type="button"
+                onClick={() => setOrientation("landscape")}
+                className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+                  orientation === "landscape" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+                }`}
+              >
+                {t("wallet.orientationLandscape")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setOrientation("portrait")}
+                className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+                  orientation === "portrait" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+                }`}
+              >
+                {t("wallet.orientationPortrait")}
+              </button>
             </div>
           </div>
         </FormSection>

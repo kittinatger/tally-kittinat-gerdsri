@@ -47,6 +47,7 @@ export default function MembershipCardDetail({
         codeSize="large"
         logoUrl={card.hasLogo ? `/api/memberships/${card.id}/logo` : null}
         bannerUrl={card.hasBanner ? `/api/memberships/${card.id}/banner` : null}
+        orientation={card.orientation}
       />
 
       {card.notes && (

@@ -15,6 +15,7 @@ import {
   type PassZone,
 } from "@/lib/membership-templates";
 import type { MembershipCodeFormat } from "@/lib/memberships";
+import { DEFAULT_CARD_ORIENTATION, type CardOrientation } from "@/lib/card-orientation";
 
 // The shared "what does this pass actually look like" renderer — used by
 // both MembershipCardDetail (the big view) and MembershipCardModal's live
@@ -33,6 +34,7 @@ export default function PassShape({
   codeSize = "large",
   logoUrl,
   bannerUrl,
+  orientation = DEFAULT_CARD_ORIENTATION,
 }: {
   name: string;
   color: string;
@@ -51,8 +53,14 @@ export default function PassShape({
   /** A large full-width hero image shown under the header, like the "photo"
    * strip on a real Wallet pass. */
   bannerUrl?: string | null;
+  /** Portrait (default) is this component's natural rendering — a plain
+   * vertical zone stack, no aspect lock at all. Landscape is a light-touch
+   * reflow only (cap the width, put primary/stub fields side by side)
+   * rather than a full zone→grid rewrite — see card-orientation.ts. */
+  orientation?: CardOrientation;
 }) {
   const t = useT();
+  const isLandscape = orientation === "landscape";
   const effectiveLayout = layout ?? defaultLayoutFor(template);
   const fieldByKey = Object.fromEntries(TEMPLATE_FIELDS[template].map((f) => [f.key, f]));
   // The "tear-off stub" notch-divider treatment — see membership-templates.ts
@@ -115,25 +123,53 @@ export default function PassShape({
           <img src={bannerUrl} alt="" className="mt-3 aspect-[5/3] w-full rounded-xl object-cover" />
         )}
 
-        {primaryFields.length > 0 && (
-          <div className="mt-3">
-            {primaryFields.map(({ key, def, value }) => (
-              <div key={key}>
-                <p className="text-[10px] uppercase tracking-wide" style={{ color: fg.a70 }}>
-                  {t(def!.labelKey)}
-                </p>
-                <p className="text-2xl font-bold">{value}</p>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Landscape is a light-touch reflow, not a real zone→grid rewrite
+         * (see the orientation prop's comment above): primary and stub
+         * fields sit side by side in a row instead of stacked, which is
+         * enough to stop a wide box from looking like a narrow strip of
+         * text with empty space around it, without touching
+         * membership-templates.ts's layout model at all. */}
+        <div className={isLandscape ? "flex items-start gap-4" : ""}>
+          {primaryFields.length > 0 && (
+            <div className={`mt-3 ${isLandscape ? "flex-1" : ""}`}>
+              {primaryFields.map(({ key, def, value }) => (
+                <div key={key}>
+                  <p className="text-[10px] uppercase tracking-wide" style={{ color: fg.a70 }}>
+                    {t(def!.labelKey)}
+                  </p>
+                  <p className="text-2xl font-bold">{value}</p>
+                </div>
+              ))}
+            </div>
+          )}
 
-        {hasStub ? (
-          stubFields.length > 0 && (
-            <div className="relative mt-3 border-t border-dashed pt-3" style={{ borderColor: fg.a40 }}>
-              <span className="absolute -left-2 -top-2 h-3 w-3 rounded-full bg-black/15" />
-              <span className="absolute -right-2 -top-2 h-3 w-3 rounded-full bg-black/15" />
-              <div className="flex flex-wrap gap-x-4 gap-y-2">
+          {hasStub ? (
+            stubFields.length > 0 && (
+              <div
+                className={`relative mt-3 ${isLandscape ? "shrink-0 border-l border-dashed pl-3" : "border-t border-dashed pt-3"}`}
+                style={{ borderColor: fg.a40 }}
+              >
+                {!isLandscape && (
+                  <>
+                    <span className="absolute -left-2 -top-2 h-3 w-3 rounded-full bg-black/15" />
+                    <span className="absolute -right-2 -top-2 h-3 w-3 rounded-full bg-black/15" />
+                  </>
+                )}
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                  {stubFields.map(({ key, def, value }) => (
+                    <div key={key}>
+                      <p className="text-[9px] uppercase tracking-wide" style={{ color: fg.a70 }}>
+                        {t(def!.labelKey)}
+                      </p>
+                      <p className="text-sm font-semibold">{value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          ) : (
+            stubFields.length > 0 && (
+              <div className={`mt-3 flex flex-wrap gap-x-4 gap-y-2 ${isLandscape ? "shrink-0" : ""}`}>
                 {stubFields.map(({ key, def, value }) => (
                   <div key={key}>
                     <p className="text-[9px] uppercase tracking-wide" style={{ color: fg.a70 }}>
@@ -143,22 +179,9 @@ export default function PassShape({
                   </div>
                 ))}
               </div>
-            </div>
-          )
-        ) : (
-          stubFields.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
-              {stubFields.map(({ key, def, value }) => (
-                <div key={key}>
-                  <p className="text-[9px] uppercase tracking-wide" style={{ color: fg.a70 }}>
-                    {t(def!.labelKey)}
-                  </p>
-                  <p className="text-sm font-semibold">{value}</p>
-                </div>
-              ))}
-            </div>
-          )
-        )}
+            )
+          )}
+        </div>
       </div>
 
       <div className="mt-3">
