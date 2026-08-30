@@ -198,7 +198,7 @@ const SECTIONS: { id: string; title: MessageKey; icon: React.ReactNode; body: Re
         <p>
           <T k="usageGuide.s5Part1" />{" "}
           <span className="font-semibold text-foreground">
-            <T k="nav.settings" /> &gt; <T k="settings.section.budgeting" />
+            <T k="nav.settings" /> &gt; <T k="settings.section.records" />
           </span>{" "}
           <T k="usageGuide.s5Part2" />
         </p>

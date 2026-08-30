@@ -399,32 +399,46 @@ export default function SettingsNavList({
         <SettingsListItem icon={<LockIcon />} label={t("settings.appLock")} accent="rose" {...panelItemProps("appLock")} />
       </SettingsSection>
 
+      {/* "Money" (was "Records") — every panel about what you own or owe:
+       * wallets themselves plus the categorization/budgeting/recurring/
+       * loan features built on top of them. Budgets/savings/recurring
+       * used to sit in their own "Budgeting" section, separated from
+       * wallets/categories for no real reason — they're all the same
+       * "manage my money" mental bucket. */}
       <SettingsSection title={t("settings.section.records")}>
+        <SettingsListItem icon={<WalletIcon />} label={t("settings.wallets")} accent="sky" {...panelItemProps("wallets")} />
         <SettingsListItem icon={<GridIcon />} label={t("settings.manageCategories")} accent="indigo" {...panelItemProps("categories")} />
         <SettingsListItem icon={<HashIcon />} label={t("settings.manageTags")} accent="indigo" {...panelItemProps("tags")} />
-        <SettingsListItem icon={<WalletIcon />} label={t("settings.wallets")} accent="sky" {...panelItemProps("wallets")} />
-        <ExportDataButton />
-        <ImportDataButton />
-        <ReportExportButton />
-        <SettingsListItem icon={<BackupIcon />} label={t("settings.backup")} accent="cyan" {...panelItemProps("backup")} />
-        {isAdmin && (
-          <SettingsListItem icon={<UploadIcon className="h-5 w-5" />} label={t("wallet.templateReviewTitle")} accent="indigo" {...panelItemProps("templateReviews")} />
-        )}
+        <SettingsListItem icon={<BudgetIcon />} label={t("settings.budgets")} accent="orange" {...panelItemProps("budgets")} />
+        <SettingsListItem icon={<GoalIcon />} label={t("settings.savingsGoals")} accent="emerald" {...panelItemProps("savingsGoals")} />
+        <SettingsListItem icon={<RecurringIcon />} label={t("settings.recurring")} accent="teal" {...panelItemProps("recurring")} />
+        <SettingsListItem icon={<LoanIcon />} label={t("settings.loans")} accent="teal" {...panelItemProps("loans")} />
       </SettingsSection>
 
       <SettingsSection title={t("settings.section.social")}>
         <SettingsListItem icon={<FriendsIcon />} label={t("settings.friends")} accent="pink" {...panelItemProps("friends")} />
         <SettingsListItem icon={<TrophyNavIcon />} label={t("settings.challenges")} accent="violet" {...panelItemProps("challenges")} />
         <SettingsListItem icon={<ReceiptNavIcon />} label={t("settings.splitBills")} accent="amber" {...panelItemProps("splitBills")} />
-        <SettingsListItem icon={<LoanIcon />} label={t("settings.loans")} accent="teal" {...panelItemProps("loans")} />
         <SettingsListItem icon={<AssistantIcon />} label={t("settings.assistant")} accent="violet" {...panelItemProps("assistant")} />
       </SettingsSection>
 
-      <SettingsSection title={t("settings.section.budgeting")}>
-        <SettingsListItem icon={<RecurringIcon />} label={t("settings.recurring")} accent="teal" {...panelItemProps("recurring")} />
-        <SettingsListItem icon={<BudgetIcon />} label={t("settings.budgets")} accent="orange" {...panelItemProps("budgets")} />
-        <SettingsListItem icon={<GoalIcon />} label={t("settings.savingsGoals")} accent="emerald" {...panelItemProps("savingsGoals")} />
+      {/* Everything that moves data in/out of the app rather than being a
+       * feature you use day to day — export/import/backup, automatic
+       * import, the error log and pending-changes queue (both diagnostic,
+       * not "support" in the FAQ/contact sense below), and the admin-only
+       * template review/manage pages, which are fundamentally about
+       * curating shared data too. */}
+      <SettingsSection title={t("settings.section.data")}>
+        <ExportDataButton />
+        <ImportDataButton />
+        <ReportExportButton />
         <SettingsListItem icon={<AutoImportIcon />} label={t("settings.autoImport")} accent="cyan" {...panelItemProps("autoImport")} />
+        <SettingsListItem icon={<BackupIcon />} label={t("settings.backup")} accent="cyan" {...panelItemProps("backup")} />
+        <SettingsListItem icon={<WarningIcon />} label={t("settings.errorLog")} {...panelItemProps("errorReports")} />
+        <SettingsListItem icon={<RecurringIcon />} label={t("settings.pendingChanges")} {...panelItemProps("pendingChanges")} />
+        {isAdmin && (
+          <SettingsListItem icon={<UploadIcon className="h-5 w-5" />} label={t("wallet.templateReviewTitle")} accent="indigo" {...panelItemProps("templateReviews")} />
+        )}
       </SettingsSection>
 
       <SettingsSection title={t("settings.section.display")}>
@@ -439,8 +453,6 @@ export default function SettingsNavList({
         <SettingsListItem icon={<BookIcon />} label={t("settings.usageGuide")} href="/usage-guide" selected={pathname === "/usage-guide"} />
         <SettingsListItem icon={<QuestionIcon />} label={t("settings.faqs")} href="/faq" selected={pathname === "/faq"} />
         <SettingsListItem icon={<WrenchIcon />} label={t("settings.troubleshooting")} href="/troubleshooting" selected={pathname === "/troubleshooting"} />
-        <SettingsListItem icon={<WarningIcon />} label={t("settings.errorLog")} {...panelItemProps("errorReports")} />
-        <SettingsListItem icon={<RecurringIcon />} label={t("settings.pendingChanges")} {...panelItemProps("pendingChanges")} />
         <SettingsListItem icon={<MailIcon />} label={t("settings.contact")} href="/contact" selected={pathname === "/contact"} />
         <SettingsListItem icon={<FlagIcon />} label={t("settings.reportIssue")} href="/report-issue" selected={pathname === "/report-issue"} />
         <SettingsListItem icon={<ClockIcon />} label={t("settings.changelog")} href="/changelog" selected={pathname === "/changelog"} />
