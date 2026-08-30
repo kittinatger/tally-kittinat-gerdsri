@@ -12,6 +12,7 @@ import WalletCardShape, { RECOLORABLE_BADGE_ASPECT, ICON_COLOR_ORIGINAL } from "
 import CardBackgroundPicker from "./CardBackgroundPicker";
 import CardTextColorPicker from "./CardTextColorPicker";
 import PremadeCardPicker from "./PremadeCardPicker";
+import ForceToggleField from "./ForceToggleField";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import { CARD_NETWORKS, type CardNetwork } from "@/lib/wallet-cards";
 import { backgroundGlowColor, cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
@@ -102,17 +103,24 @@ export default function WalletModal({
   const [templateSubmitted, setTemplateSubmitted] = useState(false);
   const [templateError, setTemplateError] = useState<string | null>(null);
   // Which per-face toggles the author wants to force onto anyone who picks
-  // this template — checked means "lock this toggle to its current value
-  // above"; unchecked (the default) means the template doesn't touch it at
-  // all. Only the checked ones' *current* showX value gets sent — see
-  // handleUploadTemplate.
-  const [forceToggles, setForceToggles] = useState({
-    showName: false,
-    showNetworkBadge: false,
-    showChip: false,
-    showCardNumber: false,
-    showBalance: false,
-    showCurrency: false,
+  // this template, and to what value — null means "don't touch it" (the
+  // default for all six); true/false means "force it on/off", picked
+  // independently of whatever showX is currently set to above (see
+  // ForceToggleField).
+  const [forceToggles, setForceToggles] = useState<{
+    showName: boolean | null;
+    showNetworkBadge: boolean | null;
+    showChip: boolean | null;
+    showCardNumber: boolean | null;
+    showBalance: boolean | null;
+    showCurrency: boolean | null;
+  }>({
+    showName: null,
+    showNetworkBadge: null,
+    showChip: null,
+    showCardNumber: null,
+    showBalance: null,
+    showCurrency: null,
   });
 
   const month = expiryMonth ? Number(expiryMonth) : null;
@@ -166,12 +174,12 @@ export default function WalletModal({
           color,
           background,
           textColor,
-          forceShowName: forceToggles.showName ? showName : null,
-          forceShowNetworkBadge: forceToggles.showNetworkBadge ? showNetworkBadge : null,
-          forceShowChip: forceToggles.showChip ? showChip : null,
-          forceShowCardNumber: forceToggles.showCardNumber ? showCardNumber : null,
-          forceShowBalance: forceToggles.showBalance ? showBalance : null,
-          forceShowCurrency: forceToggles.showCurrency ? showCurrency : null,
+          forceShowName: forceToggles.showName,
+          forceShowNetworkBadge: forceToggles.showNetworkBadge,
+          forceShowChip: forceToggles.showChip,
+          forceShowCardNumber: forceToggles.showCardNumber,
+          forceShowBalance: forceToggles.showBalance,
+          forceShowCurrency: forceToggles.showCurrency,
         }),
       });
       const data = await res.json();
@@ -814,23 +822,20 @@ export default function WalletModal({
                   <div className="space-y-1.5">
                     {(
                       [
-                        ["showName", "wallet.showNameOnCardLabel", showName],
-                        ["showNetworkBadge", "wallet.showNetworkBadgeLabel", showNetworkBadge],
-                        ["showChip", "wallet.showChipLabel", showChip],
-                        ["showCardNumber", "wallet.showCardNumberLabel", showCardNumber],
-                        ["showBalance", "wallet.showBalanceOnCardLabel", showBalance],
-                        ["showCurrency", "wallet.showCurrencyOnCardLabel", showCurrency],
+                        ["showName", "wallet.showNameOnCardLabel"],
+                        ["showNetworkBadge", "wallet.showNetworkBadgeLabel"],
+                        ["showChip", "wallet.showChipLabel"],
+                        ["showCardNumber", "wallet.showCardNumberLabel"],
+                        ["showBalance", "wallet.showBalanceOnCardLabel"],
+                        ["showCurrency", "wallet.showCurrencyOnCardLabel"],
                       ] as const
-                    ).map(([key, labelKey, currentValue]) => (
-                      <label key={key} className="flex items-center gap-2 text-xs text-foreground">
-                        <input
-                          type="checkbox"
-                          checked={forceToggles[key]}
-                          onChange={(e) => setForceToggles((prev) => ({ ...prev, [key]: e.target.checked }))}
-                          className="h-4 w-4 rounded border-line accent-navy"
-                        />
-                        {t(labelKey)} — {currentValue ? t("wallet.forceOn") : t("wallet.forceOff")}
-                      </label>
+                    ).map(([key, labelKey]) => (
+                      <ForceToggleField
+                        key={key}
+                        label={t(labelKey)}
+                        value={forceToggles[key]}
+                        onChange={(v) => setForceToggles((prev) => ({ ...prev, [key]: v }))}
+                      />
                     ))}
                   </div>
                 </div>

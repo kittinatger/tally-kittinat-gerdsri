@@ -6,6 +6,7 @@ import FormSection from "./FormSection";
 import ColorGlowPreview from "./ColorGlowPreview";
 import CardBackgroundPicker from "./CardBackgroundPicker";
 import CardTextColorPicker from "./CardTextColorPicker";
+import ForceToggleField from "./ForceToggleField";
 import { backgroundGlowColor, cardForegroundFor, cardBackgroundStyle, type CardBackground } from "@/lib/card-backgrounds";
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { CATEGORY_PALETTE } from "@/lib/categories";
@@ -154,24 +155,12 @@ export default function TemplateEditModal({
           <p className="text-xs text-ink-soft">{t("wallet.forceTogglesDesc")}</p>
           <div className="space-y-1.5">
             {FORCE_FIELDS.map(([key, labelKey]) => (
-              <label key={key} className="flex items-center gap-2 text-xs text-foreground">
-                <input
-                  type="checkbox"
-                  checked={force[key] !== null}
-                  onChange={(e) => setForce((prev) => ({ ...prev, [key]: e.target.checked ? true : null }))}
-                  className="h-4 w-4 rounded border-line accent-navy"
-                />
-                {t(labelKey)}
-                {force[key] !== null && (
-                  <button
-                    type="button"
-                    onClick={() => setForce((prev) => ({ ...prev, [key]: !prev[key] }))}
-                    className="rounded-full border border-line px-2 py-0.5 text-[11px] font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)]"
-                  >
-                    {force[key] ? t("wallet.forceOn") : t("wallet.forceOff")}
-                  </button>
-                )}
-              </label>
+              <ForceToggleField
+                key={key}
+                label={t(labelKey)}
+                value={force[key]}
+                onChange={(v) => setForce((prev) => ({ ...prev, [key]: v }))}
+              />
             ))}
           </div>
         </FormSection>
