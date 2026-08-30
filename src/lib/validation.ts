@@ -241,9 +241,26 @@ export const cardTemplateInputSchema = z.object({
   forceShowCurrency: z.boolean().nullable().optional(),
 });
 
-export const cardTemplateReviewSchema = z.object({
-  status: z.enum(["approved", "rejected"]),
-});
+// Admin-only edit — every field optional (at least one required), used for
+// both the quick approve/reject buttons (just `status`) and the full
+// edit form.
+export const cardTemplateUpdateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(40).optional(),
+    color: z.string().trim().min(1).max(30).optional(),
+    background: cardBackgroundSchema.optional(),
+    textColor: cardTextColorSchema.optional(),
+    forceShowName: z.boolean().nullable().optional(),
+    forceShowNetworkBadge: z.boolean().nullable().optional(),
+    forceShowChip: z.boolean().nullable().optional(),
+    forceShowCardNumber: z.boolean().nullable().optional(),
+    forceShowBalance: z.boolean().nullable().optional(),
+    forceShowCurrency: z.boolean().nullable().optional(),
+    status: z.enum(["pending", "approved", "rejected"]).optional(),
+  })
+  .refine((data) => Object.values(data).some((v) => v !== undefined), {
+    message: "Provide at least one field to update",
+  });
 
 export const walletTransferInputSchema = z
   .object({

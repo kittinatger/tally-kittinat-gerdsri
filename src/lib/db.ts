@@ -1939,33 +1939,110 @@ export async function listApprovedCardTemplates(): Promise<CardTemplateRow[]> {
   return rows;
 }
 
-// Admin-only (enforced by the caller via isAdminUser) — oldest-first, so
-// the review queue works through submissions in the order they arrived.
-export async function listPendingCardTemplates(): Promise<CardTemplateRow[]> {
+// Admin-only — every template regardless of status, for the "view/edit/
+// remove existing templates" management page (which filters/sorts by
+// status client-side rather than needing a separate pending-only query).
+export async function listAllCardTemplates(): Promise<CardTemplateRow[]> {
   await ensureSchema();
   const { rows } = await sql.query<CardTemplateRow>(
     `SELECT ${CARD_TEMPLATE_COLUMNS.split(", ").map((c) => "ct." + c).join(", ")}, u.username AS submitted_by_username
      FROM card_templates ct
      LEFT JOIN users u ON u.id = ct.submitted_by
-     WHERE ct.status = 'pending'
-     ORDER BY ct.created_at ASC;`,
+     ORDER BY ct.created_at DESC;`,
   );
   return rows;
 }
 
-// Only moves a still-pending submission — reviewing an already-decided one
-// again (e.g. two admin tabs open) is a no-op rather than silently
-// overwriting the first decision's reviewed_at.
-export async function reviewCardTemplate(id: number, status: "approved" | "rejected"): Promise<CardTemplateRow | null> {
+// Admin-only full edit — every field optional/partial, used both for the
+// quick approve/reject buttons (just `{status}`) and the full edit form.
+// Setting `status` bumps reviewed_at regardless of the template's current
+// status (re-approving a rejected one, or editing an already-approved
+// one, are both just "the admin decided this again") — this is a
+// single-admin management surface, not a guarded review queue, so there's
+// no "only from pending" restriction to protect against a race.
+export async function updateCardTemplate(
+  id: number,
+  input: {
+    name?: string;
+    color?: string;
+    background?: unknown;
+    textColor?: string | null;
+    forceShowName?: boolean | null;
+    forceShowNetworkBadge?: boolean | null;
+    forceShowChip?: boolean | null;
+    forceShowCardNumber?: boolean | null;
+    forceShowBalance?: boolean | null;
+    forceShowCurrency?: boolean | null;
+    status?: "pending" | "approved" | "rejected";
+  },
+): Promise<CardTemplateRow | null> {
   await ensureSchema();
+  const { rows: existingRows } = await sql<{
+    name: string;
+    color: string;
+    background: string | null;
+    text_color: string | null;
+    force_show_name: boolean | null;
+    force_show_network_badge: boolean | null;
+    force_show_chip: boolean | null;
+    force_show_card_number: boolean | null;
+    force_show_balance: boolean | null;
+    force_show_currency: boolean | null;
+    status: "pending" | "approved" | "rejected";
+  }>`
+    SELECT name, color, background, text_color,
+           force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency,
+           status
+    FROM card_templates WHERE id = ${id};
+  `;
+  const existing = existingRows[0];
+  if (!existing) return null;
+
+  const newName = input.name?.trim() ?? existing.name;
+  const newColor = input.color ?? existing.color;
+  const newBackground = input.background !== undefined ? (input.background ? JSON.stringify(input.background) : null) : existing.background;
+  const newTextColor = input.textColor !== undefined ? input.textColor : existing.text_color;
+  const newForceShowName = input.forceShowName !== undefined ? input.forceShowName : existing.force_show_name;
+  const newForceShowNetworkBadge = input.forceShowNetworkBadge !== undefined ? input.forceShowNetworkBadge : existing.force_show_network_badge;
+  const newForceShowChip = input.forceShowChip !== undefined ? input.forceShowChip : existing.force_show_chip;
+  const newForceShowCardNumber = input.forceShowCardNumber !== undefined ? input.forceShowCardNumber : existing.force_show_card_number;
+  const newForceShowBalance = input.forceShowBalance !== undefined ? input.forceShowBalance : existing.force_show_balance;
+  const newForceShowCurrency = input.forceShowCurrency !== undefined ? input.forceShowCurrency : existing.force_show_currency;
+  const newStatus = input.status ?? existing.status;
+  const bumpReviewedAt = input.status !== undefined;
+
   const { rows } = await sql.query<CardTemplateRow>(
     `UPDATE card_templates
-     SET status = $1, reviewed_at = now()
-     WHERE id = $2 AND status = 'pending'
+     SET name = $1, color = $2, background = $3, text_color = $4,
+         force_show_name = $5, force_show_network_badge = $6, force_show_chip = $7, force_show_card_number = $8, force_show_balance = $9, force_show_currency = $10,
+         status = $11, reviewed_at = ${bumpReviewedAt ? "now()" : "reviewed_at"}
+     WHERE id = $12
      RETURNING ${CARD_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
-    [status, id],
+    [
+      newName,
+      newColor,
+      newBackground,
+      newTextColor,
+      newForceShowName,
+      newForceShowNetworkBadge,
+      newForceShowChip,
+      newForceShowCardNumber,
+      newForceShowBalance,
+      newForceShowCurrency,
+      newStatus,
+      id,
+    ],
   );
   return rows[0] ?? null;
+}
+
+// Admin-only, permanent — a template isn't referenced by any wallet (only
+// its background/colors get *copied* onto one when picked, see
+// PremadeCardPicker), so there's nothing else to clean up.
+export async function deleteCardTemplate(id: number): Promise<boolean> {
+  await ensureSchema();
+  const { rows } = await sql<{ id: number }>`DELETE FROM card_templates WHERE id = ${id} RETURNING id;`;
+  return rows.length > 0;
 }
 
 // ---- Wallet members (shared/household wallets) ----------------------------
