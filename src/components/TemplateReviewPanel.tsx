@@ -85,6 +85,8 @@ export default function TemplateReviewPanel() {
       [tpl.forceShowNetworkBadge, t("wallet.showNetworkBadgeLabel")],
       [tpl.forceShowChip, t("wallet.showChipLabel")],
       [tpl.forceShowCardNumber, t("wallet.showCardNumberLabel")],
+      [tpl.forceShowHolderName, t("wallet.showHolderNameLabel")],
+      [tpl.forceShowExpiry, t("wallet.showExpiryLabel")],
       [tpl.forceShowBalance, t("wallet.showBalanceOnCardLabel")],
       [tpl.forceShowCurrency, t("wallet.showCurrencyOnCardLabel")],
     ];
@@ -93,7 +95,6 @@ export default function TemplateReviewPanel() {
       .map(([value, label]) => `${label}: ${value ? t("wallet.forceOn") : t("wallet.forceOff")}`);
     if (tpl.forceCurrency !== null) parts.push(`${t("wallet.lockCurrencyLabel")}: ${tpl.forceCurrency}`);
     if (tpl.forceNetwork !== null) parts.push(`${t("wallet.networkLabel")}: ${t(NETWORK_LABEL_KEYS[tpl.forceNetwork])}`);
-    if (tpl.forceHideCardInfo) parts.push(t("wallet.forceHideCardInfoLabel"));
     if (tpl.forceNamePosition !== null) parts.push(`${t("wallet.namePositionLabel")}: ${t(NAME_POSITION_LABEL_KEYS[tpl.forceNamePosition])}`);
     if (tpl.lockTextColor) parts.push(t("wallet.lockTextColorLabel"));
     return parts.length ? parts.join(", ") : "";

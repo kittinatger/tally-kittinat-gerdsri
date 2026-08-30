@@ -125,12 +125,8 @@ export default function WalletModal({
     showBalance: boolean;
     showCurrency: boolean;
     network: boolean;
-    // A template forcing this takes last4/holderName/expiry/name-position
-    // out of the editor as a group (see hideCardInfo below), rather than
-    // this being one more independent per-field force — a template whose
-    // artwork has no card-number/holder/expiry area at all wants the
-    // whole block gone, not each piece force-hidden separately.
-    hideCardInfo: boolean;
+    showHolderName: boolean;
+    showExpiry: boolean;
   }>({
     showName: false,
     showNetworkBadge: false,
@@ -139,7 +135,8 @@ export default function WalletModal({
     showBalance: false,
     showCurrency: false,
     network: false,
-    hideCardInfo: false,
+    showHolderName: false,
+    showExpiry: false,
   });
 
   // "Upload as template" submits the current background/color/textColor
@@ -169,6 +166,8 @@ export default function WalletModal({
     showCardNumber: boolean | null;
     showBalance: boolean | null;
     showCurrency: boolean | null;
+    showHolderName: boolean | null;
+    showExpiry: boolean | null;
   }>({
     showName: null,
     showNetworkBadge: null,
@@ -176,6 +175,8 @@ export default function WalletModal({
     showCardNumber: null,
     showBalance: null,
     showCurrency: null,
+    showHolderName: null,
+    showExpiry: null,
   });
   // Separate from forceToggles.showCurrency (which only forces whether a
   // currency renders) — this forces which currency code the wallet itself
@@ -202,11 +203,6 @@ export default function WalletModal({
   // artwork, so it doesn't make sense to let the picker choose a
   // different one.
   const [templateForceNetwork, setTemplateForceNetwork] = useState<CardNetwork | null>(null);
-  // When true, submits force_hide_card_info — for artwork with no real
-  // card-number/holder/expiry area at all, taking last4/holderName/
-  // expiry/name-position out of the picker's editor entirely rather than
-  // leaving an empty section for fields that don't apply.
-  const [templateForceHideCardInfo, setTemplateForceHideCardInfo] = useState(false);
 
   const month = expiryMonth ? Number(expiryMonth) : null;
   const year = expiryYear ? Number(expiryYear) : null;
@@ -224,7 +220,11 @@ export default function WalletModal({
     !forcedFields.showNetworkBadge ||
     showNetworkBadge;
   const hasChipSection = !forcedFields.showChip || showChip;
-  const hasCardFaceSection = !forcedFields.showCardNumber || !forcedFields.showName || !forcedFields.hideCardInfo;
+  // Always true — the last4/holder/expiry inputs render unconditionally
+  // (they're just data fields, independent of whether the corresponding
+  // show* toggle is forced), so this section never ends up empty the way
+  // Network/Chip/On-card display can.
+  const hasCardFaceSection = true;
   const hasOnCardDisplaySection = !forcedFields.showBalance || (showBalance && !forcedFields.showCurrency);
 
   // The "Template" tab (Upload as template) hides once a premade card's
@@ -264,12 +264,13 @@ export default function WalletModal({
           forceShowCardNumber: forceToggles.showCardNumber,
           forceShowBalance: forceToggles.showBalance,
           forceShowCurrency: forceToggles.showCurrency,
+          forceShowHolderName: forceToggles.showHolderName,
+          forceShowExpiry: forceToggles.showExpiry,
           forceCurrency: lockCurrency ? currency : null,
           forceNamePosition: templateForceNamePosition,
           lockTextColor: templateLockTextColor,
           category: templateCategory,
           forceNetwork: templateForceNetwork,
-          forceHideCardInfo: templateForceHideCardInfo,
         }),
       });
       const data = await res.json();
@@ -688,73 +689,75 @@ export default function WalletModal({
             </button>
           )}
 
-          {/* Hidden as one group (not each field independently) once a
-           * picked template forces card info hidden — see the
-           * forcedFields.hideCardInfo comment above. */}
-          {!forcedFields.hideCardInfo && (
-            <>
-            <div className={!forcedFields.showCardNumber || !forcedFields.showName ? "border-t border-line pt-3" : ""}>
-              <label htmlFor="walletLast4" className="mb-1.5 block text-xs font-semibold text-ink-soft">
-                {t("wallet.last4Label")}
+          {/* last4/holder/expiry are plain data fields, independent of
+           * whether their respective show* toggle is forced — even a
+           * forced-hidden field can still be worth filling in (it just
+           * won't render on the card), same as chip color/position
+           * staying editable regardless of whether "Show chip" itself is
+           * forced. Only the toggle switches below hide when forced. */}
+          <div className={!forcedFields.showCardNumber || !forcedFields.showName ? "border-t border-line pt-3" : ""}>
+            <label htmlFor="walletLast4" className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              {t("wallet.last4Label")}
+            </label>
+            <input
+              id="walletLast4"
+              type="text"
+              inputMode="numeric"
+              pattern="\d{4}"
+              maxLength={4}
+              value={last4}
+              onChange={(e) => setLast4(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              placeholder="1234"
+              className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+            />
+            <p className="mt-1 text-[11px] text-ink-soft">{t("wallet.last4Hint")}</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="walletCardHolder" className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                {t("wallet.holderLabel")}
               </label>
               <input
-                id="walletLast4"
+                id="walletCardHolder"
                 type="text"
-                inputMode="numeric"
-                pattern="\d{4}"
-                maxLength={4}
-                value={last4}
-                onChange={(e) => setLast4(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                placeholder="1234"
+                value={holderName}
+                onChange={(e) => setHolderName(e.target.value)}
+                placeholder={t("wallet.holderPlaceholder")}
                 className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
               />
-              <p className="mt-1 text-[11px] text-ink-soft">{t("wallet.last4Hint")}</p>
             </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="walletCardHolder" className="mb-1.5 block text-xs font-semibold text-ink-soft">
-                  {t("wallet.holderLabel")}
-                </label>
+            <div>
+              <label htmlFor="walletCardExpiry" className="mb-1.5 block text-xs font-semibold text-ink-soft">
+                {t("wallet.expiryLabel")}
+              </label>
+              <div id="walletCardExpiry" className="flex items-center gap-1.5">
                 <input
-                  id="walletCardHolder"
                   type="text"
-                  value={holderName}
-                  onChange={(e) => setHolderName(e.target.value)}
-                  placeholder={t("wallet.holderPlaceholder")}
-                  className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+                  inputMode="numeric"
+                  maxLength={2}
+                  value={expiryMonth}
+                  onChange={(e) => setExpiryMonth(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                  placeholder="MM"
+                  aria-label={t("wallet.expiryMonthLabel")}
+                  className="w-full rounded-card border border-line bg-bg-soft px-3 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+                />
+                <span className="text-ink-soft">/</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={expiryYear}
+                  onChange={(e) => setExpiryYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  placeholder="YYYY"
+                  aria-label={t("wallet.expiryYearLabel")}
+                  className="w-full rounded-card border border-line bg-bg-soft px-3 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
                 />
               </div>
-              <div>
-                <label htmlFor="walletCardExpiry" className="mb-1.5 block text-xs font-semibold text-ink-soft">
-                  {t("wallet.expiryLabel")}
-                </label>
-                <div id="walletCardExpiry" className="flex items-center gap-1.5">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={2}
-                    value={expiryMonth}
-                    onChange={(e) => setExpiryMonth(e.target.value.replace(/\D/g, "").slice(0, 2))}
-                    placeholder="MM"
-                    aria-label={t("wallet.expiryMonthLabel")}
-                    className="w-full rounded-card border border-line bg-bg-soft px-3 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-                  />
-                  <span className="text-ink-soft">/</span>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={4}
-                    value={expiryYear}
-                    onChange={(e) => setExpiryYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                    placeholder="YYYY"
-                    aria-label={t("wallet.expiryYearLabel")}
-                    className="w-full rounded-card border border-line bg-bg-soft px-3 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-                  />
-                </div>
-              </div>
             </div>
+          </div>
 
+          {!forcedFields.showHolderName && (
             <button
               type="button"
               onClick={() => setShowHolderName((v) => !v)}
@@ -778,39 +781,41 @@ export default function WalletModal({
                 />
               </span>
             </button>
+          )}
 
-            {/* Hidden entirely (not just disabled) once a picked template's
-             * forceNamePosition locks this — a locked field has nothing for
-             * the wallet's own editor to do here, so showing a disabled
-             * control just invites confusion about why it doesn't respond.
-             * See the matching text-color section on the Look tab for the
-             * same idea. */}
-            {showHolderName && !namePositionLocked && (
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.namePositionLabel")}</label>
-                <div className="grid w-24 grid-cols-2 gap-1.5">
-                  {NAME_POSITIONS.map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setNamePosition(p)}
-                      aria-label={t(NAME_POSITION_LABEL_KEYS[p])}
-                      title={t(NAME_POSITION_LABEL_KEYS[p])}
-                      className={`flex h-10 w-10 items-center rounded-lg border transition ${
-                        p === "topLeft" || p === "topRight" ? "items-start" : "items-end"
-                      } ${p === "topLeft" || p === "bottomLeft" ? "justify-start" : "justify-end"} ${
-                        namePosition === p
-                          ? "border-navy bg-navy/10"
-                          : "border-line bg-bg-soft hover:bg-[var(--nav-hover-bg)]"
-                      } p-1.5`}
-                    >
-                      <span className={`h-2 w-2 rounded-full ${namePosition === p ? "bg-navy" : "bg-ink-soft/50"}`} />
-                    </button>
-                  ))}
-                </div>
+          {/* Hidden entirely (not just disabled) once a picked template's
+           * forceNamePosition locks this — a locked field has nothing for
+           * the wallet's own editor to do here, so showing a disabled
+           * control just invites confusion about why it doesn't respond.
+           * See the matching text-color section on the Look tab for the
+           * same idea. */}
+          {showHolderName && !namePositionLocked && (
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.namePositionLabel")}</label>
+              <div className="grid w-24 grid-cols-2 gap-1.5">
+                {NAME_POSITIONS.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setNamePosition(p)}
+                    aria-label={t(NAME_POSITION_LABEL_KEYS[p])}
+                    title={t(NAME_POSITION_LABEL_KEYS[p])}
+                    className={`flex h-10 w-10 items-center rounded-lg border transition ${
+                      p === "topLeft" || p === "topRight" ? "items-start" : "items-end"
+                    } ${p === "topLeft" || p === "bottomLeft" ? "justify-start" : "justify-end"} ${
+                      namePosition === p
+                        ? "border-navy bg-navy/10"
+                        : "border-line bg-bg-soft hover:bg-[var(--nav-hover-bg)]"
+                    } p-1.5`}
+                  >
+                    <span className={`h-2 w-2 rounded-full ${namePosition === p ? "bg-navy" : "bg-ink-soft/50"}`} />
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
+          )}
 
+          {!forcedFields.showExpiry && (
             <button
               type="button"
               onClick={() => setShowExpiry((v) => !v)}
@@ -834,7 +839,6 @@ export default function WalletModal({
                 />
               </span>
             </button>
-            </>
           )}
         </FormSection>
         )}
@@ -979,10 +983,8 @@ export default function WalletModal({
               if (tpl.forceShowCurrency !== null) setShowCurrency(tpl.forceShowCurrency);
               if (tpl.forceCurrency !== null) setCurrency(tpl.forceCurrency);
               if (tpl.forceNetwork !== null) setNetwork(tpl.forceNetwork);
-              if (tpl.forceHideCardInfo) {
-                setShowHolderName(false);
-                setShowExpiry(false);
-              }
+              if (tpl.forceShowHolderName !== null) setShowHolderName(tpl.forceShowHolderName);
+              if (tpl.forceShowExpiry !== null) setShowExpiry(tpl.forceShowExpiry);
               setForcedFields({
                 showName: tpl.forceShowName !== null,
                 showNetworkBadge: tpl.forceShowNetworkBadge !== null,
@@ -991,7 +993,8 @@ export default function WalletModal({
                 showBalance: tpl.forceShowBalance !== null,
                 showCurrency: tpl.forceShowCurrency !== null,
                 network: tpl.forceNetwork !== null,
-                hideCardInfo: tpl.forceHideCardInfo,
+                showHolderName: tpl.forceShowHolderName !== null,
+                showExpiry: tpl.forceShowExpiry !== null,
               });
               if (tpl.forceNamePosition !== null) {
                 setNamePosition(tpl.forceNamePosition);
@@ -1124,6 +1127,8 @@ export default function WalletModal({
                 ["showNetworkBadge", "wallet.forceLabelNetworkBadge"],
                 ["showChip", "wallet.forceLabelChip"],
                 ["showCardNumber", "wallet.forceLabelCardNumber"],
+                ["showHolderName", "wallet.forceLabelHolderName"],
+                ["showExpiry", "wallet.forceLabelExpiry"],
                 ["showBalance", "wallet.forceLabelBalance"],
                 ["showCurrency", "wallet.forceLabelCurrency"],
               ] as const
@@ -1136,30 +1141,6 @@ export default function WalletModal({
               />
             ))}
           </div>
-
-          <button
-            type="button"
-            onClick={() => setTemplateForceHideCardInfo((v) => !v)}
-            className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
-          >
-            <span>
-              <span className="block text-sm font-medium text-foreground">{t("wallet.forceHideCardInfoLabel")}</span>
-              <span className="block text-xs text-ink-soft">{t("wallet.forceHideCardInfoDesc")}</span>
-            </span>
-            <span
-              role="switch"
-              aria-checked={templateForceHideCardInfo}
-              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
-                templateForceHideCardInfo ? "bg-navy" : "bg-line"
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                  templateForceHideCardInfo ? "translate-x-6" : "translate-x-1"
-                }`}
-              />
-            </span>
-          </button>
         </FormSection>
 
         <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("wallet.templateLocksLabel")}>

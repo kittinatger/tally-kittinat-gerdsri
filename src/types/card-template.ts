@@ -42,10 +42,12 @@ export type CardTemplateOption = {
    * which network it is). Null means "leave whatever the wallet already
    * has". */
   forceNetwork: CardNetwork | null;
-  /** When true, last4/holderName/expiry are forced off the card face and
-   * out of the wallet editor entirely — see force_hide_card_info in
-   * db.ts. */
-  forceHideCardInfo: boolean;
+  /** Whether to force the holder-name/expiry rows shown or hidden — null
+   * means "leave whatever the wallet already has". Two independent
+   * fields, same convention as the other force_show_* fields — see
+   * force_show_holder_name/force_show_expiry in db.ts. */
+  forceShowHolderName: boolean | null;
+  forceShowExpiry: boolean | null;
   status: "pending" | "approved" | "rejected";
   submittedByUsername: string | null;
   createdAt: string;

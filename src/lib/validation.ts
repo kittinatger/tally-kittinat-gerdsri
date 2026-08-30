@@ -264,10 +264,10 @@ export const cardTemplateInputSchema = z.object({
   // forceShowNetworkBadge above (whether a badge renders at all, not which
   // network it is).
   forceNetwork: z.enum(CARD_NETWORKS).nullable().optional(),
-  // When true, forces last4/holderName/expiry off the card face and out
-  // of the wallet editor entirely — see the force_hide_card_info comment
-  // in db.ts.
-  forceHideCardInfo: z.boolean().optional(),
+  // Whether to force the holder-name/expiry rows shown or hidden — see
+  // the force_show_holder_name/force_show_expiry comment in db.ts.
+  forceShowHolderName: z.boolean().nullable().optional(),
+  forceShowExpiry: z.boolean().nullable().optional(),
 });
 
 // Admin-only edit — every field optional (at least one required), used for
@@ -291,7 +291,8 @@ export const cardTemplateUpdateSchema = z
     lockTextColor: z.boolean().optional(),
     category: z.enum(CARD_TEMPLATE_CATEGORIES).nullable().optional(),
     forceNetwork: z.enum(CARD_NETWORKS).nullable().optional(),
-    forceHideCardInfo: z.boolean().optional(),
+    forceShowHolderName: z.boolean().nullable().optional(),
+    forceShowExpiry: z.boolean().nullable().optional(),
     status: z.enum(["pending", "approved", "rejected"]).optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
