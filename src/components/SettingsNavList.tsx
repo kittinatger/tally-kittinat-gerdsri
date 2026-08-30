@@ -457,12 +457,12 @@ export default function SettingsNavList({
 
       <SettingsSection title={t("settings.section.support")}>
         <SettingsListItem icon={<GiftIcon />} label={t("settings.referFriend")} accent="pink" href="/refer-a-friend" selected={pathname === "/refer-a-friend"} />
-        <SettingsListItem icon={<BookIcon />} label={t("settings.usageGuide")} href="/usage-guide" selected={pathname === "/usage-guide"} />
-        <SettingsListItem icon={<QuestionIcon />} label={t("settings.faqs")} href="/faq" selected={pathname === "/faq"} />
-        <SettingsListItem icon={<WrenchIcon />} label={t("settings.troubleshooting")} href="/troubleshooting" selected={pathname === "/troubleshooting"} />
-        <SettingsListItem icon={<MailIcon />} label={t("settings.contact")} href="/contact" selected={pathname === "/contact"} />
-        <SettingsListItem icon={<FlagIcon />} label={t("settings.reportIssue")} href="/report-issue" selected={pathname === "/report-issue"} />
-        <SettingsListItem icon={<ClockIcon />} label={t("settings.changelog")} href="/changelog" selected={pathname === "/changelog"} />
+        <SettingsListItem icon={<BookIcon />} label={t("settings.usageGuide")} accent="indigo" href="/usage-guide" selected={pathname === "/usage-guide"} />
+        <SettingsListItem icon={<QuestionIcon />} label={t("settings.faqs")} accent="violet" href="/faq" selected={pathname === "/faq"} />
+        <SettingsListItem icon={<WrenchIcon />} label={t("settings.troubleshooting")} accent="orange" href="/troubleshooting" selected={pathname === "/troubleshooting"} />
+        <SettingsListItem icon={<MailIcon />} label={t("settings.contact")} accent="sky" href="/contact" selected={pathname === "/contact"} />
+        <SettingsListItem icon={<FlagIcon />} label={t("settings.reportIssue")} accent="rose" href="/report-issue" selected={pathname === "/report-issue"} />
+        <SettingsListItem icon={<ClockIcon />} label={t("settings.changelog")} accent="slate" href="/changelog" selected={pathname === "/changelog"} />
       </SettingsSection>
     </div>
   );
