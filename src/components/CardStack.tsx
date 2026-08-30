@@ -39,6 +39,10 @@ export default function CardStack({
             type="button"
             {...getHandlers(item.key, item.onOpen)}
             aria-label={item.ariaLabel}
+            // Lets PullToRefresh (an ancestor wrapping this whole stack)
+            // recognize and skip touches that start on a reorderable card
+            // — see its own comment for why that matters.
+            {...(reorderable ? { "data-reorder-item": "" } : {})}
             style={{
               marginTop: i === 0 ? 0 : isLast ? -16 : -8,
               zIndex: isDragging ? 50 : i + 1,

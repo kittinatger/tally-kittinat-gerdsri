@@ -19,7 +19,18 @@ export default function PullToRefresh({ children }: { children: React.ReactNode 
   const pulling = useRef(false);
 
   function onTouchStart(e: React.TouchEvent) {
-    if (refreshing || window.scrollY > 0) {
+    // A card armed for click-and-hold-to-drag (see use-reorderable-list.ts)
+    // sits inside this wrapper, and touch events aren't stopped by that
+    // card's own touch-action: none — that CSS property only suppresses
+    // the browser's native scrolling, not React's independent onTouchMove
+    // handlers here, which keep firing (and re-rendering this whole
+    // component on every frame) throughout the same physical gesture. Left
+    // unchecked, that competing pull-tracking made a long-press feel like
+    // it barely registered and any successful drag feel janky, since both
+    // gestures were fighting over the same touch the entire time. Any
+    // touch starting on a reorderable card skips pull-to-refresh tracking
+    // entirely instead.
+    if (refreshing || window.scrollY > 0 || (e.target as HTMLElement).closest?.("[data-reorder-item]")) {
       startY.current = null;
       return;
     }
