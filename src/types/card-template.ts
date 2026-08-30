@@ -18,6 +18,9 @@ export type CardTemplateOption = {
   forceShowCardNumber: boolean | null;
   forceShowBalance: boolean | null;
   forceShowCurrency: boolean | null;
+  /** Which currency code to force the wallet itself onto — distinct from
+   * forceShowCurrency above (whether it renders at all, not which one). */
+  forceCurrency: string | null;
   status: "pending" | "approved" | "rejected";
   submittedByUsername: string | null;
   createdAt: string;

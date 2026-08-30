@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 41;
+const CURRENT_SCHEMA_VERSION = 42;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1220,6 +1220,13 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS show_holder_name BOOLEAN NOT NULL DEFAULT true;`;
       await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS show_expiry BOOLEAN NOT NULL DEFAULT true;`;
 
+      // Unlike the boolean force_show_* columns above (which only force
+      // whether the currency renders), this forces *which* currency the
+      // wallet itself uses — e.g. a Japanese transit-card template locking
+      // its picker to JPY regardless of the app's own default currency.
+      // NULL means "don't touch the wallet's currency", same convention.
+      await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS force_currency TEXT;`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -1895,18 +1902,22 @@ export type CardTemplateRow = {
   force_show_card_number: boolean | null;
   force_show_balance: boolean | null;
   force_show_currency: boolean | null;
+  // Which currency code to force the wallet itself onto — distinct from
+  // force_show_currency above, which only forces whether a currency
+  // renders at all, not which one. NULL means "don't touch it".
+  force_currency: string | null;
   status: "pending" | "approved" | "rejected";
   created_at: string;
   reviewed_at: string | null;
 };
 
-// Shared by every query below so the six force_* columns can't drift out
-// of one of them the way the wallets-merge fields once nearly did (see
+// Shared by every query below so the force_* columns can't drift out of
+// one of them the way the wallets-merge fields once nearly did (see
 // WALLET_COLUMNS' own comment) — `ct.` for the SELECT queries (aliased
 // against the users join), bare column names for INSERT/UPDATE...RETURNING
 // where there's no alias to strip.
 const CARD_TEMPLATE_COLUMNS =
-  "id, submitted_by, name, color, background, text_color, force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, status, created_at, reviewed_at";
+  "id, submitted_by, name, color, background, text_color, force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency, status, created_at, reviewed_at";
 
 export async function createCardTemplate(
   userId: number,
@@ -1921,6 +1932,7 @@ export async function createCardTemplate(
     forceShowCardNumber?: boolean | null;
     forceShowBalance?: boolean | null;
     forceShowCurrency?: boolean | null;
+    forceCurrency?: string | null;
   },
 ): Promise<CardTemplateRow> {
   await ensureSchema();
@@ -1928,10 +1940,10 @@ export async function createCardTemplate(
   const { rows } = await sql.query<CardTemplateRow>(
     `INSERT INTO card_templates (
        submitted_by, name, color, background, text_color,
-       force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency,
+       force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency,
        status
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending')
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending')
      RETURNING ${CARD_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
     [
       userId,
@@ -1945,6 +1957,7 @@ export async function createCardTemplate(
       input.forceShowCardNumber ?? null,
       input.forceShowBalance ?? null,
       input.forceShowCurrency ?? null,
+      input.forceCurrency ?? null,
     ],
   );
   return rows[0];
@@ -1998,6 +2011,7 @@ export async function updateCardTemplate(
     forceShowCardNumber?: boolean | null;
     forceShowBalance?: boolean | null;
     forceShowCurrency?: boolean | null;
+    forceCurrency?: string | null;
     status?: "pending" | "approved" | "rejected";
   },
 ): Promise<CardTemplateRow | null> {
@@ -2013,10 +2027,11 @@ export async function updateCardTemplate(
     force_show_card_number: boolean | null;
     force_show_balance: boolean | null;
     force_show_currency: boolean | null;
+    force_currency: string | null;
     status: "pending" | "approved" | "rejected";
   }>`
     SELECT name, color, background, text_color,
-           force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency,
+           force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency,
            status
     FROM card_templates WHERE id = ${id};
   `;
@@ -2033,6 +2048,7 @@ export async function updateCardTemplate(
   const newForceShowCardNumber = input.forceShowCardNumber !== undefined ? input.forceShowCardNumber : existing.force_show_card_number;
   const newForceShowBalance = input.forceShowBalance !== undefined ? input.forceShowBalance : existing.force_show_balance;
   const newForceShowCurrency = input.forceShowCurrency !== undefined ? input.forceShowCurrency : existing.force_show_currency;
+  const newForceCurrency = input.forceCurrency !== undefined ? input.forceCurrency : existing.force_currency;
   const newStatus = input.status ?? existing.status;
   const bumpReviewedAt = input.status !== undefined;
 
@@ -2040,8 +2056,8 @@ export async function updateCardTemplate(
     `UPDATE card_templates
      SET name = $1, color = $2, background = $3, text_color = $4,
          force_show_name = $5, force_show_network_badge = $6, force_show_chip = $7, force_show_card_number = $8, force_show_balance = $9, force_show_currency = $10,
-         status = $11, reviewed_at = ${bumpReviewedAt ? "now()" : "reviewed_at"}
-     WHERE id = $12
+         force_currency = $11, status = $12, reviewed_at = ${bumpReviewedAt ? "now()" : "reviewed_at"}
+     WHERE id = $13
      RETURNING ${CARD_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
     [
       newName,
@@ -2054,6 +2070,7 @@ export async function updateCardTemplate(
       newForceShowCardNumber,
       newForceShowBalance,
       newForceShowCurrency,
+      newForceCurrency,
       newStatus,
       id,
     ],

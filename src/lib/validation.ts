@@ -241,6 +241,9 @@ export const cardTemplateInputSchema = z.object({
   forceShowCardNumber: z.boolean().nullable().optional(),
   forceShowBalance: z.boolean().nullable().optional(),
   forceShowCurrency: z.boolean().nullable().optional(),
+  // Which currency code to force the wallet itself onto — distinct from
+  // forceShowCurrency above (whether it renders at all, not which one).
+  forceCurrency: walletCurrencySchema.optional(),
 });
 
 // Admin-only edit — every field optional (at least one required), used for
@@ -258,6 +261,7 @@ export const cardTemplateUpdateSchema = z
     forceShowCardNumber: z.boolean().nullable().optional(),
     forceShowBalance: z.boolean().nullable().optional(),
     forceShowCurrency: z.boolean().nullable().optional(),
+    forceCurrency: walletCurrencySchema.optional(),
     status: z.enum(["pending", "approved", "rejected"]).optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {

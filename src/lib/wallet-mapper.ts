@@ -60,6 +60,7 @@ export function toCardTemplateOption(t: CardTemplateRow): CardTemplateOption {
     forceShowCardNumber: t.force_show_card_number,
     forceShowBalance: t.force_show_balance,
     forceShowCurrency: t.force_show_currency,
+    forceCurrency: t.force_currency,
     status: t.status,
     submittedByUsername: t.submitted_by_username,
     createdAt: t.created_at,

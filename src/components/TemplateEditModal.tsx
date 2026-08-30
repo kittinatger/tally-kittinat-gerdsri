@@ -7,9 +7,12 @@ import ColorGlowPreview from "./ColorGlowPreview";
 import CardBackgroundPicker from "./CardBackgroundPicker";
 import CardTextColorPicker from "./CardTextColorPicker";
 import ForceToggleField from "./ForceToggleField";
+import SelectDropdown from "./SelectDropdown";
 import { backgroundGlowColor, cardForegroundFor, cardBackgroundStyle, type CardBackground } from "@/lib/card-backgrounds";
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { CATEGORY_PALETTE } from "@/lib/categories";
+import { CURRENCIES } from "@/lib/currencies";
+import { useCurrency } from "@/lib/currency-context";
 import { PaletteIcon, TrashIcon } from "@/lib/icons";
 import { describeFetchError } from "@/lib/fetch-error";
 import { useT } from "@/lib/language-context";
@@ -41,6 +44,7 @@ export default function TemplateEditModal({
   onDeleted: (id: number) => void;
 }) {
   const t = useT();
+  const appCurrency = useCurrency();
   const [name, setName] = useState(template.name);
   const [color, setColor] = useState(template.color || CATEGORY_PALETTE[0]);
   const [background, setBackground] = useState<CardBackground | null>(template.background);
@@ -54,6 +58,12 @@ export default function TemplateEditModal({
     forceShowBalance: template.forceShowBalance,
     forceShowCurrency: template.forceShowCurrency,
   });
+  // Distinct from force.forceShowCurrency above (whether a currency
+  // renders at all) — this is which currency code the wallet itself gets
+  // forced onto. currencyLocked tracks on/off separately from the value
+  // itself so toggling off doesn't lose whatever code was picked.
+  const [currencyLocked, setCurrencyLocked] = useState(template.forceCurrency !== null);
+  const [forceCurrencyValue, setForceCurrencyValue] = useState(template.forceCurrency ?? appCurrency);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -67,7 +77,15 @@ export default function TemplateEditModal({
       const res = await fetch(`/api/card-templates/${template.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, color, background, textColor, status, ...force }),
+        body: JSON.stringify({
+          name,
+          color,
+          background,
+          textColor,
+          status,
+          ...force,
+          forceCurrency: currencyLocked ? forceCurrencyValue : null,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -164,6 +182,41 @@ export default function TemplateEditModal({
               />
             ))}
           </div>
+        </FormSection>
+
+        <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("wallet.lockCurrencyLabel")}>
+          <button
+            type="button"
+            onClick={() => setCurrencyLocked((v) => !v)}
+            className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+          >
+            <span>
+              <span className="block text-sm font-medium text-foreground">{t("wallet.lockCurrencyLabel")}</span>
+              <span className="block text-xs text-ink-soft">
+                {currencyLocked ? t("wallet.lockCurrencyDesc").replace("{currency}", forceCurrencyValue) : t("wallet.lockCurrencyOffDesc")}
+              </span>
+            </span>
+            <span
+              role="switch"
+              aria-checked={currencyLocked}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                currencyLocked ? "bg-navy" : "bg-line"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                  currencyLocked ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </span>
+          </button>
+          {currencyLocked && (
+            <SelectDropdown
+              value={CURRENCIES.find((c) => c.code === forceCurrencyValue) ? `${forceCurrencyValue} — ${CURRENCIES.find((c) => c.code === forceCurrencyValue)!.name}` : forceCurrencyValue}
+              options={CURRENCIES.map((c) => `${c.code} — ${c.name}`)}
+              onChange={(label) => setForceCurrencyValue(label.split(" — ")[0])}
+            />
+          )}
         </FormSection>
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}

@@ -124,6 +124,13 @@ export default function WalletModal({
     showBalance: null,
     showCurrency: null,
   });
+  // Separate from forceToggles.showCurrency (which only forces whether a
+  // currency renders) — this forces which currency code the wallet itself
+  // uses, e.g. a Japanese transit-card template locking pickers to JPY
+  // regardless of the app's own default currency. Captures whatever
+  // `currency` is currently set to (including null/"app default") at
+  // submit time, same pattern as the boolean forces.
+  const [lockCurrency, setLockCurrency] = useState(false);
 
   const month = expiryMonth ? Number(expiryMonth) : null;
   const year = expiryYear ? Number(expiryYear) : null;
@@ -184,6 +191,7 @@ export default function WalletModal({
           forceShowCardNumber: forceToggles.showCardNumber,
           forceShowBalance: forceToggles.showBalance,
           forceShowCurrency: forceToggles.showCurrency,
+          forceCurrency: lockCurrency ? currency : null,
         }),
       });
       const data = await res.json();
@@ -811,6 +819,7 @@ export default function WalletModal({
               if (tpl.forceShowCardNumber !== null) setShowCardNumber(tpl.forceShowCardNumber);
               if (tpl.forceShowBalance !== null) setShowBalance(tpl.forceShowBalance);
               if (tpl.forceShowCurrency !== null) setShowCurrency(tpl.forceShowCurrency);
+              if (tpl.forceCurrency !== null) setCurrency(tpl.forceCurrency);
             }}
           />
           <CardBackgroundPicker value={background} onChange={setBackground} plainColor={color} onPlainColorChange={setColor} />
@@ -908,6 +917,32 @@ export default function WalletModal({
                   </div>
                 </div>
               )}
+
+              <button
+                type="button"
+                onClick={() => setLockCurrency((v) => !v)}
+                className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+              >
+                <span>
+                  <span className="block text-sm font-medium text-foreground">{t("wallet.lockCurrencyLabel")}</span>
+                  <span className="block text-xs text-ink-soft">
+                    {lockCurrency ? t("wallet.lockCurrencyDesc").replace("{currency}", currency ?? appCurrency) : t("wallet.lockCurrencyOffDesc")}
+                  </span>
+                </span>
+                <span
+                  role="switch"
+                  aria-checked={lockCurrency}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                    lockCurrency ? "bg-navy" : "bg-line"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                      lockCurrency ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </span>
+              </button>
 
               {templateError && <p className="text-sm text-red-600 dark:text-red-400">{templateError}</p>}
               <button

@@ -76,6 +76,7 @@ export default function TemplateReviewPanel() {
     const parts = entries
       .filter(([value]) => value !== null)
       .map(([value, label]) => `${label}: ${value ? t("wallet.forceOn") : t("wallet.forceOff")}`);
+    if (tpl.forceCurrency !== null) parts.push(`${t("wallet.lockCurrencyLabel")}: ${tpl.forceCurrency}`);
     return parts.length ? parts.join(", ") : "";
   }
 
