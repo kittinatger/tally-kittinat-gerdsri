@@ -7,7 +7,6 @@ import { UploadIcon } from "@/lib/icons";
 import SelectDropdown from "./SelectDropdown";
 import FormSection from "./FormSection";
 import ColorGlowPreview from "./ColorGlowPreview";
-import AccountCardShape from "./AccountCardShape";
 import WalletCardShape, { RECOLORABLE_BADGE_ASPECT, ICON_COLOR_ORIGINAL } from "./WalletCardShape";
 import CardBackgroundPicker from "./CardBackgroundPicker";
 import CardTextColorPicker from "./CardTextColorPicker";
@@ -42,11 +41,11 @@ const NETWORK_LABEL_KEYS: Record<CardNetwork, MessageKey> = {
 };
 
 // The single wallet editor — money account and payment-card visuals are one
-// form now, not two (see the wallets migration comments in db.ts). A plain
-// account is just "hasCardLook: false"; flipping that on reveals the same
-// network/holder/last4/expiry/badge/chip fields the old standalone
-// wallet-cards feature had, and the live preview switches from
-// AccountCardShape to WalletCardShape to match.
+// form now, not two (see the wallets migration comments in db.ts), and
+// every wallet always renders with the full card look (WalletCardShape) —
+// there's no separate "Payment card look" toggle gating the network/
+// holder/last4/expiry/badge/chip fields off; they're just always part of
+// the form, always visible.
 export default function WalletModal({
   wallet,
   onClose,
@@ -70,10 +69,7 @@ export default function WalletModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Card-look fields — only meaningful (and only shown) once hasCardLook is
-  // on. Seeded from the wallet's network being non-null on edit, same
-  // convention WalletCardShape itself uses.
-  const [hasCardLook, setHasCardLook] = useState(Boolean(wallet?.network));
+  // Card-look fields — always part of the form now (see the comment above).
   const [network, setNetwork] = useState<CardNetwork>(wallet?.network ?? "other");
   const [holderName, setHolderName] = useState(wallet?.holderName ?? "");
   const [last4, setLast4] = useState(wallet?.last4 ?? "");
@@ -86,11 +82,6 @@ export default function WalletModal({
   const [chipColor, setChipColor] = useState<ChipColor>(wallet?.chipColor ?? DEFAULT_CHIP_COLOR);
   const [chipPosition, setChipPosition] = useState<ChipPosition>(wallet?.chipPosition ?? DEFAULT_CHIP_POSITION);
   const [cardNotes, setCardNotes] = useState(wallet?.notes ?? "");
-  // Only meaningful once hasCardLook is on — a plain account always shows
-  // its balance/currency (that's the entire point of an account), so these
-  // toggles don't even apply there. Default true so a freshly-added card
-  // that turns hasCardLook on doesn't have to also remember to turn these
-  // on separately.
   const [showBalance, setShowBalance] = useState(wallet?.showBalance ?? true);
   const [showCurrency, setShowCurrency] = useState(wallet?.showCurrency ?? true);
   const [showCardNumber, setShowCardNumber] = useState(wallet?.showCardNumber ?? true);
@@ -172,39 +163,6 @@ export default function WalletModal({
     ? (CURRENCIES.find((c) => c.code === currency) ? `${currency} — ${CURRENCIES.find((c) => c.code === currency)!.name}` : currency)
     : `${appDefaultLabel} (${appCurrency})`;
 
-  const previewWallet: WalletOption = {
-    id: wallet?.id ?? 0,
-    name: name || t("wallet.namePlaceholder"),
-    color,
-    background,
-    textColor,
-    kind,
-    currency,
-    isDefault,
-    archived: false,
-    balance: Number(startingBalance) || 0,
-    isOwner: wallet?.isOwner ?? true,
-    holderName: holderName || null,
-    last4: last4 || null,
-    expiryMonth: month,
-    expiryYear: year,
-    network: hasCardLook ? network : null,
-    showNetworkBadge,
-    badgePosition,
-    iconColor,
-    showChip,
-    chipColor,
-    chipPosition,
-    notes: cardNotes || null,
-    showBalance,
-    showCurrency,
-    showCardNumber,
-    showName,
-    showHolderName,
-    showExpiry,
-    namePosition,
-  };
-
   async function handleUploadTemplate() {
     setTemplateSubmitting(true);
     setTemplateError(null);
@@ -261,7 +219,7 @@ export default function WalletModal({
         last4: last4.trim() || null,
         expiryMonth: month,
         expiryYear: year,
-        network: hasCardLook ? network : null,
+        network,
         showNetworkBadge,
         badgePosition,
         iconColor,
@@ -322,36 +280,32 @@ export default function WalletModal({
     <Modal onClose={onClose} title={isEdit ? t("wallet.editTitle") : t("wallet.addWallet")}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <ColorGlowPreview color={backgroundGlowColor(background, color)}>
-          {hasCardLook ? (
-            <WalletCardShape
-              label={name || t("wallet.namePlaceholder")}
-              holderName={holderName || null}
-              last4={last4 || null}
-              expiryMonth={month}
-              expiryYear={year}
-              network={network}
-              color={color}
-              background={background}
-              showNetworkBadge={showNetworkBadge}
-              badgePosition={badgePosition}
-              textColor={textColor}
-              iconColor={iconColor}
-              showChip={showChip}
-              chipColor={chipColor}
-              chipPosition={chipPosition}
-              balance={Number(startingBalance) || 0}
-              currency={currency ?? appCurrency}
-              showBalance={showBalance}
-              showCurrency={showCurrency}
-              showCardNumber={showCardNumber}
-              showName={showName}
-              showHolderName={showHolderName}
-              showExpiry={showExpiry}
-              namePosition={namePosition}
-            />
-          ) : (
-            <AccountCardShape wallet={previewWallet} currency={appCurrency} />
-          )}
+          <WalletCardShape
+            label={name || t("wallet.namePlaceholder")}
+            holderName={holderName || null}
+            last4={last4 || null}
+            expiryMonth={month}
+            expiryYear={year}
+            network={network}
+            color={color}
+            background={background}
+            showNetworkBadge={showNetworkBadge}
+            badgePosition={badgePosition}
+            textColor={textColor}
+            iconColor={iconColor}
+            showChip={showChip}
+            chipColor={chipColor}
+            chipPosition={chipPosition}
+            balance={Number(startingBalance) || 0}
+            currency={currency ?? appCurrency}
+            showBalance={showBalance}
+            showCurrency={showCurrency}
+            showCardNumber={showCardNumber}
+            showName={showName}
+            showHolderName={showHolderName}
+            showExpiry={showExpiry}
+            namePosition={namePosition}
+          />
         </ColorGlowPreview>
 
         <FormSection icon={<CategoryIcon iconKey="bank" className="h-4 w-4" />} title={t("wallet.nameLabel")}>
@@ -390,33 +344,8 @@ export default function WalletModal({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setHasCardLook((v) => !v)}
-            className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
-          >
-            <span>
-              <span className="block text-sm font-medium text-foreground">{t("wallet.cardLookLabel")}</span>
-              <span className="block text-xs text-ink-soft">{t("wallet.cardLookDesc")}</span>
-            </span>
-            <span
-              role="switch"
-              aria-checked={hasCardLook}
-              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
-                hasCardLook ? "bg-navy" : "bg-line"
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                  hasCardLook ? "translate-x-6" : "translate-x-1"
-                }`}
-              />
-            </span>
-          </button>
-
-          {hasCardLook && (
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.networkLabel")}</label>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.networkLabel")}</label>
               <div className="flex flex-wrap gap-1.5">
                 {CARD_NETWORKS.map((n) => (
                   <button
@@ -439,12 +368,10 @@ export default function WalletModal({
                 ))}
               </div>
             </div>
-          )}
 
-          {hasCardLook && (
-            <button
-              type="button"
-              onClick={() => setShowNetworkBadge((v) => !v)}
+          <button
+            type="button"
+            onClick={() => setShowNetworkBadge((v) => !v)}
               className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
             >
               <span>
@@ -465,9 +392,8 @@ export default function WalletModal({
                 />
               </span>
             </button>
-          )}
 
-          {hasCardLook && showNetworkBadge && (
+          {showNetworkBadge && (
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.badgePositionLabel")}</label>
               <div className="grid w-24 grid-cols-2 gap-1.5">
@@ -493,31 +419,29 @@ export default function WalletModal({
             </div>
           )}
 
-          {hasCardLook && (
-            <button
-              type="button"
-              onClick={() => setShowChip((v) => !v)}
-              className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+          <button
+            type="button"
+            onClick={() => setShowChip((v) => !v)}
+            className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+          >
+            <span>
+              <span className="block text-sm font-medium text-foreground">{t("wallet.showChipLabel")}</span>
+              <span className="block text-xs text-ink-soft">{t("wallet.showChipDesc")}</span>
+            </span>
+            <span
+              role="switch"
+              aria-checked={showChip}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${showChip ? "bg-navy" : "bg-line"}`}
             >
-              <span>
-                <span className="block text-sm font-medium text-foreground">{t("wallet.showChipLabel")}</span>
-                <span className="block text-xs text-ink-soft">{t("wallet.showChipDesc")}</span>
-              </span>
               <span
-                role="switch"
-                aria-checked={showChip}
-                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${showChip ? "bg-navy" : "bg-line"}`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                    showChip ? "translate-x-6" : "translate-x-1"
-                  }`}
-                />
-              </span>
-            </button>
-          )}
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                  showChip ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </span>
+          </button>
 
-          {hasCardLook && showChip && (
+          {showChip && (
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.chipColorLabel")}</label>
               <div className="flex flex-wrap gap-2">
@@ -540,7 +464,7 @@ export default function WalletModal({
             </div>
           )}
 
-          {hasCardLook && showChip && (
+          {showChip && (
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.chipPositionLabel")}</label>
               <div className="flex gap-1.5">
@@ -562,7 +486,6 @@ export default function WalletModal({
             </div>
           )}
 
-          {hasCardLook && (
             <button
               type="button"
               onClick={() => setShowCardNumber((v) => !v)}
@@ -586,9 +509,7 @@ export default function WalletModal({
                 />
               </span>
             </button>
-          )}
 
-          {hasCardLook && (
             <button
               type="button"
               onClick={() => setShowName((v) => !v)}
@@ -612,9 +533,7 @@ export default function WalletModal({
                 />
               </span>
             </button>
-          )}
 
-          {hasCardLook && (
             <div>
               <label htmlFor="walletLast4" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 {t("wallet.last4Label")}
@@ -632,9 +551,7 @@ export default function WalletModal({
               />
               <p className="mt-1 text-[11px] text-ink-soft">{t("wallet.last4Hint")}</p>
             </div>
-          )}
 
-          {hasCardLook && (
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label htmlFor="walletCardHolder" className="mb-1.5 block text-xs font-semibold text-ink-soft">
@@ -678,9 +595,7 @@ export default function WalletModal({
                 </div>
               </div>
             </div>
-          )}
 
-          {hasCardLook && (
             <button
               type="button"
               onClick={() => setShowHolderName((v) => !v)}
@@ -704,9 +619,8 @@ export default function WalletModal({
                 />
               </span>
             </button>
-          )}
 
-          {hasCardLook && showHolderName && (
+          {showHolderName && (
             <div>
               <div className="mb-1.5 flex items-center justify-between gap-2">
                 <label className="block text-xs font-semibold text-ink-soft">{t("wallet.namePositionLabel")}</label>
@@ -747,7 +661,6 @@ export default function WalletModal({
             </div>
           )}
 
-          {hasCardLook && (
             <button
               type="button"
               onClick={() => setShowExpiry((v) => !v)}
@@ -771,7 +684,6 @@ export default function WalletModal({
                 />
               </span>
             </button>
-          )}
         </FormSection>
 
         <FormSection icon={<CategoryIcon iconKey="cash" className="h-4 w-4" />} title={t("wallet.currencyLabel")}>
@@ -796,7 +708,6 @@ export default function WalletModal({
             </div>
           )}
 
-          {hasCardLook && (
             <div className="space-y-2 border-t border-line pt-3">
               <button
                 type="button"
@@ -847,7 +758,6 @@ export default function WalletModal({
                 </button>
               )}
             </div>
-          )}
 
           <button
             type="button"
@@ -878,14 +788,6 @@ export default function WalletModal({
         <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("wallet.colorLabel")}>
           <PremadeCardPicker
             onSelect={(tpl) => {
-              // A premade card is real card artwork (a transit card, etc.)
-              // — it's meant to render as WalletCardShape, not the plain
-              // AccountCardShape a card-look-off wallet falls back to.
-              // Without this, every show* toggle below (and any forced
-              // ones) would apply to a component that isn't even being
-              // rendered — AccountCardShape ignores all of them and always
-              // shows name/kind/balance regardless.
-              setHasCardLook(true);
               setBackground(tpl.background);
               setColor(tpl.color);
               setTextColor(tpl.textColor);
@@ -928,7 +830,7 @@ export default function WalletModal({
               <CardTextColorPicker value={textColor} onChange={setTextColor} autoColor={cardForegroundFor(null, background, color).full} />
             )}
           </div>
-          {hasCardLook && showNetworkBadge && (
+          {showNetworkBadge && (
             <div className="border-t border-line pt-3">
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.iconColorLabel")}</label>
               <p className="mb-1.5 text-[11px] text-ink-soft">{t("wallet.iconColorDesc")}</p>
@@ -965,7 +867,6 @@ export default function WalletModal({
           )}
         </FormSection>
 
-        {hasCardLook && (
           <FormSection icon={<FileIcon className="h-4 w-4" />} title={t("membership.notesLabel")}>
             <textarea
               id="walletCardNotes"
@@ -976,7 +877,6 @@ export default function WalletModal({
               className="w-full resize-none rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
             />
           </FormSection>
-        )}
 
         <FormSection icon={<UploadIcon className="h-4 w-4" />} title={t("wallet.uploadTemplateLabel")}>
           {templateSubmitted ? (
@@ -1027,7 +927,6 @@ export default function WalletModal({
                 </div>
               </div>
 
-              {hasCardLook && (
                 <div className="rounded-card border border-line bg-bg-soft p-3">
                   <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceTogglesLabel")}</p>
                   <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceTogglesDesc")}</p>
@@ -1051,7 +950,6 @@ export default function WalletModal({
                     ))}
                   </div>
                 </div>
-              )}
 
               <button
                 type="button"
