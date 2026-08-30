@@ -443,6 +443,32 @@ export default function WalletModal({
               </button>
             </div>
           </div>
+
+          {/* Same templateCategory state the Template tab's chip picker
+           * uses (see wallet.templateCategoryLabel there) — shown here too
+           * so the card type can be set up front while filling in the
+           * basics, rather than only when actually uploading this wallet
+           * as a template. Metadata only: it's never saved on the wallet
+           * itself, only submitted alongside a template upload. */}
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.templateCategoryLabel")}</label>
+            <div className="flex flex-wrap gap-1.5">
+              {CARD_TEMPLATE_CATEGORIES.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setTemplateCategory((prev) => (prev === c ? null : c))}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    templateCategory === c
+                      ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                      : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                  }`}
+                >
+                  {t(CARD_TEMPLATE_CATEGORY_LABEL_KEYS[c])}
+                </button>
+              ))}
+            </div>
+          </div>
         </FormSection>
         )}
 
