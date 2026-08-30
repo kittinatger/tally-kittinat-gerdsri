@@ -103,16 +103,17 @@ export default function TemplateEditModal({
   return (
     <Modal onClose={onClose} title={template.name}>
       <form onSubmit={handleSave} className="space-y-4">
+        {/* No name label stamped on the preview — `name` here is just this
+         * template's admin-facing catalog name (shown as the modal title
+         * and the field below), not on-card text. Overlaying it on top of
+         * the background used to duplicate onto artwork that already has
+         * its own wordmark baked in (e.g. a Suica card's own "Suica"
+         * text), reading as a rendering bug. */}
         <ColorGlowPreview color={backgroundGlowColor(background, color)}>
           <div
-            className={`flex aspect-[1.586/1] min-h-[190px] w-full items-end rounded-2xl p-4 shadow-soft ${background ? "" : heroGradientClasses(color)}`}
-            style={{
-              color: cardForegroundFor(textColor, background, color).full,
-              ...(background ? cardBackgroundStyle(background) : colorHeroStyle(color)),
-            }}
-          >
-            <p className="truncate text-sm font-semibold">{name || t("wallet.namePlaceholder")}</p>
-          </div>
+            className={`aspect-[1.586/1] min-h-[190px] w-full rounded-2xl shadow-soft ${background ? "" : heroGradientClasses(color)}`}
+            style={background ? cardBackgroundStyle(background) : colorHeroStyle(color)}
+          />
         </ColorGlowPreview>
 
         <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("wallet.templateNameLabel")}>
