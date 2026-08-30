@@ -1008,6 +1008,30 @@ export default function WalletModal({
                       />
                     ))}
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setTemplateForceHideCardInfo((v) => !v)}
+                    className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+                  >
+                    <span>
+                      <span className="block text-sm font-medium text-foreground">{t("wallet.forceHideCardInfoLabel")}</span>
+                      <span className="block text-xs text-ink-soft">{t("wallet.forceHideCardInfoDesc")}</span>
+                    </span>
+                    <span
+                      role="switch"
+                      aria-checked={templateForceHideCardInfo}
+                      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                        templateForceHideCardInfo ? "bg-navy" : "bg-line"
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                          templateForceHideCardInfo ? "translate-x-6" : "translate-x-1"
+                        }`}
+                      />
+                    </span>
+                  </button>
                 </div>
 
               <button
@@ -1069,93 +1093,78 @@ export default function WalletModal({
                 </span>
               </button>
 
-              <div className="rounded-card border border-line bg-bg-soft p-3">
-                <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceNamePositionLabel")}</p>
-                <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceNamePositionDesc")}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setTemplateForceNamePosition(null)}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                      templateForceNamePosition === null
-                        ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
-                        : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
-                    }`}
-                  >
-                    {t("wallet.forceAuto")}
-                  </button>
-                  {NAME_POSITIONS.map((p) => (
+              {/* Positioning holder-name text makes no sense once "Name on
+               * card" is itself forced off — see the matching guard on
+               * force network below. */}
+              {forceToggles.showName !== false && (
+                <div className="rounded-card border border-line bg-bg-soft p-3">
+                  <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceNamePositionLabel")}</p>
+                  <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceNamePositionDesc")}</p>
+                  <div className="flex flex-wrap gap-1.5">
                     <button
-                      key={p}
                       type="button"
-                      onClick={() => setTemplateForceNamePosition(p)}
+                      onClick={() => setTemplateForceNamePosition(null)}
                       className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                        templateForceNamePosition === p
+                        templateForceNamePosition === null
                           ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
                           : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
                       }`}
                     >
-                      {t(NAME_POSITION_LABEL_KEYS[p])}
+                      {t("wallet.forceAuto")}
                     </button>
-                  ))}
+                    {NAME_POSITIONS.map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setTemplateForceNamePosition(p)}
+                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                          templateForceNamePosition === p
+                            ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                            : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                        }`}
+                      >
+                        {t(NAME_POSITION_LABEL_KEYS[p])}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div className="rounded-card border border-line bg-bg-soft p-3">
-                <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceNetworkLabel")}</p>
-                <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceNetworkDesc")}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setTemplateForceNetwork(null)}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                      templateForceNetwork === null
-                        ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
-                        : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
-                    }`}
-                  >
-                    {t("wallet.forceAuto")}
-                  </button>
-                  {CARD_NETWORKS.map((n) => (
+              {/* Forcing a network makes no sense once the badge that
+               * would show it is itself forced off. */}
+              {forceToggles.showNetworkBadge !== false && (
+                <div className="rounded-card border border-line bg-bg-soft p-3">
+                  <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceNetworkLabel")}</p>
+                  <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceNetworkDesc")}</p>
+                  <div className="flex flex-wrap gap-1.5">
                     <button
-                      key={n}
                       type="button"
-                      onClick={() => setTemplateForceNetwork(n)}
+                      onClick={() => setTemplateForceNetwork(null)}
                       className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                        templateForceNetwork === n
+                        templateForceNetwork === null
                           ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
                           : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
                       }`}
                     >
-                      {t(NETWORK_LABEL_KEYS[n])}
+                      {t("wallet.forceAuto")}
                     </button>
-                  ))}
+                    {CARD_NETWORKS.map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setTemplateForceNetwork(n)}
+                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                          templateForceNetwork === n
+                            ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                            : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                        }`}
+                      >
+                        {t(NETWORK_LABEL_KEYS[n])}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setTemplateForceHideCardInfo((v) => !v)}
-                className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
-              >
-                <span>
-                  <span className="block text-sm font-medium text-foreground">{t("wallet.forceHideCardInfoLabel")}</span>
-                  <span className="block text-xs text-ink-soft">{t("wallet.forceHideCardInfoDesc")}</span>
-                </span>
-                <span
-                  role="switch"
-                  aria-checked={templateForceHideCardInfo}
-                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
-                    templateForceHideCardInfo ? "bg-navy" : "bg-line"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                      templateForceHideCardInfo ? "translate-x-6" : "translate-x-1"
-                    }`}
-                  />
-                </span>
-              </button>
+              )}
 
               {templateError && <p className="text-sm text-red-600 dark:text-red-400">{templateError}</p>}
               <button
