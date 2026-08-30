@@ -9,6 +9,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.19.0] - 2026-08-30
+
+### Added
+- Encrypted full-data backup export/import (Settings > Backup) — a passphrase-protected file you can download and restore from, encrypted client-side so the passphrase never reaches the server
+- Biometric app lock (Settings > App lock) — unlock with Face ID/Touch ID/Windows Hello via WebAuthn, alongside the existing passcode option
+- A 4-8 digit passcode as an app-lock alternative, entered on a real numeric keypad (typable with a physical keyboard too) that shows the passcode's real length as fixed dot slots
+- A configurable app-lock inactivity timeout, and the timeout is now actually respected across a plain page refresh
+- Offline support — a sync queue that lets you keep adding/editing expenses (and wallets, budgets, recurring rules, savings goals, loans) without a connection, with a "Pending changes" screen (Settings) to review and retry anything that failed to sync
+- Net settle-up on Friends & Family — a single combined "owes you"/"you owe" figure per friend across splits and loans
+- Recurring-transaction suggestions (Settings > Recurring) — a heuristic scan of your past transactions, one tap to turn a repeating one into a recurring rule
+- Recurring splits (e.g. monthly rent) that auto-regenerate a real split on schedule
+- Push notifications for upcoming loan payment reminders
+- A "Refer a friend" page with a QR code, copyable link, and an embeddable widget
+- Wallets and payment cards are now one thing — any wallet can optionally take on a payment-card look (network badge, chip, holder name, last 4, expiry), with per-card toggles to show/hide the name, card number, balance, currency, holder name, and expiry on its face
+- The wallet detail view now shows a Balance box and a Latest Transactions list, with Edit/Add Money/Share/Archive moved into a "..." menu instead of permanently-visible buttons — deleting a wallet was replaced with reversible Archive (restorable from Settings > Wallets)
+- Click-and-hold to drag-reorder wallets and cards, on both mobile and desktop
+- Card templates — save any wallet's background/color look as a reusable "premade card" others can pick from a gallery; submissions go through an admin review queue (Settings > Admin > Manage Templates) with the option to force specific display settings (or lock the currency) onto anyone who picks it
+- "Scan a card" now accepts SVG uploads directly as the background, keeping vector artwork crisp instead of flattening it into a photo
+- JCB, UnionPay, and Apple Pay as wallet card networks, with recolorable badges and a separate color picker for the badge/chip icon versus the card's text
+- Settings reorganized into clearer sections (Money, Data & Backup, a new admin-only section), with a colored icon badge on every row
+
+### Changed
+- Activities is now the default landing page; the old Dashboard moved to /analytics
+- Desktop swipe-to-reveal actions on a transaction row replaced with click-and-hold, matching how touch devices already worked
+
+### Fixed
+- Swipe actions and hover buttons overlapping on transaction rows (a translucent hover background was letting the swipe backdrop bleed through)
+- Several wallet payment-card layout bugs where the balance/holder row shifted position depending on which display toggles were on
+- A modal opened from Settings' desktop two-pane layout could render underneath the page's sticky nav header instead of above it
+- Drag-to-reorder on mobile being hijacked by the page's own scroll instead of moving the card
+
 ## [0.18.0] - 2026-08-27
 
 ### Added

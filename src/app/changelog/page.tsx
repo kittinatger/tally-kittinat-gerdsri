@@ -6,6 +6,45 @@ export const dynamic = "force-dynamic";
 
 const RELEASES: { version: string; date: string; sections: { heading: string; items: string[] }[] }[] = [
   {
+    version: "0.19.0",
+    date: "2026-08-30",
+    sections: [
+      {
+        heading: "Added",
+        items: [
+          "Encrypted full-data backup export/import (Settings > Backup)",
+          "Biometric app lock (Face ID/Touch ID/Windows Hello) and a numeric-keypad passcode option, with a configurable inactivity timeout",
+          "Offline support — keep adding/editing expenses, wallets, budgets, and more without a connection, with a Pending changes screen to review syncs",
+          "Net settle-up on Friends & Family, recurring-transaction suggestions, and auto-regenerating recurring splits (e.g. monthly rent)",
+          "Push notifications for upcoming loan payment reminders",
+          "A \"Refer a friend\" page with a QR code and embeddable widget",
+          "Wallets and payment cards combined into one — any wallet can take on a payment-card look, with per-card toggles for what shows on its face",
+          "Wallet detail view redesign: Balance box, Latest Transactions list, and a \"...\" menu for Edit/Add Money/Share/Archive",
+          "Click-and-hold drag-to-reorder for wallets and cards, on mobile and desktop",
+          "Card templates — save a wallet's look as a reusable \"premade card\" others can pick, with admin review (Settings > Admin > Manage Templates)",
+          "SVG uploads in \"Scan a card\", JCB/UnionPay/Apple Pay network badges, and a separate badge/chip color picker",
+          "Settings reorganized into clearer sections with a colored icon badge on every row",
+        ],
+      },
+      {
+        heading: "Changed",
+        items: [
+          "Activities is now the default landing page; the old Dashboard moved to /analytics",
+          "Desktop swipe-to-reveal actions on a transaction row replaced with click-and-hold",
+        ],
+      },
+      {
+        heading: "Fixed",
+        items: [
+          "Swipe actions and hover buttons overlapping on transaction rows",
+          "Several wallet payment-card layout bugs where the balance/holder row shifted depending on which display toggles were on",
+          "A modal opened from Settings' desktop layout rendering underneath the sticky nav header",
+          "Drag-to-reorder on mobile being hijacked by the page's own scroll",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.18.0",
     date: "2026-08-27",
     sections: [
