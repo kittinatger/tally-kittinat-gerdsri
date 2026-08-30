@@ -41,23 +41,3 @@ export const CARD_MIN_SIZE_CLASSES: Record<CardOrientation, string> = {
   landscape: "min-h-[190px]",
   portrait: "min-w-[120px]",
 };
-
-// Width, alongside the aspect classes above — this is what actually makes
-// "portrait" read as the *same physical card, turned 90°* instead of a
-// taller card. `aspect-[1/1.586]` alone just inverts the ratio; combined
-// with the same `w-full` landscape uses, that stretches a portrait card
-// to be 1.586x *taller* than landscape at the same width, not the same
-// card rotated. A true rotation swaps which side is full-width: landscape
-// is full width with a shorter derived height; portrait needs to be
-// full-width's worth of *height*, with a narrower derived width — i.e.
-// its width should equal what landscape's height would have been at the
-// same container width. 100% / 1.586 ≈ 63.05% is exactly that: a
-// same-container-width portrait box at this width, times the portrait
-// aspect ratio, works out to a height equal to the full container width
-// (mirroring landscape's width : the roles of width/height are swapped,
-// not just the ratio). `mx-auto` centers the now-narrower box in the
-// row/column it shares with landscape cards.
-export const CARD_WIDTH_CLASSES: Record<CardOrientation, string> = {
-  landscape: "w-full",
-  portrait: "mx-auto w-[63.05%]",
-};
