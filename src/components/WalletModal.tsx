@@ -791,6 +791,14 @@ export default function WalletModal({
         <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("wallet.colorLabel")}>
           <PremadeCardPicker
             onSelect={(tpl) => {
+              // A premade card is real card artwork (a transit card, etc.)
+              // — it's meant to render as WalletCardShape, not the plain
+              // AccountCardShape a card-look-off wallet falls back to.
+              // Without this, every show* toggle below (and any forced
+              // ones) would apply to a component that isn't even being
+              // rendered — AccountCardShape ignores all of them and always
+              // shows name/kind/balance regardless.
+              setHasCardLook(true);
               setBackground(tpl.background);
               setColor(tpl.color);
               setTextColor(tpl.textColor);
