@@ -620,44 +620,34 @@ export default function WalletModal({
               </span>
             </button>
 
-          {showHolderName && (
+          {/* Hidden entirely (not just disabled) once a picked template's
+           * forceNamePosition locks this — a locked field has nothing for
+           * the wallet's own editor to do here, so showing a disabled
+           * control just invites confusion about why it doesn't respond.
+           * See the matching text-color section below for the same idea. */}
+          {showHolderName && !namePositionLocked && (
             <div>
-              <div className="mb-1.5 flex items-center justify-between gap-2">
-                <label className="block text-xs font-semibold text-ink-soft">{t("wallet.namePositionLabel")}</label>
-                {namePositionLocked && (
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.namePositionLabel")}</label>
+              <div className="grid w-24 grid-cols-2 gap-1.5">
+                {NAME_POSITIONS.map((p) => (
                   <button
+                    key={p}
                     type="button"
-                    onClick={() => setNamePositionLocked(false)}
-                    className="text-[11px] font-semibold text-navy underline dark:text-blue-300"
+                    onClick={() => setNamePosition(p)}
+                    aria-label={t(NAME_POSITION_LABEL_KEYS[p])}
+                    title={t(NAME_POSITION_LABEL_KEYS[p])}
+                    className={`flex h-10 w-10 items-center rounded-lg border transition ${
+                      p === "topLeft" || p === "topRight" ? "items-start" : "items-end"
+                    } ${p === "topLeft" || p === "bottomLeft" ? "justify-start" : "justify-end"} ${
+                      namePosition === p
+                        ? "border-navy bg-navy/10"
+                        : "border-line bg-bg-soft hover:bg-[var(--nav-hover-bg)]"
+                    } p-1.5`}
                   >
-                    {t("wallet.lockedByTemplateUnlock")}
+                    <span className={`h-2 w-2 rounded-full ${namePosition === p ? "bg-navy" : "bg-ink-soft/50"}`} />
                   </button>
-                )}
+                ))}
               </div>
-              {namePositionLocked ? (
-                <p className="text-xs text-ink-soft">{t("wallet.lockedByTemplateDesc")}</p>
-              ) : (
-                <div className="grid w-24 grid-cols-2 gap-1.5">
-                  {NAME_POSITIONS.map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setNamePosition(p)}
-                      aria-label={t(NAME_POSITION_LABEL_KEYS[p])}
-                      title={t(NAME_POSITION_LABEL_KEYS[p])}
-                      className={`flex h-10 w-10 items-center rounded-lg border transition ${
-                        p === "topLeft" || p === "topRight" ? "items-start" : "items-end"
-                      } ${p === "topLeft" || p === "bottomLeft" ? "justify-start" : "justify-end"} ${
-                        namePosition === p
-                          ? "border-navy bg-navy/10"
-                          : "border-line bg-bg-soft hover:bg-[var(--nav-hover-bg)]"
-                      } p-1.5`}
-                    >
-                      <span className={`h-2 w-2 rounded-full ${namePosition === p ? "bg-navy" : "bg-ink-soft/50"}`} />
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
           )}
 
@@ -811,25 +801,15 @@ export default function WalletModal({
             }}
           />
           <CardBackgroundPicker value={background} onChange={setBackground} plainColor={color} onPlainColorChange={setColor} />
-          <div className="border-t border-line pt-3">
-            <div className="mb-1.5 flex items-center justify-between gap-2">
-              <label className="block text-xs font-semibold text-ink-soft">{t("background.textColorLabel")}</label>
-              {textColorLocked && (
-                <button
-                  type="button"
-                  onClick={() => setTextColorLocked(false)}
-                  className="text-[11px] font-semibold text-navy underline dark:text-blue-300"
-                >
-                  {t("wallet.lockedByTemplateUnlock")}
-                </button>
-              )}
-            </div>
-            {textColorLocked ? (
-              <p className="text-xs text-ink-soft">{t("wallet.lockedByTemplateDesc")}</p>
-            ) : (
+          {/* Hidden entirely once a picked template locks the text color —
+           * see the matching name-position section above for why this is a
+           * hide, not a disabled/note state. */}
+          {!textColorLocked && (
+            <div className="border-t border-line pt-3">
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("background.textColorLabel")}</label>
               <CardTextColorPicker value={textColor} onChange={setTextColor} autoColor={cardForegroundFor(null, background, color).full} />
-            )}
-          </div>
+            </div>
+          )}
           {showNetworkBadge && (
             <div className="border-t border-line pt-3">
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.iconColorLabel")}</label>
