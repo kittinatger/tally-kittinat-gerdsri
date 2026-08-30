@@ -406,8 +406,8 @@ export default function WalletModal({
               onClick={() => setTab(key)}
               className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition ${
                 tab === key
-                  ? "border-transparent bg-navy/10 text-navy dark:text-blue-300"
-                  : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                  ? "border-transparent bg-navy text-white shadow-sm"
+                  : "border-line bg-bg-soft text-ink-soft hover:bg-[var(--nav-hover-bg)]"
               }`}
             >
               {t(labelKey)}
