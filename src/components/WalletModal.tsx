@@ -98,6 +98,29 @@ export default function WalletModal({
   // deliberately override it for this one card.
   const [namePositionLocked, setNamePositionLocked] = useState(false);
   const [textColorLocked, setTextColorLocked] = useState(false);
+  // Same idea, per show* toggle — a picked template's force_show_* fields
+  // (see card_templates in db.ts) don't just set the toggle's value, they
+  // take the toggle out of the wallet editor's hands entirely, so the
+  // corresponding switch is hidden rather than left interactive-but-
+  // overridable. Reset (not just added-to) on every pick, including a
+  // plain background/color pick with no forces at all, so switching from a
+  // locked template to an unlocked one (or to no template) un-hides
+  // everything again.
+  const [forcedFields, setForcedFields] = useState<{
+    showName: boolean;
+    showNetworkBadge: boolean;
+    showChip: boolean;
+    showCardNumber: boolean;
+    showBalance: boolean;
+    showCurrency: boolean;
+  }>({
+    showName: false,
+    showNetworkBadge: false,
+    showChip: false,
+    showCardNumber: false,
+    showBalance: false,
+    showCurrency: false,
+  });
 
   // "Upload as template" submits the current background/color/textColor
   // (only the visual skin, nothing balance/identity-related) for review —
@@ -369,9 +392,10 @@ export default function WalletModal({
               </div>
             </div>
 
-          <button
-            type="button"
-            onClick={() => setShowNetworkBadge((v) => !v)}
+          {!forcedFields.showNetworkBadge && (
+            <button
+              type="button"
+              onClick={() => setShowNetworkBadge((v) => !v)}
               className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
             >
               <span>
@@ -392,6 +416,7 @@ export default function WalletModal({
                 />
               </span>
             </button>
+          )}
 
           {showNetworkBadge && (
             <div>
@@ -419,27 +444,29 @@ export default function WalletModal({
             </div>
           )}
 
-          <button
-            type="button"
-            onClick={() => setShowChip((v) => !v)}
-            className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
-          >
-            <span>
-              <span className="block text-sm font-medium text-foreground">{t("wallet.showChipLabel")}</span>
-              <span className="block text-xs text-ink-soft">{t("wallet.showChipDesc")}</span>
-            </span>
-            <span
-              role="switch"
-              aria-checked={showChip}
-              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${showChip ? "bg-navy" : "bg-line"}`}
+          {!forcedFields.showChip && (
+            <button
+              type="button"
+              onClick={() => setShowChip((v) => !v)}
+              className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
             >
+              <span>
+                <span className="block text-sm font-medium text-foreground">{t("wallet.showChipLabel")}</span>
+                <span className="block text-xs text-ink-soft">{t("wallet.showChipDesc")}</span>
+              </span>
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                  showChip ? "translate-x-6" : "translate-x-1"
-                }`}
-              />
-            </span>
-          </button>
+                role="switch"
+                aria-checked={showChip}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${showChip ? "bg-navy" : "bg-line"}`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                    showChip ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </span>
+            </button>
+          )}
 
           {showChip && (
             <div>
@@ -486,53 +513,57 @@ export default function WalletModal({
             </div>
           )}
 
-            <button
-              type="button"
-              onClick={() => setShowCardNumber((v) => !v)}
-              className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
-            >
-              <span>
-                <span className="block text-sm font-medium text-foreground">{t("wallet.showCardNumberLabel")}</span>
-                <span className="block text-xs text-ink-soft">{t("wallet.showCardNumberDesc")}</span>
-              </span>
-              <span
-                role="switch"
-                aria-checked={showCardNumber}
-                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
-                  showCardNumber ? "bg-navy" : "bg-line"
-                }`}
+            {!forcedFields.showCardNumber && (
+              <button
+                type="button"
+                onClick={() => setShowCardNumber((v) => !v)}
+                className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
               >
+                <span>
+                  <span className="block text-sm font-medium text-foreground">{t("wallet.showCardNumberLabel")}</span>
+                  <span className="block text-xs text-ink-soft">{t("wallet.showCardNumberDesc")}</span>
+                </span>
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                    showCardNumber ? "translate-x-6" : "translate-x-1"
+                  role="switch"
+                  aria-checked={showCardNumber}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                    showCardNumber ? "bg-navy" : "bg-line"
                   }`}
-                />
-              </span>
-            </button>
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                      showCardNumber ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </span>
+              </button>
+            )}
 
-            <button
-              type="button"
-              onClick={() => setShowName((v) => !v)}
-              className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
-            >
-              <span>
-                <span className="block text-sm font-medium text-foreground">{t("wallet.showNameOnCardLabel")}</span>
-                <span className="block text-xs text-ink-soft">{t("wallet.showNameOnCardDesc")}</span>
-              </span>
-              <span
-                role="switch"
-                aria-checked={showName}
-                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
-                  showName ? "bg-navy" : "bg-line"
-                }`}
+            {!forcedFields.showName && (
+              <button
+                type="button"
+                onClick={() => setShowName((v) => !v)}
+                className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
               >
+                <span>
+                  <span className="block text-sm font-medium text-foreground">{t("wallet.showNameOnCardLabel")}</span>
+                  <span className="block text-xs text-ink-soft">{t("wallet.showNameOnCardDesc")}</span>
+                </span>
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                    showName ? "translate-x-6" : "translate-x-1"
+                  role="switch"
+                  aria-checked={showName}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                    showName ? "bg-navy" : "bg-line"
                   }`}
-                />
-              </span>
-            </button>
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                      showName ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </span>
+              </button>
+            )}
 
             <div>
               <label htmlFor="walletLast4" className="mb-1.5 block text-xs font-semibold text-ink-soft">
@@ -699,30 +730,32 @@ export default function WalletModal({
           )}
 
             <div className="space-y-2 border-t border-line pt-3">
-              <button
-                type="button"
-                onClick={() => setShowBalance((v) => !v)}
-                className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
-              >
-                <span>
-                  <span className="block text-sm font-medium text-foreground">{t("wallet.showBalanceOnCardLabel")}</span>
-                  <span className="block text-xs text-ink-soft">{t("wallet.showBalanceOnCardDesc")}</span>
-                </span>
-                <span
-                  role="switch"
-                  aria-checked={showBalance}
-                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
-                    showBalance ? "bg-navy" : "bg-line"
-                  }`}
+              {!forcedFields.showBalance && (
+                <button
+                  type="button"
+                  onClick={() => setShowBalance((v) => !v)}
+                  className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
                 >
+                  <span>
+                    <span className="block text-sm font-medium text-foreground">{t("wallet.showBalanceOnCardLabel")}</span>
+                    <span className="block text-xs text-ink-soft">{t("wallet.showBalanceOnCardDesc")}</span>
+                  </span>
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                      showBalance ? "translate-x-6" : "translate-x-1"
+                    role="switch"
+                    aria-checked={showBalance}
+                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                      showBalance ? "bg-navy" : "bg-line"
                     }`}
-                  />
-                </span>
-              </button>
-              {showBalance && (
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                        showBalance ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </span>
+                </button>
+              )}
+              {showBalance && !forcedFields.showCurrency && (
                 <button
                   type="button"
                   onClick={() => setShowCurrency((v) => !v)}
@@ -792,6 +825,14 @@ export default function WalletModal({
               if (tpl.forceShowBalance !== null) setShowBalance(tpl.forceShowBalance);
               if (tpl.forceShowCurrency !== null) setShowCurrency(tpl.forceShowCurrency);
               if (tpl.forceCurrency !== null) setCurrency(tpl.forceCurrency);
+              setForcedFields({
+                showName: tpl.forceShowName !== null,
+                showNetworkBadge: tpl.forceShowNetworkBadge !== null,
+                showChip: tpl.forceShowChip !== null,
+                showCardNumber: tpl.forceShowCardNumber !== null,
+                showBalance: tpl.forceShowBalance !== null,
+                showCurrency: tpl.forceShowCurrency !== null,
+              });
               if (tpl.forceNamePosition !== null) {
                 setNamePosition(tpl.forceNamePosition);
                 setNamePositionLocked(true);
