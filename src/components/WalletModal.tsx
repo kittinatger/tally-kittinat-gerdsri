@@ -211,6 +211,22 @@ export default function WalletModal({
   const month = expiryMonth ? Number(expiryMonth) : null;
   const year = expiryYear ? Number(expiryYear) : null;
 
+  // Whether the "Card details" tab's FormSection actually has anything in
+  // it — mirrors every condition its own children render under. A
+  // template that forces every field off/hidden (network badge, chip,
+  // card number, name-on-card, and the last4/holder/expiry group) leaves
+  // nothing left to show, so the section itself disappears rather than
+  // rendering an empty header with a divider and no content under it.
+  const hasCardDetailsContent =
+    (!forcedFields.network && !(forcedFields.showNetworkBadge && !showNetworkBadge)) ||
+    !forcedFields.showNetworkBadge ||
+    showNetworkBadge ||
+    !forcedFields.showChip ||
+    showChip ||
+    !forcedFields.showCardNumber ||
+    !forcedFields.showName ||
+    !forcedFields.hideCardInfo;
+
   const appDefaultLabel = t("wallet.appDefault");
   const currencyOptions = [`${appDefaultLabel} (${appCurrency})`, ...CURRENCIES.map((c) => `${c.code} — ${c.name}`)];
   const currencyValue = currency
@@ -426,6 +442,7 @@ export default function WalletModal({
 
         {tab === "card" && (
         <>
+        {hasCardDetailsContent && (
         <FormSection icon={<MembershipCardIcon className="h-4 w-4" />} title={t("wallet.tabCardDetails")}>
           {/* Hidden both when a template forces a specific network AND
            * when it forces the network badge off entirely — picking a
@@ -835,6 +852,7 @@ export default function WalletModal({
             )}
           </div>
         </FormSection>
+        )}
 
           <FormSection icon={<FileIcon className="h-4 w-4" />} title={t("membership.notesLabel")}>
             <textarea
