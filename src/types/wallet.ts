@@ -50,4 +50,9 @@ export type WalletOption = {
   showCardNumber: boolean;
   /** Whether the wallet's name renders on the card face at all. */
   showName: boolean;
+  /** Whether the holder-name text (bottom-left of the card) renders at all. */
+  showHolderName: boolean;
+  /** Whether the expiry date (bottom-right of the card) renders at all —
+   * only matters when both expiryMonth and expiryYear are set. */
+  showExpiry: boolean;
 };

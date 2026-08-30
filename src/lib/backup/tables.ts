@@ -99,6 +99,8 @@ export const BACKUP_TABLES: BackupTable[] = [
       { name: "show_currency" },
       { name: "show_card_number" },
       { name: "show_name" },
+      { name: "show_holder_name" },
+      { name: "show_expiry" },
     ],
   },
   {

@@ -148,6 +148,8 @@ export default function WalletCardShape({
   showCurrency = true,
   showCardNumber = true,
   showName = true,
+  showHolderName = true,
+  showExpiry = true,
 }: {
   label: string;
   holderName: string | null;
@@ -195,6 +197,13 @@ export default function WalletCardShape({
   showCardNumber?: boolean;
   /** Whether the wallet's name renders on the card face at all. */
   showName?: boolean;
+  /** Whether the holder-name text renders at all — previously always shown
+   * regardless of every other toggle, so "hide everything" still left
+   * real holder-name text visible with no way to turn it off. */
+  showHolderName?: boolean;
+  /** Whether the expiry date renders at all (only matters when both
+   * expiryMonth and expiryYear are set — same gap as showHolderName). */
+  showExpiry?: boolean;
 }) {
   const t = useT();
   const expiry = expiryMonth && expiryYear ? `${String(expiryMonth).padStart(2, "0")}/${String(expiryYear).slice(-2)}` : null;
@@ -341,9 +350,9 @@ export default function WalletCardShape({
       <div className="mt-auto">
         <div className="flex items-end justify-between gap-2" style={rowReserveStyle(false)}>
           <p className="min-w-0 truncate text-xs uppercase tracking-wide" style={{ color: fg.a85 }}>
-            {holderName || " "}
+            {showHolderName ? holderName || " " : " "}
           </p>
-          {expiry && (
+          {expiry && showExpiry && (
             <p className="shrink-0 text-xs font-semibold" style={{ color: fg.a85 }}>
               {expiry}
             </p>

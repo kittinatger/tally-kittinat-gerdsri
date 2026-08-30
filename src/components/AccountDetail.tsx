@@ -163,6 +163,8 @@ export default function AccountDetail({
           showCurrency={wallet.showCurrency}
           showCardNumber={wallet.showCardNumber}
           showName={wallet.showName}
+          showHolderName={wallet.showHolderName}
+          showExpiry={wallet.showExpiry}
         />
       ) : (
         <AccountCardShape wallet={wallet} currency={appCurrency} />

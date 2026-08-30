@@ -42,6 +42,8 @@ export function toWalletOption(w: WalletRow): WalletOption {
     showCurrency: w.show_currency,
     showCardNumber: w.show_card_number,
     showName: w.show_name,
+    showHolderName: w.show_holder_name,
+    showExpiry: w.show_expiry,
   };
 }
 

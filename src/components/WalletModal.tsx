@@ -92,6 +92,8 @@ export default function WalletModal({
   const [showCurrency, setShowCurrency] = useState(wallet?.showCurrency ?? true);
   const [showCardNumber, setShowCardNumber] = useState(wallet?.showCardNumber ?? true);
   const [showName, setShowName] = useState(wallet?.showName ?? true);
+  const [showHolderName, setShowHolderName] = useState(wallet?.showHolderName ?? true);
+  const [showExpiry, setShowExpiry] = useState(wallet?.showExpiry ?? true);
 
   // "Upload as template" submits the current background/color/textColor
   // (only the visual skin, nothing balance/identity-related) for review —
@@ -160,6 +162,8 @@ export default function WalletModal({
     showCurrency,
     showCardNumber,
     showName,
+    showHolderName,
+    showExpiry,
   };
 
   async function handleUploadTemplate() {
@@ -225,6 +229,8 @@ export default function WalletModal({
         showCurrency,
         showCardNumber,
         showName,
+        showHolderName,
+        showExpiry,
       };
       const res = isEdit
         ? await fetch(`/api/wallets/${wallet!.id}`, {
@@ -294,6 +300,8 @@ export default function WalletModal({
               showCurrency={showCurrency}
               showCardNumber={showCardNumber}
               showName={showName}
+              showHolderName={showHolderName}
+              showExpiry={showExpiry}
             />
           ) : (
             <AccountCardShape wallet={previewWallet} currency={appCurrency} />
@@ -624,6 +632,58 @@ export default function WalletModal({
                 </div>
               </div>
             </div>
+          )}
+
+          {hasCardLook && (
+            <button
+              type="button"
+              onClick={() => setShowHolderName((v) => !v)}
+              className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+            >
+              <span>
+                <span className="block text-sm font-medium text-foreground">{t("wallet.showHolderNameLabel")}</span>
+                <span className="block text-xs text-ink-soft">{t("wallet.showHolderNameDesc")}</span>
+              </span>
+              <span
+                role="switch"
+                aria-checked={showHolderName}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                  showHolderName ? "bg-navy" : "bg-line"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                    showHolderName ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </span>
+            </button>
+          )}
+
+          {hasCardLook && (
+            <button
+              type="button"
+              onClick={() => setShowExpiry((v) => !v)}
+              className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+            >
+              <span>
+                <span className="block text-sm font-medium text-foreground">{t("wallet.showExpiryLabel")}</span>
+                <span className="block text-xs text-ink-soft">{t("wallet.showExpiryDesc")}</span>
+              </span>
+              <span
+                role="switch"
+                aria-checked={showExpiry}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                  showExpiry ? "bg-navy" : "bg-line"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                    showExpiry ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </span>
+            </button>
           )}
         </FormSection>
 
