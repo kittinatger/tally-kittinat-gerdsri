@@ -393,14 +393,21 @@ export default function WalletModal({
           />
         </ColorGlowPreview>
 
-        <div className="flex gap-1 rounded-full bg-bg-soft p-1">
+        {/* A horizontal scroll strip, not an equal-width segmented control
+         * — four tabs (five once "Template" briefly overlaps in width
+         * with the others) squeezed to fit the modal's width made every
+         * label crowd its neighbors. Each tab keeps its own natural
+         * width and the strip scrolls instead of shrinking text. */}
+        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
           {tabs.map(([key, labelKey]) => (
             <button
               key={key}
               type="button"
               onClick={() => setTab(key)}
-              className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-                tab === key ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+              className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                tab === key
+                  ? "border-transparent bg-navy/10 text-navy dark:text-blue-300"
+                  : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
               }`}
             >
               {t(labelKey)}
