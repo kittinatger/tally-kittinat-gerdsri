@@ -19,6 +19,7 @@ import { CARD_PATTERNS, PATTERN_COLOR_COUNT } from "@/lib/card-backgrounds";
 import { CHIP_COLORS } from "@/lib/chip-colors";
 import { BADGE_POSITIONS } from "@/lib/badge-position";
 import { NAME_POSITIONS } from "@/lib/name-position";
+import { CARD_TEMPLATE_CATEGORIES } from "@/lib/card-template-category";
 import { CHIP_POSITIONS } from "@/lib/chip-position";
 import { isLanguageCode } from "@/lib/languages";
 
@@ -256,6 +257,9 @@ export const cardTemplateInputSchema = z.object({
   // When true, the picker's text-color control is locked to this
   // template's textColor rather than just starting from it.
   lockTextColor: z.boolean().optional(),
+  // What kind of real-world card this is — see card-template-category.ts.
+  // Nullable metadata only, like country.
+  category: z.enum(CARD_TEMPLATE_CATEGORIES).nullable().optional(),
 });
 
 // Admin-only edit — every field optional (at least one required), used for
@@ -277,6 +281,7 @@ export const cardTemplateUpdateSchema = z
     country: z.string().trim().max(60).nullable().optional(),
     forceNamePosition: z.enum(NAME_POSITIONS).nullable().optional(),
     lockTextColor: z.boolean().optional(),
+    category: z.enum(CARD_TEMPLATE_CATEGORIES).nullable().optional(),
     status: z.enum(["pending", "approved", "rejected"]).optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {

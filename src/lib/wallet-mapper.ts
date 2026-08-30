@@ -8,6 +8,7 @@ import { isChipColor, DEFAULT_CHIP_COLOR } from "@/lib/chip-colors";
 import { isBadgePosition, DEFAULT_BADGE_POSITION } from "@/lib/badge-position";
 import { isChipPosition, DEFAULT_CHIP_POSITION } from "@/lib/chip-position";
 import { isNamePosition, DEFAULT_NAME_POSITION } from "@/lib/name-position";
+import { isCardTemplateCategory } from "@/lib/card-template-category";
 
 // Every server page that lists wallets (Activities, Analytics, Settings,
 // the Wallet page itself) maps the raw DB row the same way — pulled out
@@ -66,6 +67,7 @@ export function toCardTemplateOption(t: CardTemplateRow): CardTemplateOption {
     country: t.country,
     forceNamePosition: t.force_name_position && isNamePosition(t.force_name_position) ? t.force_name_position : null,
     lockTextColor: t.lock_text_color,
+    category: t.category && isCardTemplateCategory(t.category) ? t.category : null,
     status: t.status,
     submittedByUsername: t.submitted_by_username,
     createdAt: t.created_at,

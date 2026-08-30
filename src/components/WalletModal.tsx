@@ -20,6 +20,7 @@ import { CHIP_COLORS, CHIP_COLOR_LABEL_KEYS, CHIP_COLOR_STOPS, DEFAULT_CHIP_COLO
 import { BADGE_POSITIONS, BADGE_POSITION_LABEL_KEYS, DEFAULT_BADGE_POSITION, type BadgePosition } from "@/lib/badge-position";
 import { CHIP_POSITIONS, CHIP_POSITION_LABEL_KEYS, DEFAULT_CHIP_POSITION, type ChipPosition } from "@/lib/chip-position";
 import { NAME_POSITIONS, NAME_POSITION_LABEL_KEYS, DEFAULT_NAME_POSITION, type NamePosition } from "@/lib/name-position";
+import { CARD_TEMPLATE_CATEGORIES, CARD_TEMPLATE_CATEGORY_LABEL_KEYS, type CardTemplateCategory } from "@/lib/card-template-category";
 import { CategoryIcon, PaletteIcon, FileIcon } from "@/lib/icons";
 import { useCurrency } from "@/lib/currency-context";
 import { CURRENCIES } from "@/lib/currencies";
@@ -156,6 +157,11 @@ export default function WalletModal({
   // while it's applied (see card_templates.lock_text_color in db.ts).
   const [templateForceNamePosition, setTemplateForceNamePosition] = useState<NamePosition | null>(null);
   const [templateLockTextColor, setTemplateLockTextColor] = useState(false);
+  // What kind of real-world card this is (e-money, credit card, transit
+  // card, ...) — see card-template-category.ts. Metadata only, like
+  // country, so PremadeCardPicker can filter an increasingly long,
+  // multi-country gallery by card type.
+  const [templateCategory, setTemplateCategory] = useState<CardTemplateCategory | null>(null);
 
   const month = expiryMonth ? Number(expiryMonth) : null;
   const year = expiryYear ? Number(expiryYear) : null;
@@ -221,6 +227,7 @@ export default function WalletModal({
           forceCurrency: lockCurrency ? currency : null,
           forceNamePosition: templateForceNamePosition,
           lockTextColor: templateLockTextColor,
+          category: templateCategory,
         }),
       });
       const data = await res.json();
@@ -999,6 +1006,26 @@ export default function WalletModal({
                   <option key={c} value={c} />
                 ))}
               </datalist>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.templateCategoryLabel")}</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {CARD_TEMPLATE_CATEGORIES.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setTemplateCategory((prev) => (prev === c ? null : c))}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                        templateCategory === c
+                          ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                          : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                      }`}
+                    >
+                      {t(CARD_TEMPLATE_CATEGORY_LABEL_KEYS[c])}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               {hasCardLook && (
                 <div className="rounded-card border border-line bg-bg-soft p-3">

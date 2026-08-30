@@ -6,6 +6,7 @@ import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { describeFetchError } from "@/lib/fetch-error";
 import { CheckCircleIcon, XCircleIcon, EditIcon } from "@/lib/icons";
 import { NAME_POSITION_LABEL_KEYS } from "@/lib/name-position";
+import { CARD_TEMPLATE_CATEGORY_LABEL_KEYS } from "@/lib/card-template-category";
 import { useT } from "@/lib/language-context";
 import TemplateEditModal from "./TemplateEditModal";
 import type { CardTemplateOption } from "@/types/card-template";
@@ -111,6 +112,7 @@ export default function TemplateReviewPanel() {
                 <p className="truncate text-xs text-ink-soft">
                   {tpl.submittedByUsername ?? t("wallet.unknownSubmitter")}
                   {tpl.country ? ` · ${tpl.country}` : ""}
+                  {tpl.category ? ` · ${t(CARD_TEMPLATE_CATEGORY_LABEL_KEYS[tpl.category])}` : ""}
                 </p>
                 {forcedSummary(tpl) && <p className="truncate text-[11px] text-ink-soft">{forcedSummary(tpl)}</p>}
               </div>

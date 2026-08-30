@@ -1,5 +1,6 @@
 import type { CardBackground } from "@/lib/card-backgrounds";
 import type { NamePosition } from "@/lib/name-position";
+import type { CardTemplateCategory } from "@/lib/card-template-category";
 
 // A user-submitted "premade card" design — see card_templates in db.ts.
 // Purely the visual skin (background + colors); a picker applies these
@@ -32,6 +33,9 @@ export type CardTemplateOption = {
   /** When true, the picker's text-color control is locked to textColor
    * above rather than just starting from it. */
   lockTextColor: boolean;
+  /** What kind of real-world card this is — null if uncategorized. See
+   * card-template-category.ts. */
+  category: CardTemplateCategory | null;
   status: "pending" | "approved" | "rejected";
   submittedByUsername: string | null;
   createdAt: string;

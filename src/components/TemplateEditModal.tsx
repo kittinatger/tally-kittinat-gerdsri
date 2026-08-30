@@ -15,6 +15,7 @@ import { CURRENCIES } from "@/lib/currencies";
 import { useCurrency } from "@/lib/currency-context";
 import { countryForCurrency, KNOWN_COUNTRIES } from "@/lib/currency-country";
 import { NAME_POSITIONS, NAME_POSITION_LABEL_KEYS, type NamePosition } from "@/lib/name-position";
+import { CARD_TEMPLATE_CATEGORIES, CARD_TEMPLATE_CATEGORY_LABEL_KEYS, type CardTemplateCategory } from "@/lib/card-template-category";
 import { PaletteIcon, TrashIcon } from "@/lib/icons";
 import { describeFetchError } from "@/lib/fetch-error";
 import { useT } from "@/lib/language-context";
@@ -53,6 +54,7 @@ export default function TemplateEditModal({
   const [textColor, setTextColor] = useState<string | null>(template.textColor);
   const [status, setStatus] = useState(template.status);
   const [country, setCountry] = useState(template.country ?? "");
+  const [category, setCategory] = useState<CardTemplateCategory | null>(template.category);
   const [force, setForce] = useState({
     forceShowName: template.forceShowName,
     forceShowNetworkBadge: template.forceShowNetworkBadge,
@@ -89,6 +91,7 @@ export default function TemplateEditModal({
           textColor,
           status,
           country: country.trim() || null,
+          category,
           ...force,
           forceCurrency: currencyLocked ? forceCurrencyValue : null,
           forceNamePosition,
@@ -166,6 +169,26 @@ export default function TemplateEditModal({
                 <option key={c} value={c} />
               ))}
             </datalist>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.templateCategoryLabel")}</label>
+            <div className="flex flex-wrap gap-1.5">
+              {CARD_TEMPLATE_CATEGORIES.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCategory((prev) => (prev === c ? null : c))}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    category === c
+                      ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                      : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                  }`}
+                >
+                  {t(CARD_TEMPLATE_CATEGORY_LABEL_KEYS[c])}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>

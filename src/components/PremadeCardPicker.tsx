@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cardBackgroundStyle } from "@/lib/card-backgrounds";
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
+import { CARD_TEMPLATE_CATEGORIES, CARD_TEMPLATE_CATEGORY_LABEL_KEYS, type CardTemplateCategory } from "@/lib/card-template-category";
 import { useT } from "@/lib/language-context";
 import type { CardTemplateOption } from "@/types/card-template";
 
@@ -35,6 +36,10 @@ function TemplateSwatch({ tpl, onSelect }: { tpl: CardTemplateOption; onSelect: 
 export default function PremadeCardPicker({ onSelect }: { onSelect: (template: CardTemplateOption) => void }) {
   const t = useT();
   const [templates, setTemplates] = useState<CardTemplateOption[] | null>(null);
+  // "All" (null) by default — the filter row only shows up once there's
+  // more than one category actually present, so a gallery that's still
+  // small (or all one card type) doesn't get a row of mostly-empty tabs.
+  const [categoryFilter, setCategoryFilter] = useState<CardTemplateCategory | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,11 +57,22 @@ export default function PremadeCardPicker({ onSelect }: { onSelect: (template: C
     };
   }, []);
 
+  // Which categories actually appear in the loaded gallery, in the enum's
+  // own fixed order — drives both whether the filter row shows at all and
+  // which tabs it offers, so it never shows a tab with nothing behind it.
+  const presentCategories = useMemo(() => {
+    if (!templates) return [];
+    const present = new Set(templates.map((tpl) => tpl.category).filter((c): c is CardTemplateCategory => c !== null));
+    return CARD_TEMPLATE_CATEGORIES.filter((c) => present.has(c));
+  }, [templates]);
+
   if (!templates || templates.length === 0) return null;
+
+  const filtered = categoryFilter ? templates.filter((tpl) => tpl.category === categoryFilter) : templates;
 
   const otherLabel = t("wallet.templateOtherCountryLabel");
   const groups = new Map<string, CardTemplateOption[]>();
-  for (const tpl of templates) {
+  for (const tpl of filtered) {
     const group = tpl.country?.trim() || otherLabel;
     const existing = groups.get(group);
     if (existing) existing.push(tpl);
@@ -74,6 +90,35 @@ export default function PremadeCardPicker({ onSelect }: { onSelect: (template: C
   return (
     <div className="space-y-3 border-b border-line pb-3">
       <label className="block text-xs font-semibold text-ink-soft">{t("wallet.premadeCardsLabel")}</label>
+      {presentCategories.length > 1 && (
+        <div className="flex gap-1.5 overflow-x-auto pb-1">
+          <button
+            type="button"
+            onClick={() => setCategoryFilter(null)}
+            className={`shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold transition ${
+              categoryFilter === null
+                ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+            }`}
+          >
+            {t("wallet.templateCategoryAll")}
+          </button>
+          {presentCategories.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setCategoryFilter(c)}
+              className={`shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold transition ${
+                categoryFilter === c
+                  ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                  : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+              }`}
+            >
+              {t(CARD_TEMPLATE_CATEGORY_LABEL_KEYS[c])}
+            </button>
+          ))}
+        </div>
+      )}
       {sortedGroups.map(([country, group]) => (
         <div key={country}>
           <p className="mb-1 text-[11px] font-semibold text-ink-soft">{country}</p>
