@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { CloseIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 
@@ -81,7 +82,17 @@ export default function Modal({
     };
   }, []);
 
-  return (
+  // Portaled to document.body — a modal opened from inside a scrolling
+  // pane that itself establishes a containing block for fixed-position
+  // descendants (e.g. Settings' desktop two-pane layout, whose detail
+  // pane is `lg:sticky ... lg:overflow-y-auto`) would otherwise have its
+  // `fixed inset-0` overlay clipped/positioned relative to that pane
+  // instead of the real viewport — the page's own sticky nav header (which
+  // sits outside that pane) then paints on top of it instead of under it.
+  // Same fix already applied to CardPhotoScanModal for the equivalent
+  // backdrop-blur-ancestor case; see that file's comment for the general
+  // mechanism.
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 backdrop-blur-md sm:items-center sm:p-4"
       onClick={onClose}
@@ -114,6 +125,7 @@ export default function Modal({
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
