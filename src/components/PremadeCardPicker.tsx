@@ -19,7 +19,7 @@ export default function PremadeCardPicker({ onSelect }: { onSelect: (template: C
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/card-templates")
+    fetch("/api/card-templates", { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!cancelled && data?.templates) setTemplates(data.templates);

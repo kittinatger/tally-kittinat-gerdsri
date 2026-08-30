@@ -21,7 +21,7 @@ export default function TemplateReviewPanel() {
   const [actingId, setActingId] = useState<number | null>(null);
 
   function load() {
-    fetch("/api/card-templates?status=pending")
+    fetch("/api/card-templates?status=pending", { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Could not load."))))
       .then((data) => setTemplates(data.templates))
       .catch((err) => setError(describeFetchError(err)));
