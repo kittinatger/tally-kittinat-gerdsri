@@ -4,7 +4,6 @@ import type { CardNetwork } from "@/lib/wallet-cards";
 import type { ChipColor } from "@/lib/chip-colors";
 import type { BadgePosition } from "@/lib/badge-position";
 import type { ChipPosition } from "@/lib/chip-position";
-import type { CardOrientation } from "@/lib/card-orientation";
 
 export type WalletOption = {
   id: number;
@@ -56,7 +55,4 @@ export type WalletOption = {
   /** Whether the expiry date (bottom-right of the card) renders at all —
    * only matters when both expiryMonth and expiryYear are set. */
   showExpiry: boolean;
-  /** Landscape or portrait card shape — applies to both AccountCardShape
-   * and WalletCardShape. */
-  orientation: CardOrientation;
 };

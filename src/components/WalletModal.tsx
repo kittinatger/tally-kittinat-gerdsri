@@ -25,7 +25,6 @@ import { CURRENCIES } from "@/lib/currencies";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 import type { WalletKind } from "@/lib/wallets";
-import { DEFAULT_CARD_ORIENTATION, type CardOrientation } from "@/lib/card-orientation";
 import type { WalletOption } from "@/types/wallet";
 
 const NETWORK_LABEL_KEYS: Record<CardNetwork, MessageKey> = {
@@ -62,7 +61,6 @@ export default function WalletModal({
   const [background, setBackground] = useState<CardBackground | null>(wallet?.background ?? null);
   const [textColor, setTextColor] = useState<string | null>(wallet?.textColor ?? null);
   const [kind, setKind] = useState<WalletKind>(wallet?.kind ?? "cash");
-  const [orientation, setOrientation] = useState<CardOrientation>(wallet?.orientation ?? DEFAULT_CARD_ORIENTATION);
   const [currency, setCurrency] = useState<string | null>(wallet?.currency ?? null);
   const [isDefault, setIsDefault] = useState(wallet?.isDefault ?? false);
   const [startingBalance, setStartingBalance] = useState(isEdit ? String(wallet!.balance) : "0");
@@ -151,7 +149,6 @@ export default function WalletModal({
     textColor,
     kind,
     currency,
-    orientation,
     isDefault,
     archived: false,
     balance: Number(startingBalance) || 0,
@@ -195,7 +192,6 @@ export default function WalletModal({
           forceShowBalance: forceToggles.showBalance,
           forceShowCurrency: forceToggles.showCurrency,
           forceCurrency: lockCurrency ? currency : null,
-          orientation,
         }),
       });
       const data = await res.json();
@@ -255,7 +251,6 @@ export default function WalletModal({
               textColor,
               kind,
               currency,
-              orientation,
               startingBalance: Number(startingBalance),
               ...(isDefault && !wallet!.isDefault ? { isDefault: true } : {}),
               ...cardFields,
@@ -264,7 +259,7 @@ export default function WalletModal({
         : await fetch("/api/wallets", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, color, background, textColor, kind, currency, orientation, ...cardFields }),
+            body: JSON.stringify({ name, color, background, textColor, kind, currency, ...cardFields }),
           });
       const data = await res.json();
       if (!res.ok) {
@@ -315,7 +310,6 @@ export default function WalletModal({
               showName={showName}
               showHolderName={showHolderName}
               showExpiry={showExpiry}
-              orientation={orientation}
             />
           ) : (
             <AccountCardShape wallet={previewWallet} currency={appCurrency} />
@@ -354,30 +348,6 @@ export default function WalletModal({
                 }`}
               >
                 {t("wallet.digital")}
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.orientationLabel")}</label>
-            <div className="flex gap-1 rounded-full bg-bg-soft p-1">
-              <button
-                type="button"
-                onClick={() => setOrientation("landscape")}
-                className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-                  orientation === "landscape" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
-                }`}
-              >
-                {t("wallet.orientationLandscape")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setOrientation("portrait")}
-                className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-                  orientation === "portrait" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
-                }`}
-              >
-                {t("wallet.orientationPortrait")}
               </button>
             </div>
           </div>
@@ -840,9 +810,6 @@ export default function WalletModal({
               setBackground(tpl.background);
               setColor(tpl.color);
               setTextColor(tpl.textColor);
-              // A plain field, not a force_* override — see the ensureSchema
-              // comment on card_templates.orientation. Always applied.
-              setOrientation(tpl.orientation);
               // Author-forced toggles (see card_templates.force_* in
               // db.ts) — null means the template doesn't touch that one,
               // so only apply the ones actually set.

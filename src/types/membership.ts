@@ -2,7 +2,6 @@ import type { MembershipCodeFormat } from "@/lib/memberships";
 import type { CategoryIconKey } from "@/lib/category-icons";
 import type { PassTemplate, PassLayout } from "@/lib/membership-templates";
 import type { CardBackground } from "@/lib/card-backgrounds";
-import type { CardOrientation } from "@/lib/card-orientation";
 
 export type MembershipCard = {
   id: number;
@@ -25,5 +24,4 @@ export type MembershipCard = {
   hasBanner: boolean;
   /** Which tab on the /wallet page this card lives in. */
   category: "pass" | "membership";
-  orientation: CardOrientation;
 };

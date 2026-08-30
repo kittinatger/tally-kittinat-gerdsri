@@ -101,7 +101,6 @@ export const BACKUP_TABLES: BackupTable[] = [
       { name: "show_name" },
       { name: "show_holder_name" },
       { name: "show_expiry" },
-      { name: "orientation" },
     ],
   },
   {
@@ -196,7 +195,6 @@ export const BACKUP_TABLES: BackupTable[] = [
       { name: "category" },
       { name: "background" },
       { name: "text_color" },
-      { name: "orientation" },
     ],
   },
   // wallet_cards is deliberately not exported — it's retired (see the

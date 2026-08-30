@@ -6,7 +6,6 @@ import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { describeFetchError } from "@/lib/fetch-error";
 import { CheckCircleIcon, XCircleIcon, EditIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
-import { ORIENTATION_LABEL_KEYS } from "@/lib/card-orientation";
 import TemplateEditModal from "./TemplateEditModal";
 import type { CardTemplateOption } from "@/types/card-template";
 
@@ -96,7 +95,7 @@ export default function TemplateReviewPanel() {
           {templates.map((tpl) => (
             <div key={tpl.id} className="flex items-center gap-3 rounded-card border border-line bg-surface p-3">
               <span
-                className={`shrink-0 rounded-lg border border-line shadow-sm ${tpl.orientation === "portrait" ? "h-16 w-11" : "h-14 w-24"} ${tpl.background ? "" : heroGradientClasses(tpl.color)}`}
+                className={`h-14 w-24 shrink-0 rounded-lg border border-line shadow-sm ${tpl.background ? "" : heroGradientClasses(tpl.color)}`}
                 style={tpl.background ? cardBackgroundStyle(tpl.background) : colorHeroStyle(tpl.color)}
               />
               <div className="min-w-0 flex-1">
@@ -104,9 +103,6 @@ export default function TemplateReviewPanel() {
                   <p className="truncate text-sm font-semibold text-foreground">{tpl.name}</p>
                   <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold capitalize ${STATUS_BADGE_CLASSES[tpl.status]}`}>
                     {tpl.status}
-                  </span>
-                  <span className="shrink-0 rounded-full bg-bg-soft px-1.5 py-0.5 text-[10px] font-semibold text-ink-soft">
-                    {t(ORIENTATION_LABEL_KEYS[tpl.orientation])}
                   </span>
                 </div>
                 <p className="truncate text-xs text-ink-soft">{tpl.submittedByUsername ?? t("wallet.unknownSubmitter")}</p>

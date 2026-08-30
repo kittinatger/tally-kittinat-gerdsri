@@ -165,7 +165,6 @@ export default function AccountDetail({
           showName={wallet.showName}
           showHolderName={wallet.showHolderName}
           showExpiry={wallet.showExpiry}
-          orientation={wallet.orientation}
         />
       ) : (
         <AccountCardShape wallet={wallet} currency={appCurrency} />

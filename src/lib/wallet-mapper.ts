@@ -7,7 +7,6 @@ import { parseCardBackground } from "@/lib/card-backgrounds";
 import { isChipColor, DEFAULT_CHIP_COLOR } from "@/lib/chip-colors";
 import { isBadgePosition, DEFAULT_BADGE_POSITION } from "@/lib/badge-position";
 import { isChipPosition, DEFAULT_CHIP_POSITION } from "@/lib/chip-position";
-import { isCardOrientation, DEFAULT_CARD_ORIENTATION } from "@/lib/card-orientation";
 
 // Every server page that lists wallets (Activities, Analytics, Settings,
 // the Wallet page itself) maps the raw DB row the same way — pulled out
@@ -45,7 +44,6 @@ export function toWalletOption(w: WalletRow): WalletOption {
     showName: w.show_name,
     showHolderName: w.show_holder_name,
     showExpiry: w.show_expiry,
-    orientation: isCardOrientation(w.orientation) ? w.orientation : DEFAULT_CARD_ORIENTATION,
   };
 }
 
@@ -63,7 +61,6 @@ export function toCardTemplateOption(t: CardTemplateRow): CardTemplateOption {
     forceShowBalance: t.force_show_balance,
     forceShowCurrency: t.force_show_currency,
     forceCurrency: t.force_currency,
-    orientation: isCardOrientation(t.orientation) ? t.orientation : DEFAULT_CARD_ORIENTATION,
     status: t.status,
     submittedByUsername: t.submitted_by_username,
     createdAt: t.created_at,

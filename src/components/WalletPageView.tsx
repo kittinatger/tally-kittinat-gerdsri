@@ -234,7 +234,6 @@ export default function WalletPageView({
           showName={wallet.showName}
           showHolderName={wallet.showHolderName}
           showExpiry={wallet.showExpiry}
-          orientation={wallet.orientation}
         />
       ) : (
         <AccountCardShape wallet={wallet} currency={currency} />
@@ -266,7 +265,6 @@ export default function WalletPageView({
           codeSize="small"
           logoUrl={card.hasLogo ? `/api/memberships/${card.id}/logo` : null}
           bannerUrl={card.hasBanner ? `/api/memberships/${card.id}/banner` : null}
-          orientation={card.orientation}
         />
       ),
       onOpen: () => setViewingPass(card),

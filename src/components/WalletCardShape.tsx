@@ -7,7 +7,6 @@ import { formatCurrency } from "@/lib/format";
 import { CHIP_COLOR_STOPS, DEFAULT_CHIP_COLOR, type ChipColor } from "@/lib/chip-colors";
 import { BADGE_POSITION_CLASSES, DEFAULT_BADGE_POSITION, type BadgePosition } from "@/lib/badge-position";
 import { CHIP_POSITION_CLASSES, DEFAULT_CHIP_POSITION, type ChipPosition } from "@/lib/chip-position";
-import { CARD_ASPECT_CLASSES, CARD_MIN_SIZE_CLASSES, DEFAULT_CARD_ORIENTATION, type CardOrientation } from "@/lib/card-orientation";
 import { useT } from "@/lib/language-context";
 import type { CardNetwork } from "@/lib/wallet-cards";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -151,7 +150,6 @@ export default function WalletCardShape({
   showName = true,
   showHolderName = true,
   showExpiry = true,
-  orientation = DEFAULT_CARD_ORIENTATION,
 }: {
   label: string;
   holderName: string | null;
@@ -206,12 +204,6 @@ export default function WalletCardShape({
   /** Whether the expiry date renders at all (only matters when both
    * expiryMonth and expiryYear are set — same gap as showHolderName). */
   showExpiry?: boolean;
-  /** Landscape (default, ID-1 ratio) or portrait (inverse ratio) — see
-   * card-orientation.ts. The existing top-content-stacks /
-   * bottom-content-flush-via-mt-auto structure below already reflows
-   * correctly for a taller box, so this only swaps the outer container's
-   * aspect/min-size classes, nothing else. */
-  orientation?: CardOrientation;
 }) {
   const t = useT();
   const expiry = expiryMonth && expiryYear ? `${String(expiryMonth).padStart(2, "0")}/${String(expiryYear).slice(-2)}` : null;
@@ -279,7 +271,7 @@ export default function WalletCardShape({
 
   return (
     <div
-      className={`relative flex ${CARD_ASPECT_CLASSES[orientation]} ${CARD_MIN_SIZE_CLASSES[orientation]} w-full flex-col rounded-2xl p-4 shadow-soft ${background ? "" : heroGradientClasses(color)}`}
+      className={`relative flex aspect-[1.586/1] min-h-[190px] w-full flex-col rounded-2xl p-4 shadow-soft ${background ? "" : heroGradientClasses(color)}`}
       style={{ color: fg.full, ...(background ? cardBackgroundStyle(background) : colorHeroStyle(color)) }}
     >
       {showNetworkBadge && (
