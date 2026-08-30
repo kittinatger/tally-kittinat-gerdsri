@@ -389,7 +389,14 @@ export default function WalletModal({
             </div>
           </div>
 
-          {!forcedFields.network && (
+          {/* Hidden both when a template forces a specific network AND
+           * when it forces the network badge off entirely — picking a
+           * network is pointless if the badge that would show it never
+           * renders. showNetworkBadge itself reflects the forced value
+           * here (its own toggle is hidden too whenever forced — see
+           * below), so it's safe to read directly rather than needing a
+           * separate stored "forced value". */}
+          {!forcedFields.network && !(forcedFields.showNetworkBadge && !showNetworkBadge) && (
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.networkLabel")}</label>
               <div className="flex flex-wrap gap-1.5">
