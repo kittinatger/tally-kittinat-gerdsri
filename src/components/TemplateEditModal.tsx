@@ -14,6 +14,7 @@ import { CATEGORY_PALETTE } from "@/lib/categories";
 import { CURRENCIES } from "@/lib/currencies";
 import { useCurrency } from "@/lib/currency-context";
 import { countryForCurrency, KNOWN_COUNTRIES } from "@/lib/currency-country";
+import { NAME_POSITIONS, NAME_POSITION_LABEL_KEYS, type NamePosition } from "@/lib/name-position";
 import { PaletteIcon, TrashIcon } from "@/lib/icons";
 import { describeFetchError } from "@/lib/fetch-error";
 import { useT } from "@/lib/language-context";
@@ -66,6 +67,8 @@ export default function TemplateEditModal({
   // itself so toggling off doesn't lose whatever code was picked.
   const [currencyLocked, setCurrencyLocked] = useState(template.forceCurrency !== null);
   const [forceCurrencyValue, setForceCurrencyValue] = useState(template.forceCurrency ?? appCurrency);
+  const [forceNamePosition, setForceNamePosition] = useState<NamePosition | null>(template.forceNamePosition);
+  const [lockTextColor, setLockTextColor] = useState(template.lockTextColor);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -88,6 +91,8 @@ export default function TemplateEditModal({
           country: country.trim() || null,
           ...force,
           forceCurrency: currencyLocked ? forceCurrencyValue : null,
+          forceNamePosition,
+          lockTextColor,
         }),
       });
       const data = await res.json();
@@ -250,6 +255,64 @@ export default function TemplateEditModal({
               }}
             />
           )}
+        </FormSection>
+
+        <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("wallet.lockTextColorLabel")}>
+          <button
+            type="button"
+            onClick={() => setLockTextColor((v) => !v)}
+            className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+          >
+            <span>
+              <span className="block text-sm font-medium text-foreground">{t("wallet.lockTextColorLabel")}</span>
+              <span className="block text-xs text-ink-soft">{t("wallet.lockTextColorDesc")}</span>
+            </span>
+            <span
+              role="switch"
+              aria-checked={lockTextColor}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                lockTextColor ? "bg-navy" : "bg-line"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                  lockTextColor ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </span>
+          </button>
+
+          <div className="border-t border-line pt-3">
+            <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceNamePositionLabel")}</p>
+            <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceNamePositionDesc")}</p>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => setForceNamePosition(null)}
+                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                  forceNamePosition === null
+                    ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                    : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                }`}
+              >
+                {t("wallet.forceAuto")}
+              </button>
+              {NAME_POSITIONS.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setForceNamePosition(p)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    forceNamePosition === p
+                      ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                      : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                  }`}
+                >
+                  {t(NAME_POSITION_LABEL_KEYS[p])}
+                </button>
+              ))}
+            </div>
+          </div>
         </FormSection>
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}

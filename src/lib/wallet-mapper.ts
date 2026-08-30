@@ -7,6 +7,7 @@ import { parseCardBackground } from "@/lib/card-backgrounds";
 import { isChipColor, DEFAULT_CHIP_COLOR } from "@/lib/chip-colors";
 import { isBadgePosition, DEFAULT_BADGE_POSITION } from "@/lib/badge-position";
 import { isChipPosition, DEFAULT_CHIP_POSITION } from "@/lib/chip-position";
+import { isNamePosition, DEFAULT_NAME_POSITION } from "@/lib/name-position";
 
 // Every server page that lists wallets (Activities, Analytics, Settings,
 // the Wallet page itself) maps the raw DB row the same way — pulled out
@@ -44,6 +45,7 @@ export function toWalletOption(w: WalletRow): WalletOption {
     showName: w.show_name,
     showHolderName: w.show_holder_name,
     showExpiry: w.show_expiry,
+    namePosition: isNamePosition(w.name_position) ? w.name_position : DEFAULT_NAME_POSITION,
   };
 }
 
@@ -62,6 +64,8 @@ export function toCardTemplateOption(t: CardTemplateRow): CardTemplateOption {
     forceShowCurrency: t.force_show_currency,
     forceCurrency: t.force_currency,
     country: t.country,
+    forceNamePosition: t.force_name_position && isNamePosition(t.force_name_position) ? t.force_name_position : null,
+    lockTextColor: t.lock_text_color,
     status: t.status,
     submittedByUsername: t.submitted_by_username,
     createdAt: t.created_at,

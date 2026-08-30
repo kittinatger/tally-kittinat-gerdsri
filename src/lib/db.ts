@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 45;
+const CURRENT_SCHEMA_VERSION = 46;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1244,6 +1244,25 @@ function ensureSchema(): Promise<void> {
       // than being required to have one.
       await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS country TEXT;`;
 
+      // Which corner the cardholder-name text sits in — see
+      // name-position.ts. Defaults to "bottomLeft", matching where it's
+      // always rendered today (inline in the bottom row), so nothing
+      // existing changes until someone picks a different corner.
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS name_position TEXT NOT NULL DEFAULT 'bottomLeft';`;
+
+      // Two more template-author controls, same "travels with the
+      // template" idea as the force_* columns above:
+      // - force_name_position: which corner to force the holder-name text
+      //   into on any wallet that picks this template (NULL = don't touch
+      //   it) — lets a template like a transit-card design put the name
+      //   exactly where its own artwork's placeholder text used to sit.
+      // - lock_text_color: when true, the template's textColor isn't just
+      //   a starting suggestion — WalletModal/TemplateEditModal disable
+      //   the text-color picker while a locked template's look is applied,
+      //   same idea as force_currency locking the currency picker.
+      await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS force_name_position TEXT;`;
+      await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS lock_text_color BOOLEAN NOT NULL DEFAULT false;`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -1473,6 +1492,8 @@ export type WalletRow = {
   show_name: boolean;
   show_holder_name: boolean;
   show_expiry: boolean;
+  /** Which corner the holder-name text renders in — see name-position.ts. */
+  name_position: string;
 };
 
 // The full column list every wallet-returning query below selects — one
@@ -1482,7 +1503,7 @@ const WALLET_COLUMNS = `
   w.holder_name, w.last4, w.expiry_month, w.expiry_year, w.network,
   w.show_network_badge, w.badge_position, w.icon_color, w.show_chip, w.chip_color,
   w.chip_position, w.notes, w.show_balance, w.show_currency, w.show_card_number, w.show_name,
-  w.show_holder_name, w.show_expiry
+  w.show_holder_name, w.show_expiry, w.name_position
 `;
 const WALLET_BALANCE_EXPR = `
   (
@@ -1550,6 +1571,7 @@ export async function createWallet(
     showName?: boolean;
     showHolderName?: boolean;
     showExpiry?: boolean;
+    namePosition?: string;
   },
 ): Promise<WalletRow> {
   await ensureSchema();
@@ -1569,6 +1591,7 @@ export async function createWallet(
   const showName = input.showName ?? true;
   const showHolderName = input.showHolderName ?? true;
   const showExpiry = input.showExpiry ?? true;
+  const namePosition = input.namePosition ?? "bottomLeft";
   const { rows } = await sql<{
     id: number;
     name: string;
@@ -1595,24 +1618,25 @@ export async function createWallet(
     show_name: boolean;
     show_holder_name: boolean;
     show_expiry: boolean;
+    name_position: string;
   }>`
     INSERT INTO wallets (
       user_id, name, color, background, text_color, kind, currency, sort_order,
       holder_name, last4, expiry_month, expiry_year, network,
       show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
-      show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry
+      show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position
     )
     VALUES (
       ${userId}, ${input.name}, ${input.color}, ${backgroundJson}, ${input.textColor ?? null}, ${input.kind}, ${input.currency ?? null}, ${nextSort},
       ${input.holderName ?? null}, ${input.last4 ?? null}, ${input.expiryMonth ?? null}, ${input.expiryYear ?? null}, ${input.network ?? null},
       ${showNetworkBadge}, ${badgePosition}, ${input.iconColor ?? null}, ${showChip}, ${chipColor}, ${chipPosition}, ${input.notes ?? null},
-      ${showBalance}, ${showCurrency}, ${showCardNumber}, ${showName}, ${showHolderName}, ${showExpiry}
+      ${showBalance}, ${showCurrency}, ${showCardNumber}, ${showName}, ${showHolderName}, ${showExpiry}, ${namePosition}
     )
     RETURNING
       id, name, color, background, text_color, kind, currency,
       holder_name, last4, expiry_month, expiry_year, network,
       show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
-      show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry;
+      show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position;
   `;
   return { ...rows[0], is_default: false, archived: false, balance: "0", is_owner: true };
 }
@@ -1648,6 +1672,7 @@ export async function updateWallet(
     showName?: boolean;
     showHolderName?: boolean;
     showExpiry?: boolean;
+    namePosition?: string;
   },
 ): Promise<WalletRow | { ok: false; error: string } | null> {
   await ensureSchema();
@@ -1678,12 +1703,13 @@ export async function updateWallet(
     show_name: boolean;
     show_holder_name: boolean;
     show_expiry: boolean;
+    name_position: string;
   }>`
     SELECT
       name, color, background, text_color, kind, currency, is_default, archived,
       holder_name, last4, expiry_month, expiry_year, network,
       show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
-      show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry
+      show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position
     FROM wallets WHERE id = ${id} AND user_id = ${userId};
   `;
   const existing = existingRows[0];
@@ -1724,6 +1750,7 @@ export async function updateWallet(
   const newShowName = input.showName ?? existing.show_name;
   const newShowHolderName = input.showHolderName ?? existing.show_holder_name;
   const newShowExpiry = input.showExpiry ?? existing.show_expiry;
+  const newNamePosition = input.namePosition ?? existing.name_position;
 
   const client = await db.connect();
   try {
@@ -1738,7 +1765,7 @@ export async function updateWallet(
             show_network_badge = ${newShowNetworkBadge}, badge_position = ${newBadgePosition}, icon_color = ${newIconColor},
             show_chip = ${newShowChip}, chip_color = ${newChipColor}, chip_position = ${newChipPosition}, notes = ${newNotes},
             show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}, show_card_number = ${newShowCardNumber}, show_name = ${newShowName},
-            show_holder_name = ${newShowHolderName}, show_expiry = ${newShowExpiry}
+            show_holder_name = ${newShowHolderName}, show_expiry = ${newShowExpiry}, name_position = ${newNamePosition}
         WHERE id = ${id} AND user_id = ${userId};
       `;
     } else {
@@ -1749,7 +1776,7 @@ export async function updateWallet(
             show_network_badge = ${newShowNetworkBadge}, badge_position = ${newBadgePosition}, icon_color = ${newIconColor},
             show_chip = ${newShowChip}, chip_color = ${newChipColor}, chip_position = ${newChipPosition}, notes = ${newNotes},
             show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}, show_card_number = ${newShowCardNumber}, show_name = ${newShowName},
-            show_holder_name = ${newShowHolderName}, show_expiry = ${newShowExpiry}
+            show_holder_name = ${newShowHolderName}, show_expiry = ${newShowExpiry}, name_position = ${newNamePosition}
         WHERE id = ${id} AND user_id = ${userId};
       `;
     }
@@ -1925,6 +1952,14 @@ export type CardTemplateRow = {
   force_currency: string | null;
   // Free-text, nullable — see the ensureSchema comment for country.
   country: string | null;
+  // Which corner to force the holder-name text into — NULL means "don't
+  // touch it", same convention as the other force_* fields. See
+  // name-position.ts.
+  force_name_position: string | null;
+  // When true, the template's text_color isn't just a starting suggestion
+  // — the picker's text-color control is disabled while this template's
+  // look is applied.
+  lock_text_color: boolean;
   status: "pending" | "approved" | "rejected";
   created_at: string;
   reviewed_at: string | null;
@@ -1936,7 +1971,7 @@ export type CardTemplateRow = {
 // against the users join), bare column names for INSERT/UPDATE...RETURNING
 // where there's no alias to strip.
 const CARD_TEMPLATE_COLUMNS =
-  "id, submitted_by, name, color, background, text_color, force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency, country, status, created_at, reviewed_at";
+  "id, submitted_by, name, color, background, text_color, force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency, country, force_name_position, lock_text_color, status, created_at, reviewed_at";
 
 export async function createCardTemplate(
   userId: number,
@@ -1953,6 +1988,8 @@ export async function createCardTemplate(
     forceShowCurrency?: boolean | null;
     forceCurrency?: string | null;
     country?: string | null;
+    forceNamePosition?: string | null;
+    lockTextColor?: boolean;
   },
 ): Promise<CardTemplateRow> {
   await ensureSchema();
@@ -1961,9 +1998,9 @@ export async function createCardTemplate(
     `INSERT INTO card_templates (
        submitted_by, name, color, background, text_color,
        force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency,
-       country, status
+       country, force_name_position, lock_text_color, status
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'pending')
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'pending')
      RETURNING ${CARD_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
     [
       userId,
@@ -1979,6 +2016,8 @@ export async function createCardTemplate(
       input.forceShowCurrency ?? null,
       input.forceCurrency ?? null,
       input.country ?? null,
+      input.forceNamePosition ?? null,
+      input.lockTextColor ?? false,
     ],
   );
   return rows[0];
@@ -2034,6 +2073,8 @@ export async function updateCardTemplate(
     forceShowCurrency?: boolean | null;
     forceCurrency?: string | null;
     country?: string | null;
+    forceNamePosition?: string | null;
+    lockTextColor?: boolean;
     status?: "pending" | "approved" | "rejected";
   },
 ): Promise<CardTemplateRow | null> {
@@ -2051,11 +2092,13 @@ export async function updateCardTemplate(
     force_show_currency: boolean | null;
     force_currency: string | null;
     country: string | null;
+    force_name_position: string | null;
+    lock_text_color: boolean;
     status: "pending" | "approved" | "rejected";
   }>`
     SELECT name, color, background, text_color,
            force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency,
-           country, status
+           country, force_name_position, lock_text_color, status
     FROM card_templates WHERE id = ${id};
   `;
   const existing = existingRows[0];
@@ -2073,6 +2116,8 @@ export async function updateCardTemplate(
   const newForceShowCurrency = input.forceShowCurrency !== undefined ? input.forceShowCurrency : existing.force_show_currency;
   const newForceCurrency = input.forceCurrency !== undefined ? input.forceCurrency : existing.force_currency;
   const newCountry = input.country !== undefined ? input.country : existing.country;
+  const newForceNamePosition = input.forceNamePosition !== undefined ? input.forceNamePosition : existing.force_name_position;
+  const newLockTextColor = input.lockTextColor ?? existing.lock_text_color;
   const newStatus = input.status ?? existing.status;
   const bumpReviewedAt = input.status !== undefined;
 
@@ -2080,8 +2125,8 @@ export async function updateCardTemplate(
     `UPDATE card_templates
      SET name = $1, color = $2, background = $3, text_color = $4,
          force_show_name = $5, force_show_network_badge = $6, force_show_chip = $7, force_show_card_number = $8, force_show_balance = $9, force_show_currency = $10,
-         force_currency = $11, country = $12, status = $13, reviewed_at = ${bumpReviewedAt ? "now()" : "reviewed_at"}
-     WHERE id = $14
+         force_currency = $11, country = $12, force_name_position = $13, lock_text_color = $14, status = $15, reviewed_at = ${bumpReviewedAt ? "now()" : "reviewed_at"}
+     WHERE id = $16
      RETURNING ${CARD_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
     [
       newName,
@@ -2096,6 +2141,8 @@ export async function updateCardTemplate(
       newForceShowCurrency,
       newForceCurrency,
       newCountry,
+      newForceNamePosition,
+      newLockTextColor,
       newStatus,
       id,
     ],

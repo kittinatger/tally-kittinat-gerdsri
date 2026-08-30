@@ -7,6 +7,7 @@ import { formatCurrency } from "@/lib/format";
 import { CHIP_COLOR_STOPS, DEFAULT_CHIP_COLOR, type ChipColor } from "@/lib/chip-colors";
 import { BADGE_POSITION_CLASSES, DEFAULT_BADGE_POSITION, type BadgePosition } from "@/lib/badge-position";
 import { CHIP_POSITION_CLASSES, DEFAULT_CHIP_POSITION, type ChipPosition } from "@/lib/chip-position";
+import { NAME_POSITION_CLASSES, DEFAULT_NAME_POSITION, type NamePosition } from "@/lib/name-position";
 import { useT } from "@/lib/language-context";
 import type { CardNetwork } from "@/lib/wallet-cards";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -150,6 +151,7 @@ export default function WalletCardShape({
   showName = true,
   showHolderName = true,
   showExpiry = true,
+  namePosition = DEFAULT_NAME_POSITION,
 }: {
   label: string;
   holderName: string | null;
@@ -204,6 +206,12 @@ export default function WalletCardShape({
   /** Whether the expiry date renders at all (only matters when both
    * expiryMonth and expiryYear are set — same gap as showHolderName). */
   showExpiry?: boolean;
+  /** Which corner the holder-name text sits in — "bottomLeft" (default)
+   * keeps it inline in the bottom row next to the expiry date, exactly as
+   * it always rendered; any other corner pulls it out into a free-
+   * floating element instead, same idea as badgePosition/chipPosition —
+   * see name-position.ts. */
+  namePosition?: NamePosition;
 }) {
   const t = useT();
   const expiry = expiryMonth && expiryYear ? `${String(expiryMonth).padStart(2, "0")}/${String(expiryYear).slice(-2)}` : null;
@@ -240,6 +248,13 @@ export default function WalletCardShape({
   // than sitting side by side.
   const chipInCorner = showChip && chipPosition !== "middleLeft";
   const chipOnTop = chipPosition === "topLeft";
+  // At the default position, the holder name stays exactly where it always
+  // rendered — inline in the bottom row next to the expiry date — so no
+  // existing card's layout changes. Any other corner pulls it out into its
+  // own free-floating element instead (like the badge/chip), which is what
+  // lets a premade-card template put the name wherever its own artwork's
+  // placeholder text used to sit.
+  const nameInCorner = namePosition !== DEFAULT_NAME_POSITION;
   function rowReserveStyle(isTopRow: boolean): CSSProperties {
     let left = 0;
     let right = 0;
@@ -310,6 +325,15 @@ export default function WalletCardShape({
         </div>
       )}
 
+      {showHolderName && nameInCorner && (
+        <p
+          className={`absolute max-w-[65%] truncate text-xs uppercase tracking-wide ${NAME_POSITION_CLASSES[namePosition]}`}
+          style={{ color: fg.a85 }}
+        >
+          {holderName || " "}
+        </p>
+      )}
+
       {/* Top content stacks tightly from the top (no justify-between any
        * more — see the outer div) rather than being evenly spaced against
        * the balance/holder block below: with justify-between, every toggle
@@ -350,7 +374,7 @@ export default function WalletCardShape({
       <div className="mt-auto">
         <div className="flex items-end justify-between gap-2" style={rowReserveStyle(false)}>
           <p className="min-w-0 truncate text-xs uppercase tracking-wide" style={{ color: fg.a85 }}>
-            {showHolderName ? holderName || " " : " "}
+            {showHolderName && !nameInCorner ? holderName || " " : " "}
           </p>
           {expiry && showExpiry && (
             <p className="shrink-0 text-xs font-semibold" style={{ color: fg.a85 }}>

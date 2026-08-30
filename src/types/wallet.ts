@@ -4,6 +4,7 @@ import type { CardNetwork } from "@/lib/wallet-cards";
 import type { ChipColor } from "@/lib/chip-colors";
 import type { BadgePosition } from "@/lib/badge-position";
 import type { ChipPosition } from "@/lib/chip-position";
+import type { NamePosition } from "@/lib/name-position";
 
 export type WalletOption = {
   id: number;
@@ -55,4 +56,6 @@ export type WalletOption = {
   /** Whether the expiry date (bottom-right of the card) renders at all —
    * only matters when both expiryMonth and expiryYear are set. */
   showExpiry: boolean;
+  /** Which corner the holder-name text sits in — see name-position.ts. */
+  namePosition: NamePosition;
 };

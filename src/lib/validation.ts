@@ -18,6 +18,7 @@ import { CARD_NETWORKS } from "@/lib/wallet-cards";
 import { CARD_PATTERNS, PATTERN_COLOR_COUNT } from "@/lib/card-backgrounds";
 import { CHIP_COLORS } from "@/lib/chip-colors";
 import { BADGE_POSITIONS } from "@/lib/badge-position";
+import { NAME_POSITIONS } from "@/lib/name-position";
 import { CHIP_POSITIONS } from "@/lib/chip-position";
 import { isLanguageCode } from "@/lib/languages";
 
@@ -197,6 +198,7 @@ const walletCardVisualFields = {
   showName: z.boolean().optional(),
   showHolderName: z.boolean().optional(),
   showExpiry: z.boolean().optional(),
+  namePosition: z.enum(NAME_POSITIONS).optional(),
 };
 
 export const walletInputSchema = z.object({
@@ -248,6 +250,12 @@ export const cardTemplateInputSchema = z.object({
   // PremadeCardPicker's grouping. Not a real force_* field: it isn't
   // applied to the picking wallet at all, just metadata for the gallery.
   country: z.string().trim().max(60).nullable().optional(),
+  // Which corner to force the holder-name text into — null means "don't
+  // touch it", same convention as the other force_* fields above.
+  forceNamePosition: z.enum(NAME_POSITIONS).nullable().optional(),
+  // When true, the picker's text-color control is locked to this
+  // template's textColor rather than just starting from it.
+  lockTextColor: z.boolean().optional(),
 });
 
 // Admin-only edit — every field optional (at least one required), used for
@@ -267,6 +275,8 @@ export const cardTemplateUpdateSchema = z
     forceShowCurrency: z.boolean().nullable().optional(),
     forceCurrency: walletCurrencySchema.optional(),
     country: z.string().trim().max(60).nullable().optional(),
+    forceNamePosition: z.enum(NAME_POSITIONS).nullable().optional(),
+    lockTextColor: z.boolean().optional(),
     status: z.enum(["pending", "approved", "rejected"]).optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {

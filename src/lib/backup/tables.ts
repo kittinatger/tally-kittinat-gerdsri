@@ -101,6 +101,7 @@ export const BACKUP_TABLES: BackupTable[] = [
       { name: "show_name" },
       { name: "show_holder_name" },
       { name: "show_expiry" },
+      { name: "name_position" },
     ],
   },
   {

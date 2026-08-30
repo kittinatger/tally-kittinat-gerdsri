@@ -19,6 +19,7 @@ import { backgroundGlowColor, cardForegroundFor, type CardBackground } from "@/l
 import { CHIP_COLORS, CHIP_COLOR_LABEL_KEYS, CHIP_COLOR_STOPS, DEFAULT_CHIP_COLOR, type ChipColor } from "@/lib/chip-colors";
 import { BADGE_POSITIONS, BADGE_POSITION_LABEL_KEYS, DEFAULT_BADGE_POSITION, type BadgePosition } from "@/lib/badge-position";
 import { CHIP_POSITIONS, CHIP_POSITION_LABEL_KEYS, DEFAULT_CHIP_POSITION, type ChipPosition } from "@/lib/chip-position";
+import { NAME_POSITIONS, NAME_POSITION_LABEL_KEYS, DEFAULT_NAME_POSITION, type NamePosition } from "@/lib/name-position";
 import { CategoryIcon, PaletteIcon, FileIcon } from "@/lib/icons";
 import { useCurrency } from "@/lib/currency-context";
 import { CURRENCIES } from "@/lib/currencies";
@@ -95,6 +96,16 @@ export default function WalletModal({
   const [showName, setShowName] = useState(wallet?.showName ?? true);
   const [showHolderName, setShowHolderName] = useState(wallet?.showHolderName ?? true);
   const [showExpiry, setShowExpiry] = useState(wallet?.showExpiry ?? true);
+  const [namePosition, setNamePosition] = useState<NamePosition>(wallet?.namePosition ?? DEFAULT_NAME_POSITION);
+  // Set when a picked premade-card template forces the name position/text
+  // color (see PremadeCardPicker's onSelect below) — while locked, the
+  // corresponding control is replaced with a "set by template" note plus
+  // an explicit unlock action, rather than just being pre-filled, so the
+  // template's own placement/color choice can't be silently changed by
+  // accident while still leaving the author (not just an admin) able to
+  // deliberately override it for this one card.
+  const [namePositionLocked, setNamePositionLocked] = useState(false);
+  const [textColorLocked, setTextColorLocked] = useState(false);
 
   // "Upload as template" submits the current background/color/textColor
   // (only the visual skin, nothing balance/identity-related) for review —
@@ -138,6 +149,13 @@ export default function WalletModal({
   // `currency` is currently set to (including null/"app default") at
   // submit time, same pattern as the boolean forces.
   const [lockCurrency, setLockCurrency] = useState(false);
+  // Two more author controls submitted alongside the force toggles above —
+  // forceNamePosition null means "don't force a corner" (the picker just
+  // inherits whatever the wallet already has); lockTextColor forces the
+  // template's own textColor and disables the picker's text-color control
+  // while it's applied (see card_templates.lock_text_color in db.ts).
+  const [templateForceNamePosition, setTemplateForceNamePosition] = useState<NamePosition | null>(null);
+  const [templateLockTextColor, setTemplateLockTextColor] = useState(false);
 
   const month = expiryMonth ? Number(expiryMonth) : null;
   const year = expiryYear ? Number(expiryYear) : null;
@@ -178,6 +196,7 @@ export default function WalletModal({
     showName,
     showHolderName,
     showExpiry,
+    namePosition,
   };
 
   async function handleUploadTemplate() {
@@ -200,6 +219,8 @@ export default function WalletModal({
           forceShowBalance: forceToggles.showBalance,
           forceShowCurrency: forceToggles.showCurrency,
           forceCurrency: lockCurrency ? currency : null,
+          forceNamePosition: templateForceNamePosition,
+          lockTextColor: templateLockTextColor,
         }),
       });
       const data = await res.json();
@@ -247,6 +268,7 @@ export default function WalletModal({
         showName,
         showHolderName,
         showExpiry,
+        namePosition,
       };
       const res = isEdit
         ? await fetch(`/api/wallets/${wallet!.id}`, {
@@ -318,6 +340,7 @@ export default function WalletModal({
               showName={showName}
               showHolderName={showHolderName}
               showExpiry={showExpiry}
+              namePosition={namePosition}
             />
           ) : (
             <AccountCardShape wallet={previewWallet} currency={appCurrency} />
@@ -676,6 +699,47 @@ export default function WalletModal({
             </button>
           )}
 
+          {hasCardLook && showHolderName && (
+            <div>
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <label className="block text-xs font-semibold text-ink-soft">{t("wallet.namePositionLabel")}</label>
+                {namePositionLocked && (
+                  <button
+                    type="button"
+                    onClick={() => setNamePositionLocked(false)}
+                    className="text-[11px] font-semibold text-navy underline dark:text-blue-300"
+                  >
+                    {t("wallet.lockedByTemplateUnlock")}
+                  </button>
+                )}
+              </div>
+              {namePositionLocked ? (
+                <p className="text-xs text-ink-soft">{t("wallet.lockedByTemplateDesc")}</p>
+              ) : (
+                <div className="grid w-24 grid-cols-2 gap-1.5">
+                  {NAME_POSITIONS.map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setNamePosition(p)}
+                      aria-label={t(NAME_POSITION_LABEL_KEYS[p])}
+                      title={t(NAME_POSITION_LABEL_KEYS[p])}
+                      className={`flex h-10 w-10 items-center rounded-lg border transition ${
+                        p === "topLeft" || p === "topRight" ? "items-start" : "items-end"
+                      } ${p === "topLeft" || p === "bottomLeft" ? "justify-start" : "justify-end"} ${
+                        namePosition === p
+                          ? "border-navy bg-navy/10"
+                          : "border-line bg-bg-soft hover:bg-[var(--nav-hover-bg)]"
+                      } p-1.5`}
+                    >
+                      <span className={`h-2 w-2 rounded-full ${namePosition === p ? "bg-navy" : "bg-ink-soft/50"}`} />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {hasCardLook && (
             <button
               type="button"
@@ -818,6 +882,7 @@ export default function WalletModal({
               setBackground(tpl.background);
               setColor(tpl.color);
               setTextColor(tpl.textColor);
+              setTextColorLocked(tpl.lockTextColor);
               // Author-forced toggles (see card_templates.force_* in
               // db.ts) — null means the template doesn't touch that one,
               // so only apply the ones actually set.
@@ -828,12 +893,33 @@ export default function WalletModal({
               if (tpl.forceShowBalance !== null) setShowBalance(tpl.forceShowBalance);
               if (tpl.forceShowCurrency !== null) setShowCurrency(tpl.forceShowCurrency);
               if (tpl.forceCurrency !== null) setCurrency(tpl.forceCurrency);
+              if (tpl.forceNamePosition !== null) {
+                setNamePosition(tpl.forceNamePosition);
+                setNamePositionLocked(true);
+              } else {
+                setNamePositionLocked(false);
+              }
             }}
           />
           <CardBackgroundPicker value={background} onChange={setBackground} plainColor={color} onPlainColorChange={setColor} />
           <div className="border-t border-line pt-3">
-            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("background.textColorLabel")}</label>
-            <CardTextColorPicker value={textColor} onChange={setTextColor} autoColor={cardForegroundFor(null, background, color).full} />
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <label className="block text-xs font-semibold text-ink-soft">{t("background.textColorLabel")}</label>
+              {textColorLocked && (
+                <button
+                  type="button"
+                  onClick={() => setTextColorLocked(false)}
+                  className="text-[11px] font-semibold text-navy underline dark:text-blue-300"
+                >
+                  {t("wallet.lockedByTemplateUnlock")}
+                </button>
+              )}
+            </div>
+            {textColorLocked ? (
+              <p className="text-xs text-ink-soft">{t("wallet.lockedByTemplateDesc")}</p>
+            ) : (
+              <CardTextColorPicker value={textColor} onChange={setTextColor} autoColor={cardForegroundFor(null, background, color).full} />
+            )}
           </div>
           {hasCardLook && showNetworkBadge && (
             <div className="border-t border-line pt-3">
@@ -974,6 +1060,62 @@ export default function WalletModal({
                   />
                 </span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => setTemplateLockTextColor((v) => !v)}
+                className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+              >
+                <span>
+                  <span className="block text-sm font-medium text-foreground">{t("wallet.lockTextColorLabel")}</span>
+                  <span className="block text-xs text-ink-soft">{t("wallet.lockTextColorDesc")}</span>
+                </span>
+                <span
+                  role="switch"
+                  aria-checked={templateLockTextColor}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                    templateLockTextColor ? "bg-navy" : "bg-line"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                      templateLockTextColor ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </span>
+              </button>
+
+              <div className="rounded-card border border-line bg-bg-soft p-3">
+                <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceNamePositionLabel")}</p>
+                <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceNamePositionDesc")}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setTemplateForceNamePosition(null)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                      templateForceNamePosition === null
+                        ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                        : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                    }`}
+                  >
+                    {t("wallet.forceAuto")}
+                  </button>
+                  {NAME_POSITIONS.map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setTemplateForceNamePosition(p)}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                        templateForceNamePosition === p
+                          ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                          : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                      }`}
+                    >
+                      {t(NAME_POSITION_LABEL_KEYS[p])}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               {templateError && <p className="text-sm text-red-600 dark:text-red-400">{templateError}</p>}
               <button
