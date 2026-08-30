@@ -4,6 +4,7 @@ import { describeFetchError } from "@/lib/fetch-error";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UploadIcon } from "@/lib/icons";
+import { badgeClasses } from "@/lib/category-styles";
 
 export default function ImportDataButton() {
   const router = useRouter();
@@ -42,7 +43,7 @@ export default function ImportDataButton() {
     <div className="flex flex-col gap-1 px-4 py-3.5">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center text-ink-soft">
+          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses("blue")}`}>
             <UploadIcon className="h-5 w-5" />
           </span>
           <div className="min-w-0">

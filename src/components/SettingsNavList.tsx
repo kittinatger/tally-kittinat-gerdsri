@@ -434,8 +434,8 @@ export default function SettingsNavList({
         <ReportExportButton />
         <SettingsListItem icon={<AutoImportIcon />} label={t("settings.autoImport")} accent="cyan" {...panelItemProps("autoImport")} />
         <SettingsListItem icon={<BackupIcon />} label={t("settings.backup")} accent="cyan" {...panelItemProps("backup")} />
-        <SettingsListItem icon={<WarningIcon />} label={t("settings.errorLog")} {...panelItemProps("errorReports")} />
-        <SettingsListItem icon={<RecurringIcon />} label={t("settings.pendingChanges")} {...panelItemProps("pendingChanges")} />
+        <SettingsListItem icon={<WarningIcon />} label={t("settings.errorLog")} accent="amber" {...panelItemProps("errorReports")} />
+        <SettingsListItem icon={<RecurringIcon />} label={t("settings.pendingChanges")} accent="teal" {...panelItemProps("pendingChanges")} />
         {isAdmin && (
           <SettingsListItem icon={<UploadIcon className="h-5 w-5" />} label={t("wallet.templateReviewTitle")} accent="indigo" {...panelItemProps("templateReviews")} />
         )}

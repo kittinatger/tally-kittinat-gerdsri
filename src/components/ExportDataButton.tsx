@@ -6,6 +6,7 @@ import { normalizeExpenseType, normalizeDirection, signedAmount } from "@/types/
 import { todayInputValue, formatAmountRaw } from "@/lib/format";
 import { DownloadIcon } from "@/lib/icons";
 import { useCurrency } from "@/lib/currency-context";
+import { badgeClasses } from "@/lib/category-styles";
 
 type ApiExpense = {
   id: number;
@@ -84,7 +85,7 @@ export default function ExportDataButton() {
   return (
     <div className="flex items-center justify-between gap-3 px-4 py-3.5">
       <div className="flex min-w-0 items-center gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center text-ink-soft">
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses("sky")}`}>
           <DownloadIcon className="h-5 w-5" />
         </span>
         <div className="min-w-0">
