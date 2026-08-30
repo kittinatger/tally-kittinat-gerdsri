@@ -13,7 +13,7 @@ import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import { CURRENCIES } from "@/lib/currencies";
 import { useCurrency } from "@/lib/currency-context";
-import { CARD_ASPECT_CLASSES, CARD_MIN_SIZE_CLASSES, type CardOrientation } from "@/lib/card-orientation";
+import { CARD_ASPECT_CLASSES, CARD_MIN_SIZE_CLASSES, CARD_WIDTH_CLASSES, type CardOrientation } from "@/lib/card-orientation";
 import { PaletteIcon, TrashIcon } from "@/lib/icons";
 import { describeFetchError } from "@/lib/fetch-error";
 import { useT } from "@/lib/language-context";
@@ -132,7 +132,7 @@ export default function TemplateEditModal({
          * text), reading as a rendering bug. */}
         <ColorGlowPreview color={backgroundGlowColor(background, color)}>
           <div
-            className={`${CARD_ASPECT_CLASSES[orientation]} ${CARD_MIN_SIZE_CLASSES[orientation]} w-full rounded-2xl shadow-soft ${background ? "" : heroGradientClasses(color)}`}
+            className={`${CARD_ASPECT_CLASSES[orientation]} ${CARD_MIN_SIZE_CLASSES[orientation]} ${CARD_WIDTH_CLASSES[orientation]} rounded-2xl shadow-soft ${background ? "" : heroGradientClasses(color)}`}
             style={background ? cardBackgroundStyle(background) : colorHeroStyle(color)}
           />
         </ColorGlowPreview>

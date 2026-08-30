@@ -3,7 +3,7 @@
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { cardBackgroundStyle, cardForegroundFor } from "@/lib/card-backgrounds";
 import { formatCurrency } from "@/lib/format";
-import { CARD_ASPECT_CLASSES, CARD_MIN_SIZE_CLASSES } from "@/lib/card-orientation";
+import { CARD_ASPECT_CLASSES, CARD_MIN_SIZE_CLASSES, CARD_WIDTH_CLASSES } from "@/lib/card-orientation";
 import { useT } from "@/lib/language-context";
 import type { WalletOption } from "@/types/wallet";
 
@@ -25,7 +25,7 @@ export default function AccountCardShape({ wallet, currency }: { wallet: WalletO
   const fg = cardForegroundFor(wallet.textColor, wallet.background, wallet.color);
   return (
     <div
-      className={`flex ${CARD_ASPECT_CLASSES[wallet.orientation]} ${CARD_MIN_SIZE_CLASSES[wallet.orientation]} w-full flex-col justify-between rounded-2xl p-4 shadow-soft ${wallet.background ? "" : heroGradientClasses(wallet.color)}`}
+      className={`flex ${CARD_ASPECT_CLASSES[wallet.orientation]} ${CARD_MIN_SIZE_CLASSES[wallet.orientation]} ${CARD_WIDTH_CLASSES[wallet.orientation]} flex-col justify-between rounded-2xl p-4 shadow-soft ${wallet.background ? "" : heroGradientClasses(wallet.color)}`}
       style={{ color: fg.full, ...(wallet.background ? cardBackgroundStyle(wallet.background) : colorHeroStyle(wallet.color)) }}
     >
       <div className="flex items-start justify-between gap-2">

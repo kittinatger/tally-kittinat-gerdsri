@@ -7,7 +7,7 @@ import { formatCurrency } from "@/lib/format";
 import { CHIP_COLOR_STOPS, DEFAULT_CHIP_COLOR, type ChipColor } from "@/lib/chip-colors";
 import { BADGE_POSITION_CLASSES, DEFAULT_BADGE_POSITION, type BadgePosition } from "@/lib/badge-position";
 import { CHIP_POSITION_CLASSES, DEFAULT_CHIP_POSITION, type ChipPosition } from "@/lib/chip-position";
-import { CARD_ASPECT_CLASSES, CARD_MIN_SIZE_CLASSES, DEFAULT_CARD_ORIENTATION, type CardOrientation } from "@/lib/card-orientation";
+import { CARD_ASPECT_CLASSES, CARD_MIN_SIZE_CLASSES, CARD_WIDTH_CLASSES, DEFAULT_CARD_ORIENTATION, type CardOrientation } from "@/lib/card-orientation";
 import { useT } from "@/lib/language-context";
 import type { CardNetwork } from "@/lib/wallet-cards";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -279,7 +279,7 @@ export default function WalletCardShape({
 
   return (
     <div
-      className={`relative flex ${CARD_ASPECT_CLASSES[orientation]} ${CARD_MIN_SIZE_CLASSES[orientation]} w-full flex-col rounded-2xl p-4 shadow-soft ${background ? "" : heroGradientClasses(color)}`}
+      className={`relative flex ${CARD_ASPECT_CLASSES[orientation]} ${CARD_MIN_SIZE_CLASSES[orientation]} ${CARD_WIDTH_CLASSES[orientation]} flex-col rounded-2xl p-4 shadow-soft ${background ? "" : heroGradientClasses(color)}`}
       style={{ color: fg.full, ...(background ? cardBackgroundStyle(background) : colorHeroStyle(color)) }}
     >
       {showNetworkBadge && (
