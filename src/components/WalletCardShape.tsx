@@ -175,9 +175,9 @@ export default function WalletCardShape({
   badgePosition?: BadgePosition;
   showChip?: boolean;
   chipColor?: ChipColor;
-  /** Where the chip sits — "middleLeft" (default) keeps it inline next to
-   * the card number, exactly as it always rendered; "topLeft"/"bottomLeft"
-   * pull it out into its own corner — see chip-position.ts. */
+  /** Where the chip sits — "middleLeft" (default) centers it vertically
+   * against the card's left edge; "topLeft"/"bottomLeft" pull it into a
+   * corner instead — see chip-position.ts. */
   chipPosition?: ChipPosition;
   /** Balance to preview on the card face — only rendered when showBalance
    * is true AND a number is actually passed (so a purely decorative card
@@ -236,17 +236,20 @@ export default function WalletCardShape({
   // shares their row with, so long text truncates before running under it.
   const badgeOnTop = badgePosition === "topLeft" || badgePosition === "topRight";
   const badgeOnRight = badgePosition === "topRight" || badgePosition === "bottomRight";
-  // The chip follows the same free-floating-corner idea as the badge (see
-  // above) when pulled out of its default spot inline with the card
-  // number — "topLeft"/"bottomLeft" instead share whichever text row sits
-  // in that corner, so that row reserves space too. Both reservations are
-  // computed as plain pixel widths (not stacked Tailwind classes) since a
-  // row can need space from the badge and the chip on the same side at
-  // once, and two conflicting padding-left utility classes in one
-  // className don't reliably combine — the larger of the two wins here,
-  // which is correct since they overlap the same horizontal band rather
-  // than sitting side by side.
-  const chipInCorner = showChip && chipPosition !== "middleLeft";
+  // The chip is always a free-floating absolutely-positioned element now
+  // (like the badge) rather than only when pulled into a corner — its
+  // default "middleLeft" is a real vertical center against the card's
+  // left edge, not just "inline with the card-number row" (which used to
+  // read as "near the top", not the middle its label promised).
+  // "topLeft"/"bottomLeft" share whichever text row sits in that corner,
+  // so that row reserves space too. Both reservations are computed as
+  // plain pixel widths (not stacked Tailwind classes) since a row can need
+  // space from the badge and the chip on the same side at once, and two
+  // conflicting padding-left utility classes in one className don't
+  // reliably combine — the larger of the two wins here, which is correct
+  // since they overlap the same horizontal band rather than sitting side
+  // by side.
+  const chipInCorner = showChip;
   const chipOnTop = chipPosition === "topLeft";
   // At the default position, the holder name stays exactly where it always
   // rendered — inline in the bottom row next to the expiry date — so no
@@ -262,7 +265,10 @@ export default function WalletCardShape({
       if (badgeOnRight) right = 64;
       else left = 64;
     }
-    if (chipInCorner && chipOnTop === isTopRow) {
+    // middleLeft doesn't reserve space in either row — it's vertically
+    // centered, not pulled into a corner that could overlap the top or
+    // bottom text row the way topLeft/bottomLeft can.
+    if (chipInCorner && chipPosition !== "middleLeft" && chipOnTop === isTopRow) {
       left = Math.max(left, 40);
     }
     const style: CSSProperties = {};
@@ -272,17 +278,22 @@ export default function WalletCardShape({
   }
   // When both the badge and the chip land in the same top/bottom-left
   // corner, stack the chip below (or above) the badge instead of drawing
-  // them on top of each other.
-  const chipSharesCornerWithBadge = chipInCorner && showNetworkBadge && !badgeOnRight && badgeOnTop === chipOnTop;
-  const chipCornerClass = chipInCorner
-    ? chipOnTop
-      ? chipSharesCornerWithBadge
-        ? "top-14 left-4"
-        : CHIP_POSITION_CLASSES.topLeft
-      : chipSharesCornerWithBadge
-        ? "bottom-14 left-4"
-        : CHIP_POSITION_CLASSES.bottomLeft
-    : "";
+  // them on top of each other — only possible for the top/bottom chip
+  // positions, since middleLeft sits vertically centered and can't
+  // coincide with a top or bottom corner.
+  const chipSharesCornerWithBadge =
+    chipInCorner && chipPosition !== "middleLeft" && showNetworkBadge && !badgeOnRight && badgeOnTop === chipOnTop;
+  const chipCornerClass = !chipInCorner
+    ? ""
+    : chipPosition === "middleLeft"
+      ? CHIP_POSITION_CLASSES.middleLeft
+      : chipOnTop
+        ? chipSharesCornerWithBadge
+          ? "top-14 left-4"
+          : CHIP_POSITION_CLASSES.topLeft
+        : chipSharesCornerWithBadge
+          ? "bottom-14 left-4"
+          : CHIP_POSITION_CLASSES.bottomLeft;
 
   return (
     <div
@@ -352,7 +363,6 @@ export default function WalletCardShape({
       </div>
 
       <div className="mt-2 flex min-h-6 items-center gap-2">
-        {showChip && !chipInCorner && <EMVChip color={chipColor} />}
         {showCardNumber && (
           <p className="truncate text-base font-semibold tracking-[0.15em]">
             •••• •••• •••• {last4 ?? "••••"}
