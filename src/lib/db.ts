@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 47;
+const CURRENT_SCHEMA_VERSION = 48;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1270,6 +1270,13 @@ function ensureSchema(): Promise<void> {
       // country.
       await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS category TEXT;`;
 
+      // Which network to force the wallet itself onto — same idea as
+      // force_currency (a real card's network is inherent to the artwork,
+      // e.g. a Visa transit card's design already shows a Visa mark, so
+      // letting the picker choose a different network makes no sense).
+      // NULL means "don't touch it".
+      await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS force_network TEXT;`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -1971,6 +1978,10 @@ export type CardTemplateRow = {
   // Nullable metadata only (like country), never applied to a picking
   // wallet.
   category: string | null;
+  // Which network to force the wallet itself onto — distinct from
+  // force_show_network_badge above (whether a badge renders at all, not
+  // which network it is). NULL means "don't touch it".
+  force_network: string | null;
   status: "pending" | "approved" | "rejected";
   created_at: string;
   reviewed_at: string | null;
@@ -1982,7 +1993,7 @@ export type CardTemplateRow = {
 // against the users join), bare column names for INSERT/UPDATE...RETURNING
 // where there's no alias to strip.
 const CARD_TEMPLATE_COLUMNS =
-  "id, submitted_by, name, color, background, text_color, force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency, country, force_name_position, lock_text_color, category, status, created_at, reviewed_at";
+  "id, submitted_by, name, color, background, text_color, force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency, country, force_name_position, lock_text_color, category, force_network, status, created_at, reviewed_at";
 
 export async function createCardTemplate(
   userId: number,
@@ -2002,6 +2013,7 @@ export async function createCardTemplate(
     forceNamePosition?: string | null;
     lockTextColor?: boolean;
     category?: string | null;
+    forceNetwork?: string | null;
   },
 ): Promise<CardTemplateRow> {
   await ensureSchema();
@@ -2010,9 +2022,9 @@ export async function createCardTemplate(
     `INSERT INTO card_templates (
        submitted_by, name, color, background, text_color,
        force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency,
-       country, force_name_position, lock_text_color, category, status
+       country, force_name_position, lock_text_color, category, force_network, status
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'pending')
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 'pending')
      RETURNING ${CARD_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
     [
       userId,
@@ -2031,6 +2043,7 @@ export async function createCardTemplate(
       input.forceNamePosition ?? null,
       input.lockTextColor ?? false,
       input.category ?? null,
+      input.forceNetwork ?? null,
     ],
   );
   return rows[0];
@@ -2089,6 +2102,7 @@ export async function updateCardTemplate(
     forceNamePosition?: string | null;
     lockTextColor?: boolean;
     category?: string | null;
+    forceNetwork?: string | null;
     status?: "pending" | "approved" | "rejected";
   },
 ): Promise<CardTemplateRow | null> {
@@ -2109,11 +2123,12 @@ export async function updateCardTemplate(
     force_name_position: string | null;
     lock_text_color: boolean;
     category: string | null;
+    force_network: string | null;
     status: "pending" | "approved" | "rejected";
   }>`
     SELECT name, color, background, text_color,
            force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency,
-           country, force_name_position, lock_text_color, category, status
+           country, force_name_position, lock_text_color, category, force_network, status
     FROM card_templates WHERE id = ${id};
   `;
   const existing = existingRows[0];
@@ -2134,6 +2149,7 @@ export async function updateCardTemplate(
   const newForceNamePosition = input.forceNamePosition !== undefined ? input.forceNamePosition : existing.force_name_position;
   const newLockTextColor = input.lockTextColor ?? existing.lock_text_color;
   const newCategory = input.category !== undefined ? input.category : existing.category;
+  const newForceNetwork = input.forceNetwork !== undefined ? input.forceNetwork : existing.force_network;
   const newStatus = input.status ?? existing.status;
   const bumpReviewedAt = input.status !== undefined;
 
@@ -2141,8 +2157,8 @@ export async function updateCardTemplate(
     `UPDATE card_templates
      SET name = $1, color = $2, background = $3, text_color = $4,
          force_show_name = $5, force_show_network_badge = $6, force_show_chip = $7, force_show_card_number = $8, force_show_balance = $9, force_show_currency = $10,
-         force_currency = $11, country = $12, force_name_position = $13, lock_text_color = $14, category = $15, status = $16, reviewed_at = ${bumpReviewedAt ? "now()" : "reviewed_at"}
-     WHERE id = $17
+         force_currency = $11, country = $12, force_name_position = $13, lock_text_color = $14, category = $15, force_network = $16, status = $17, reviewed_at = ${bumpReviewedAt ? "now()" : "reviewed_at"}
+     WHERE id = $18
      RETURNING ${CARD_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
     [
       newName,
@@ -2160,6 +2176,7 @@ export async function updateCardTemplate(
       newForceNamePosition,
       newLockTextColor,
       newCategory,
+      newForceNetwork,
       newStatus,
       id,
     ],

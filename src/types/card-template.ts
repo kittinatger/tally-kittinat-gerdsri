@@ -1,6 +1,7 @@
 import type { CardBackground } from "@/lib/card-backgrounds";
 import type { NamePosition } from "@/lib/name-position";
 import type { CardTemplateCategory } from "@/lib/card-template-category";
+import type { CardNetwork } from "@/lib/wallet-cards";
 
 // A user-submitted "premade card" design — see card_templates in db.ts.
 // Purely the visual skin (background + colors); a picker applies these
@@ -36,6 +37,11 @@ export type CardTemplateOption = {
   /** What kind of real-world card this is — null if uncategorized. See
    * card-template-category.ts. */
   category: CardTemplateCategory | null;
+  /** Which network to force the wallet itself onto — distinct from
+   * forceShowNetworkBadge above (whether a badge renders at all, not
+   * which network it is). Null means "leave whatever the wallet already
+   * has". */
+  forceNetwork: CardNetwork | null;
   status: "pending" | "approved" | "rejected";
   submittedByUsername: string | null;
   createdAt: string;

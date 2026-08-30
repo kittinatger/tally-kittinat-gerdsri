@@ -113,6 +113,7 @@ export default function WalletModal({
     showCardNumber: boolean;
     showBalance: boolean;
     showCurrency: boolean;
+    network: boolean;
   }>({
     showName: false,
     showNetworkBadge: false,
@@ -120,6 +121,7 @@ export default function WalletModal({
     showCardNumber: false,
     showBalance: false,
     showCurrency: false,
+    network: false,
   });
 
   // "Upload as template" submits the current background/color/textColor
@@ -176,6 +178,12 @@ export default function WalletModal({
   // country, so PremadeCardPicker can filter an increasingly long,
   // multi-country gallery by card type.
   const [templateCategory, setTemplateCategory] = useState<CardTemplateCategory | null>(null);
+  // Which network to force the wallet itself onto — null means "don't
+  // force a network" (the picker just inherits whatever it already had).
+  // Same idea as forceCurrency: a real card's network is inherent to its
+  // artwork, so it doesn't make sense to let the picker choose a
+  // different one.
+  const [templateForceNetwork, setTemplateForceNetwork] = useState<CardNetwork | null>(null);
 
   const month = expiryMonth ? Number(expiryMonth) : null;
   const year = expiryYear ? Number(expiryYear) : null;
@@ -209,6 +217,7 @@ export default function WalletModal({
           forceNamePosition: templateForceNamePosition,
           lockTextColor: templateLockTextColor,
           category: templateCategory,
+          forceNetwork: templateForceNetwork,
         }),
       });
       const data = await res.json();
@@ -367,8 +376,9 @@ export default function WalletModal({
             </div>
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.networkLabel")}</label>
+          {!forcedFields.network && (
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.networkLabel")}</label>
               <div className="flex flex-wrap gap-1.5">
                 {CARD_NETWORKS.map((n) => (
                   <button
@@ -391,6 +401,7 @@ export default function WalletModal({
                 ))}
               </div>
             </div>
+          )}
 
           {!forcedFields.showNetworkBadge && (
             <button
@@ -825,6 +836,7 @@ export default function WalletModal({
               if (tpl.forceShowBalance !== null) setShowBalance(tpl.forceShowBalance);
               if (tpl.forceShowCurrency !== null) setShowCurrency(tpl.forceShowCurrency);
               if (tpl.forceCurrency !== null) setCurrency(tpl.forceCurrency);
+              if (tpl.forceNetwork !== null) setNetwork(tpl.forceNetwork);
               setForcedFields({
                 showName: tpl.forceShowName !== null,
                 showNetworkBadge: tpl.forceShowNetworkBadge !== null,
@@ -832,6 +844,7 @@ export default function WalletModal({
                 showCardNumber: tpl.forceShowCardNumber !== null,
                 showBalance: tpl.forceShowBalance !== null,
                 showCurrency: tpl.forceShowCurrency !== null,
+                network: tpl.forceNetwork !== null,
               });
               if (tpl.forceNamePosition !== null) {
                 setNamePosition(tpl.forceNamePosition);
@@ -1058,6 +1071,38 @@ export default function WalletModal({
                       }`}
                     >
                       {t(NAME_POSITION_LABEL_KEYS[p])}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-card border border-line bg-bg-soft p-3">
+                <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceNetworkLabel")}</p>
+                <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceNetworkDesc")}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setTemplateForceNetwork(null)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                      templateForceNetwork === null
+                        ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                        : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                    }`}
+                  >
+                    {t("wallet.forceAuto")}
+                  </button>
+                  {CARD_NETWORKS.map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setTemplateForceNetwork(n)}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                        templateForceNetwork === n
+                          ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                          : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                      }`}
+                    >
+                      {t(NETWORK_LABEL_KEYS[n])}
                     </button>
                   ))}
                 </div>

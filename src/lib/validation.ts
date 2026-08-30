@@ -260,6 +260,10 @@ export const cardTemplateInputSchema = z.object({
   // What kind of real-world card this is — see card-template-category.ts.
   // Nullable metadata only, like country.
   category: z.enum(CARD_TEMPLATE_CATEGORIES).nullable().optional(),
+  // Which network to force the wallet itself onto — distinct from
+  // forceShowNetworkBadge above (whether a badge renders at all, not which
+  // network it is).
+  forceNetwork: z.enum(CARD_NETWORKS).nullable().optional(),
 });
 
 // Admin-only edit — every field optional (at least one required), used for
@@ -282,6 +286,7 @@ export const cardTemplateUpdateSchema = z
     forceNamePosition: z.enum(NAME_POSITIONS).nullable().optional(),
     lockTextColor: z.boolean().optional(),
     category: z.enum(CARD_TEMPLATE_CATEGORIES).nullable().optional(),
+    forceNetwork: z.enum(CARD_NETWORKS).nullable().optional(),
     status: z.enum(["pending", "approved", "rejected"]).optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {

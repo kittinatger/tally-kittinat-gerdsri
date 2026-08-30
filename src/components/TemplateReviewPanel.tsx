@@ -7,14 +7,27 @@ import { describeFetchError } from "@/lib/fetch-error";
 import { CheckCircleIcon, XCircleIcon, EditIcon } from "@/lib/icons";
 import { NAME_POSITION_LABEL_KEYS } from "@/lib/name-position";
 import { CARD_TEMPLATE_CATEGORY_LABEL_KEYS } from "@/lib/card-template-category";
+import type { CardNetwork } from "@/lib/wallet-cards";
 import { useT } from "@/lib/language-context";
 import TemplateEditModal from "./TemplateEditModal";
 import type { CardTemplateOption } from "@/types/card-template";
+import type { MessageKey } from "@/lib/i18n/messages";
 
 const STATUS_BADGE_CLASSES: Record<CardTemplateOption["status"], string> = {
   pending: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
   approved: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
   rejected: "bg-red-500/15 text-red-700 dark:text-red-400",
+};
+
+const NETWORK_LABEL_KEYS: Record<CardNetwork, MessageKey> = {
+  visa: "wallet.networkVisa",
+  mastercard: "wallet.networkMastercard",
+  amex: "wallet.networkAmex",
+  discover: "wallet.networkDiscover",
+  jcb: "wallet.networkJcb",
+  unionpay: "wallet.networkUnionPay",
+  "apple-pay": "wallet.networkApplePay",
+  other: "wallet.networkOther",
 };
 
 // Admin-only (the route itself 403s anyone else — see
@@ -79,6 +92,7 @@ export default function TemplateReviewPanel() {
       .filter(([value]) => value !== null)
       .map(([value, label]) => `${label}: ${value ? t("wallet.forceOn") : t("wallet.forceOff")}`);
     if (tpl.forceCurrency !== null) parts.push(`${t("wallet.lockCurrencyLabel")}: ${tpl.forceCurrency}`);
+    if (tpl.forceNetwork !== null) parts.push(`${t("wallet.networkLabel")}: ${t(NETWORK_LABEL_KEYS[tpl.forceNetwork])}`);
     if (tpl.forceNamePosition !== null) parts.push(`${t("wallet.namePositionLabel")}: ${t(NAME_POSITION_LABEL_KEYS[tpl.forceNamePosition])}`);
     if (tpl.lockTextColor) parts.push(t("wallet.lockTextColorLabel"));
     return parts.length ? parts.join(", ") : "";

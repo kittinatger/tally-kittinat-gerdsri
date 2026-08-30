@@ -16,12 +16,25 @@ import { useCurrency } from "@/lib/currency-context";
 import { countryForCurrency, KNOWN_COUNTRIES } from "@/lib/currency-country";
 import { NAME_POSITIONS, NAME_POSITION_LABEL_KEYS, type NamePosition } from "@/lib/name-position";
 import { CARD_TEMPLATE_CATEGORIES, CARD_TEMPLATE_CATEGORY_LABEL_KEYS, type CardTemplateCategory } from "@/lib/card-template-category";
+import { CARD_NETWORKS, type CardNetwork } from "@/lib/wallet-cards";
+import type { MessageKey } from "@/lib/i18n/messages";
 import { PaletteIcon, TrashIcon } from "@/lib/icons";
 import { describeFetchError } from "@/lib/fetch-error";
 import { useT } from "@/lib/language-context";
 import type { CardTemplateOption } from "@/types/card-template";
 
 const STATUSES = ["pending", "approved", "rejected"] as const;
+
+const NETWORK_LABEL_KEYS: Record<CardNetwork, MessageKey> = {
+  visa: "wallet.networkVisa",
+  mastercard: "wallet.networkMastercard",
+  amex: "wallet.networkAmex",
+  discover: "wallet.networkDiscover",
+  jcb: "wallet.networkJcb",
+  unionpay: "wallet.networkUnionPay",
+  "apple-pay": "wallet.networkApplePay",
+  other: "wallet.networkOther",
+};
 
 const FORCE_FIELDS = [
   ["forceShowName", "wallet.forceLabelName"],
@@ -71,6 +84,7 @@ export default function TemplateEditModal({
   const [forceCurrencyValue, setForceCurrencyValue] = useState(template.forceCurrency ?? appCurrency);
   const [forceNamePosition, setForceNamePosition] = useState<NamePosition | null>(template.forceNamePosition);
   const [lockTextColor, setLockTextColor] = useState(template.lockTextColor);
+  const [forceNetwork, setForceNetwork] = useState<CardNetwork | null>(template.forceNetwork);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -96,6 +110,7 @@ export default function TemplateEditModal({
           forceCurrency: currencyLocked ? forceCurrencyValue : null,
           forceNamePosition,
           lockTextColor,
+          forceNetwork,
         }),
       });
       const data = await res.json();
@@ -332,6 +347,38 @@ export default function TemplateEditModal({
                   }`}
                 >
                   {t(NAME_POSITION_LABEL_KEYS[p])}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="border-t border-line pt-3">
+            <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceNetworkLabel")}</p>
+            <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceNetworkDesc")}</p>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => setForceNetwork(null)}
+                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                  forceNetwork === null
+                    ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                    : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                }`}
+              >
+                {t("wallet.forceAuto")}
+              </button>
+              {CARD_NETWORKS.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setForceNetwork(n)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    forceNetwork === n
+                      ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                      : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                  }`}
+                >
+                  {t(NETWORK_LABEL_KEYS[n])}
                 </button>
               ))}
             </div>

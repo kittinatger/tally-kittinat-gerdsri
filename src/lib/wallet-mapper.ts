@@ -68,6 +68,7 @@ export function toCardTemplateOption(t: CardTemplateRow): CardTemplateOption {
     forceNamePosition: t.force_name_position && isNamePosition(t.force_name_position) ? t.force_name_position : null,
     lockTextColor: t.lock_text_color,
     category: t.category && isCardTemplateCategory(t.category) ? t.category : null,
+    forceNetwork: t.force_network && isCardNetwork(t.force_network) ? t.force_network : null,
     status: t.status,
     submittedByUsername: t.submitted_by_username,
     createdAt: t.created_at,
