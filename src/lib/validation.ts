@@ -19,6 +19,7 @@ import { CARD_PATTERNS, PATTERN_COLOR_COUNT } from "@/lib/card-backgrounds";
 import { CHIP_COLORS } from "@/lib/chip-colors";
 import { BADGE_POSITIONS } from "@/lib/badge-position";
 import { NAME_POSITIONS } from "@/lib/name-position";
+import { CARD_NUMBER_POSITIONS } from "@/lib/card-number-position";
 import { CARD_TEMPLATE_CATEGORIES } from "@/lib/card-template-category";
 import { CHIP_POSITIONS } from "@/lib/chip-position";
 import { isLanguageCode } from "@/lib/languages";
@@ -200,6 +201,8 @@ const walletCardVisualFields = {
   showHolderName: z.boolean().optional(),
   showExpiry: z.boolean().optional(),
   namePosition: z.enum(NAME_POSITIONS).optional(),
+  cardNumberPosition: z.enum(CARD_NUMBER_POSITIONS).optional(),
+  cardNumberLast4Only: z.boolean().optional(),
 };
 
 export const walletInputSchema = z.object({

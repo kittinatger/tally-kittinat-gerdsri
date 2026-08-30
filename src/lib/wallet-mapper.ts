@@ -8,6 +8,7 @@ import { isChipColor, DEFAULT_CHIP_COLOR } from "@/lib/chip-colors";
 import { isBadgePosition, DEFAULT_BADGE_POSITION } from "@/lib/badge-position";
 import { isChipPosition, DEFAULT_CHIP_POSITION } from "@/lib/chip-position";
 import { isNamePosition, DEFAULT_NAME_POSITION } from "@/lib/name-position";
+import { isCardNumberPosition, DEFAULT_CARD_NUMBER_POSITION } from "@/lib/card-number-position";
 import { isCardTemplateCategory } from "@/lib/card-template-category";
 
 // Every server page that lists wallets (Activities, Analytics, Settings,
@@ -47,6 +48,8 @@ export function toWalletOption(w: WalletRow): WalletOption {
     showHolderName: w.show_holder_name,
     showExpiry: w.show_expiry,
     namePosition: isNamePosition(w.name_position) ? w.name_position : DEFAULT_NAME_POSITION,
+    cardNumberPosition: isCardNumberPosition(w.card_number_position) ? w.card_number_position : DEFAULT_CARD_NUMBER_POSITION,
+    cardNumberLast4Only: w.card_number_last4_only,
   };
 }
 

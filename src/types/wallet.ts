@@ -5,6 +5,7 @@ import type { ChipColor } from "@/lib/chip-colors";
 import type { BadgePosition } from "@/lib/badge-position";
 import type { ChipPosition } from "@/lib/chip-position";
 import type { NamePosition } from "@/lib/name-position";
+import type { CardNumberPosition } from "@/lib/card-number-position";
 
 export type WalletOption = {
   id: number;
@@ -58,4 +59,9 @@ export type WalletOption = {
   showExpiry: boolean;
   /** Which corner the holder-name text sits in — see name-position.ts. */
   namePosition: NamePosition;
+  /** Where the masked card-number row sits — see card-number-position.ts. */
+  cardNumberPosition: CardNumberPosition;
+  /** Whether the card-number row shows just the bare last4 digits instead
+   * of the full masked "•••• •••• •••• 1234" row. */
+  cardNumberLast4Only: boolean;
 };

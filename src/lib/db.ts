@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 50;
+const CURRENT_SCHEMA_VERSION = 51;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1291,6 +1291,14 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS force_show_holder_name BOOLEAN;`;
       await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS force_show_expiry BOOLEAN;`;
 
+      // Where the masked card-number row sits — see card-number-position.ts.
+      // Defaults to 'top', matching where it always rendered, so nothing
+      // existing changes until someone picks otherwise.
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS card_number_position TEXT NOT NULL DEFAULT 'top';`;
+      // When true, shows just the bare last4 digits instead of the full
+      // masked "•••• •••• •••• 1234" row.
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS card_number_last4_only BOOLEAN NOT NULL DEFAULT false;`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -1522,6 +1530,11 @@ export type WalletRow = {
   show_expiry: boolean;
   /** Which corner the holder-name text renders in — see name-position.ts. */
   name_position: string;
+  /** Where the masked card-number row renders — see card-number-position.ts. */
+  card_number_position: string;
+  /** Whether the card-number row shows just the bare last4 digits instead
+   * of the full masked row. */
+  card_number_last4_only: boolean;
 };
 
 // The full column list every wallet-returning query below selects — one
@@ -1531,7 +1544,7 @@ const WALLET_COLUMNS = `
   w.holder_name, w.last4, w.expiry_month, w.expiry_year, w.network,
   w.show_network_badge, w.badge_position, w.icon_color, w.show_chip, w.chip_color,
   w.chip_position, w.notes, w.show_balance, w.show_currency, w.show_card_number, w.show_name,
-  w.show_holder_name, w.show_expiry, w.name_position
+  w.show_holder_name, w.show_expiry, w.name_position, w.card_number_position, w.card_number_last4_only
 `;
 const WALLET_BALANCE_EXPR = `
   (
@@ -1600,6 +1613,8 @@ export async function createWallet(
     showHolderName?: boolean;
     showExpiry?: boolean;
     namePosition?: string;
+    cardNumberPosition?: string;
+    cardNumberLast4Only?: boolean;
   },
 ): Promise<WalletRow> {
   await ensureSchema();
@@ -1620,6 +1635,8 @@ export async function createWallet(
   const showHolderName = input.showHolderName ?? true;
   const showExpiry = input.showExpiry ?? true;
   const namePosition = input.namePosition ?? "bottomLeft";
+  const cardNumberPosition = input.cardNumberPosition ?? "top";
+  const cardNumberLast4Only = input.cardNumberLast4Only ?? false;
   const { rows } = await sql<{
     id: number;
     name: string;
@@ -1647,24 +1664,29 @@ export async function createWallet(
     show_holder_name: boolean;
     show_expiry: boolean;
     name_position: string;
+    card_number_position: string;
+    card_number_last4_only: boolean;
   }>`
     INSERT INTO wallets (
       user_id, name, color, background, text_color, kind, currency, sort_order,
       holder_name, last4, expiry_month, expiry_year, network,
       show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
-      show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position
+      show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position,
+      card_number_position, card_number_last4_only
     )
     VALUES (
       ${userId}, ${input.name}, ${input.color}, ${backgroundJson}, ${input.textColor ?? null}, ${input.kind}, ${input.currency ?? null}, ${nextSort},
       ${input.holderName ?? null}, ${input.last4 ?? null}, ${input.expiryMonth ?? null}, ${input.expiryYear ?? null}, ${input.network ?? null},
       ${showNetworkBadge}, ${badgePosition}, ${input.iconColor ?? null}, ${showChip}, ${chipColor}, ${chipPosition}, ${input.notes ?? null},
-      ${showBalance}, ${showCurrency}, ${showCardNumber}, ${showName}, ${showHolderName}, ${showExpiry}, ${namePosition}
+      ${showBalance}, ${showCurrency}, ${showCardNumber}, ${showName}, ${showHolderName}, ${showExpiry}, ${namePosition},
+      ${cardNumberPosition}, ${cardNumberLast4Only}
     )
     RETURNING
       id, name, color, background, text_color, kind, currency,
       holder_name, last4, expiry_month, expiry_year, network,
       show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
-      show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position;
+      show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position,
+      card_number_position, card_number_last4_only;
   `;
   return { ...rows[0], is_default: false, archived: false, balance: "0", is_owner: true };
 }
@@ -1701,6 +1723,8 @@ export async function updateWallet(
     showHolderName?: boolean;
     showExpiry?: boolean;
     namePosition?: string;
+    cardNumberPosition?: string;
+    cardNumberLast4Only?: boolean;
   },
 ): Promise<WalletRow | { ok: false; error: string } | null> {
   await ensureSchema();
@@ -1732,12 +1756,15 @@ export async function updateWallet(
     show_holder_name: boolean;
     show_expiry: boolean;
     name_position: string;
+    card_number_position: string;
+    card_number_last4_only: boolean;
   }>`
     SELECT
       name, color, background, text_color, kind, currency, is_default, archived,
       holder_name, last4, expiry_month, expiry_year, network,
       show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
-      show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position
+      show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position,
+      card_number_position, card_number_last4_only
     FROM wallets WHERE id = ${id} AND user_id = ${userId};
   `;
   const existing = existingRows[0];
@@ -1779,6 +1806,8 @@ export async function updateWallet(
   const newShowHolderName = input.showHolderName ?? existing.show_holder_name;
   const newShowExpiry = input.showExpiry ?? existing.show_expiry;
   const newNamePosition = input.namePosition ?? existing.name_position;
+  const newCardNumberPosition = input.cardNumberPosition ?? existing.card_number_position;
+  const newCardNumberLast4Only = input.cardNumberLast4Only ?? existing.card_number_last4_only;
 
   const client = await db.connect();
   try {
@@ -1793,7 +1822,8 @@ export async function updateWallet(
             show_network_badge = ${newShowNetworkBadge}, badge_position = ${newBadgePosition}, icon_color = ${newIconColor},
             show_chip = ${newShowChip}, chip_color = ${newChipColor}, chip_position = ${newChipPosition}, notes = ${newNotes},
             show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}, show_card_number = ${newShowCardNumber}, show_name = ${newShowName},
-            show_holder_name = ${newShowHolderName}, show_expiry = ${newShowExpiry}, name_position = ${newNamePosition}
+            show_holder_name = ${newShowHolderName}, show_expiry = ${newShowExpiry}, name_position = ${newNamePosition},
+            card_number_position = ${newCardNumberPosition}, card_number_last4_only = ${newCardNumberLast4Only}
         WHERE id = ${id} AND user_id = ${userId};
       `;
     } else {
@@ -1804,7 +1834,8 @@ export async function updateWallet(
             show_network_badge = ${newShowNetworkBadge}, badge_position = ${newBadgePosition}, icon_color = ${newIconColor},
             show_chip = ${newShowChip}, chip_color = ${newChipColor}, chip_position = ${newChipPosition}, notes = ${newNotes},
             show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}, show_card_number = ${newShowCardNumber}, show_name = ${newShowName},
-            show_holder_name = ${newShowHolderName}, show_expiry = ${newShowExpiry}, name_position = ${newNamePosition}
+            show_holder_name = ${newShowHolderName}, show_expiry = ${newShowExpiry}, name_position = ${newNamePosition},
+            card_number_position = ${newCardNumberPosition}, card_number_last4_only = ${newCardNumberLast4Only}
         WHERE id = ${id} AND user_id = ${userId};
       `;
     }

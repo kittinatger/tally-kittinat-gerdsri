@@ -8,6 +8,11 @@ import { CHIP_COLOR_STOPS, DEFAULT_CHIP_COLOR, type ChipColor } from "@/lib/chip
 import { BADGE_POSITION_CLASSES, DEFAULT_BADGE_POSITION, type BadgePosition } from "@/lib/badge-position";
 import { CHIP_POSITION_CLASSES, DEFAULT_CHIP_POSITION, type ChipPosition } from "@/lib/chip-position";
 import { NAME_POSITION_CLASSES, DEFAULT_NAME_POSITION, type NamePosition } from "@/lib/name-position";
+import {
+  CARD_NUMBER_POSITION_CLASSES,
+  DEFAULT_CARD_NUMBER_POSITION,
+  type CardNumberPosition,
+} from "@/lib/card-number-position";
 import { useT } from "@/lib/language-context";
 import type { CardNetwork } from "@/lib/wallet-cards";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -148,6 +153,8 @@ export default function WalletCardShape({
   showBalance = false,
   showCurrency = true,
   showCardNumber = true,
+  cardNumberLast4Only = false,
+  cardNumberPosition = DEFAULT_CARD_NUMBER_POSITION,
   showName = true,
   showHolderName = true,
   showExpiry = true,
@@ -197,6 +204,15 @@ export default function WalletCardShape({
    * (no last4 set) it's an all-dots placeholder some users would rather
    * not show. */
   showCardNumber?: boolean;
+  /** When true, shows just the bare last4 digits ("1234") instead of the
+   * full masked "•••• •••• •••• 1234" row — only meaningful when
+   * showCardNumber is true. */
+  cardNumberLast4Only?: boolean;
+  /** Where the card-number row sits — "top" (default) stays in its
+   * original inline row; "middle"/"bottom" pull it out into a free-
+   * floating full-width row instead, same idea as chipPosition — see
+   * card-number-position.ts. */
+  cardNumberPosition?: CardNumberPosition;
   /** Whether the wallet's name renders on the card face at all. */
   showName?: boolean;
   /** Whether the holder-name text renders at all — previously always shown
@@ -258,6 +274,12 @@ export default function WalletCardShape({
   // lets a premade-card template put the name wherever its own artwork's
   // placeholder text used to sit.
   const nameInCorner = namePosition !== DEFAULT_NAME_POSITION;
+  // Same idea as nameInCorner — "top" (DEFAULT_CARD_NUMBER_POSITION) stays
+  // inline in its original row; "middle"/"bottom" pull it out into a
+  // free-floating full-width row instead (checked directly at each render
+  // site below so TypeScript narrows cardNumberPosition to "middle" |
+  // "bottom" for CARD_NUMBER_POSITION_CLASSES' lookup).
+  const cardNumberText = cardNumberLast4Only ? (last4 ?? "••••") : `•••• •••• •••• ${last4 ?? "••••"}`;
   function rowReserveStyle(isTopRow: boolean): CSSProperties {
     let left = 0;
     let right = 0;
@@ -345,6 +367,12 @@ export default function WalletCardShape({
         </p>
       )}
 
+      {showCardNumber && cardNumberPosition !== "top" && (
+        <p className={`absolute truncate text-base font-semibold tracking-[0.15em] ${CARD_NUMBER_POSITION_CLASSES[cardNumberPosition]}`}>
+          {cardNumberText}
+        </p>
+      )}
+
       {/* Top content stacks tightly from the top (no justify-between any
        * more — see the outer div) rather than being evenly spaced against
        * the balance/holder block below: with justify-between, every toggle
@@ -363,10 +391,8 @@ export default function WalletCardShape({
       </div>
 
       <div className="mt-2 flex min-h-6 items-center gap-2">
-        {showCardNumber && (
-          <p className="truncate text-base font-semibold tracking-[0.15em]">
-            •••• •••• •••• {last4 ?? "••••"}
-          </p>
+        {showCardNumber && cardNumberPosition === "top" && (
+          <p className="truncate text-base font-semibold tracking-[0.15em]">{cardNumberText}</p>
         )}
       </div>
 

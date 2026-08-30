@@ -19,6 +19,12 @@ import { CHIP_COLORS, CHIP_COLOR_LABEL_KEYS, CHIP_COLOR_STOPS, DEFAULT_CHIP_COLO
 import { BADGE_POSITIONS, BADGE_POSITION_LABEL_KEYS, DEFAULT_BADGE_POSITION, type BadgePosition } from "@/lib/badge-position";
 import { CHIP_POSITIONS, CHIP_POSITION_LABEL_KEYS, DEFAULT_CHIP_POSITION, type ChipPosition } from "@/lib/chip-position";
 import { NAME_POSITIONS, NAME_POSITION_LABEL_KEYS, DEFAULT_NAME_POSITION, type NamePosition } from "@/lib/name-position";
+import {
+  CARD_NUMBER_POSITIONS,
+  CARD_NUMBER_POSITION_LABEL_KEYS,
+  DEFAULT_CARD_NUMBER_POSITION,
+  type CardNumberPosition,
+} from "@/lib/card-number-position";
 import { CARD_TEMPLATE_CATEGORIES, CARD_TEMPLATE_CATEGORY_LABEL_KEYS, type CardTemplateCategory } from "@/lib/card-template-category";
 import { CategoryIcon, PaletteIcon, FileIcon } from "@/lib/icons";
 import { useCurrency } from "@/lib/currency-context";
@@ -92,6 +98,10 @@ export default function WalletModal({
   const [showBalance, setShowBalance] = useState(wallet?.showBalance ?? true);
   const [showCurrency, setShowCurrency] = useState(wallet?.showCurrency ?? true);
   const [showCardNumber, setShowCardNumber] = useState(wallet?.showCardNumber ?? true);
+  const [cardNumberLast4Only, setCardNumberLast4Only] = useState(wallet?.cardNumberLast4Only ?? false);
+  const [cardNumberPosition, setCardNumberPosition] = useState<CardNumberPosition>(
+    wallet?.cardNumberPosition ?? DEFAULT_CARD_NUMBER_POSITION,
+  );
   const [showName, setShowName] = useState(wallet?.showName ?? true);
   const [showHolderName, setShowHolderName] = useState(wallet?.showHolderName ?? true);
   const [showExpiry, setShowExpiry] = useState(wallet?.showExpiry ?? true);
@@ -315,6 +325,8 @@ export default function WalletModal({
         showBalance,
         showCurrency,
         showCardNumber,
+        cardNumberLast4Only,
+        cardNumberPosition,
         showName,
         showHolderName,
         showExpiry,
@@ -386,6 +398,8 @@ export default function WalletModal({
             showBalance={showBalance}
             showCurrency={showCurrency}
             showCardNumber={showCardNumber}
+            cardNumberLast4Only={cardNumberLast4Only}
+            cardNumberPosition={cardNumberPosition}
             showName={showName}
             showHolderName={showHolderName}
             showExpiry={showExpiry}
@@ -668,6 +682,54 @@ export default function WalletModal({
                 />
               </span>
             </button>
+          )}
+
+          {showCardNumber && (
+            <button
+              type="button"
+              onClick={() => setCardNumberLast4Only((v) => !v)}
+              className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+            >
+              <span>
+                <span className="block text-sm font-medium text-foreground">{t("wallet.cardNumberLast4OnlyLabel")}</span>
+                <span className="block text-xs text-ink-soft">{t("wallet.cardNumberLast4OnlyDesc")}</span>
+              </span>
+              <span
+                role="switch"
+                aria-checked={cardNumberLast4Only}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                  cardNumberLast4Only ? "bg-navy" : "bg-line"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                    cardNumberLast4Only ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </span>
+            </button>
+          )}
+
+          {showCardNumber && (
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.cardNumberPositionLabel")}</label>
+              <div className="flex gap-1.5">
+                {CARD_NUMBER_POSITIONS.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setCardNumberPosition(p)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                      cardNumberPosition === p
+                        ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                        : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                    }`}
+                  >
+                    {t(CARD_NUMBER_POSITION_LABEL_KEYS[p])}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
 
           {!forcedFields.showName && (
