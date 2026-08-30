@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 42;
+const CURRENT_SCHEMA_VERSION = 44;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1226,6 +1226,13 @@ function ensureSchema(): Promise<void> {
       // its picker to JPY regardless of the app's own default currency.
       // NULL means "don't touch the wallet's currency", same convention.
       await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS force_currency TEXT;`;
+
+      // Landscape/portrait orientation (a v42→v43 feature) was removed
+      // again before any real use — dropped here rather than carried
+      // forward unused, same as the wallets.locked precedent above.
+      await sql`ALTER TABLE wallets DROP COLUMN IF EXISTS orientation;`;
+      await sql`ALTER TABLE card_templates DROP COLUMN IF EXISTS orientation;`;
+      await sql`ALTER TABLE membership_cards DROP COLUMN IF EXISTS orientation;`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
