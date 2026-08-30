@@ -98,6 +98,10 @@ export default function WalletModal({
   // deliberately override it for this one card.
   const [namePositionLocked, setNamePositionLocked] = useState(false);
   const [textColorLocked, setTextColorLocked] = useState(false);
+  // Set once a premade card has been picked in this editing session — the
+  // whole "Upload as template" section hides while true, since submitting
+  // an already-premade design back in as a new template makes no sense.
+  const [templateApplied, setTemplateApplied] = useState(false);
   // Same idea, per show* toggle — a picked template's force_show_* fields
   // (see card_templates in db.ts) don't just set the toggle's value, they
   // take the toggle out of the wallet editor's hands entirely, so the
@@ -849,6 +853,7 @@ export default function WalletModal({
         <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("wallet.colorLabel")}>
           <PremadeCardPicker
             onSelect={(tpl) => {
+              setTemplateApplied(true);
               setBackground(tpl.background);
               setColor(tpl.color);
               setTextColor(tpl.textColor);
@@ -944,6 +949,7 @@ export default function WalletModal({
             />
           </FormSection>
 
+        {!templateApplied && (
         <FormSection icon={<UploadIcon className="h-4 w-4" />} title={t("wallet.uploadTemplateLabel")}>
           {templateSubmitted ? (
             <p className="text-xs text-ink-soft">{t("wallet.templateSubmittedDesc")}</p>
@@ -1185,6 +1191,7 @@ export default function WalletModal({
             </>
           )}
         </FormSection>
+        )}
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
