@@ -822,12 +822,12 @@ export default function WalletModal({
                   <div className="space-y-1.5">
                     {(
                       [
-                        ["showName", "wallet.showNameOnCardLabel"],
-                        ["showNetworkBadge", "wallet.showNetworkBadgeLabel"],
-                        ["showChip", "wallet.showChipLabel"],
-                        ["showCardNumber", "wallet.showCardNumberLabel"],
-                        ["showBalance", "wallet.showBalanceOnCardLabel"],
-                        ["showCurrency", "wallet.showCurrencyOnCardLabel"],
+                        ["showName", "wallet.forceLabelName"],
+                        ["showNetworkBadge", "wallet.forceLabelNetworkBadge"],
+                        ["showChip", "wallet.forceLabelChip"],
+                        ["showCardNumber", "wallet.forceLabelCardNumber"],
+                        ["showBalance", "wallet.forceLabelBalance"],
+                        ["showCurrency", "wallet.forceLabelCurrency"],
                       ] as const
                     ).map(([key, labelKey]) => (
                       <ForceToggleField

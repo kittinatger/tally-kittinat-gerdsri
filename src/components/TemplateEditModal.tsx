@@ -18,12 +18,12 @@ import type { CardTemplateOption } from "@/types/card-template";
 const STATUSES = ["pending", "approved", "rejected"] as const;
 
 const FORCE_FIELDS = [
-  ["forceShowName", "wallet.showNameOnCardLabel"],
-  ["forceShowNetworkBadge", "wallet.showNetworkBadgeLabel"],
-  ["forceShowChip", "wallet.showChipLabel"],
-  ["forceShowCardNumber", "wallet.showCardNumberLabel"],
-  ["forceShowBalance", "wallet.showBalanceOnCardLabel"],
-  ["forceShowCurrency", "wallet.showCurrencyOnCardLabel"],
+  ["forceShowName", "wallet.forceLabelName"],
+  ["forceShowNetworkBadge", "wallet.forceLabelNetworkBadge"],
+  ["forceShowChip", "wallet.forceLabelChip"],
+  ["forceShowCardNumber", "wallet.forceLabelCardNumber"],
+  ["forceShowBalance", "wallet.forceLabelBalance"],
+  ["forceShowCurrency", "wallet.forceLabelCurrency"],
 ] as const;
 
 // The admin's full edit surface for one existing card template — unlike
