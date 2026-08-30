@@ -20,7 +20,7 @@ import { BADGE_POSITIONS, BADGE_POSITION_LABEL_KEYS, DEFAULT_BADGE_POSITION, typ
 import { CHIP_POSITIONS, CHIP_POSITION_LABEL_KEYS, DEFAULT_CHIP_POSITION, type ChipPosition } from "@/lib/chip-position";
 import { NAME_POSITIONS, NAME_POSITION_LABEL_KEYS, DEFAULT_NAME_POSITION, type NamePosition } from "@/lib/name-position";
 import { CARD_TEMPLATE_CATEGORIES, CARD_TEMPLATE_CATEGORY_LABEL_KEYS, type CardTemplateCategory } from "@/lib/card-template-category";
-import { CategoryIcon, PaletteIcon, FileIcon } from "@/lib/icons";
+import { CategoryIcon, PaletteIcon, FileIcon, MembershipCardIcon } from "@/lib/icons";
 import { useCurrency } from "@/lib/currency-context";
 import { CURRENCIES } from "@/lib/currencies";
 import { countryForCurrency, KNOWN_COUNTRIES } from "@/lib/currency-country";
@@ -68,6 +68,13 @@ export default function WalletModal({
   const [startingBalance, setStartingBalance] = useState(isEdit ? String(wallet!.balance) : "0");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Which section of the form is showing — the modal used to be one long
+  // scroll (name/type/network/chip/card-number/holder/expiry/currency/
+  // balance/color/notes/upload-as-template, 15+ groups). Splitting it into
+  // three tabs keeps each screenful focused; the live preview and the
+  // submit/cancel row stay outside the tabs so switching never loses sight
+  // of either.
+  const [tab, setTab] = useState<"basics" | "card" | "look">("basics");
 
   // Card-look fields — always part of the form now (see the comment above).
   const [network, setNetwork] = useState<CardNetwork>(wallet?.network ?? "other");
@@ -357,6 +364,28 @@ export default function WalletModal({
           />
         </ColorGlowPreview>
 
+        <div className="flex gap-1 rounded-full bg-bg-soft p-1">
+          {(
+            [
+              ["basics", "wallet.tabBasics"],
+              ["card", "wallet.tabCardDetails"],
+              ["look", "wallet.tabLook"],
+            ] as const
+          ).map(([key, labelKey]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setTab(key)}
+              className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+                tab === key ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+              }`}
+            >
+              {t(labelKey)}
+            </button>
+          ))}
+        </div>
+
+        {tab === "basics" && (
         <FormSection icon={<CategoryIcon iconKey="bank" className="h-4 w-4" />} title={t("wallet.nameLabel")}>
           <input
             id="walletName"
@@ -392,7 +421,12 @@ export default function WalletModal({
               </button>
             </div>
           </div>
+        </FormSection>
+        )}
 
+        {tab === "card" && (
+        <>
+        <FormSection icon={<MembershipCardIcon className="h-4 w-4" />} title={t("wallet.tabCardDetails")}>
           {/* Hidden both when a template forces a specific network AND
            * when it forces the network badge off entirely — picking a
            * network is pointless if the badge that would show it never
@@ -747,8 +781,75 @@ export default function WalletModal({
             </button>
             </>
           )}
+
+          <div className="space-y-2 border-t border-line pt-3">
+            {!forcedFields.showBalance && (
+              <button
+                type="button"
+                onClick={() => setShowBalance((v) => !v)}
+                className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+              >
+                <span>
+                  <span className="block text-sm font-medium text-foreground">{t("wallet.showBalanceOnCardLabel")}</span>
+                  <span className="block text-xs text-ink-soft">{t("wallet.showBalanceOnCardDesc")}</span>
+                </span>
+                <span
+                  role="switch"
+                  aria-checked={showBalance}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                    showBalance ? "bg-navy" : "bg-line"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                      showBalance ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </span>
+              </button>
+            )}
+            {showBalance && !forcedFields.showCurrency && (
+              <button
+                type="button"
+                onClick={() => setShowCurrency((v) => !v)}
+                className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+              >
+                <span>
+                  <span className="block text-sm font-medium text-foreground">{t("wallet.showCurrencyOnCardLabel")}</span>
+                  <span className="block text-xs text-ink-soft">{t("wallet.showCurrencyOnCardDesc")}</span>
+                </span>
+                <span
+                  role="switch"
+                  aria-checked={showCurrency}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                    showCurrency ? "bg-navy" : "bg-line"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                      showCurrency ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </span>
+              </button>
+            )}
+          </div>
         </FormSection>
 
+          <FormSection icon={<FileIcon className="h-4 w-4" />} title={t("membership.notesLabel")}>
+            <textarea
+              id="walletCardNotes"
+              rows={2}
+              value={cardNotes}
+              onChange={(e) => setCardNotes(e.target.value)}
+              placeholder={t("membership.notesPlaceholder")}
+              className="w-full resize-none rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+            />
+          </FormSection>
+        </>
+        )}
+
+        {tab === "basics" && (
         <FormSection icon={<CategoryIcon iconKey="cash" className="h-4 w-4" />} title={t("wallet.currencyLabel")}>
           <SelectDropdown value={currencyValue} options={currencyOptions} onChange={handleCurrencyChange} />
           <p className="text-xs text-ink-soft">{t("wallet.currencyNote")}</p>
@@ -771,85 +872,37 @@ export default function WalletModal({
             </div>
           )}
 
-            <div className="space-y-2 border-t border-line pt-3">
-              {!forcedFields.showBalance && (
-                <button
-                  type="button"
-                  onClick={() => setShowBalance((v) => !v)}
-                  className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
-                >
-                  <span>
-                    <span className="block text-sm font-medium text-foreground">{t("wallet.showBalanceOnCardLabel")}</span>
-                    <span className="block text-xs text-ink-soft">{t("wallet.showBalanceOnCardDesc")}</span>
-                  </span>
-                  <span
-                    role="switch"
-                    aria-checked={showBalance}
-                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
-                      showBalance ? "bg-navy" : "bg-line"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                        showBalance ? "translate-x-6" : "translate-x-1"
-                      }`}
-                    />
-                  </span>
-                </button>
-              )}
-              {showBalance && !forcedFields.showCurrency && (
-                <button
-                  type="button"
-                  onClick={() => setShowCurrency((v) => !v)}
-                  className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
-                >
-                  <span>
-                    <span className="block text-sm font-medium text-foreground">{t("wallet.showCurrencyOnCardLabel")}</span>
-                    <span className="block text-xs text-ink-soft">{t("wallet.showCurrencyOnCardDesc")}</span>
-                  </span>
-                  <span
-                    role="switch"
-                    aria-checked={showCurrency}
-                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
-                      showCurrency ? "bg-navy" : "bg-line"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                        showCurrency ? "translate-x-6" : "translate-x-1"
-                      }`}
-                    />
-                  </span>
-                </button>
-              )}
-            </div>
-
-          <button
-            type="button"
-            onClick={() => setIsDefault((v) => !v)}
-            disabled={isEdit && wallet!.isDefault}
-            className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition disabled:opacity-60"
-          >
-            <span>
-              <span className="block text-sm font-medium text-foreground">{t("wallet.defaultWalletLabel")}</span>
-              <span className="block text-xs text-ink-soft">{t("wallet.defaultWalletDesc")}</span>
-            </span>
-            <span
-              role="switch"
-              aria-checked={isDefault}
-              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
-                isDefault ? "bg-navy" : "bg-line"
-              }`}
+          <div className="border-t border-line pt-3">
+            <button
+              type="button"
+              onClick={() => setIsDefault((v) => !v)}
+              disabled={isEdit && wallet!.isDefault}
+              className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition disabled:opacity-60"
             >
+              <span>
+                <span className="block text-sm font-medium text-foreground">{t("wallet.defaultWalletLabel")}</span>
+                <span className="block text-xs text-ink-soft">{t("wallet.defaultWalletDesc")}</span>
+              </span>
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                  isDefault ? "translate-x-6" : "translate-x-1"
+                role="switch"
+                aria-checked={isDefault}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                  isDefault ? "bg-navy" : "bg-line"
                 }`}
-              />
-            </span>
-          </button>
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                    isDefault ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </span>
+            </button>
+          </div>
         </FormSection>
+        )}
 
+        {tab === "look" && (
+        <>
         <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("wallet.colorLabel")}>
           <PremadeCardPicker
             onSelect={(tpl) => {
@@ -937,17 +990,6 @@ export default function WalletModal({
             </div>
           )}
         </FormSection>
-
-          <FormSection icon={<FileIcon className="h-4 w-4" />} title={t("membership.notesLabel")}>
-            <textarea
-              id="walletCardNotes"
-              rows={2}
-              value={cardNotes}
-              onChange={(e) => setCardNotes(e.target.value)}
-              placeholder={t("membership.notesPlaceholder")}
-              className="w-full resize-none rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-            />
-          </FormSection>
 
         {!templateApplied && (
         <FormSection icon={<UploadIcon className="h-4 w-4" />} title={t("wallet.uploadTemplateLabel")}>
@@ -1191,6 +1233,8 @@ export default function WalletModal({
             </>
           )}
         </FormSection>
+        )}
+        </>
         )}
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
