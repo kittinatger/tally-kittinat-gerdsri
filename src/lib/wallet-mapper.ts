@@ -69,6 +69,7 @@ export function toCardTemplateOption(t: CardTemplateRow): CardTemplateOption {
     lockTextColor: t.lock_text_color,
     category: t.category && isCardTemplateCategory(t.category) ? t.category : null,
     forceNetwork: t.force_network && isCardNetwork(t.force_network) ? t.force_network : null,
+    forceHideCardInfo: t.force_hide_card_info,
     status: t.status,
     submittedByUsername: t.submitted_by_username,
     createdAt: t.created_at,

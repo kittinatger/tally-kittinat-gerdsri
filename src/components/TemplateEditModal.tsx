@@ -85,6 +85,7 @@ export default function TemplateEditModal({
   const [forceNamePosition, setForceNamePosition] = useState<NamePosition | null>(template.forceNamePosition);
   const [lockTextColor, setLockTextColor] = useState(template.lockTextColor);
   const [forceNetwork, setForceNetwork] = useState<CardNetwork | null>(template.forceNetwork);
+  const [forceHideCardInfo, setForceHideCardInfo] = useState(template.forceHideCardInfo);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -111,6 +112,7 @@ export default function TemplateEditModal({
           forceNamePosition,
           lockTextColor,
           forceNetwork,
+          forceHideCardInfo,
         }),
       });
       const data = await res.json();
@@ -382,6 +384,32 @@ export default function TemplateEditModal({
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="border-t border-line pt-3">
+            <button
+              type="button"
+              onClick={() => setForceHideCardInfo((v) => !v)}
+              className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+            >
+              <span>
+                <span className="block text-sm font-medium text-foreground">{t("wallet.forceHideCardInfoLabel")}</span>
+                <span className="block text-xs text-ink-soft">{t("wallet.forceHideCardInfoDesc")}</span>
+              </span>
+              <span
+                role="switch"
+                aria-checked={forceHideCardInfo}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                  forceHideCardInfo ? "bg-navy" : "bg-line"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                    forceHideCardInfo ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </span>
+            </button>
           </div>
         </FormSection>
 

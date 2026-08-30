@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 48;
+const CURRENT_SCHEMA_VERSION = 49;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1277,6 +1277,16 @@ function ensureSchema(): Promise<void> {
       // NULL means "don't touch it".
       await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS force_network TEXT;`;
 
+      // When true, forces the wallet's last4/holderName/expiry off the
+      // card face entirely (show_holder_name = false, show_expiry =
+      // false) and takes those fields — plus last4/holderName themselves
+      // and the name-position picker — out of the wallet editor, same
+      // idea as lock_text_color. For a template whose artwork carries no
+      // real card-number/holder/expiry area at all (a plain e-money
+      // balance card, say), there's nothing there for the picker to fill
+      // in or show.
+      await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS force_hide_card_info BOOLEAN NOT NULL DEFAULT false;`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -1982,6 +1992,9 @@ export type CardTemplateRow = {
   // force_show_network_badge above (whether a badge renders at all, not
   // which network it is). NULL means "don't touch it".
   force_network: string | null;
+  // When true, forces last4/holderName/expiry off the card face and out
+  // of the wallet editor entirely — see the ensureSchema comment.
+  force_hide_card_info: boolean;
   status: "pending" | "approved" | "rejected";
   created_at: string;
   reviewed_at: string | null;
@@ -1993,7 +2006,7 @@ export type CardTemplateRow = {
 // against the users join), bare column names for INSERT/UPDATE...RETURNING
 // where there's no alias to strip.
 const CARD_TEMPLATE_COLUMNS =
-  "id, submitted_by, name, color, background, text_color, force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency, country, force_name_position, lock_text_color, category, force_network, status, created_at, reviewed_at";
+  "id, submitted_by, name, color, background, text_color, force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency, country, force_name_position, lock_text_color, category, force_network, force_hide_card_info, status, created_at, reviewed_at";
 
 export async function createCardTemplate(
   userId: number,
@@ -2014,6 +2027,7 @@ export async function createCardTemplate(
     lockTextColor?: boolean;
     category?: string | null;
     forceNetwork?: string | null;
+    forceHideCardInfo?: boolean;
   },
 ): Promise<CardTemplateRow> {
   await ensureSchema();
@@ -2022,9 +2036,9 @@ export async function createCardTemplate(
     `INSERT INTO card_templates (
        submitted_by, name, color, background, text_color,
        force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency,
-       country, force_name_position, lock_text_color, category, force_network, status
+       country, force_name_position, lock_text_color, category, force_network, force_hide_card_info, status
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 'pending')
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, 'pending')
      RETURNING ${CARD_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
     [
       userId,
@@ -2044,6 +2058,7 @@ export async function createCardTemplate(
       input.lockTextColor ?? false,
       input.category ?? null,
       input.forceNetwork ?? null,
+      input.forceHideCardInfo ?? false,
     ],
   );
   return rows[0];
@@ -2103,6 +2118,7 @@ export async function updateCardTemplate(
     lockTextColor?: boolean;
     category?: string | null;
     forceNetwork?: string | null;
+    forceHideCardInfo?: boolean;
     status?: "pending" | "approved" | "rejected";
   },
 ): Promise<CardTemplateRow | null> {
@@ -2124,11 +2140,12 @@ export async function updateCardTemplate(
     lock_text_color: boolean;
     category: string | null;
     force_network: string | null;
+    force_hide_card_info: boolean;
     status: "pending" | "approved" | "rejected";
   }>`
     SELECT name, color, background, text_color,
            force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency,
-           country, force_name_position, lock_text_color, category, force_network, status
+           country, force_name_position, lock_text_color, category, force_network, force_hide_card_info, status
     FROM card_templates WHERE id = ${id};
   `;
   const existing = existingRows[0];
@@ -2150,6 +2167,7 @@ export async function updateCardTemplate(
   const newLockTextColor = input.lockTextColor ?? existing.lock_text_color;
   const newCategory = input.category !== undefined ? input.category : existing.category;
   const newForceNetwork = input.forceNetwork !== undefined ? input.forceNetwork : existing.force_network;
+  const newForceHideCardInfo = input.forceHideCardInfo ?? existing.force_hide_card_info;
   const newStatus = input.status ?? existing.status;
   const bumpReviewedAt = input.status !== undefined;
 
@@ -2157,8 +2175,8 @@ export async function updateCardTemplate(
     `UPDATE card_templates
      SET name = $1, color = $2, background = $3, text_color = $4,
          force_show_name = $5, force_show_network_badge = $6, force_show_chip = $7, force_show_card_number = $8, force_show_balance = $9, force_show_currency = $10,
-         force_currency = $11, country = $12, force_name_position = $13, lock_text_color = $14, category = $15, force_network = $16, status = $17, reviewed_at = ${bumpReviewedAt ? "now()" : "reviewed_at"}
-     WHERE id = $18
+         force_currency = $11, country = $12, force_name_position = $13, lock_text_color = $14, category = $15, force_network = $16, force_hide_card_info = $17, status = $18, reviewed_at = ${bumpReviewedAt ? "now()" : "reviewed_at"}
+     WHERE id = $19
      RETURNING ${CARD_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
     [
       newName,
@@ -2177,6 +2195,7 @@ export async function updateCardTemplate(
       newLockTextColor,
       newCategory,
       newForceNetwork,
+      newForceHideCardInfo,
       newStatus,
       id,
     ],

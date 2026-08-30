@@ -114,6 +114,12 @@ export default function WalletModal({
     showBalance: boolean;
     showCurrency: boolean;
     network: boolean;
+    // A template forcing this takes last4/holderName/expiry/name-position
+    // out of the editor as a group (see hideCardInfo below), rather than
+    // this being one more independent per-field force — a template whose
+    // artwork has no card-number/holder/expiry area at all wants the
+    // whole block gone, not each piece force-hidden separately.
+    hideCardInfo: boolean;
   }>({
     showName: false,
     showNetworkBadge: false,
@@ -122,6 +128,7 @@ export default function WalletModal({
     showBalance: false,
     showCurrency: false,
     network: false,
+    hideCardInfo: false,
   });
 
   // "Upload as template" submits the current background/color/textColor
@@ -184,6 +191,11 @@ export default function WalletModal({
   // artwork, so it doesn't make sense to let the picker choose a
   // different one.
   const [templateForceNetwork, setTemplateForceNetwork] = useState<CardNetwork | null>(null);
+  // When true, submits force_hide_card_info — for artwork with no real
+  // card-number/holder/expiry area at all, taking last4/holderName/
+  // expiry/name-position out of the picker's editor entirely rather than
+  // leaving an empty section for fields that don't apply.
+  const [templateForceHideCardInfo, setTemplateForceHideCardInfo] = useState(false);
 
   const month = expiryMonth ? Number(expiryMonth) : null;
   const year = expiryYear ? Number(expiryYear) : null;
@@ -218,6 +230,7 @@ export default function WalletModal({
           lockTextColor: templateLockTextColor,
           category: templateCategory,
           forceNetwork: templateForceNetwork,
+          forceHideCardInfo: templateForceHideCardInfo,
         }),
       });
       const data = await res.json();
@@ -576,6 +589,11 @@ export default function WalletModal({
               </button>
             )}
 
+          {/* Hidden as one group (not each field independently) once a
+           * picked template forces card info hidden — see the
+           * forcedFields.hideCardInfo comment above. */}
+          {!forcedFields.hideCardInfo && (
+            <>
             <div>
               <label htmlFor="walletLast4" className="mb-1.5 block text-xs font-semibold text-ink-soft">
                 {t("wallet.last4Label")}
@@ -716,6 +734,8 @@ export default function WalletModal({
                 />
               </span>
             </button>
+            </>
+          )}
         </FormSection>
 
         <FormSection icon={<CategoryIcon iconKey="cash" className="h-4 w-4" />} title={t("wallet.currencyLabel")}>
@@ -837,6 +857,10 @@ export default function WalletModal({
               if (tpl.forceShowCurrency !== null) setShowCurrency(tpl.forceShowCurrency);
               if (tpl.forceCurrency !== null) setCurrency(tpl.forceCurrency);
               if (tpl.forceNetwork !== null) setNetwork(tpl.forceNetwork);
+              if (tpl.forceHideCardInfo) {
+                setShowHolderName(false);
+                setShowExpiry(false);
+              }
               setForcedFields({
                 showName: tpl.forceShowName !== null,
                 showNetworkBadge: tpl.forceShowNetworkBadge !== null,
@@ -845,6 +869,7 @@ export default function WalletModal({
                 showBalance: tpl.forceShowBalance !== null,
                 showCurrency: tpl.forceShowCurrency !== null,
                 network: tpl.forceNetwork !== null,
+                hideCardInfo: tpl.forceHideCardInfo,
               });
               if (tpl.forceNamePosition !== null) {
                 setNamePosition(tpl.forceNamePosition);
@@ -1107,6 +1132,30 @@ export default function WalletModal({
                   ))}
                 </div>
               </div>
+
+              <button
+                type="button"
+                onClick={() => setTemplateForceHideCardInfo((v) => !v)}
+                className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+              >
+                <span>
+                  <span className="block text-sm font-medium text-foreground">{t("wallet.forceHideCardInfoLabel")}</span>
+                  <span className="block text-xs text-ink-soft">{t("wallet.forceHideCardInfoDesc")}</span>
+                </span>
+                <span
+                  role="switch"
+                  aria-checked={templateForceHideCardInfo}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                    templateForceHideCardInfo ? "bg-navy" : "bg-line"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                      templateForceHideCardInfo ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </span>
+              </button>
 
               {templateError && <p className="text-sm text-red-600 dark:text-red-400">{templateError}</p>}
               <button
