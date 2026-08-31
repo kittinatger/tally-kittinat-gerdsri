@@ -408,6 +408,11 @@ export default function SettingsNavList({
         <SettingsListItem icon={<AccountIcon />} label={t("settings.account")} accent="slate" {...panelItemProps("account")} />
         <SettingsListItem icon={<ShieldIcon />} label={t("settings.permissions")} accent="slate" {...panelItemProps("permissions")} />
         <SettingsListItem icon={<LockIcon />} label={t("settings.appLock")} accent="rose" {...panelItemProps("appLock")} />
+        {/* Not money-related — a generic utility (encode any link/text as a
+         * QR/barcode), so it lives with Account/Permissions/App lock rather
+         * than under Money just because it shares a symbology with pass
+         * codes. */}
+        <SettingsListItem icon={<QrCodeIcon />} label={t("settings.codeGenerator")} accent="indigo" {...panelItemProps("codeGenerator")} />
       </SettingsSection>
 
       {/* "Money" (was "Records") — every panel about what you own or owe:
@@ -418,7 +423,6 @@ export default function SettingsNavList({
        * "manage my money" mental bucket. */}
       <SettingsSection title={t("settings.section.records")}>
         <SettingsListItem icon={<WalletIcon />} label={t("settings.wallets")} accent="sky" {...panelItemProps("wallets")} />
-        <SettingsListItem icon={<QrCodeIcon />} label={t("settings.codeGenerator")} accent="indigo" {...panelItemProps("codeGenerator")} />
         <SettingsListItem icon={<GridIcon />} label={t("settings.manageCategories")} accent="indigo" {...panelItemProps("categories")} />
         <SettingsListItem icon={<HashIcon />} label={t("settings.manageTags")} accent="indigo" {...panelItemProps("tags")} />
         <SettingsListItem icon={<BudgetIcon />} label={t("settings.budgets")} accent="orange" {...panelItemProps("budgets")} />
