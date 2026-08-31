@@ -28,6 +28,10 @@ export const PANEL_VALUES = [
   "pendingChanges",
   "templateReviews",
   "codeGenerator",
+  "codeScanner",
+  "currencyConverter",
+  "discountCalculator",
+  "loanCalculator",
 ] as const;
 
 export type Panel = (typeof PANEL_VALUES)[number];

@@ -283,6 +283,44 @@ function QrCodeIcon() {
   );
 }
 
+function ScannerIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <path d="M3 7V4.5A1.5 1.5 0 0 1 4.5 3H7M13 3h2.5A1.5 1.5 0 0 1 17 4.5V7M17 13v2.5a1.5 1.5 0 0 1-1.5 1.5H13M7 17H4.5A1.5 1.5 0 0 1 3 15.5V13" />
+      <path d="M4 10h12" />
+    </svg>
+  );
+}
+
+function ConverterIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <path d="M4 7h11l-3-3M16 13H5l3 3" />
+      <circle cx="10" cy="10" r="7.25" />
+    </svg>
+  );
+}
+
+function PercentIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <path d="M15 5 5 15" />
+      <circle cx="6" cy="6" r="1.75" />
+      <circle cx="14" cy="14" r="1.75" />
+    </svg>
+  );
+}
+
+function CalculatorIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <rect x="3.5" y="2.5" width="13" height="15" rx="2" />
+      <path d="M6.5 5.5h7" />
+      <path d="M6.5 9.5h.01M10 9.5h.01M13.5 9.5h.01M6.5 12.5h.01M10 12.5h.01M13.5 12.5h.01M6.5 15.5h.01M10 15.5h.01M13.5 15.5h.01" />
+    </svg>
+  );
+}
+
 function AutoImportIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
@@ -417,6 +455,10 @@ export default function SettingsNavList({
        * home for whatever else in this vein shows up later. */}
       <SettingsSection title={t("settings.section.tools")}>
         <SettingsListItem icon={<QrCodeIcon />} label={t("settings.codeGenerator")} accent="indigo" {...panelItemProps("codeGenerator")} />
+        <SettingsListItem icon={<ScannerIcon />} label={t("settings.codeScanner")} accent="indigo" {...panelItemProps("codeScanner")} />
+        <SettingsListItem icon={<ConverterIcon />} label={t("settings.currencyConverter")} accent="green" {...panelItemProps("currencyConverter")} />
+        <SettingsListItem icon={<PercentIcon />} label={t("settings.discountCalculator")} accent="orange" {...panelItemProps("discountCalculator")} />
+        <SettingsListItem icon={<CalculatorIcon />} label={t("settings.loanCalculator")} accent="teal" {...panelItemProps("loanCalculator")} />
       </SettingsSection>
 
       {/* "Money" (was "Records") — every panel about what you own or owe:

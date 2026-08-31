@@ -42,6 +42,10 @@ const BackupSettingsPanel = dynamic(() => import("./BackupSettingsPanel"), { ssr
 const AppLockSettingsPanel = dynamic(() => import("./AppLockSettingsPanel"), { ssr: false });
 const TemplateReviewPanel = dynamic(() => import("./TemplateReviewPanel"), { ssr: false });
 const CodeGeneratorPanel = dynamic(() => import("./CodeGeneratorPanel"), { ssr: false });
+const CodeScannerPanel = dynamic(() => import("./CodeScannerPanel"), { ssr: false });
+const CurrencyConverterPanel = dynamic(() => import("./CurrencyConverterPanel"), { ssr: false });
+const DiscountCalculatorPanel = dynamic(() => import("./DiscountCalculatorPanel"), { ssr: false });
+const LoanCalculatorPanel = dynamic(() => import("./LoanCalculatorPanel"), { ssr: false });
 
 const PANEL_TITLES: Record<Panel, string> = {
   account: "Account",
@@ -68,6 +72,10 @@ const PANEL_TITLES: Record<Panel, string> = {
   appLock: "App lock",
   templateReviews: "Template Reviews",
   codeGenerator: "Code generator",
+  codeScanner: "Code scanner",
+  currencyConverter: "Currency converter",
+  discountCalculator: "Discount / tip calculator",
+  loanCalculator: "Loan calculator",
 };
 
 function BackIcon() {
@@ -183,6 +191,10 @@ export default function SettingsView({
       {panel === "appLock" && <AppLockSettingsPanel />}
       {panel === "templateReviews" && <TemplateReviewPanel />}
       {panel === "codeGenerator" && <CodeGeneratorPanel />}
+      {panel === "codeScanner" && <CodeScannerPanel />}
+      {panel === "currencyConverter" && <CurrencyConverterPanel />}
+      {panel === "discountCalculator" && <DiscountCalculatorPanel />}
+      {panel === "loanCalculator" && <LoanCalculatorPanel />}
       {panel === "dashboardWidgets" && (
         <DashboardWidgetsSettings
           categories={categories}
