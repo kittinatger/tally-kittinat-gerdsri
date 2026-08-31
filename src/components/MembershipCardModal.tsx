@@ -436,6 +436,7 @@ export default function MembershipCardModal({
             placeholder={t("membership.codePlaceholder")}
             className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
+          <p className="-mt-1 text-[11px] text-ink-soft">{t("membership.codeLinkHint")}</p>
 
           <div>
             <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("membership.formatLabel")}</label>

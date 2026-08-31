@@ -272,6 +272,17 @@ function GiftIcon() {
   );
 }
 
+function QrCodeIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <rect x="2.5" y="2.5" width="5.5" height="5.5" rx="1" />
+      <rect x="12" y="2.5" width="5.5" height="5.5" rx="1" />
+      <rect x="2.5" y="12" width="5.5" height="5.5" rx="1" />
+      <path d="M12 12h2.25v2.25M12 16.75h2.25M16.75 12v1.75M16.75 16.75v.01" />
+    </svg>
+  );
+}
+
 function AutoImportIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
@@ -407,6 +418,7 @@ export default function SettingsNavList({
        * "manage my money" mental bucket. */}
       <SettingsSection title={t("settings.section.records")}>
         <SettingsListItem icon={<WalletIcon />} label={t("settings.wallets")} accent="sky" {...panelItemProps("wallets")} />
+        <SettingsListItem icon={<QrCodeIcon />} label={t("settings.codeGenerator")} accent="indigo" {...panelItemProps("codeGenerator")} />
         <SettingsListItem icon={<GridIcon />} label={t("settings.manageCategories")} accent="indigo" {...panelItemProps("categories")} />
         <SettingsListItem icon={<HashIcon />} label={t("settings.manageTags")} accent="indigo" {...panelItemProps("tags")} />
         <SettingsListItem icon={<BudgetIcon />} label={t("settings.budgets")} accent="orange" {...panelItemProps("budgets")} />
