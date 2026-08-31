@@ -305,15 +305,24 @@ export default function WalletCardShape({
   // coincide with a top or bottom corner.
   const chipSharesCornerWithBadge =
     chipInCorner && chipPosition !== "middleLeft" && showNetworkBadge && !badgeOnRight && badgeOnTop === chipOnTop;
-  // The card-number row (when left in its default "top" inline position)
-  // needs its own reservation now that the chip is *always* a free-
-  // floating absolutely-positioned element (it used to sit inline in this
-  // very row as a flex child, which pushed the number text over for free
-  // — now nothing does that automatically). "bottomLeft" is excluded: on
-  // a short preview card, "middle" and even "topLeft" can land close
-  // enough to this row to visually collide with the number text, but a
-  // bottom-anchored chip is never close to the top row.
-  const cardNumberReservesForChip = showCardNumber && cardNumberPosition === "top" && chipInCorner && chipPosition !== "bottomLeft";
+  // The card-number row needs its own reservation now that the chip is
+  // *always* a free-floating absolutely-positioned element — it used to
+  // sit inline as a flex child (in the "top" row specifically), which
+  // pushed the number text over for free; nothing does that automatically
+  // anymore, for any of the three number positions. Both chip and number
+  // default to "middle" now, so they land in the exact same spot
+  // (top-1/2, left-4) unless reserved for. Compared zone-by-zone —
+  // chipPosition's "…Left" suffix stripped so "topLeft"↔"top",
+  // "middleLeft"↔"middle", "bottomLeft"↔"bottom" — rather than only
+  // guarding the "top" case, since any matching pair can now collide.
+  const chipZone = chipPosition === "topLeft" ? "top" : chipPosition === "bottomLeft" ? "bottom" : "middle";
+  // "top" keeps the broader guard from before (anything but a
+  // bottom-anchored chip is plausibly close enough on a short card) since
+  // that's empirically what the original overlap report needed — a
+  // middleLeft chip and a "top" number aren't the same zone, yet still
+  // collided. "middle"/"bottom" use exact zone matching.
+  const cardNumberReservesForChip =
+    showCardNumber && chipInCorner && (cardNumberPosition === "top" ? chipPosition !== "bottomLeft" : chipZone === cardNumberPosition);
   const chipCornerClass = !chipInCorner
     ? ""
     : chipPosition === "middleLeft"
@@ -377,7 +386,10 @@ export default function WalletCardShape({
       )}
 
       {showCardNumber && cardNumberPosition !== "top" && (
-        <p className={`absolute truncate text-base font-semibold tracking-[0.15em] ${CARD_NUMBER_POSITION_CLASSES[cardNumberPosition]}`}>
+        <p
+          className={`absolute truncate text-base font-semibold tracking-[0.15em] ${CARD_NUMBER_POSITION_CLASSES[cardNumberPosition]}`}
+          style={cardNumberReservesForChip ? { paddingLeft: 40 } : undefined}
+        >
           {cardNumberText}
         </p>
       )}
