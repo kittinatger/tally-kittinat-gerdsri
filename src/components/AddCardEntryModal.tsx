@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import Modal from "./Modal";
 import { decodePassImage } from "@/lib/decode-pass-image";
-import { MembershipCardIcon, CameraIcon, ImageIcon, FileIcon } from "@/lib/icons";
+import { MembershipCardIcon, ImageIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 import type { MembershipCodeFormat } from "@/lib/memberships";
 
@@ -36,30 +36,36 @@ function Tile({
 }
 
 // The "Create pass" entry menu — replaces jumping straight into
-// MembershipCardModal from the Wallet page's + button. New pass opens the
-// blank form; Scan opens ScanCardModal's live camera path directly; Photo
-// gallery and From file both decode a still image via the shared
-// decodePassImage helper (From file has no `accept` restriction, so
-// non-image files are possible — those get a clear inline message instead
-// of silently failing, since there's no .pkpass parser here).
+// MembershipCardModal from the Wallet page's + button. Used to be 4 tiles
+// (New pass / Scan / Photo gallery / From file), but on iOS any
+// `accept="image/*"` file input opens the exact same system sheet (Take
+// Photo, Photo Library, Choose File) no matter which one you tapped —
+// Photo gallery, From file, and even the live Scan camera's own "choose a
+// photo" fallback all funneled to that identical picker, making three
+// separate menu entries read as one confusing duplicate. Down to 2 tiles:
+// New pass, and a single "Choose a photo" that decodes whatever image
+// comes back (gallery pick, camera-in-the-sheet capture, or a file) via
+// the shared decodePassImage helper. Live scanning is still reachable —
+// MembershipCardModal's own "Scan instead" button opens ScanCardModal
+// directly — just not duplicated here as a third near-identical option.
 export default function AddCardEntryModal({
   onClose,
   onNewPass,
-  onScanRequested,
   onScanned,
 }: {
   onClose: () => void;
   onNewPass: () => void;
-  onScanRequested: () => void;
   onScanned: (result: ScannedValue) => void;
 }) {
   const t = useT();
-  const galleryInputRef = useRef<HTMLInputElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [decoding, setDecoding] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleImageFile(file: File) {
+  async function handlePhotoSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
     setError(null);
     setDecoding(true);
     const result = await decodePassImage(file);
@@ -71,44 +77,19 @@ export default function AddCardEntryModal({
     }
   }
 
-  async function handleGallerySelected(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (file) await handleImageFile(file);
-  }
-
-  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setError(t("membership.fileImportUnsupported"));
-      return;
-    }
-    await handleImageFile(file);
-  }
-
   return (
     <Modal onClose={onClose} title={t("membership.entryTitle")}>
-      <input ref={galleryInputRef} type="file" accept="image/*" onChange={handleGallerySelected} className="hidden" />
-      <input ref={fileInputRef} type="file" onChange={handleFileSelected} className="hidden" />
+      <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoSelected} className="hidden" />
 
       {error && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
       {decoding && <p className="mb-3 text-sm text-ink-soft">{t("membership.decodingPhoto")}</p>}
 
       <div className="grid grid-cols-2 gap-3">
         <Tile icon={<MembershipCardIcon className="h-4.5 w-4.5" />} label={t("membership.entryNewPass")} onClick={onNewPass} />
-        <Tile icon={<CameraIcon className="h-4.5 w-4.5" />} label={t("membership.entryScan")} onClick={onScanRequested} />
         <Tile
           icon={<ImageIcon className="h-4.5 w-4.5" />}
-          label={t("membership.entryPhotoGallery")}
-          onClick={() => galleryInputRef.current?.click()}
-          disabled={decoding}
-        />
-        <Tile
-          icon={<FileIcon className="h-4.5 w-4.5" />}
-          label={t("membership.entryFromFile")}
-          onClick={() => fileInputRef.current?.click()}
+          label={t("membership.choosePhoto")}
+          onClick={() => photoInputRef.current?.click()}
           disabled={decoding}
         />
       </div>

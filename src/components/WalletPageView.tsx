@@ -452,10 +452,6 @@ export default function WalletPageView({
             setPassEntryOpen(false);
             setPassModal({ mode: "add" });
           }}
-          onScanRequested={() => {
-            setPassEntryOpen(false);
-            setPassScanOpen(true);
-          }}
           onScanned={(result) => {
             setPassEntryOpen(false);
             setPassModal({ mode: "add", scannedValue: result });
