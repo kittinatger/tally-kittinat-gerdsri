@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       income: categoryRows.filter((c) => c.type === "income").map((c) => c.name),
       transfer: categoryRows.filter((c) => c.type === "transfer").map((c) => c.name),
     };
-    const extractions = await extractTransactionsFromAudio(
+    const { extractions, model } = await extractTransactionsFromAudio(
       base64,
       baseType,
       categories,
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
     const results = await Promise.all(
       extractions.map((extraction) => maybeAutoConvert(extraction, defaultCurrency, autoConvertEnabled)),
     );
-    return NextResponse.json({ extractions: results });
+    return NextResponse.json({ extractions: results, model });
   } catch (err) {
     const { message, log } = describeGeminiError(err, "audio");
     if (log) console.error("extract-voice: Gemini request failed:", err);

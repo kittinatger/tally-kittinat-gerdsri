@@ -39,7 +39,9 @@ export async function importReceiptImage(
     };
 
     const base64 = buffer.toString("base64");
-    const extraction = await extractTransaction(base64, mimeType, categories, walletRows.map((w) => w.name));
+    // Automated intake (no UI to show which model answered) — only the
+    // extraction itself is needed here, not the model-used disclaimer.
+    const { extraction } = await extractTransaction(base64, mimeType, categories, walletRows.map((w) => w.name));
     const converted = await maybeAutoConvert(extraction, defaultCurrency, autoConvertEnabled);
 
     const type = isTransactionType(converted.type) ? converted.type : "expense";

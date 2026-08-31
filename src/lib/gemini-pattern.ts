@@ -8,6 +8,12 @@ import { withGeminiRetry } from "@/lib/gemini";
 // way, as a plain image). Kept in its own file rather than gemini.ts since
 // that one is entirely about text extraction (transactions from receipts/
 // voice) — this is the only image *generation* call in the app.
+// Unlike gemini.ts's text/vision calls, there's no separate lighter image-
+// generation model to fall back to on this one when it's rate-limited —
+// Gemini doesn't currently offer a "lite" image model with its own quota
+// the way it does for text/vision. This stays single-model, retry-only;
+// a rate-limited request here just fails with today's "model is busy"
+// message and the user tries again shortly.
 const IMAGE_MODEL = "gemini-2.5-flash-image";
 
 function getClient(): GoogleGenAI {

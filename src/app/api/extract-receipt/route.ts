@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
       income: categoryRows.filter((c) => c.type === "income").map((c) => c.name),
       transfer: categoryRows.filter((c) => c.type === "transfer").map((c) => c.name),
     };
-    const extraction = await extractTransaction(
+    const { extraction, model } = await extractTransaction(
       base64,
       file.type,
       categories,
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       fallbackDate,
     );
     const result = await maybeAutoConvert(extraction, defaultCurrency, autoConvertEnabled);
-    return NextResponse.json({ extraction: result });
+    return NextResponse.json({ extraction: result, model });
   } catch (err) {
     const { message, log } = describeGeminiError(err, "image");
     if (log) console.error("extract-receipt: Gemini request failed:", err);

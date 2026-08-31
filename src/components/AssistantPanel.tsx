@@ -5,7 +5,7 @@ import { useState } from "react";
 import { todayInputValue } from "@/lib/format";
 import { useT } from "@/lib/language-context";
 
-type Message = { role: "user" | "assistant"; text: string };
+type Message = { role: "user" | "assistant"; text: string; model?: string };
 
 const SUGGESTIONS = ["How much did I spend this month?", "What's my top spending category this month?", "Where do I spend the most?"];
 
@@ -34,7 +34,10 @@ export default function AssistantPanel() {
         setError(typeof data.error === "string" ? data.error : "Could not get an answer.");
         return;
       }
-      setMessages((prev) => [...prev, { role: "assistant", text: data.answer }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", text: data.answer, model: typeof data.model === "string" ? data.model : undefined },
+      ]);
     } catch (err) {
       setError(describeFetchError(err));
     } finally {
@@ -69,7 +72,7 @@ export default function AssistantPanel() {
           </div>
         ) : (
           messages.map((m, i) => (
-            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div key={i} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
               <p
                 className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-sm ${
                   m.role === "user" ? "bg-navy text-white" : "bg-bg-soft text-foreground"
@@ -77,6 +80,9 @@ export default function AssistantPanel() {
               >
                 {m.text}
               </p>
+              {m.role === "assistant" && m.model && (
+                <p className="mt-1 px-1 text-[10px] text-ink-soft/70">{t("ai.answeredBy").replace("{model}", m.model)}</p>
+              )}
             </div>
           ))
         )}

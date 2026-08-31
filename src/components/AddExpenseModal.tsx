@@ -72,8 +72,10 @@ export default function AddExpenseModal({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [scanValues, setScanValues] = useState<ExpenseFormValues | null>(null);
   const [scanConversion, setScanConversion] = useState<ConversionInfo | null>(null);
+  const [scanModel, setScanModel] = useState<string | null>(null);
   const [voiceStatus, setVoiceStatus] = useState<ScanStatus>("idle");
   const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [voiceModel, setVoiceModel] = useState<string | null>(null);
   const [voiceQueue, setVoiceQueue] = useState<{ values: ExpenseFormValues; conversion: ConversionInfo | null }[]>([]);
   const [voiceQueueIndex, setVoiceQueueIndex] = useState(0);
   const [lastRecording, setLastRecording] = useState<{ blob: Blob; mimeType: string } | null>(null);
@@ -139,6 +141,7 @@ export default function AddExpenseModal({
           ? { originalAmount: extraction.originalAmount, originalCurrency: extraction.originalCurrency }
           : null,
       );
+      setScanModel(typeof data.model === "string" ? data.model : null);
       setScanStatus("review");
     } catch (err) {
       setScanError(describeFetchError(err, "Scan document"));
@@ -209,6 +212,7 @@ export default function AddExpenseModal({
           };
         }),
       );
+      setVoiceModel(typeof data.model === "string" ? data.model : null);
       setVoiceQueueIndex(0);
       setVoiceStatus("review");
     } catch (err) {
@@ -222,6 +226,7 @@ export default function AddExpenseModal({
     setVoiceError(null);
     setVoiceQueue([]);
     setVoiceQueueIndex(0);
+    setVoiceModel(null);
     setLastRecording(null);
   }
 
@@ -520,6 +525,7 @@ export default function AddExpenseModal({
                     Review the details below before saving — the vision model detected whether this is an expense
                     or income and can occasionally get it wrong, so double-check the toggle too.
                   </p>
+                  {scanModel && <p className="mt-1 text-[10px] text-surface-foreground-soft/70">{t("ai.modelUsed").replace("{model}", scanModel)}</p>}
                 </div>
               </div>
               {scanConversion && (
@@ -593,6 +599,7 @@ export default function AddExpenseModal({
                       ? "Heard multiple transactions — review each before saving. Double-check the amounts and expense/income toggles, since spoken numbers can occasionally be misheard."
                       : "Review the details below before saving — double-check the amount and expense/income toggle, since spoken numbers can occasionally be misheard."}
                   </p>
+                  {voiceModel && <p className="mt-1 text-[10px] text-surface-foreground-soft/70">{t("ai.modelUsed").replace("{model}", voiceModel)}</p>}
                 </div>
               </div>
               {voiceQueue[voiceQueueIndex].conversion && (

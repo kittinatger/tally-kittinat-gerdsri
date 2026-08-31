@@ -30,8 +30,8 @@ export async function POST(req: NextRequest) {
   try {
     await recordGeminiUsage(userId);
     const todayIso = today && /^\d{4}-\d{2}-\d{2}$/.test(today) ? today : new Date().toISOString().slice(0, 10);
-    const answer = await askAssistant(userId, question, todayIso);
-    return NextResponse.json({ answer });
+    const { answer, model } = await askAssistant(userId, question, todayIso);
+    return NextResponse.json({ answer, model });
   } catch (err) {
     console.error("Assistant request failed:", err);
     return NextResponse.json({ error: "Could not get an answer right now. Please try again." }, { status: 502 });

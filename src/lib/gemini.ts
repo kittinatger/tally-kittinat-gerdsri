@@ -28,6 +28,14 @@ export type CategoriesByType = {
 // broke scanning/voice entry for weeks with no code change on our end.
 export const MODEL = "gemini-flash-latest";
 
+// A lighter, less capable model in the same family — used only as a
+// fallback when MODEL is rate-limited, never chosen by default. Gemini's
+// free-tier quota is tracked separately per model, so this has its own
+// (typically higher) daily allowance under the same API key rather than
+// sharing MODEL's — the cheapest way to add headroom without a second
+// provider, a paid tier, or any new setup.
+export const LITE_MODEL = "gemini-flash-lite-latest";
+
 export function getClient(): GoogleGenAI {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -52,13 +60,16 @@ export function getClient(): GoogleGenAI {
 // only 429 (rate limit) and 503 (overloaded); anything else (bad input,
 // auth/config problems, a genuinely exhausted quota that won't clear in
 // seconds) fails immediately, same as before.
+function isRetryableGeminiError(err: unknown): boolean {
+  return err instanceof ApiError && (err.status === 429 || err.status === 503);
+}
+
 export async function withGeminiRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
       return await fn();
     } catch (err) {
-      const retryable = err instanceof ApiError && (err.status === 429 || err.status === 503);
-      if (!retryable || attempt === attempts) throw err;
+      if (!isRetryableGeminiError(err) || attempt === attempts) throw err;
       const delayMs = 500 * 2 ** (attempt - 1); // 500ms, 1000ms, ...
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
@@ -66,6 +77,36 @@ export async function withGeminiRetry<T>(fn: () => Promise<T>, attempts = 3): Pr
   // Unreachable — the loop always either returns or throws — but keeps
   // TypeScript happy about every code path returning a value.
   throw new Error("withGeminiRetry: exhausted attempts without returning or throwing.");
+}
+
+// Runs `run` against MODEL with the usual 3x retry; if every attempt is
+// still rate-limited/overloaded, makes one more attempt against
+// LITE_MODEL instead of giving up. `run` takes the model id so the same
+// logical request (single call, or — for askAssistant's two-step
+// tool-calling exchange — the whole exchange) can be replayed against
+// whichever model ends up serving it, rather than mixing models
+// mid-conversation. Returns which model actually answered so callers can
+// surface that to the user. On a failure that ISN'T rate-limiting (bad
+// input, auth/config, a genuinely exhausted quota), or if the lite
+// attempt also fails, the original MODEL error propagates — LITE_MODEL is
+// never the error the user sees, since it's not the model they expect
+// results from.
+export async function withGeminiFallback<T>(run: (model: string) => Promise<T>): Promise<{ result: T; model: string }> {
+  try {
+    const result = await withGeminiRetry(() => run(MODEL));
+    return { result, model: MODEL };
+  } catch (err) {
+    if (!isRetryableGeminiError(err)) throw err;
+    try {
+      const result = await run(LITE_MODEL);
+      return { result, model: LITE_MODEL };
+    } catch {
+      // The lite attempt failed too (including for reasons unrelated to
+      // rate limiting) — surface the original, more informative error
+      // about the model the user actually expects to be used.
+      throw err;
+    }
+  }
 }
 
 function buildPrompt(categories: CategoriesByType, walletNames: string[]): string {
@@ -258,13 +299,13 @@ export async function extractTransaction(
   categories: CategoriesByType,
   walletNames: string[] = [],
   fallbackDate: string = serverTodayIso(),
-): Promise<TransactionExtraction> {
+): Promise<{ extraction: TransactionExtraction; model: string }> {
   const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
   const ai = getClient();
 
-  const response = await withGeminiRetry(() =>
-    ai.models.generateContent({
-      model: MODEL,
+  const { result: text, model } = await withGeminiFallback(async (model) => {
+    const response = await ai.models.generateContent({
+      model,
       contents: [
         {
           role: "user",
@@ -275,15 +316,14 @@ export async function extractTransaction(
         responseMimeType: "application/json",
         responseSchema: responseSchema(allCategories, false, walletNames),
       },
-    }),
-  );
+    });
+    if (!response.text) {
+      throw new Error("The vision model returned an empty response.");
+    }
+    return response.text;
+  });
 
-  const text = response.text;
-  if (!text) {
-    throw new Error("The vision model returned an empty response.");
-  }
-
-  return parseExtraction(text, categories, walletNames, fallbackDate);
+  return { extraction: parseExtraction(text, categories, walletNames, fallbackDate), model };
 }
 
 // Voice entry supports logging several transactions in one recording (e.g.
@@ -295,13 +335,13 @@ export async function extractTransactionsFromAudio(
   categories: CategoriesByType,
   walletNames: string[] = [],
   fallbackDate: string = serverTodayIso(),
-): Promise<TransactionExtraction[]> {
+): Promise<{ extractions: TransactionExtraction[]; model: string }> {
   const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
   const ai = getClient();
 
-  const response = await withGeminiRetry(() =>
-    ai.models.generateContent({
-      model: MODEL,
+  const { result: text, model } = await withGeminiFallback(async (model) => {
+    const response = await ai.models.generateContent({
+      model,
       contents: [
         {
           role: "user",
@@ -312,13 +352,12 @@ export async function extractTransactionsFromAudio(
         responseMimeType: "application/json",
         responseSchema: arrayResponseSchema(allCategories, walletNames),
       },
-    }),
-  );
+    });
+    if (!response.text) {
+      throw new Error("The model returned an empty response. Try recording again with a clearer description.");
+    }
+    return response.text;
+  });
 
-  const text = response.text;
-  if (!text) {
-    throw new Error("The model returned an empty response. Try recording again with a clearer description.");
-  }
-
-  return parseExtractions(text, categories, walletNames, fallbackDate);
+  return { extractions: parseExtractions(text, categories, walletNames, fallbackDate), model };
 }
