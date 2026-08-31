@@ -141,6 +141,14 @@ export default function MembershipCardModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const category = CATEGORY_BY_TEMPLATE[template];
+  // The modal used to be one long scroll of 5 FormSections (name+template,
+  // code, the field editor, color/icon/images, notes) — same problem the
+  // wallet editor had before its own tab split. Grouped the same way here:
+  // Basics/Code stay separate (both short, both essential), Fields is its
+  // own tab since the guided/custom editor is the single biggest chunk of
+  // UI, and Look folds in notes at the end (matching how the wallet
+  // editor's "Card details" tab also ends with Notes).
+  const [tab, setTab] = useState<"basics" | "code" | "fields" | "look">("basics");
 
   // Logo/banner: a staged File replaces whatever's already saved (shown via
   // the /logo|/banner API routes for an existing card); "removed" clears a
@@ -227,11 +235,27 @@ export default function MembershipCardModal({
   const placedKeys = new Set(Object.values(layout).flat().filter((k): k is string => Boolean(k)));
   const unplacedKeys = templateFieldDefs.map((f) => f.key).filter((k) => !placedKeys.has(k));
 
+  // "Fields" only shows up once the current template actually has fields
+  // (e.g. "generic" has none) — same idea as the wallet editor's Template
+  // tab disappearing once it's no longer relevant.
+  const tabs = (
+    [
+      ["basics", "wallet.tabBasics"],
+      ["code", "membership.tabCode"],
+      ["fields", "membership.tabFields"],
+      ["look", "wallet.tabLook"],
+    ] as const
+  ).filter(([key]) => key !== "fields" || templateFieldDefs.length > 0);
+
   function handleTemplateChange(next: PassTemplate) {
     setTemplate(next);
     setFields({});
     setLayout(defaultLayoutFor(next));
     setSelectedFieldKey(null);
+    // Switching to a template with no fields (e.g. "generic") makes the
+    // "Fields" tab disappear from the strip above — bail out of it so the
+    // user isn't left on a tab that no longer renders anything.
+    if (tab === "fields" && TEMPLATE_FIELDS[next].length === 0) setTab("basics");
   }
 
   function setFieldValue(key: string, value: string) {
@@ -333,6 +357,27 @@ export default function MembershipCardModal({
           />
         </ColorGlowPreview>
 
+        {/* Same horizontally-scrollable chip strip as the wallet editor's
+         * tab bar — each tab keeps its natural width instead of being
+         * squeezed into an equal-width segmented control. */}
+        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+          {tabs.map(([key, labelKey]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setTab(key)}
+              className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                tab === key
+                  ? "border-transparent bg-navy text-white shadow-sm"
+                  : "border-line bg-bg-soft text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+              }`}
+            >
+              {t(labelKey)}
+            </button>
+          ))}
+        </div>
+
+        {tab === "basics" && (
         <FormSection icon={<TagIcon className="h-4 w-4" />} title={t("membership.nameLabel")}>
           <input
             id="membershipName"
@@ -365,7 +410,9 @@ export default function MembershipCardModal({
             </div>
           </div>
         </FormSection>
+        )}
 
+        {tab === "code" && (
         <FormSection
           icon={<MembershipCardIcon className="h-4 w-4" />}
           title={t("membership.codeLabel")}
@@ -409,8 +456,9 @@ export default function MembershipCardModal({
             </div>
           </div>
         </FormSection>
+        )}
 
-        {templateFieldDefs.length > 0 && (
+        {tab === "fields" && templateFieldDefs.length > 0 && (
           <FormSection
             icon={(() => {
               const Icon = CATEGORY_ICON_COMPONENTS.receipt;
@@ -542,6 +590,8 @@ export default function MembershipCardModal({
           </FormSection>
         )}
 
+        {tab === "look" && (
+        <>
         <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("membership.colorLabel")}>
           <CardBackgroundPicker value={background} onChange={setBackground} plainColor={color} onPlainColorChange={setColor} />
 
@@ -619,6 +669,8 @@ export default function MembershipCardModal({
             className="w-full resize-none rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
         </FormSection>
+        </>
+        )}
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
