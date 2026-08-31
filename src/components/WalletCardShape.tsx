@@ -305,6 +305,15 @@ export default function WalletCardShape({
   // coincide with a top or bottom corner.
   const chipSharesCornerWithBadge =
     chipInCorner && chipPosition !== "middleLeft" && showNetworkBadge && !badgeOnRight && badgeOnTop === chipOnTop;
+  // The card-number row (when left in its default "top" inline position)
+  // needs its own reservation now that the chip is *always* a free-
+  // floating absolutely-positioned element (it used to sit inline in this
+  // very row as a flex child, which pushed the number text over for free
+  // — now nothing does that automatically). "bottomLeft" is excluded: on
+  // a short preview card, "middle" and even "topLeft" can land close
+  // enough to this row to visually collide with the number text, but a
+  // bottom-anchored chip is never close to the top row.
+  const cardNumberReservesForChip = showCardNumber && cardNumberPosition === "top" && chipInCorner && chipPosition !== "bottomLeft";
   const chipCornerClass = !chipInCorner
     ? ""
     : chipPosition === "middleLeft"
@@ -390,7 +399,7 @@ export default function WalletCardShape({
         {showName && <p className="min-w-0 truncate text-sm font-semibold">{label}</p>}
       </div>
 
-      <div className="mt-2 flex min-h-6 items-center gap-2">
+      <div className="mt-2 flex min-h-6 items-center gap-2" style={cardNumberReservesForChip ? { paddingLeft: 40 } : undefined}>
         {showCardNumber && cardNumberPosition === "top" && (
           <p className="truncate text-base font-semibold tracking-[0.15em]">{cardNumberText}</p>
         )}
