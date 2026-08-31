@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 51;
+const CURRENT_SCHEMA_VERSION = 52;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1299,6 +1299,15 @@ function ensureSchema(): Promise<void> {
       // masked "•••• •••• •••• 1234" row.
       await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS card_number_last4_only BOOLEAN NOT NULL DEFAULT false;`;
 
+      // What kind of real-world card this wallet represents (e-money,
+      // credit card, transit card, ...) — same enum as
+      // card_templates.category (see card-template-category.ts). The
+      // Basics tab's chip picker already rendered this for template
+      // submission only; this column is what actually persists the pick
+      // on the wallet itself, since picking one with no effect on a plain
+      // (non-template) wallet read as a bug.
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS category TEXT;`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -1535,6 +1544,9 @@ export type WalletRow = {
   /** Whether the card-number row shows just the bare last4 digits instead
    * of the full masked row. */
   card_number_last4_only: boolean;
+  /** What kind of real-world card this is — see card-template-category.ts.
+   * Null if uncategorized. */
+  category: string | null;
 };
 
 // The full column list every wallet-returning query below selects — one
@@ -1544,7 +1556,8 @@ const WALLET_COLUMNS = `
   w.holder_name, w.last4, w.expiry_month, w.expiry_year, w.network,
   w.show_network_badge, w.badge_position, w.icon_color, w.show_chip, w.chip_color,
   w.chip_position, w.notes, w.show_balance, w.show_currency, w.show_card_number, w.show_name,
-  w.show_holder_name, w.show_expiry, w.name_position, w.card_number_position, w.card_number_last4_only
+  w.show_holder_name, w.show_expiry, w.name_position, w.card_number_position, w.card_number_last4_only,
+  w.category
 `;
 const WALLET_BALANCE_EXPR = `
   (
@@ -1615,6 +1628,7 @@ export async function createWallet(
     namePosition?: string;
     cardNumberPosition?: string;
     cardNumberLast4Only?: boolean;
+    category?: string | null;
   },
 ): Promise<WalletRow> {
   await ensureSchema();
@@ -1666,27 +1680,28 @@ export async function createWallet(
     name_position: string;
     card_number_position: string;
     card_number_last4_only: boolean;
+    category: string | null;
   }>`
     INSERT INTO wallets (
       user_id, name, color, background, text_color, kind, currency, sort_order,
       holder_name, last4, expiry_month, expiry_year, network,
       show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
       show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position,
-      card_number_position, card_number_last4_only
+      card_number_position, card_number_last4_only, category
     )
     VALUES (
       ${userId}, ${input.name}, ${input.color}, ${backgroundJson}, ${input.textColor ?? null}, ${input.kind}, ${input.currency ?? null}, ${nextSort},
       ${input.holderName ?? null}, ${input.last4 ?? null}, ${input.expiryMonth ?? null}, ${input.expiryYear ?? null}, ${input.network ?? null},
       ${showNetworkBadge}, ${badgePosition}, ${input.iconColor ?? null}, ${showChip}, ${chipColor}, ${chipPosition}, ${input.notes ?? null},
       ${showBalance}, ${showCurrency}, ${showCardNumber}, ${showName}, ${showHolderName}, ${showExpiry}, ${namePosition},
-      ${cardNumberPosition}, ${cardNumberLast4Only}
+      ${cardNumberPosition}, ${cardNumberLast4Only}, ${input.category ?? null}
     )
     RETURNING
       id, name, color, background, text_color, kind, currency,
       holder_name, last4, expiry_month, expiry_year, network,
       show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
       show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position,
-      card_number_position, card_number_last4_only;
+      card_number_position, card_number_last4_only, category;
   `;
   return { ...rows[0], is_default: false, archived: false, balance: "0", is_owner: true };
 }
@@ -1725,6 +1740,7 @@ export async function updateWallet(
     namePosition?: string;
     cardNumberPosition?: string;
     cardNumberLast4Only?: boolean;
+    category?: string | null;
   },
 ): Promise<WalletRow | { ok: false; error: string } | null> {
   await ensureSchema();
@@ -1758,13 +1774,14 @@ export async function updateWallet(
     name_position: string;
     card_number_position: string;
     card_number_last4_only: boolean;
+    category: string | null;
   }>`
     SELECT
       name, color, background, text_color, kind, currency, is_default, archived,
       holder_name, last4, expiry_month, expiry_year, network,
       show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
       show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position,
-      card_number_position, card_number_last4_only
+      card_number_position, card_number_last4_only, category
     FROM wallets WHERE id = ${id} AND user_id = ${userId};
   `;
   const existing = existingRows[0];
@@ -1808,6 +1825,7 @@ export async function updateWallet(
   const newNamePosition = input.namePosition ?? existing.name_position;
   const newCardNumberPosition = input.cardNumberPosition ?? existing.card_number_position;
   const newCardNumberLast4Only = input.cardNumberLast4Only ?? existing.card_number_last4_only;
+  const newCategory = input.category !== undefined ? input.category : existing.category;
 
   const client = await db.connect();
   try {
@@ -1823,7 +1841,7 @@ export async function updateWallet(
             show_chip = ${newShowChip}, chip_color = ${newChipColor}, chip_position = ${newChipPosition}, notes = ${newNotes},
             show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}, show_card_number = ${newShowCardNumber}, show_name = ${newShowName},
             show_holder_name = ${newShowHolderName}, show_expiry = ${newShowExpiry}, name_position = ${newNamePosition},
-            card_number_position = ${newCardNumberPosition}, card_number_last4_only = ${newCardNumberLast4Only}
+            card_number_position = ${newCardNumberPosition}, card_number_last4_only = ${newCardNumberLast4Only}, category = ${newCategory}
         WHERE id = ${id} AND user_id = ${userId};
       `;
     } else {
@@ -1835,7 +1853,7 @@ export async function updateWallet(
             show_chip = ${newShowChip}, chip_color = ${newChipColor}, chip_position = ${newChipPosition}, notes = ${newNotes},
             show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}, show_card_number = ${newShowCardNumber}, show_name = ${newShowName},
             show_holder_name = ${newShowHolderName}, show_expiry = ${newShowExpiry}, name_position = ${newNamePosition},
-            card_number_position = ${newCardNumberPosition}, card_number_last4_only = ${newCardNumberLast4Only}
+            card_number_position = ${newCardNumberPosition}, card_number_last4_only = ${newCardNumberLast4Only}, category = ${newCategory}
         WHERE id = ${id} AND user_id = ${userId};
       `;
     }
@@ -2986,7 +3004,19 @@ export async function deleteExpense(userId: number, id: number): Promise<boolean
 // totals (same as any other transfer), but each moves its wallet's balance.
 export async function createWalletTransfer(
   userId: number,
-  input: { fromWalletId: number; toWalletId: number; amount: number; date: string; notes?: string | null },
+  input: {
+    fromWalletId: number;
+    toWalletId: number;
+    amount: number;
+    /** The destination leg's own amount, in the destination wallet's
+     * currency — only meaningful when the two wallets have different
+     * currencies (see WalletTransferModal's conversion preview). Falls
+     * back to `amount` when omitted, i.e. today's same-currency behavior:
+     * both legs move the identical number. */
+    toAmount?: number;
+    date: string;
+    notes?: string | null;
+  },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   await ensureSchema();
   if (input.fromWalletId === input.toWalletId) {
@@ -3002,6 +3032,7 @@ export async function createWalletTransfer(
     return { ok: false, error: "Wallet not found." };
   }
 
+  const toAmount = input.toAmount ?? input.amount;
   const groupId = `wt_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
   const client = await db.connect();
   try {
@@ -3012,7 +3043,7 @@ export async function createWalletTransfer(
     `;
     await client.sql`
       INSERT INTO expenses (user_id, type, direction, date, amount, merchant, category, notes, wallet_id, transfer_group_id)
-      VALUES (${userId}, 'transfer', 'in', ${input.date}, ${input.amount}, ${`Transfer from ${fromWallet.name}`}, 'Self-transfer', ${input.notes ?? null}, ${toWallet.id}, ${groupId});
+      VALUES (${userId}, 'transfer', 'in', ${input.date}, ${toAmount}, ${`Transfer from ${fromWallet.name}`}, 'Self-transfer', ${input.notes ?? null}, ${toWallet.id}, ${groupId});
     `;
     await client.query("COMMIT");
   } catch (err) {

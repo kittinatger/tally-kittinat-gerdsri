@@ -104,6 +104,7 @@ export const BACKUP_TABLES: BackupTable[] = [
       { name: "name_position" },
       { name: "card_number_position" },
       { name: "card_number_last4_only" },
+      { name: "category" },
     ],
   },
   {

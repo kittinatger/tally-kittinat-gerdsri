@@ -203,10 +203,13 @@ export default function WalletModal({
   const [templateForceNamePosition, setTemplateForceNamePosition] = useState<NamePosition | null>(null);
   const [templateLockTextColor, setTemplateLockTextColor] = useState(false);
   // What kind of real-world card this is (e-money, credit card, transit
-  // card, ...) — see card-template-category.ts. Metadata only, like
-  // country, so PremadeCardPicker can filter an increasingly long,
-  // multi-country gallery by card type.
-  const [templateCategory, setTemplateCategory] = useState<CardTemplateCategory | null>(null);
+  // card, ...) — see card-template-category.ts. Shared by two uses: it's
+  // both a real, persisted field on the wallet itself (wallets.category —
+  // useful for filtering/organizing your own wallet list later) AND, when
+  // uploading this wallet as a template, the metadata PremadeCardPicker
+  // filters its gallery by. One state drives both, initialized from the
+  // wallet's own saved category on edit.
+  const [templateCategory, setTemplateCategory] = useState<CardTemplateCategory | null>(wallet?.category ?? null);
   // Which network to force the wallet itself onto — null means "don't
   // force a network" (the picker just inherits whatever it already had).
   // Same idea as forceCurrency: a real card's network is inherent to its
@@ -331,6 +334,7 @@ export default function WalletModal({
         showHolderName,
         showExpiry,
         namePosition,
+        category: templateCategory,
       };
       const res = isEdit
         ? await fetch(`/api/wallets/${wallet!.id}`, {

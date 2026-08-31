@@ -6,6 +6,7 @@ import type { BadgePosition } from "@/lib/badge-position";
 import type { ChipPosition } from "@/lib/chip-position";
 import type { NamePosition } from "@/lib/name-position";
 import type { CardNumberPosition } from "@/lib/card-number-position";
+import type { CardTemplateCategory } from "@/lib/card-template-category";
 
 export type WalletOption = {
   id: number;
@@ -64,4 +65,8 @@ export type WalletOption = {
   /** Whether the card-number row shows just the bare last4 digits instead
    * of the full masked "•••• •••• •••• 1234" row. */
   cardNumberLast4Only: boolean;
+  /** What kind of real-world card this wallet is — null if uncategorized.
+   * Same enum as card_templates.category, see card-template-category.ts.
+   * Metadata only, never applied automatically. */
+  category: CardTemplateCategory | null;
 };

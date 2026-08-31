@@ -203,6 +203,10 @@ const walletCardVisualFields = {
   namePosition: z.enum(NAME_POSITIONS).optional(),
   cardNumberPosition: z.enum(CARD_NUMBER_POSITIONS).optional(),
   cardNumberLast4Only: z.boolean().optional(),
+  // What kind of real-world card this wallet is (e-money, credit card,
+  // transit card, ...) — same enum as card_templates.category. Metadata
+  // only; never applied automatically, just persisted on the wallet.
+  category: z.enum(CARD_TEMPLATE_CATEGORIES).nullable().optional(),
 };
 
 export const walletInputSchema = z.object({
@@ -307,6 +311,10 @@ export const walletTransferInputSchema = z
     fromWalletId: z.number().int().positive(),
     toWalletId: z.number().int().positive(),
     amount: z.number().positive().finite(),
+    // The destination leg's own amount, in the destination wallet's
+    // currency — only sent when the two wallets' currencies differ, see
+    // createWalletTransfer/WalletTransferModal.
+    toAmount: z.number().positive().finite().optional(),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
     notes: z.string().trim().max(500).nullable().optional(),
   })

@@ -1,11 +1,12 @@
 "use client";
 
 import { describeFetchError } from "@/lib/fetch-error";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Modal from "./Modal";
 import SelectDropdown from "./SelectDropdown";
 import DatePicker from "./DatePicker";
 import { todayInputValue } from "@/lib/format";
+import { useCurrency } from "@/lib/currency-context";
 import { useT } from "@/lib/language-context";
 import type { WalletOption } from "@/types/wallet";
 
@@ -19,6 +20,7 @@ export default function WalletTransferModal({
   onSaved: () => void;
 }) {
   const t = useT();
+  const appCurrency = useCurrency();
   const [fromWalletId, setFromWalletId] = useState(wallets[0].id);
   const [toWalletId, setToWalletId] = useState(wallets.find((w) => w.id !== wallets[0].id)?.id ?? wallets[0].id);
   const [amount, setAmount] = useState("");
@@ -27,8 +29,82 @@ export default function WalletTransferModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fromName = wallets.find((w) => w.id === fromWalletId)?.name ?? "";
-  const toName = wallets.find((w) => w.id === toWalletId)?.name ?? "";
+  const fromWallet = wallets.find((w) => w.id === fromWalletId);
+  const toWallet = wallets.find((w) => w.id === toWalletId);
+  const fromName = fromWallet?.name ?? "";
+  const toName = toWallet?.name ?? "";
+  const fromCurrency = fromWallet?.currency ?? appCurrency;
+  const toCurrency = toWallet?.currency ?? appCurrency;
+  const differentCurrencies = fromCurrency !== toCurrency;
+
+  // The destination amount, in the destination wallet's own currency —
+  // only meaningful (and only shown) when the two wallets' currencies
+  // differ; otherwise the same number just moves to both legs, as before.
+  // Auto-filled from convertAmount (via /api/exchange-rate) whenever the
+  // source amount/either wallet changes, but stays user-editable so a
+  // real rate the user actually got can override the estimate — same
+  // "auto-suggest, never enforced" pattern used elsewhere in this app
+  // (e.g. a template's country auto-suggested from its locked currency).
+  const [toAmount, setToAmount] = useState("");
+  const [toAmountTouched, setToAmountTouched] = useState(false);
+  const [converting, setConverting] = useState(false);
+
+  // Untouch (go back to auto-filling) whenever which currencies are even
+  // involved changes — a manual correction for one currency pair isn't a
+  // meaningful starting point for a different pair. Adjusted during
+  // render (comparing against the last-seen pair) rather than in an
+  // effect, since this is deriving state from a prop/state change, not
+  // synchronizing with anything external — the pattern React itself
+  // recommends over a setState-on-mount-of-dependency-change effect.
+  const currencyPairKey = `${fromCurrency}:${toCurrency}`;
+  const [lastCurrencyPairKey, setLastCurrencyPairKey] = useState(currencyPairKey);
+  if (currencyPairKey !== lastCurrencyPairKey) {
+    setLastCurrencyPairKey(currencyPairKey);
+    setToAmountTouched(false);
+  }
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    // Every branch schedules its state update inside a timeout callback
+    // (even the "nothing to do" ones, at 0ms) rather than calling setState
+    // directly in the effect body, to steer clear of the cascading-render
+    // footgun that pattern invites.
+    if (!differentCurrencies || toAmountTouched) {
+      debounceRef.current = setTimeout(() => setConverting(false), 0);
+      return () => {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+      };
+    }
+
+    const amountNum = Number(amount);
+    if (!amount || !Number.isFinite(amountNum) || amountNum <= 0) {
+      debounceRef.current = setTimeout(() => setToAmount(""), 0);
+      return () => {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+      };
+    }
+
+    debounceRef.current = setTimeout(() => {
+      setConverting(true);
+      fetch(`/api/exchange-rate?from=${fromCurrency}&to=${toCurrency}&amount=${amountNum}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (typeof data?.converted === "number") {
+            setToAmount(data.converted.toFixed(2));
+          }
+        })
+        .catch(() => {
+          // Silent — the field just stays whatever it already was, and
+          // the user can always type an amount in manually.
+        })
+        .finally(() => setConverting(false));
+    }, 400);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [amount, fromCurrency, toCurrency, differentCurrencies, toAmountTouched]);
 
   function handleFromChange(name: string) {
     const wallet = wallets.find((w) => w.name === name);
@@ -55,6 +131,7 @@ export default function WalletTransferModal({
     setSubmitting(true);
     setError(null);
     try {
+      const toAmountNum = Number(toAmount);
       const res = await fetch("/api/wallets/transfer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -62,6 +139,9 @@ export default function WalletTransferModal({
           fromWalletId,
           toWalletId,
           amount: Number(amount),
+          ...(differentCurrencies && toAmount && Number.isFinite(toAmountNum) && toAmountNum > 0
+            ? { toAmount: toAmountNum }
+            : {}),
           date,
           notes: notes || undefined,
         }),
@@ -84,11 +164,15 @@ export default function WalletTransferModal({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("walletTransfer.from")}</label>
+            <label className="mb-1.5 block text-sm font-semibold text-ink-soft">
+              {t("walletTransfer.from")} <span className="font-normal text-ink-soft">({fromCurrency})</span>
+            </label>
             <SelectDropdown value={fromName} options={wallets.map((w) => w.name)} onChange={handleFromChange} />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-semibold text-ink-soft">{t("walletTransfer.to")}</label>
+            <label className="mb-1.5 block text-sm font-semibold text-ink-soft">
+              {t("walletTransfer.to")} <span className="font-normal text-ink-soft">({toCurrency})</span>
+            </label>
             <SelectDropdown value={toName} options={wallets.map((w) => w.name)} onChange={handleToChange} />
           </div>
         </div>
@@ -118,6 +202,32 @@ export default function WalletTransferModal({
             />
           </div>
         </div>
+
+        {/* Only shown when the two wallets' currencies actually differ —
+         * a same-currency transfer still just moves one identical number,
+         * same as before this feature existed. */}
+        {differentCurrencies && (
+          <div>
+            <label htmlFor="transferToAmount" className="mb-1.5 block text-sm font-semibold text-ink-soft">
+              {t("walletTransfer.toAmountLabel").replace("{currency}", toCurrency)}
+            </label>
+            <input
+              id="transferToAmount"
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              min="0"
+              value={toAmount}
+              onChange={(e) => {
+                setToAmount(e.target.value);
+                setToAmountTouched(true);
+              }}
+              placeholder={converting ? t("walletTransfer.converting") : "0.00"}
+              className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+            />
+            <p className="mt-1 text-[11px] text-ink-soft">{t("walletTransfer.toAmountHint")}</p>
+          </div>
+        )}
 
         <div>
           <label htmlFor="transferNotes" className="mb-1.5 block text-sm font-semibold text-ink-soft">
