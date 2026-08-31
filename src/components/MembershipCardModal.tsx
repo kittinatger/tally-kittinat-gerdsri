@@ -354,6 +354,7 @@ export default function MembershipCardModal({
             codeSize="small"
             logoUrl={logoPreviewUrl}
             bannerUrl={bannerPreviewUrl}
+            notes={notes}
           />
         </ColorGlowPreview>
 

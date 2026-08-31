@@ -99,12 +99,24 @@ export default function MembershipCardCode({
     );
   }
 
+  // 1D formats already render their text via bwip's own `includetext`
+  // option (inside the canvas); 2D codes (qr/aztec) don't have anywhere
+  // to put text of their own, so the value goes underneath — matching a
+  // real Wallet pass, and useful when the scanner can't read it or a
+  // cashier needs to type it in by hand.
+  const is2d = format === "qr" || format === "aztec";
+
   return (
     <div className="w-full rounded-2xl bg-white p-4">
       {error ? (
         <p className="py-6 text-center text-sm text-red-600">{error}</p>
       ) : (
-        <canvas ref={canvasRef} className="mx-auto block max-w-full" />
+        <>
+          <canvas ref={canvasRef} className="mx-auto block max-w-full" />
+          {is2d && (
+            <p className="mt-2 break-all text-center font-mono text-xs text-gray-500">{value}</p>
+          )}
+        </>
       )}
     </div>
   );
