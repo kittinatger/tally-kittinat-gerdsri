@@ -1635,7 +1635,7 @@ export async function createWallet(
   const showHolderName = input.showHolderName ?? true;
   const showExpiry = input.showExpiry ?? true;
   const namePosition = input.namePosition ?? "bottomLeft";
-  const cardNumberPosition = input.cardNumberPosition ?? "top";
+  const cardNumberPosition = input.cardNumberPosition ?? "middle";
   const cardNumberLast4Only = input.cardNumberLast4Only ?? false;
   const { rows } = await sql<{
     id: number;
