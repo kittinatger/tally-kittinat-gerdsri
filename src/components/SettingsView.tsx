@@ -46,6 +46,7 @@ const CodeScannerPanel = dynamic(() => import("./CodeScannerPanel"), { ssr: fals
 const CurrencyConverterPanel = dynamic(() => import("./CurrencyConverterPanel"), { ssr: false });
 const DiscountCalculatorPanel = dynamic(() => import("./DiscountCalculatorPanel"), { ssr: false });
 const LoanCalculatorPanel = dynamic(() => import("./LoanCalculatorPanel"), { ssr: false });
+const AiUsagePanel = dynamic(() => import("./AiUsagePanel"), { ssr: false });
 
 const PANEL_TITLES: Record<Panel, string> = {
   account: "Account",
@@ -76,6 +77,7 @@ const PANEL_TITLES: Record<Panel, string> = {
   currencyConverter: "Currency converter",
   discountCalculator: "Discount / tip calculator",
   loanCalculator: "Loan calculator",
+  aiUsage: "AI usage & models",
 };
 
 function BackIcon() {
@@ -195,6 +197,7 @@ export default function SettingsView({
       {panel === "currencyConverter" && <CurrencyConverterPanel />}
       {panel === "discountCalculator" && <DiscountCalculatorPanel />}
       {panel === "loanCalculator" && <LoanCalculatorPanel />}
+      {panel === "aiUsage" && <AiUsagePanel />}
       {panel === "dashboardWidgets" && (
         <DashboardWidgetsSettings
           categories={categories}

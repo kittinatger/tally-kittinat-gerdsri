@@ -2,11 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { askAssistant } from "@/lib/assistant";
 import { countRecentGeminiUsage, recordGeminiUsage } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
+import { MAX_GEMINI_CALLS_PER_DAY } from "@/lib/gemini-usage";
 
-// Shares the same daily Gemini-usage bucket as receipt scanning/voice entry
-// (see extract-receipt/route.ts) — one combined cap on paid-API calls per
-// user per day, not a separate quota per feature.
-const MAX_GEMINI_CALLS_PER_DAY = 60;
 const MAX_QUESTION_LENGTH = 300;
 
 // askAssistant's worst case (1 try against MODEL + 1 fallback try against

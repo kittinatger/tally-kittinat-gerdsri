@@ -3,15 +3,10 @@ import { generateCardPatternImage } from "@/lib/gemini-pattern";
 import { describeGeminiError } from "@/lib/gemini-error";
 import { countRecentGeminiUsage, recordGeminiUsage } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
+import { MAX_GEMINI_CALLS_PER_DAY } from "@/lib/gemini-usage";
 
 const MAX_BYTES = 8 * 1024 * 1024; // 8MB
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-
-// Shares the same daily bucket as extract-receipt/extract-voice (see
-// countRecentGeminiUsage) — all three are interactive Gemini calls a user
-// can trigger from the UI, so one combined cap is simpler than a separate
-// counter per feature and still well above normal usage.
-const MAX_GEMINI_CALLS_PER_DAY = 60;
 
 export async function POST(req: NextRequest) {
   const userId = await getUserId();

@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
-import { withGeminiRetry, REQUEST_TIMEOUT_MS } from "@/lib/gemini";
+import { withGeminiRetry } from "@/lib/gemini";
+import { IMAGE_MODEL, REQUEST_TIMEOUT_MS } from "@/lib/gemini-models";
 
 // Generates a new, abstract decorative pattern "inspired by" a scanned
 // card photo — used by CardPhotoScanModal's "Generate AI pattern" option,
@@ -14,7 +15,6 @@ import { withGeminiRetry, REQUEST_TIMEOUT_MS } from "@/lib/gemini";
 // the way it does for text/vision. This stays single-model, retry-only;
 // a rate-limited request here just fails with today's "model is busy"
 // message and the user tries again shortly.
-const IMAGE_MODEL = "gemini-2.5-flash-image";
 
 function getClient(): GoogleGenAI {
   const apiKey = process.env.GEMINI_API_KEY;

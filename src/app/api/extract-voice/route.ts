@@ -11,6 +11,7 @@ import {
 } from "@/lib/db";
 import { maybeAutoConvert } from "@/lib/exchange-rate";
 import { getUserId } from "@/lib/auth";
+import { MAX_GEMINI_CALLS_PER_DAY } from "@/lib/gemini-usage";
 
 const MAX_BYTES = 15 * 1024 * 1024; // 15MB
 const ALLOWED_TYPES = new Set([
@@ -22,9 +23,6 @@ const ALLOWED_TYPES = new Set([
   "audio/ogg",
   "audio/x-m4a",
 ]);
-
-// Shares its daily bucket with extract-receipt — see countRecentGeminiUsage.
-const MAX_GEMINI_CALLS_PER_DAY = 60;
 
 // See extract-receipt/route.ts's comment — same retry/fallback worst case.
 export const maxDuration = 60;

@@ -11,6 +11,7 @@ import {
 } from "@/lib/db";
 import { maybeAutoConvert } from "@/lib/exchange-rate";
 import { getUserId } from "@/lib/auth";
+import { MAX_GEMINI_CALLS_PER_DAY } from "@/lib/gemini-usage";
 
 const MAX_BYTES = 8 * 1024 * 1024; // 8MB
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
@@ -22,11 +23,6 @@ const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/h
 // retry, which looks to the client like a request that never resolves at
 // all (no response, no error) rather than a clean failure.
 export const maxDuration = 60;
-
-// Gemini calls cost money — cap interactive scans (this route + extract-voice
-// share the same daily bucket, see countRecentGeminiUsage) well above normal
-// usage but well below what a scripted client could rack up.
-const MAX_GEMINI_CALLS_PER_DAY = 60;
 
 export async function POST(req: NextRequest) {
   const userId = await getUserId();

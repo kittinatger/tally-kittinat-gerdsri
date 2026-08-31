@@ -32,6 +32,7 @@ export const PANEL_VALUES = [
   "currencyConverter",
   "discountCalculator",
   "loanCalculator",
+  "aiUsage",
 ] as const;
 
 export type Panel = (typeof PANEL_VALUES)[number];

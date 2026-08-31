@@ -321,6 +321,15 @@ function CalculatorIcon() {
   );
 }
 
+function SparkleIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <path d="M10 3v3M10 14v3M3 10h3M14 10h3M5.3 5.3l2.1 2.1M12.6 12.6l2.1 2.1M14.7 5.3l-2.1 2.1M7.4 12.6l-2.1 2.1" />
+      <circle cx="10" cy="10" r="1.75" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 function AutoImportIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
@@ -461,6 +470,16 @@ export default function SettingsNavList({
         <SettingsListItem icon={<CalculatorIcon />} label={t("settings.loanCalculator")} accent="teal" {...panelItemProps("loanCalculator")} />
       </SettingsSection>
 
+      {/* Everything about the app's own AI features, gathered in one place
+       * instead of Assistant living alone under Social (it's a chat
+       * feature, but "AI" is the more useful grouping for it) with no
+       * visibility anywhere into which models power it or how much of
+       * the shared daily quota is left. */}
+      <SettingsSection title={t("settings.section.ai")}>
+        <SettingsListItem icon={<AssistantIcon />} label={t("settings.assistant")} accent="violet" {...panelItemProps("assistant")} />
+        <SettingsListItem icon={<SparkleIcon />} label={t("settings.aiUsage")} accent="violet" {...panelItemProps("aiUsage")} />
+      </SettingsSection>
+
       {/* "Money" (was "Records") — every panel about what you own or owe:
        * wallets themselves plus the categorization/budgeting/recurring/
        * loan features built on top of them. Budgets/savings/recurring
@@ -481,7 +500,6 @@ export default function SettingsNavList({
         <SettingsListItem icon={<FriendsIcon />} label={t("settings.friends")} accent="pink" {...panelItemProps("friends")} />
         <SettingsListItem icon={<TrophyNavIcon />} label={t("settings.challenges")} accent="violet" {...panelItemProps("challenges")} />
         <SettingsListItem icon={<ReceiptNavIcon />} label={t("settings.splitBills")} accent="amber" {...panelItemProps("splitBills")} />
-        <SettingsListItem icon={<AssistantIcon />} label={t("settings.assistant")} accent="violet" {...panelItemProps("assistant")} />
       </SettingsSection>
 
       {/* Everything that moves data in/out of the app rather than being a
