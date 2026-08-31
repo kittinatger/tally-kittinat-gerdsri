@@ -408,10 +408,14 @@ export default function SettingsNavList({
         <SettingsListItem icon={<AccountIcon />} label={t("settings.account")} accent="slate" {...panelItemProps("account")} />
         <SettingsListItem icon={<ShieldIcon />} label={t("settings.permissions")} accent="slate" {...panelItemProps("permissions")} />
         <SettingsListItem icon={<LockIcon />} label={t("settings.appLock")} accent="rose" {...panelItemProps("appLock")} />
-        {/* Not money-related — a generic utility (encode any link/text as a
-         * QR/barcode), so it lives with Account/Permissions/App lock rather
-         * than under Money just because it shares a symbology with pass
-         * codes. */}
+      </SettingsSection>
+
+      {/* A generic utility (encode any link/text as a QR/barcode) that
+       * doesn't fit any existing bucket — not money, not social, not
+       * data-movement, not display prefs. Its own small section rather
+       * than being wedged into one of those for a loose reason. Its own
+       * home for whatever else in this vein shows up later. */}
+      <SettingsSection title={t("settings.section.tools")}>
         <SettingsListItem icon={<QrCodeIcon />} label={t("settings.codeGenerator")} accent="indigo" {...panelItemProps("codeGenerator")} />
       </SettingsSection>
 
