@@ -112,6 +112,13 @@
 body {
   background: var(--background);
   color: var(--foreground);
+  /* Now that viewport-fit=cover (layout.tsx) puts the notch/status bar and
+     home-indicator areas inside the layout viewport, ordinary page content
+     needs its own padding to stay clear of them — env() resolves to 0 on
+     devices with no safe area (most non-notched phones, all desktops), so
+     this is a no-op everywhere except the devices it's actually for. */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 h1, h2, h3 {
