@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { withGeminiRetry } from "@/lib/gemini";
 
 // Generates a new, abstract decorative pattern "inspired by" a scanned
 // card photo — used by CardPhotoScanModal's "Generate AI pattern" option,
@@ -42,15 +43,17 @@ Output only the generated image, nothing else.`;
 
 export async function generateCardPatternImage(imageBase64: string, mimeType: string): Promise<{ data: string; mimeType: string }> {
   const ai = getClient();
-  const response = await ai.models.generateContent({
-    model: IMAGE_MODEL,
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: PROMPT }, { inlineData: { mimeType, data: imageBase64 } }],
-      },
-    ],
-  });
+  const response = await withGeminiRetry(() =>
+    ai.models.generateContent({
+      model: IMAGE_MODEL,
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: PROMPT }, { inlineData: { mimeType, data: imageBase64 } }],
+        },
+      ],
+    }),
+  );
 
   const parts = response.candidates?.[0]?.content?.parts ?? [];
   const imagePart = parts.find((p) => p.inlineData?.data);

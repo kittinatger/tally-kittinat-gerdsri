@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, ApiError } from "@google/genai";
 import { isTransactionType, isTransferDirection, type TransactionType, type TransferDirection } from "@/lib/categories";
 
 export type TransactionExtraction = {
@@ -42,6 +42,30 @@ export function getClient(): GoogleGenAI {
   // the SDK uses `throwErrorIfNotOK`, which parses the real error body into
   // a proper ApiError with the true status/message.
   return new GoogleGenAI({ apiKey });
+}
+
+// "Gemini is busy right now" (429/503, see describeGeminiError) is often
+// transient — a momentary overload on Google's end clears within a couple
+// seconds — but every call here previously surfaced it to the user on the
+// very first attempt with no retry at all, so anyone hitting a brief blip
+// saw a hard failure instead of it just working a second later. Retries
+// only 429 (rate limit) and 503 (overloaded); anything else (bad input,
+// auth/config problems, a genuinely exhausted quota that won't clear in
+// seconds) fails immediately, same as before.
+export async function withGeminiRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const retryable = err instanceof ApiError && (err.status === 429 || err.status === 503);
+      if (!retryable || attempt === attempts) throw err;
+      const delayMs = 500 * 2 ** (attempt - 1); // 500ms, 1000ms, ...
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  // Unreachable — the loop always either returns or throws — but keeps
+  // TypeScript happy about every code path returning a value.
+  throw new Error("withGeminiRetry: exhausted attempts without returning or throwing.");
 }
 
 function buildPrompt(categories: CategoriesByType, walletNames: string[]): string {
@@ -238,19 +262,21 @@ export async function extractTransaction(
   const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
   const ai = getClient();
 
-  const response = await ai.models.generateContent({
-    model: MODEL,
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: buildPrompt(categories, walletNames) }, { inlineData: { mimeType, data: imageBase64 } }],
+  const response = await withGeminiRetry(() =>
+    ai.models.generateContent({
+      model: MODEL,
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: buildPrompt(categories, walletNames) }, { inlineData: { mimeType, data: imageBase64 } }],
+        },
+      ],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: responseSchema(allCategories, false, walletNames),
       },
-    ],
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: responseSchema(allCategories, false, walletNames),
-    },
-  });
+    }),
+  );
 
   const text = response.text;
   if (!text) {
@@ -273,19 +299,21 @@ export async function extractTransactionsFromAudio(
   const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
   const ai = getClient();
 
-  const response = await ai.models.generateContent({
-    model: MODEL,
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: buildVoicePrompt(categories, walletNames) }, { inlineData: { mimeType, data: audioBase64 } }],
+  const response = await withGeminiRetry(() =>
+    ai.models.generateContent({
+      model: MODEL,
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: buildVoicePrompt(categories, walletNames) }, { inlineData: { mimeType, data: audioBase64 } }],
+        },
+      ],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: arrayResponseSchema(allCategories, walletNames),
       },
-    ],
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: arrayResponseSchema(allCategories, walletNames),
-    },
-  });
+    }),
+  );
 
   const text = response.text;
   if (!text) {

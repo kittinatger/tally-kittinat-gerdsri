@@ -1,5 +1,5 @@
 import { Type, type FunctionCall, type Tool } from "@google/genai";
-import { getClient, MODEL } from "@/lib/gemini";
+import { getClient, MODEL, withGeminiRetry } from "@/lib/gemini";
 import { getSpendingByCategory, getSpendingTotal, getTopMerchants } from "@/lib/spending-queries";
 
 // The in-app spending assistant answers questions like "how much did I
@@ -81,11 +81,13 @@ export async function askAssistant(userId: number, question: string, todayIso: s
     { role: "user", parts: [{ text: question }] },
   ];
 
-  const first = await ai.models.generateContent({
-    model: MODEL,
-    contents,
-    config: { systemInstruction, tools: TOOLS },
-  });
+  const first = await withGeminiRetry(() =>
+    ai.models.generateContent({
+      model: MODEL,
+      contents,
+      config: { systemInstruction, tools: TOOLS },
+    }),
+  );
 
   const calls = first.functionCalls;
   if (!calls || calls.length === 0) {
@@ -106,11 +108,13 @@ export async function askAssistant(userId: number, question: string, todayIso: s
     { role: "user", parts: responseParts },
   );
 
-  const second = await ai.models.generateContent({
-    model: MODEL,
-    contents,
-    config: { systemInstruction, tools: TOOLS },
-  });
+  const second = await withGeminiRetry(() =>
+    ai.models.generateContent({
+      model: MODEL,
+      contents,
+      config: { systemInstruction, tools: TOOLS },
+    }),
+  );
 
   return second.text ?? "Sorry, I couldn't come up with an answer to that.";
 }
