@@ -17,9 +17,21 @@ const FORMAT_LABEL_KEYS: Record<MembershipCodeFormat, MessageKey> = {
   aztec: "membership.formatAztec",
 };
 
+const BCID: Record<MembershipCodeFormat, string> = {
+  qr: "qrcode",
+  code128: "code128",
+  ean13: "ean13",
+  upc: "upca",
+  pdf417: "pdf417",
+  aztec: "azteccode",
+};
+
+const DOWNLOAD_KINDS = ["png", "jpg", "svg"] as const;
+type DownloadKind = (typeof DOWNLOAD_KINDS)[number];
+
 // A standalone version of what MembershipCardCode.tsx renders inline on a
 // pass — same bwip-js call, but kept independent (rather than reused)
-// because this one needs its own canvas ref to export a PNG, which
+// because this one needs its own canvas ref to export an image, which
 // MembershipCardCode doesn't expose.
 export default function CodeGeneratorPanel() {
   const t = useT();
@@ -32,6 +44,17 @@ export default function CodeGeneratorPanel() {
   const isEmpty = trimmed === "";
   const is2d = format === "qr" || format === "aztec";
 
+  function bwipOpts() {
+    return {
+      bcid: BCID[format],
+      text: trimmed,
+      scale: is2d ? 6 : 3,
+      includetext: !is2d,
+      textxalign: "center" as const,
+      ...(!is2d && { height: 16 }),
+    };
+  }
+
   useEffect(() => {
     let cancelled = false;
     // Deferred to a microtask so the setError(null) below doesn't run
@@ -43,14 +66,7 @@ export default function CodeGeneratorPanel() {
       const canvas = canvasRef.current;
       if (!canvas) return;
       try {
-        bwipjs.toCanvas(canvas, {
-          bcid: { qr: "qrcode", code128: "code128", ean13: "ean13", upc: "upca", pdf417: "pdf417", aztec: "azteccode" }[format],
-          text: trimmed,
-          scale: is2d ? 6 : 3,
-          includetext: !is2d,
-          textxalign: "center" as const,
-          ...(!is2d && { height: 16 }),
-        });
+        bwipjs.toCanvas(canvas, bwipOpts());
       } catch (err) {
         console.error("bwip-js render failed:", err);
         setError(t("membership.codeRenderError"));
@@ -59,16 +75,56 @@ export default function CodeGeneratorPanel() {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bwipOpts is derived fresh each render from the same deps listed below
   }, [trimmed, format, is2d, isEmpty, t]);
 
-  function handleDownload() {
-    const canvas = canvasRef.current;
-    if (!canvas || isEmpty || error) return;
-    const url = canvas.toDataURL("image/png");
+  function triggerDownload(href: string, extension: string) {
     const a = document.createElement("a");
-    a.href = url;
-    a.download = `code-${format}-${Date.now()}.png`;
+    a.href = href;
+    // Only ever called from a click handler (never during render), but the
+    // react-hooks/purity rule can't tell that from a component-scoped
+    // helper — Date.now() here is fine.
+    // eslint-disable-next-line react-hooks/purity
+    a.download = `code-${format}-${Date.now()}.${extension}`;
     a.click();
+  }
+
+  function handleDownload(kind: DownloadKind) {
+    if (isEmpty || error) return;
+    if (kind === "svg") {
+      // bwip-js can render straight to an SVG string, independent of the
+      // canvas preview — a real vector file, not a canvas-to-image trace.
+      try {
+        const svg = bwipjs.toSVG(bwipOpts());
+        const blob = new Blob([svg], { type: "image/svg+xml" });
+        const url = URL.createObjectURL(blob);
+        triggerDownload(url, "svg");
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error("bwip-js SVG render failed:", err);
+        setError(t("membership.codeRenderError"));
+      }
+      return;
+    }
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    if (kind === "png") {
+      triggerDownload(canvas.toDataURL("image/png"), "png");
+      return;
+    }
+    // JPEG has no transparency channel — bwip-js's canvas background is
+    // already opaque white for every format here, but composite onto an
+    // explicit white background anyway rather than depend on that.
+    const flattened = document.createElement("canvas");
+    flattened.width = canvas.width;
+    flattened.height = canvas.height;
+    const ctx = flattened.getContext("2d");
+    if (!ctx) return;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, flattened.width, flattened.height);
+    ctx.drawImage(canvas, 0, 0);
+    triggerDownload(flattened.toDataURL("image/jpeg", 0.92), "jpg");
   }
 
   return (
@@ -120,14 +176,22 @@ export default function CodeGeneratorPanel() {
             <canvas ref={canvasRef} className="mx-auto block max-w-full" />
           )}
         </div>
-        <button
-          type="button"
-          onClick={handleDownload}
-          disabled={isEmpty || Boolean(error)}
-          className="mt-4 self-start rounded-full border border-line px-3.5 py-2 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-60"
-        >
-          {t("codeGenerator.downloadButton")}
-        </button>
+        <div className="mt-4">
+          <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("codeGenerator.downloadLabel")}</label>
+          <div className="flex flex-wrap gap-2">
+            {DOWNLOAD_KINDS.map((kind) => (
+              <button
+                key={kind}
+                type="button"
+                onClick={() => handleDownload(kind)}
+                disabled={isEmpty || Boolean(error)}
+                className="rounded-full border border-line px-3.5 py-2 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-60"
+              >
+                {t("codeGenerator.downloadAs").replace("{format}", kind.toUpperCase())}
+              </button>
+            ))}
+          </div>
+        </div>
       </section>
     </div>
   );
