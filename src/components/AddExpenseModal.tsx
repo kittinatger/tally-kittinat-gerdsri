@@ -21,6 +21,13 @@ type Tab = "manual" | "scan" | "voice";
 type ScanStatus = "idle" | "analyzing" | "review" | "error";
 type ConversionInfo = { originalAmount: number; originalCurrency: string };
 
+// Generous enough to cover the server's own worst case (gemini.ts's
+// REQUEST_TIMEOUT_MS per attempt, times up to 3 retries plus one lite-
+// model fallback attempt, plus the retry backoff delays) with headroom —
+// this is a backstop so a genuinely stuck request always resolves to a
+// clear error within a bounded time, not the primary timeout.
+const SCAN_FETCH_TIMEOUT_MS = 100_000;
+
 function PencilTabIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
@@ -101,7 +108,11 @@ export default function AddExpenseModal({
     formData.append("fallbackDate", todayInputValue());
 
     try {
-      const res = await fetch("/api/extract-receipt", { method: "POST", body: formData });
+      const res = await fetch("/api/extract-receipt", {
+        method: "POST",
+        body: formData,
+        signal: AbortSignal.timeout(SCAN_FETCH_TIMEOUT_MS),
+      });
       const data = await res.json();
       if (!res.ok) {
         const message = typeof data.error === "string" ? data.error : "Could not read that document.";
@@ -165,7 +176,11 @@ export default function AddExpenseModal({
     formData.append("fallbackDate", todayInputValue());
 
     try {
-      const res = await fetch("/api/extract-voice", { method: "POST", body: formData });
+      const res = await fetch("/api/extract-voice", {
+        method: "POST",
+        body: formData,
+        signal: AbortSignal.timeout(SCAN_FETCH_TIMEOUT_MS),
+      });
       const data = await res.json();
       if (!res.ok) {
         const message = typeof data.error === "string" ? data.error : "Could not understand that recording.";

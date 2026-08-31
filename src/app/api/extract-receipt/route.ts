@@ -15,6 +15,14 @@ import { getUserId } from "@/lib/auth";
 const MAX_BYTES = 8 * 1024 * 1024; // 8MB
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 
+// Worst case here is 3 retries against MODEL plus one fallback attempt
+// against LITE_MODEL (see withGeminiFallback in gemini.ts), each capped at
+// REQUEST_TIMEOUT_MS — comfortably under this, but without it the platform's
+// own default function timeout (much shorter) could kill the request mid-
+// retry, which looks to the client like a request that never resolves at
+// all (no response, no error) rather than a clean failure.
+export const maxDuration = 60;
+
 // Gemini calls cost money — cap interactive scans (this route + extract-voice
 // share the same daily bucket, see countRecentGeminiUsage) well above normal
 // usage but well below what a scripted client could rack up.

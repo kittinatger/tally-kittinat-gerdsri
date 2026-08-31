@@ -9,6 +9,13 @@ type Message = { role: "user" | "assistant"; text: string; model?: string };
 
 const SUGGESTIONS = ["How much did I spend this month?", "What's my top spending category this month?", "Where do I spend the most?"];
 
+// askAssistant makes 2 sequential model calls per attempt — generous
+// headroom over the server's own worst case (see gemini.ts's
+// REQUEST_TIMEOUT_MS and withGeminiFallback) so a genuinely stuck request
+// still resolves to a clear error instead of leaving the chat "typing"
+// forever.
+const ASK_FETCH_TIMEOUT_MS = 100_000;
+
 function BotAvatar() {
   return (
     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-navy text-white">
@@ -75,6 +82,7 @@ export default function AssistantPanel() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: q, today: todayInputValue() }),
+        signal: AbortSignal.timeout(ASK_FETCH_TIMEOUT_MS),
       });
       const data = await res.json();
       if (!res.ok) {

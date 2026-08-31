@@ -26,6 +26,9 @@ const ALLOWED_TYPES = new Set([
 // Shares its daily bucket with extract-receipt — see countRecentGeminiUsage.
 const MAX_GEMINI_CALLS_PER_DAY = 60;
 
+// See extract-receipt/route.ts's comment — same retry/fallback worst case.
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   const userId = await getUserId();
   const formData = await req.formData().catch(() => null);

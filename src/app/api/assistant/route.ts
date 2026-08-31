@@ -9,6 +9,12 @@ import { getUserId } from "@/lib/auth";
 const MAX_GEMINI_CALLS_PER_DAY = 60;
 const MAX_QUESTION_LENGTH = 300;
 
+// askAssistant's worst case (1 try against MODEL + 1 fallback try against
+// LITE_MODEL, each 2 sequential calls capped at gemini.ts's
+// REQUEST_TIMEOUT_MS) stays comfortably under this — see
+// extract-receipt/route.ts's comment for why this needs to be set at all.
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   const userId = await getUserId();
   const body = await req.json().catch(() => null);

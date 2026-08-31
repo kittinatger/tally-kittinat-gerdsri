@@ -1,5 +1,5 @@
 import { Type, type FunctionCall, type Tool } from "@google/genai";
-import { getClient, withGeminiFallback } from "@/lib/gemini";
+import { getClient, withGeminiFallback, REQUEST_TIMEOUT_MS } from "@/lib/gemini";
 import { getSpendingByCategory, getSpendingTotal, getTopMerchants } from "@/lib/spending-queries";
 
 // The in-app spending assistant answers questions like "how much did I
@@ -81,6 +81,9 @@ export async function askAssistant(userId: number, question: string, todayIso: s
   // model withGeminiFallback picks — never split across models mid-
   // conversation (the second call's `contents` includes the first call's
   // raw functionCall parts, which needs one consistent model on both ends).
+  // `attempts: 1` below (1 try against MODEL, no retry, before falling back
+  // to LITE_MODEL) — see withGeminiFallback's comment on why a full 3x
+  // retry of a 2-call exchange isn't used here.
   const { result: answer, model } = await withGeminiFallback(async (model) => {
     const contents: Array<{ role: string; parts: Array<Record<string, unknown>> }> = [
       { role: "user", parts: [{ text: question }] },
@@ -89,7 +92,7 @@ export async function askAssistant(userId: number, question: string, todayIso: s
     const first = await ai.models.generateContent({
       model,
       contents,
-      config: { systemInstruction, tools: TOOLS },
+      config: { systemInstruction, tools: TOOLS, httpOptions: { timeout: REQUEST_TIMEOUT_MS } },
     });
 
     const calls = first.functionCalls;
@@ -114,11 +117,11 @@ export async function askAssistant(userId: number, question: string, todayIso: s
     const second = await ai.models.generateContent({
       model,
       contents,
-      config: { systemInstruction, tools: TOOLS },
+      config: { systemInstruction, tools: TOOLS, httpOptions: { timeout: REQUEST_TIMEOUT_MS } },
     });
 
     return second.text ?? "Sorry, I couldn't come up with an answer to that.";
-  });
+  }, 1);
 
   return { answer, model };
 }

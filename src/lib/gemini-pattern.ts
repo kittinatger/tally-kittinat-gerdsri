@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { withGeminiRetry } from "@/lib/gemini";
+import { withGeminiRetry, REQUEST_TIMEOUT_MS } from "@/lib/gemini";
 
 // Generates a new, abstract decorative pattern "inspired by" a scanned
 // card photo — used by CardPhotoScanModal's "Generate AI pattern" option,
@@ -58,6 +58,7 @@ export async function generateCardPatternImage(imageBase64: string, mimeType: st
           parts: [{ text: PROMPT }, { inlineData: { mimeType, data: imageBase64 } }],
         },
       ],
+      config: { httpOptions: { timeout: REQUEST_TIMEOUT_MS } },
     }),
   );
 

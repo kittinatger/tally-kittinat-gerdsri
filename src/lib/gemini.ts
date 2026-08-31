@@ -36,6 +36,16 @@ export const MODEL = "gemini-flash-latest";
 // provider, a paid tier, or any new setup.
 export const LITE_MODEL = "gemini-flash-lite-latest";
 
+// Neither the SDK nor our own retry loop ever bounded how long a single
+// generateContent call is allowed to hang — before the lite-model fallback
+// existed, a stuck request was still just one stuck request; now a stall on
+// MODEL can be followed by a second stall on LITE_MODEL, doubling the
+// exposure. Every call below sets this via httpOptions.timeout so a request
+// that never gets a response is forced to fail (and retry/fall back, or
+// surface a clear error) instead of leaving the UI stuck on "analyzing"
+// forever with no success and no error either.
+export const REQUEST_TIMEOUT_MS = 12_000;
+
 export function getClient(): GoogleGenAI {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -79,8 +89,8 @@ export async function withGeminiRetry<T>(fn: () => Promise<T>, attempts = 3): Pr
   throw new Error("withGeminiRetry: exhausted attempts without returning or throwing.");
 }
 
-// Runs `run` against MODEL with the usual 3x retry; if every attempt is
-// still rate-limited/overloaded, makes one more attempt against
+// Runs `run` against MODEL with a retry (3x by default); if every attempt
+// is still rate-limited/overloaded, makes one more attempt against
 // LITE_MODEL instead of giving up. `run` takes the model id so the same
 // logical request (single call, or — for askAssistant's two-step
 // tool-calling exchange — the whole exchange) can be replayed against
@@ -91,9 +101,18 @@ export async function withGeminiRetry<T>(fn: () => Promise<T>, attempts = 3): Pr
 // attempt also fails, the original MODEL error propagates — LITE_MODEL is
 // never the error the user sees, since it's not the model they expect
 // results from.
-export async function withGeminiFallback<T>(run: (model: string) => Promise<T>): Promise<{ result: T; model: string }> {
+//
+// `attempts` defaults to 3 but askAssistant passes 1: each of its "calls"
+// is actually 2 sequential generateContent round trips (the tool-call
+// exchange), so 3 retries of that would be 6 calls before ever reaching
+// the lite fallback — multiplied by REQUEST_TIMEOUT_MS per call, that
+// risks exceeding the serverless function's own execution time limit
+// (see maxDuration in the API routes that call into this), which kills
+// the request outright and leaves the client with no response at all —
+// not a clean error, just a hang. Single-call callers keep the default.
+export async function withGeminiFallback<T>(run: (model: string) => Promise<T>, attempts = 3): Promise<{ result: T; model: string }> {
   try {
-    const result = await withGeminiRetry(() => run(MODEL));
+    const result = await withGeminiRetry(() => run(MODEL), attempts);
     return { result, model: MODEL };
   } catch (err) {
     if (!isRetryableGeminiError(err)) throw err;
@@ -315,6 +334,7 @@ export async function extractTransaction(
       config: {
         responseMimeType: "application/json",
         responseSchema: responseSchema(allCategories, false, walletNames),
+        httpOptions: { timeout: REQUEST_TIMEOUT_MS },
       },
     });
     if (!response.text) {
@@ -351,6 +371,7 @@ export async function extractTransactionsFromAudio(
       config: {
         responseMimeType: "application/json",
         responseSchema: arrayResponseSchema(allCategories, walletNames),
+        httpOptions: { timeout: REQUEST_TIMEOUT_MS },
       },
     });
     if (!response.text) {
