@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AppHeader from "./AppHeader";
 import PullToRefresh from "./PullToRefresh";
@@ -16,7 +15,7 @@ import PassShape from "./PassShape";
 import { useT } from "@/lib/language-context";
 import { useCurrency } from "@/lib/currency-context";
 import { describeFetchError } from "@/lib/fetch-error";
-import { PlusIcon, GearIcon, EditIcon, ArchiveIcon } from "@/lib/icons";
+import { PlusIcon, EditIcon, ArchiveIcon } from "@/lib/icons";
 import type { WalletOption } from "@/types/wallet";
 import type { MembershipCard } from "@/types/membership";
 import type { MembershipCodeFormat } from "@/lib/memberships";
@@ -278,34 +277,15 @@ export default function WalletPageView({
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10 lg:max-w-6xl">
       <PullToRefresh>
-        <AppHeader />
+        <AppHeader onAddClick={() => setEntryOpen(true)} />
 
         <main className="flex-1 px-1 py-6 sm:px-2">
           <div className="mx-auto max-w-md lg:max-w-none">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="font-display text-2xl text-foreground">{t("nav.wallet")}</h2>
-              <div className="flex items-center gap-2">
-                {/* Manage accounts (incl. archived wallets + restoring one)
-                 * now lives in Settings > Wallets — WalletManager used to
-                 * also render here in its own modal, a second, redundant
-                 * place to find the same archive/restore controls. */}
-                <Link
-                  href="/settings?panel=wallets"
-                  aria-label={t("wallet.manageAccounts")}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-ink-soft transition hover:border-navy hover:text-foreground"
-                >
-                  <GearIcon className="h-4.5 w-4.5" />
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setEntryOpen(true)}
-                  aria-label={t("wallet.entryTitle")}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark"
-                >
-                  <PlusIcon className="h-4 w-4 shrink-0" />
-                </button>
-              </div>
-            </div>
+            {/* The add button lives in AppHeader's nav bar now (like every
+             * other page), and "manage accounts" (archived wallets,
+             * restoring one) is reachable from Settings > Wallets — both
+             * used to be duplicated here as their own buttons. */}
+            <h2 className="font-display text-2xl text-foreground">{t("nav.wallet")}</h2>
 
             {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
 

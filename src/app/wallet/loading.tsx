@@ -28,20 +28,18 @@ export default function WalletLoading() {
             Settings
           </span>
         </nav>
-        <div className="flex shrink-0 items-center gap-1.5" />
+        <div className="flex shrink-0 items-center gap-1.5">
+          <span className="hidden items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white opacity-60 sm:flex">
+            + Add
+          </span>
+        </div>
       </header>
 
-      <BottomNav pathname="/wallet" />
+      <BottomNav pathname="/wallet" showAdd />
 
       <main className="flex-1 px-1 py-6 sm:px-2">
         <div className="mx-auto max-w-md">
-          <div className="flex items-center justify-between gap-3">
-            <div className="h-7 w-24 animate-pulse rounded-full bg-surface" />
-            <div className="flex items-center gap-2">
-              <div className="h-10 w-10 shrink-0 animate-pulse rounded-full border border-line bg-surface" />
-              <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-surface" />
-            </div>
-          </div>
+          <div className="h-7 w-24 animate-pulse rounded-full bg-surface" />
 
           <div className="mt-5">
             <div className="h-16 animate-pulse rounded-t-2xl border border-line bg-surface" />
