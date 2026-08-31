@@ -120,8 +120,13 @@ export default function PassShape({
       </div>
 
       {bannerUrl && (
+        // Full-bleed, edge to edge — real Wallet passes (airline loyalty
+        // cards especially) run the hero photo flush to both sides with no
+        // inset or corner rounding of its own, unlike the rounded/padded
+        // thumbnail this used to be. -mx-4 cancels the card's own p-4 so
+        // the image reaches the same edges the card outline does.
         // eslint-disable-next-line @next/next/no-img-element -- user-uploaded, not a build-time asset
-        <img src={bannerUrl} alt="" className="mt-3 aspect-[5/3] w-full rounded-xl object-cover" />
+        <img src={bannerUrl} alt="" className="-mx-4 mt-3 aspect-[16/9] w-[calc(100%+2rem)] max-w-none object-cover" />
       )}
 
       {primaryFields.length > 0 && (
@@ -142,13 +147,16 @@ export default function PassShape({
           <div className="relative mt-3 border-t border-dashed pt-3" style={{ borderColor: fg.a40 }}>
             <span className="absolute -left-2 -top-2 h-3 w-3 rounded-full bg-black/15" />
             <span className="absolute -right-2 -top-2 h-3 w-3 rounded-full bg-black/15" />
-            <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {/* Two-up grid, not a wrapped row of chips — matches the paired
+             * label/value rows (MEMBER SINCE / MEMBER NAME, MEMBER STATUS /
+             * MEMBER SINCE, ...) every real loyalty/boarding pass uses. */}
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               {stubFields.map(({ key, def, value }) => (
-                <div key={key}>
+                <div key={key} className="min-w-0">
                   <p className="text-[9px] uppercase tracking-wide" style={{ color: fg.a70 }}>
                     {t(def!.labelKey)}
                   </p>
-                  <p className="text-sm font-semibold">{value}</p>
+                  <p className="truncate text-sm font-semibold">{value}</p>
                 </div>
               ))}
             </div>
@@ -156,13 +164,13 @@ export default function PassShape({
         )
       ) : (
         stubFields.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+          <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
             {stubFields.map(({ key, def, value }) => (
-              <div key={key}>
+              <div key={key} className="min-w-0">
                 <p className="text-[9px] uppercase tracking-wide" style={{ color: fg.a70 }}>
                   {t(def!.labelKey)}
                 </p>
-                <p className="text-sm font-semibold">{value}</p>
+                <p className="truncate text-sm font-semibold">{value}</p>
               </div>
             ))}
           </div>
