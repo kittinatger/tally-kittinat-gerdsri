@@ -29,4 +29,9 @@ export type MembershipCard = {
    * template field, but with a label the user typed themselves instead of
    * an i18n key. See MAX_CUSTOM_FIELDS in membership-templates.ts. */
   customFieldLabels: Record<string, string>;
+  /** Whether the header's logo/icon avatar and name text show on the card
+   * face — independent of whether a logo image is actually attached or
+   * the name itself, so either can be hidden without deleting either. */
+  showLogo: boolean;
+  showName: boolean;
 };

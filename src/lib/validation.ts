@@ -482,6 +482,8 @@ export const membershipInputSchema = z.object({
   textColor: cardTextColorSchema.optional(),
   category: membershipCategorySchema.default("membership"),
   customFieldLabels: customFieldLabelsSchema.default({}),
+  showLogo: z.boolean().default(true),
+  showName: z.boolean().default(true),
 });
 
 export const membershipUpdateSchema = z
@@ -499,6 +501,8 @@ export const membershipUpdateSchema = z
     textColor: cardTextColorSchema.optional(),
     category: membershipCategorySchema.optional(),
     customFieldLabels: customFieldLabelsSchema.optional(),
+    showLogo: z.boolean().optional(),
+    showName: z.boolean().optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
     message: "Provide at least one field to update",

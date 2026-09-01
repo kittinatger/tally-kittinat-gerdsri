@@ -29,6 +29,8 @@ export type MembershipCardApiRow = {
   has_banner: boolean;
   category: string;
   custom_field_labels: string;
+  show_logo: boolean;
+  show_name: boolean;
 };
 
 export function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
@@ -71,5 +73,7 @@ export function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
     hasBanner: row.has_banner,
     category: row.category === "pass" ? "pass" : "membership",
     customFieldLabels,
+    showLogo: row.show_logo,
+    showName: row.show_name,
   };
 }

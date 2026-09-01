@@ -35,6 +35,8 @@ export default function PassShape({
   bannerUrl,
   notes,
   customFieldLabels = {},
+  showLogo = true,
+  showName = true,
 }: {
   name: string;
   color: string;
@@ -60,6 +62,12 @@ export default function PassShape({
   /** User-named fields beyond the template's own fixed set — key -> plain
    * text label (not an i18n key, since the user typed it themselves). */
   customFieldLabels?: Record<string, string>;
+  /** Whether the logo/icon avatar shows in the header — when false, the
+   * whole slot disappears (not just the image; the icon/initial fallback
+   * too), not merely "no image attached". */
+  showLogo?: boolean;
+  /** Whether the name shows in the header. */
+  showName?: boolean;
 }) {
   const t = useT();
   const effectiveLayout = layout ?? defaultLayoutFor(template);
@@ -102,28 +110,30 @@ export default function PassShape({
       style={{ color: fg.full, ...(background ? cardBackgroundStyle(background) : colorHeroStyle(color)) }}
     >
       <div className="flex items-center gap-2.5">
-        {logoUrl ? (
-          // Sized to the logo's own aspect ratio (fixed height, auto
-          // width, capped) rather than forced into the same square every
-          // logo used to get squashed into — the crop tool this comes
-          // from already lets the user pick whatever shape they want.
-          // eslint-disable-next-line @next/next/no-img-element -- user-uploaded, not a build-time asset
-          <img
-            src={logoUrl}
-            alt=""
-            className="h-9 w-auto max-w-[7rem] shrink-0 rounded-lg object-contain ring-1"
-            style={{ boxShadow: `0 0 0 1px ${fg.a30}` }}
-          />
-        ) : (
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: fg.a20 }}>
-            {icon && isCategoryIconKey(icon) ? (
-              <CategoryIcon iconKey={icon} className="h-4.5 w-4.5" />
-            ) : (
-              <span className="text-sm font-semibold">{(name || "?").charAt(0).toUpperCase()}</span>
-            )}
-          </span>
-        )}
-        <p className="min-w-0 flex-1 truncate font-semibold">{name}</p>
+        {showLogo &&
+          (logoUrl ? (
+            // Sized to the logo's own aspect ratio (fixed height, auto
+            // width, capped) rather than forced into the same square
+            // every logo used to get squashed into — the crop tool this
+            // comes from already lets the user pick whatever shape they
+            // want. No border/ring of its own — a logo asset that already
+            // has a background/outline (most do) doubled up with one.
+            // eslint-disable-next-line @next/next/no-img-element -- user-uploaded, not a build-time asset
+            <img src={logoUrl} alt="" className="h-9 w-auto max-w-[7rem] shrink-0 rounded-lg object-contain" />
+          ) : (
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: fg.a20 }}>
+              {icon && isCategoryIconKey(icon) ? (
+                <CategoryIcon iconKey={icon} className="h-4.5 w-4.5" />
+              ) : (
+                <span className="text-sm font-semibold">{(name || "?").charAt(0).toUpperCase()}</span>
+              )}
+            </span>
+          ))}
+        {/* Always takes up the flexible space (even with nothing in it)
+         * so headerFields still gets pushed to the far right — without
+         * this, hiding the name would also collapse the gap that keeps
+         * e.g. a boarding pass's FROM/TO fields right-aligned. */}
+        <div className="min-w-0 flex-1">{showName && <p className="truncate font-semibold">{name}</p>}</div>
         {headerFields.length > 0 && (
           <div className="flex shrink-0 items-center gap-2 text-right">
             {headerFields.map(({ key, label, value }, i) => (

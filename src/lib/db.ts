@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 53;
+const CURRENT_SCHEMA_VERSION = 54;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1315,6 +1315,14 @@ function ensureSchema(): Promise<void> {
       // field there was picking one of the template's own predefined
       // ones — there was no way to type a field of your own).
       await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS custom_field_labels TEXT NOT NULL DEFAULT '{}';`;
+
+      // Independent visibility toggles for the header's logo/icon avatar
+      // and name text — a logo asset that already spells out the brand
+      // (or a banner that does) can make repeating it in the header feel
+      // redundant, so either can be hidden without deleting the
+      // underlying logo image or the card's own name.
+      await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS show_logo BOOLEAN NOT NULL DEFAULT true;`;
+      await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS show_name BOOLEAN NOT NULL DEFAULT true;`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -4929,12 +4937,14 @@ export type MembershipCardRow = {
   category: string;
   /** Raw JSON text ({key: label}) — see normalizeCustomFieldLabels in membership-templates.ts. */
   custom_field_labels: string;
+  show_logo: boolean;
+  show_name: boolean;
 };
 
 export async function listMembershipCards(userId: number): Promise<MembershipCardRow[]> {
   await ensureSchema();
   const { rows } = await sql<MembershipCardRow>`
-    SELECT id, name, code_value, code_format, color, icon, notes, template, fields, layout, background, text_color, category, custom_field_labels,
+    SELECT id, name, code_value, code_format, color, icon, notes, template, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner
     FROM membership_cards
     WHERE user_id = ${userId}
@@ -4959,6 +4969,8 @@ export async function createMembershipCard(
     textColor?: string | null;
     category?: string;
     customFieldLabels?: Record<string, string>;
+    showLogo?: boolean;
+    showName?: boolean;
   },
 ): Promise<MembershipCardRow> {
   await ensureSchema();
@@ -4972,10 +4984,12 @@ export async function createMembershipCard(
   const background = input.background ? JSON.stringify(input.background) : null;
   const category = input.category ?? "membership";
   const customFieldLabels = JSON.stringify(input.customFieldLabels ?? {});
+  const showLogo = input.showLogo ?? true;
+  const showName = input.showName ?? true;
   const { rows } = await sql<MembershipCardRow>`
-    INSERT INTO membership_cards (user_id, name, code_value, code_format, color, icon, notes, sort_order, template, fields, layout, background, text_color, category, custom_field_labels)
-    VALUES (${userId}, ${input.name}, ${input.codeValue}, ${input.codeFormat}, ${input.color}, ${input.icon ?? null}, ${input.notes ?? null}, ${nextSort}, ${template}, ${fields}, ${layout}, ${background}, ${input.textColor ?? null}, ${category}, ${customFieldLabels})
-    RETURNING id, name, code_value, code_format, color, icon, notes, template, fields, layout, background, text_color, category, custom_field_labels,
+    INSERT INTO membership_cards (user_id, name, code_value, code_format, color, icon, notes, sort_order, template, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name)
+    VALUES (${userId}, ${input.name}, ${input.codeValue}, ${input.codeFormat}, ${input.color}, ${input.icon ?? null}, ${input.notes ?? null}, ${nextSort}, ${template}, ${fields}, ${layout}, ${background}, ${input.textColor ?? null}, ${category}, ${customFieldLabels}, ${showLogo}, ${showName})
+    RETURNING id, name, code_value, code_format, color, icon, notes, template, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner;
   `;
   return rows[0];
@@ -4998,11 +5012,13 @@ export async function updateMembershipCard(
     textColor?: string | null;
     category?: string;
     customFieldLabels?: Record<string, string>;
+    showLogo?: boolean;
+    showName?: boolean;
   },
 ): Promise<MembershipCardRow | null> {
   await ensureSchema();
   const { rows: existingRows } = await sql<MembershipCardRow>`
-    SELECT id, name, code_value, code_format, color, icon, notes, template, fields, layout, background, text_color, category, custom_field_labels,
+    SELECT id, name, code_value, code_format, color, icon, notes, template, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner
     FROM membership_cards WHERE id = ${id} AND user_id = ${userId};
   `;
@@ -5023,15 +5039,18 @@ export async function updateMembershipCard(
   const newCategory = input.category ?? existing.category;
   const newCustomFieldLabels =
     input.customFieldLabels !== undefined ? JSON.stringify(input.customFieldLabels) : existing.custom_field_labels;
+  const newShowLogo = input.showLogo !== undefined ? input.showLogo : existing.show_logo;
+  const newShowName = input.showName !== undefined ? input.showName : existing.show_name;
 
   const { rows } = await sql<MembershipCardRow>`
     UPDATE membership_cards
     SET name = ${newName}, code_value = ${newCodeValue}, code_format = ${newCodeFormat},
         color = ${newColor}, icon = ${newIcon}, notes = ${newNotes},
         template = ${newTemplate}, fields = ${newFields}, layout = ${newLayout}, background = ${newBackground},
-        text_color = ${newTextColor}, category = ${newCategory}, custom_field_labels = ${newCustomFieldLabels}
+        text_color = ${newTextColor}, category = ${newCategory}, custom_field_labels = ${newCustomFieldLabels},
+        show_logo = ${newShowLogo}, show_name = ${newShowName}
     WHERE id = ${id} AND user_id = ${userId}
-    RETURNING id, name, code_value, code_format, color, icon, notes, template, fields, layout, background, text_color, category, custom_field_labels,
+    RETURNING id, name, code_value, code_format, color, icon, notes, template, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner;
   `;
   return rows[0];
