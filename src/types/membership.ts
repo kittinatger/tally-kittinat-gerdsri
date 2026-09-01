@@ -24,4 +24,9 @@ export type MembershipCard = {
   hasBanner: boolean;
   /** Which tab on the /wallet page this card lives in. */
   category: "pass" | "membership";
+  /** User-named fields (key -> plain-text label) beyond the current
+   * template's own fixed set — placed into layout zones the same way as a
+   * template field, but with a label the user typed themselves instead of
+   * an i18n key. See MAX_CUSTOM_FIELDS in membership-templates.ts. */
+  customFieldLabels: Record<string, string>;
 };

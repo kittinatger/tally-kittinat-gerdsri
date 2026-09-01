@@ -13,7 +13,7 @@ import { SPLIT_METHODS, SPLIT_PAYMENT_METHODS } from "@/lib/splits";
 import { LOAN_DIRECTIONS } from "@/lib/loans";
 import { CATEGORY_ICON_KEYS } from "@/lib/category-icons";
 import { MEMBERSHIP_CODE_FORMATS } from "@/lib/memberships";
-import { PASS_TEMPLATES, PASS_ZONES, type PassZone } from "@/lib/membership-templates";
+import { PASS_TEMPLATES, PASS_ZONES, MAX_CUSTOM_FIELDS, type PassZone } from "@/lib/membership-templates";
 import { CARD_NETWORKS } from "@/lib/wallet-cards";
 import { CARD_PATTERNS, PATTERN_COLOR_COUNT } from "@/lib/card-backgrounds";
 import { CHIP_COLORS } from "@/lib/chip-colors";
@@ -458,6 +458,13 @@ export const categoryUpdateSchema = z.object({
 const passZoneSchema = z.enum(PASS_ZONES as [PassZone, ...PassZone[]]);
 const passFieldsSchema = z.record(z.string().max(40), z.string().max(80));
 const passLayoutSchema = z.record(passZoneSchema, z.array(z.string().nullable())).nullable();
+// User-named custom fields (see MAX_CUSTOM_FIELDS in membership-templates.ts)
+// — capped the same way there, kept in sync rather than duplicating the
+// number, since both need to agree on what "too many" means.
+const customFieldLabelsSchema = z.record(z.string().max(40), z.string().trim().min(1).max(40)).refine(
+  (v) => Object.keys(v).length <= MAX_CUSTOM_FIELDS,
+  { message: `Up to ${MAX_CUSTOM_FIELDS} custom fields` },
+);
 
 const membershipCategorySchema = z.enum(["pass", "membership"]);
 
@@ -474,6 +481,7 @@ export const membershipInputSchema = z.object({
   background: cardBackgroundSchema.optional(),
   textColor: cardTextColorSchema.optional(),
   category: membershipCategorySchema.default("membership"),
+  customFieldLabels: customFieldLabelsSchema.default({}),
 });
 
 export const membershipUpdateSchema = z
@@ -490,6 +498,7 @@ export const membershipUpdateSchema = z
     background: cardBackgroundSchema.optional(),
     textColor: cardTextColorSchema.optional(),
     category: membershipCategorySchema.optional(),
+    customFieldLabels: customFieldLabelsSchema.optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
     message: "Provide at least one field to update",

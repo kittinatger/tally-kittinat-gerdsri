@@ -92,9 +92,14 @@ export function normalizePassFields(raw: unknown): Record<string, string> {
 
 // Tolerant parse for the `layout` TEXT column — null/malformed falls back
 // to the template's default layout rather than an empty/broken canvas.
-export function normalizePassLayout(raw: unknown, template: PassTemplate): PassLayout {
+// `customKeys` are the card's own user-named custom fields (see
+// normalizeCustomFieldLabels below) — a placed custom field's key is just
+// as valid a layout slot as one of the template's own, so it's accepted
+// alongside TEMPLATE_FIELDS[template] rather than getting silently
+// stripped out as unrecognized.
+export function normalizePassLayout(raw: unknown, template: PassTemplate, customKeys: Iterable<string> = []): PassLayout {
   if (typeof raw !== "object" || raw === null) return defaultLayoutFor(template);
-  const validKeys = new Set(TEMPLATE_FIELDS[template].map((f) => f.key));
+  const validKeys = new Set([...TEMPLATE_FIELDS[template].map((f) => f.key), ...customKeys]);
   const result: PassLayout = { header: [], primary: [], secondary: [], auxiliary: [] };
   let any = false;
   for (const zone of PASS_ZONES) {
@@ -104,4 +109,23 @@ export function normalizePassLayout(raw: unknown, template: PassTemplate): PassL
     any = true;
   }
   return any ? result : defaultLayoutFor(template);
+}
+
+// A pass can only have this many user-named custom fields — same
+// "kept short" reasoning as TEMPLATE_FIELDS itself: this is meant to stay
+// a quick flow, not a full PassKit pass.json editor.
+export const MAX_CUSTOM_FIELDS = 10;
+
+// Tolerant parse for the `custom_field_labels` TEXT column — same shape
+// and defensiveness as normalizePassFields, plus the count/length caps
+// validation.ts's schema also enforces server-side (this is the client-
+// facing mirror, used when reading a card back rather than saving one).
+export function normalizeCustomFieldLabels(raw: unknown): Record<string, string> {
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return {};
+  const result: Record<string, string> = {};
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (Object.keys(result).length >= MAX_CUSTOM_FIELDS) break;
+    if (typeof v === "string" && v.trim()) result[k] = v.trim().slice(0, 40);
+  }
+  return result;
 }

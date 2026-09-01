@@ -20,6 +20,7 @@ import {
   PASS_ZONES,
   TEMPLATE_FIELDS,
   TEMPLATE_LABEL_KEYS,
+  MAX_CUSTOM_FIELDS,
   defaultLayoutFor,
   type PassTemplate,
   type PassZone,
@@ -138,6 +139,11 @@ export default function MembershipCardModal({
   const [layout, setLayout] = useState(card?.layout ?? defaultLayoutFor(template));
   const [editorMode, setEditorMode] = useState<"guided" | "custom">("guided");
   const [selectedFieldKey, setSelectedFieldKey] = useState<string | null>(null);
+  // User-named fields beyond the template's own fixed set — key -> the
+  // label the user typed (not an i18n key). Only placeable/editable from
+  // the custom editor, same as any other field, once added here.
+  const [customFieldLabels, setCustomFieldLabels] = useState<Record<string, string>>(card?.customFieldLabels ?? {});
+  const [newCustomFieldLabel, setNewCustomFieldLabel] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const category = CATEGORY_BY_TEMPLATE[template];
@@ -232,12 +238,21 @@ export default function MembershipCardModal({
 
   const templateFieldDefs = TEMPLATE_FIELDS[template];
   const fieldByKey = Object.fromEntries(templateFieldDefs.map((f) => [f.key, f]));
+  const customFieldKeys = Object.keys(customFieldLabels);
   const placedKeys = new Set(Object.values(layout).flat().filter((k): k is string => Boolean(k)));
-  const unplacedKeys = templateFieldDefs.map((f) => f.key).filter((k) => !placedKeys.has(k));
+  const unplacedKeys = [...templateFieldDefs.map((f) => f.key), ...customFieldKeys].filter((k) => !placedKeys.has(k));
+  const hasAnyFields = templateFieldDefs.length > 0 || customFieldKeys.length > 0;
+
+  // A field's label either comes from the template's own i18n key, or —
+  // for a custom field — is whatever plain text the user typed for it.
+  function labelForKey(key: string): string {
+    const def = fieldByKey[key];
+    return def ? t(def.labelKey) : (customFieldLabels[key] ?? key);
+  }
 
   // "Fields" only shows up once the current template actually has fields
-  // (e.g. "generic" has none) — same idea as the wallet editor's Template
-  // tab disappearing once it's no longer relevant.
+  // to place, template-defined or custom — same idea as the wallet
+  // editor's Template tab disappearing once it's no longer relevant.
   const tabs = (
     [
       ["basics", "wallet.tabBasics"],
@@ -245,16 +260,20 @@ export default function MembershipCardModal({
       ["fields", "membership.tabFields"],
       ["look", "wallet.tabLook"],
     ] as const
-  ).filter(([key]) => key !== "fields" || templateFieldDefs.length > 0);
+  ).filter(([key]) => key !== "fields" || hasAnyFields);
 
   function handleTemplateChange(next: PassTemplate) {
     setTemplate(next);
     setFields({});
     setLayout(defaultLayoutFor(next));
     setSelectedFieldKey(null);
-    // Switching to a template with no fields (e.g. "generic") makes the
-    // "Fields" tab disappear from the strip above — bail out of it so the
-    // user isn't left on a tab that no longer renders anything.
+    // A template switch starts the field layout fresh, so any custom
+    // fields placed under the old template wouldn't have anywhere
+    // meaningful to live either — same reset as fields/layout above.
+    setCustomFieldLabels({});
+    // Switching to a template with no fields (e.g. "generic" used to)
+    // makes the "Fields" tab disappear from the strip above — bail out of
+    // it so the user isn't left on a tab that no longer renders anything.
     if (tab === "fields" && TEMPLATE_FIELDS[next].length === 0) setTab("basics");
   }
 
@@ -270,6 +289,37 @@ export default function MembershipCardModal({
 
   function unplaceField(zone: PassZone, key: string) {
     setLayout((prev) => ({ ...prev, [zone]: (prev[zone] ?? []).filter((k) => k !== key) }));
+  }
+
+  // Custom fields (unlike a template's own fixed set) are the user's own
+  // creation, so — unlike unplaceField, which just moves a field back to
+  // the "available" pool — this drops it entirely: its label, its value,
+  // and any zone slot it was placed in.
+  function addCustomField() {
+    const label = newCustomFieldLabel.trim();
+    if (!label || customFieldKeys.length >= MAX_CUSTOM_FIELDS) return;
+    const key = `custom-${typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Date.now()}`;
+    setCustomFieldLabels((prev) => ({ ...prev, [key]: label }));
+    setFields((prev) => ({ ...prev, [key]: "" }));
+    setNewCustomFieldLabel("");
+    setSelectedFieldKey(key);
+  }
+
+  function removeCustomField(key: string) {
+    setCustomFieldLabels((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    setFields((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    setLayout((prev) =>
+      Object.fromEntries(PASS_ZONES.map((zone) => [zone, (prev[zone] ?? []).filter((k) => k !== key)])) as typeof prev,
+    );
+    if (selectedFieldKey === key) setSelectedFieldKey(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -290,6 +340,7 @@ export default function MembershipCardModal({
         fields,
         layout,
         category,
+        customFieldLabels,
       };
       const res = isEdit
         ? await fetch(`/api/memberships/${card!.id}`, {
@@ -355,6 +406,7 @@ export default function MembershipCardModal({
             logoUrl={logoPreviewUrl}
             bannerUrl={bannerPreviewUrl}
             notes={notes}
+            customFieldLabels={customFieldLabels}
           />
         </ColorGlowPreview>
 
@@ -460,7 +512,7 @@ export default function MembershipCardModal({
         </FormSection>
         )}
 
-        {tab === "fields" && templateFieldDefs.length > 0 && (
+        {tab === "fields" && hasAnyFields && (
           <FormSection
             icon={(() => {
               const Icon = CATEGORY_ICON_COMPONENTS.receipt;
@@ -507,8 +559,11 @@ export default function MembershipCardModal({
               </div>
             ) : (
               <div className="space-y-3 rounded-card border border-line bg-bg-soft p-3">
+                {/* Every zone is offered here now, not just the ones the
+                 * current template pre-defines a field for — a custom
+                 * field can go anywhere, including a zone (e.g. Header)
+                 * this template's own fixed fields never use. */}
                 {PASS_ZONES.map((zone) => {
-                  if (!templateFieldDefs.some((f) => f.zone === zone)) return null;
                   const placed = (layout[zone] ?? []).filter((k): k is string => Boolean(k));
                   return (
                     <div key={zone}>
@@ -516,19 +571,16 @@ export default function MembershipCardModal({
                         {t(ZONE_LABEL_KEYS[zone])}
                       </p>
                       <div className="flex flex-wrap items-center gap-1.5">
-                        {placed.map((key) => {
-                          const def = fieldByKey[key];
-                          return (
-                            <button
-                              key={key}
-                              type="button"
-                              onClick={() => unplaceField(zone, key)}
-                              className="rounded-full border border-navy bg-navy/10 px-3 py-1.5 text-xs font-semibold text-navy dark:text-blue-300"
-                            >
-                              {def ? t(def.labelKey) : key} ×
-                            </button>
-                          );
-                        })}
+                        {placed.map((key) => (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => unplaceField(zone, key)}
+                            className="rounded-full border border-navy bg-navy/10 px-3 py-1.5 text-xs font-semibold text-navy dark:text-blue-300"
+                          >
+                            {labelForKey(key)} ×
+                          </button>
+                        ))}
                         <button
                           type="button"
                           onClick={() => placeField(zone)}
@@ -543,26 +595,72 @@ export default function MembershipCardModal({
                   );
                 })}
 
+                {/* Type a name, add it to the available pool below, then
+                 * tap-then-place it into a zone the same way as any of the
+                 * template's own fields — the only field-adding path used
+                 * to be picking from that fixed list. */}
+                <div className="border-t border-line pt-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">{t("membership.newFieldLabel")}</p>
+                  <div className="mt-1.5 flex gap-1.5">
+                    <input
+                      type="text"
+                      value={newCustomFieldLabel}
+                      onChange={(e) => setNewCustomFieldLabel(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addCustomField();
+                        }
+                      }}
+                      placeholder={t("membership.newFieldPlaceholder")}
+                      disabled={customFieldKeys.length >= MAX_CUSTOM_FIELDS}
+                      className="min-w-0 flex-1 rounded-card border border-line bg-surface px-3 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20 disabled:opacity-60"
+                    />
+                    <button
+                      type="button"
+                      onClick={addCustomField}
+                      disabled={!newCustomFieldLabel.trim() || customFieldKeys.length >= MAX_CUSTOM_FIELDS}
+                      className="shrink-0 rounded-full border border-line bg-surface px-3.5 py-2 text-xs font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-40"
+                    >
+                      {t("membership.newFieldAdd")}
+                    </button>
+                  </div>
+                  {customFieldKeys.length >= MAX_CUSTOM_FIELDS && (
+                    <p className="mt-1 text-[11px] text-ink-soft">{t("membership.newFieldLimitReached")}</p>
+                  )}
+                </div>
+
                 {unplacedKeys.length > 0 && (
                   <div className="border-t border-line pt-3">
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">{t("membership.availableFields")}</p>
                     <p className="mb-1.5 text-[11px] text-ink-soft">{t("membership.tapFieldHint")}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {unplacedKeys.map((key) => {
-                        const def = fieldByKey[key];
+                        const isCustom = key in customFieldLabels;
                         return (
-                          <button
-                            key={key}
-                            type="button"
-                            onClick={() => setSelectedFieldKey(key)}
-                            className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                              selectedFieldKey === key
-                                ? "border-navy bg-navy text-white"
-                                : "border-line bg-surface text-ink-soft hover:bg-[var(--nav-hover-bg)]"
-                            }`}
-                          >
-                            {def ? t(def.labelKey) : key}
-                          </button>
+                          <div key={key} className="flex items-center gap-0.5">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedFieldKey(key)}
+                              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                                selectedFieldKey === key
+                                  ? "border-navy bg-navy text-white"
+                                  : "border-line bg-surface text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                              }`}
+                            >
+                              {labelForKey(key)}
+                            </button>
+                            {isCustom && (
+                              <button
+                                type="button"
+                                onClick={() => removeCustomField(key)}
+                                aria-label={t("membership.removeCustomField")}
+                                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-red-600 dark:hover:text-red-400"
+                              >
+                                <CloseIcon className="h-3 w-3" />
+                              </button>
+                            )}
+                          </div>
                         );
                       })}
                     </div>
@@ -571,20 +669,35 @@ export default function MembershipCardModal({
 
                 {placedKeys.size > 0 && (
                   <div className="space-y-2.5 border-t border-line pt-3">
-                    {templateFieldDefs
-                      .filter((def) => placedKeys.has(def.key))
-                      .map((def) => (
-                        <div key={def.key}>
-                          <label className="mb-1 block text-xs font-semibold text-ink-soft">{t(def.labelKey)}</label>
-                          <input
-                            type="text"
-                            value={fields[def.key] ?? ""}
-                            onChange={(e) => setFieldValue(def.key, e.target.value)}
-                            placeholder={t(def.placeholderKey)}
-                            className="w-full rounded-card border border-line bg-surface px-3 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-                          />
-                        </div>
-                      ))}
+                    {[...templateFieldDefs.map((f) => f.key), ...customFieldKeys]
+                      .filter((key) => placedKeys.has(key))
+                      .map((key) => {
+                        const def = fieldByKey[key];
+                        const isCustom = key in customFieldLabels;
+                        return (
+                          <div key={key}>
+                            <div className="mb-1 flex items-center justify-between gap-2">
+                              <label className="text-xs font-semibold text-ink-soft">{labelForKey(key)}</label>
+                              {isCustom && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeCustomField(key)}
+                                  className="text-[11px] font-semibold text-ink-soft hover:text-red-600 dark:hover:text-red-400"
+                                >
+                                  {t("membership.removeCustomField")}
+                                </button>
+                              )}
+                            </div>
+                            <input
+                              type="text"
+                              value={fields[key] ?? ""}
+                              onChange={(e) => setFieldValue(key, e.target.value)}
+                              placeholder={def ? t(def.placeholderKey) : undefined}
+                              className="w-full rounded-card border border-line bg-surface px-3 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+                            />
+                          </div>
+                        );
+                      })}
                   </div>
                 )}
               </div>

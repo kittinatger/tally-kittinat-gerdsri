@@ -1,6 +1,11 @@
 import { isMembershipCodeFormat } from "@/lib/memberships";
 import { isCategoryIconKey } from "@/lib/category-icons";
-import { isPassTemplate, normalizePassFields, normalizePassLayout } from "@/lib/membership-templates";
+import {
+  isPassTemplate,
+  normalizePassFields,
+  normalizePassLayout,
+  normalizeCustomFieldLabels,
+} from "@/lib/membership-templates";
 import { parseCardBackground } from "@/lib/card-backgrounds";
 import type { MembershipCard } from "@/types/membership";
 
@@ -23,6 +28,7 @@ export type MembershipCardApiRow = {
   has_logo: boolean;
   has_banner: boolean;
   category: string;
+  custom_field_labels: string;
 };
 
 export function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
@@ -39,6 +45,13 @@ export function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
   } catch {
     parsedLayout = null;
   }
+  let parsedCustomFieldLabels: unknown = null;
+  try {
+    parsedCustomFieldLabels = JSON.parse(row.custom_field_labels);
+  } catch {
+    parsedCustomFieldLabels = null;
+  }
+  const customFieldLabels = normalizeCustomFieldLabels(parsedCustomFieldLabels);
   return {
     id: row.id,
     name: row.name,
@@ -49,11 +62,14 @@ export function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
     notes: row.notes,
     template,
     fields: normalizePassFields(parsedFields),
-    layout: row.layout ? normalizePassLayout(parsedLayout, template) : null,
+    // Custom field keys are just as valid a layout slot as the template's
+    // own — see normalizePassLayout's customKeys param.
+    layout: row.layout ? normalizePassLayout(parsedLayout, template, Object.keys(customFieldLabels)) : null,
     background: parseCardBackground(row.background),
     textColor: row.text_color,
     hasLogo: row.has_logo,
     hasBanner: row.has_banner,
     category: row.category === "pass" ? "pass" : "membership",
+    customFieldLabels,
   };
 }

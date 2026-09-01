@@ -48,6 +48,7 @@ export default function MembershipCardDetail({
         logoUrl={card.hasLogo ? `/api/memberships/${card.id}/logo` : null}
         bannerUrl={card.hasBanner ? `/api/memberships/${card.id}/banner` : null}
         notes={card.notes}
+        customFieldLabels={card.customFieldLabels}
       />
 
       {card.notes && (

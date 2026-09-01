@@ -34,6 +34,7 @@ export default function PassShape({
   logoUrl,
   bannerUrl,
   notes,
+  customFieldLabels = {},
 }: {
   name: string;
   color: string;
@@ -56,6 +57,9 @@ export default function PassShape({
    * pass surfaces "back field" text the same way) — the full text still
    * gets its own unclamped block in the detail view below the card. */
   notes?: string | null;
+  /** User-named fields beyond the template's own fixed set — key -> plain
+   * text label (not an i18n key, since the user typed it themselves). */
+  customFieldLabels?: Record<string, string>;
 }) {
   const t = useT();
   const effectiveLayout = layout ?? defaultLayoutFor(template);
@@ -64,11 +68,20 @@ export default function PassShape({
   // for why exactly these three templates get it and not the others.
   const hasStub = STUB_TEMPLATES.includes(template);
 
+  // A field's label either comes from the template def's i18n key, or —
+  // for a user-named custom field — is already plain text stored on the
+  // card itself. Resolved once here so every render site below just uses
+  // `label` instead of juggling "is this a template field or a custom
+  // one" at each call site.
   function zoneEntries(zone: PassZone) {
     return (effectiveLayout[zone] ?? [])
       .filter((k): k is string => Boolean(k))
-      .map((key) => ({ key, def: fieldByKey[key], value: fields[key] }))
-      .filter((f) => f.def && f.value);
+      .map((key) => {
+        const def = fieldByKey[key];
+        const label = def ? t(def.labelKey) : customFieldLabels[key];
+        return { key, label, value: fields[key] };
+      })
+      .filter((f) => f.label && f.value);
   }
 
   const headerFields = zoneEntries("header");
@@ -104,12 +117,12 @@ export default function PassShape({
         <p className="min-w-0 flex-1 truncate font-semibold">{name}</p>
         {headerFields.length > 0 && (
           <div className="flex shrink-0 items-center gap-2 text-right">
-            {headerFields.map(({ key, def, value }, i) => (
+            {headerFields.map(({ key, label, value }, i) => (
               <div key={key} className="flex items-center gap-2">
                 {i > 0 && <span style={{ color: fg.a60 }}>→</span>}
                 <div>
                   <p className="text-[9px] uppercase tracking-wide" style={{ color: fg.a70 }}>
-                    {t(def!.labelKey)}
+                    {label}
                   </p>
                   <p className="text-sm font-semibold">{value}</p>
                 </div>
@@ -131,10 +144,10 @@ export default function PassShape({
 
       {primaryFields.length > 0 && (
         <div className="mt-3">
-          {primaryFields.map(({ key, def, value }) => (
+          {primaryFields.map(({ key, label, value }) => (
             <div key={key}>
               <p className="text-[10px] uppercase tracking-wide" style={{ color: fg.a70 }}>
-                {t(def!.labelKey)}
+                {label}
               </p>
               <p className="text-2xl font-bold">{value}</p>
             </div>
@@ -151,10 +164,10 @@ export default function PassShape({
              * label/value rows (MEMBER SINCE / MEMBER NAME, MEMBER STATUS /
              * MEMBER SINCE, ...) every real loyalty/boarding pass uses. */}
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-              {stubFields.map(({ key, def, value }) => (
+              {stubFields.map(({ key, label, value }) => (
                 <div key={key} className="min-w-0">
                   <p className="text-[9px] uppercase tracking-wide" style={{ color: fg.a70 }}>
-                    {t(def!.labelKey)}
+                    {label}
                   </p>
                   <p className="truncate text-sm font-semibold">{value}</p>
                 </div>
@@ -165,10 +178,10 @@ export default function PassShape({
       ) : (
         stubFields.length > 0 && (
           <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
-            {stubFields.map(({ key, def, value }) => (
+            {stubFields.map(({ key, label, value }) => (
               <div key={key} className="min-w-0">
                 <p className="text-[9px] uppercase tracking-wide" style={{ color: fg.a70 }}>
-                  {t(def!.labelKey)}
+                  {label}
                 </p>
                 <p className="truncate text-sm font-semibold">{value}</p>
               </div>
