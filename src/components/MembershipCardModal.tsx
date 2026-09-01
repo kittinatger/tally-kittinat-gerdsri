@@ -327,7 +327,12 @@ export default function MembershipCardModal({
   function addCustomField() {
     const label = newCustomFieldLabel.trim();
     if (!label || customFieldKeys.length >= MAX_CUSTOM_FIELDS) return;
-    const key = `custom-${typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Date.now()}`;
+    // A full UUID here ("custom-" + 36 chars = 43) blew past the 40-char
+    // key cap validation.ts enforces on both fields/customFieldLabels —
+    // every save with a custom field on it failed with "Could not save."
+    // A base-36 timestamp plus a short random suffix is plenty unique for
+    // fields on one pass and comfortably under the limit.
+    const key = `custom-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
     setCustomFieldLabels((prev) => ({ ...prev, [key]: label }));
     setFields((prev) => ({ ...prev, [key]: "" }));
     setNewCustomFieldLabel("");
