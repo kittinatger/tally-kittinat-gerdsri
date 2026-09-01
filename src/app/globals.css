@@ -112,20 +112,6 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  /* Now that viewport-fit=cover (layout.tsx) puts the notch/status bar
-     area inside the layout viewport, ordinary page content needs this to
-     stay clear of it — env() resolves to 0 on devices with no safe area
-     (most non-notched phones, all desktops), so this is a no-op
-     everywhere except the devices it's actually for.
-     Deliberately no padding-bottom here, unlike the top: every page's own
-     bottom padding (e.g. pb-28, reserved for the floating nav pill) was
-     already sized generously enough without it, and BottomNav/
-     OfflineSyncBanner each already add env(safe-area-inset-bottom) to
-     their own fixed positioning — stacking a second copy in via body
-     padding double-counted it, stretching the whole page taller and
-     leaving the nav floating with a large dead gap below it instead of
-     near the true bottom edge. */
-  padding-top: env(safe-area-inset-top);
 }
 
 h1, h2, h3 {

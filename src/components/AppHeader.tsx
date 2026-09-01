@@ -36,11 +36,7 @@ export function BottomNav({
   ];
 
   return (
-    // bottom-3 alone would sit right against (or under) the home indicator
-    // now that viewport-fit=cover puts that area inside the viewport —
-    // body's own safe-area padding (globals.css) doesn't help here since
-    // fixed positioning ignores an ancestor's padding.
-    <div className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-20 flex items-center gap-2 sm:hidden">
+    <div className="fixed inset-x-3 bottom-3 z-20 flex items-center gap-2 sm:hidden">
       <div
         aria-hidden="true"
         className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] shadow-soft backdrop-blur-xl"

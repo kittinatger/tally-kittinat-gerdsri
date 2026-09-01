@@ -94,16 +94,6 @@ export const viewport = {
     { media: "(prefers-color-scheme: light)", color: "#eef4ef" },
     { media: "(prefers-color-scheme: dark)", color: "#0a130f" },
   ],
-  // Without this, iOS treats the status bar/notch area as outside the
-  // "layout viewport" entirely — a `fixed inset-0` element (Modal.tsx's
-  // backdrop, ScanCardModal, CardPhotoScanModal, ...) stops short of the
-  // real top edge instead of reaching it, leaving a gap that shows the
-  // raw, unmasked page background above the overlay. `cover` extends the
-  // layout viewport under the safe areas so those overlays truly go edge
-  // to edge; body's own safe-area padding (globals.css) keeps ordinary
-  // page content from sliding under the notch/status bar/home indicator
-  // now that the viewport includes that space.
-  viewportFit: "cover",
 };
 
 export default function RootLayout({
