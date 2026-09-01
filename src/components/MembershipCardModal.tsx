@@ -4,6 +4,7 @@ import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Modal from "./Modal";
 import PassShape from "./PassShape";
+import ImageCropModal from "./ImageCropModal";
 import FormSection from "./FormSection";
 import ColorGlowPreview from "./ColorGlowPreview";
 import { CATEGORY_PALETTE } from "@/lib/categories";
@@ -62,7 +63,13 @@ const CATEGORY_BY_TEMPLATE: Record<PassTemplate, "pass" | "membership"> = {
 };
 
 // A slot for attaching an image — a dashed "+" tile when empty, or the
-// picked image with a small remove button once one's attached.
+// picked image with a small remove button once one's attached. The
+// placeholder tile always uses `className` (a fixed box, so the empty
+// state still reads as a clear drop target); the filled preview uses
+// `previewClassName` if given — for the logo, that's a fixed height with
+// no forced width, so a wide logo stays wide and a tall one stays narrow
+// instead of every logo getting squashed into the same square, the way a
+// crop tool now already lets the user choose exactly.
 function ImageSlot({
   previewUrl,
   onPick,
@@ -71,6 +78,8 @@ function ImageSlot({
   removeLabel,
   label,
   className,
+  previewClassName,
+  fit = "cover",
 }: {
   previewUrl: string | null;
   onPick: () => void;
@@ -79,12 +88,18 @@ function ImageSlot({
   removeLabel: string;
   label: string;
   className: string;
+  previewClassName?: string;
+  fit?: "cover" | "contain";
 }) {
   if (previewUrl) {
     return (
-      <div className={`relative shrink-0 ${className}`}>
+      <div className={`relative shrink-0 ${previewClassName ?? className}`}>
         {/* eslint-disable-next-line @next/next/no-img-element -- local object URL / API-served image, not a build-time asset */}
-        <img src={previewUrl} alt="" className="h-full w-full rounded-lg object-cover ring-1 ring-line" />
+        <img
+          src={previewUrl}
+          alt=""
+          className={`h-full rounded-lg ring-1 ring-line ${fit === "contain" ? "w-auto object-contain" : "w-full object-cover"}`}
+        />
         <button
           type="button"
           onClick={onClear}
@@ -167,6 +182,9 @@ export default function MembershipCardModal({
   const [bannerRemoved, setBannerRemoved] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
+  // A picked file opens the crop modal before it ever becomes logoFile/
+  // bannerFile — the raw picked file, not what actually gets staged/saved.
+  const [cropTarget, setCropTarget] = useState<{ kind: "logo" | "banner"; file: File } | null>(null);
 
   // Derived (not stateful) so creating the URL never triggers a setState-
   // in-effect cascade — the effect below only ever revokes, never sets.
@@ -178,20 +196,31 @@ export default function MembershipCardModal({
   const logoPreviewUrl = logoFile ? logoObjectUrl : logoRemoved ? null : card?.hasLogo ? `/api/memberships/${card.id}/logo` : null;
   const bannerPreviewUrl = bannerFile ? bannerObjectUrl : bannerRemoved ? null : card?.hasBanner ? `/api/memberships/${card.id}/banner` : null;
 
-  async function handleLogoSelected(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleLogoSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    setLogoFile(await downscaleImage(file));
-    setLogoRemoved(false);
+    setCropTarget({ kind: "logo", file });
   }
 
-  async function handleBannerSelected(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleBannerSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    setBannerFile(await downscaleImage(file));
-    setBannerRemoved(false);
+    setCropTarget({ kind: "banner", file });
+  }
+
+  async function handleCropped(cropped: File) {
+    const kind = cropTarget?.kind;
+    setCropTarget(null);
+    const downscaled = await downscaleImage(cropped);
+    if (kind === "logo") {
+      setLogoFile(downscaled);
+      setLogoRemoved(false);
+    } else if (kind === "banner") {
+      setBannerFile(downscaled);
+      setBannerRemoved(false);
+    }
   }
 
   function clearLogo() {
@@ -751,6 +780,18 @@ export default function MembershipCardModal({
           <div className="border-t border-line pt-3">
             <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoSelected} className="hidden" />
             <input ref={bannerInputRef} type="file" accept="image/*" onChange={handleBannerSelected} className="hidden" />
+            {cropTarget && (
+              <ImageCropModal
+                file={cropTarget.file}
+                // Banner is always the pass's fixed 16:9 hero strip, so its
+                // crop frame is locked to that shape; the logo has no fixed
+                // shape of its own — freeform, so whatever the user drags
+                // the frame to becomes the logo's own aspect ratio.
+                aspect={cropTarget.kind === "banner" ? 16 / 9 : null}
+                onCancel={() => setCropTarget(null)}
+                onCropped={handleCropped}
+              />
+            )}
             <div className="flex gap-3">
               <ImageSlot
                 previewUrl={logoPreviewUrl}
@@ -760,6 +801,8 @@ export default function MembershipCardModal({
                 removeLabel={t("membership.removeImage")}
                 label={t("membership.addLogo")}
                 className="h-16 w-16"
+                previewClassName="h-16 max-w-[10rem]"
+                fit="contain"
               />
               <ImageSlot
                 previewUrl={bannerPreviewUrl}

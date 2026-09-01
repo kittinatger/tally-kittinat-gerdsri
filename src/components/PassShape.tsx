@@ -103,8 +103,17 @@ export default function PassShape({
     >
       <div className="flex items-center gap-2.5">
         {logoUrl ? (
+          // Sized to the logo's own aspect ratio (fixed height, auto
+          // width, capped) rather than forced into the same square every
+          // logo used to get squashed into — the crop tool this comes
+          // from already lets the user pick whatever shape they want.
           // eslint-disable-next-line @next/next/no-img-element -- user-uploaded, not a build-time asset
-          <img src={logoUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1" style={{ boxShadow: `0 0 0 1px ${fg.a30}` }} />
+          <img
+            src={logoUrl}
+            alt=""
+            className="h-9 w-auto max-w-[7rem] shrink-0 rounded-lg object-contain ring-1"
+            style={{ boxShadow: `0 0 0 1px ${fg.a30}` }}
+          />
         ) : (
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: fg.a20 }}>
             {icon && isCategoryIconKey(icon) ? (
