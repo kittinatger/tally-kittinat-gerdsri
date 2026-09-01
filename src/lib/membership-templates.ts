@@ -34,7 +34,11 @@ export type PassFieldDef = {
 // field set reskinned. Kept short (2-5 fields) so adding a card stays a
 // quick flow rather than filling out a full PassKit pass.json.
 export const TEMPLATE_FIELDS: Record<PassTemplate, PassFieldDef[]> = {
-  generic: [],
+  generic: [
+    { key: "memberId", zone: "secondary", labelKey: "membership.fieldMemberId", placeholderKey: "membership.fieldMemberIdPlaceholder" },
+    { key: "memberSince", zone: "auxiliary", labelKey: "membership.fieldMemberSince", placeholderKey: "membership.fieldMemberSincePlaceholder" },
+    { key: "expiry", zone: "auxiliary", labelKey: "membership.fieldExpiry", placeholderKey: "membership.fieldExpiryPlaceholder" },
+  ],
   storeCard: [
     { key: "pointsBalance", zone: "secondary", labelKey: "membership.fieldPointsBalance", placeholderKey: "membership.fieldPointsBalancePlaceholder" },
     { key: "memberSince", zone: "auxiliary", labelKey: "membership.fieldMemberSince", placeholderKey: "membership.fieldMemberSincePlaceholder" },
