@@ -8,6 +8,8 @@ import {
 } from "@/lib/membership-templates";
 import { parseCardBackground } from "@/lib/card-backgrounds";
 import type { MembershipCard } from "@/types/membership";
+import type { PassTemplateOption } from "@/types/pass-template";
+import type { PassTemplateRow } from "@/lib/db";
 
 // The snake_case shape both the server's listMembershipCards (db.ts) and
 // the API routes' JSON responses share — used server-side (page.tsx) and
@@ -75,5 +77,26 @@ export function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
     customFieldLabels,
     showLogo: row.show_logo,
     showName: row.show_name,
+  };
+}
+
+// pass_templates row -> PassTemplateOption — same shape-narrowing idea as
+// toMembershipCard above (an unrecognized/stale template value falls back
+// to "generic" rather than the whole option failing to render).
+export function toPassTemplateOption(row: PassTemplateRow): PassTemplateOption {
+  return {
+    id: row.id,
+    name: row.name,
+    template: isPassTemplate(row.template) ? row.template : "generic",
+    color: row.color,
+    background: parseCardBackground(row.background),
+    textColor: row.text_color,
+    lockTextColor: row.lock_text_color,
+    forceShowName: row.force_show_name,
+    forceShowLogo: row.force_show_logo,
+    country: row.country,
+    status: row.status,
+    submittedByUsername: row.submitted_by_username,
+    createdAt: row.created_at,
   };
 }

@@ -525,6 +525,7 @@ export default function SettingsNavList({
       {isAdmin && (
         <SettingsSection title={t("settings.section.admin")}>
           <SettingsListItem icon={<UploadIcon className="h-5 w-5" />} label={t("wallet.templateReviewTitle")} accent="indigo" {...panelItemProps("templateReviews")} />
+          <SettingsListItem icon={<UploadIcon className="h-5 w-5" />} label={t("membership.passTemplateReviewTitle")} accent="indigo" {...panelItemProps("passTemplateReviews")} />
         </SettingsSection>
       )}
 

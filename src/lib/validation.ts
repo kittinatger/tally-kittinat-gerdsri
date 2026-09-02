@@ -306,6 +306,28 @@ export const cardTemplateUpdateSchema = z
     message: "Provide at least one field to update",
   });
 
+// A submitted "premade pass" design — the pass equivalent of
+// cardTemplateInputSchema above, but tied to a fixed `template` (a pass's
+// fields are structurally dependent on which one it is) rather than
+// carrying a long list of force_* overrides. See pass_templates in db.ts.
+export const passTemplateInputSchema = z.object({
+  name: z.string().trim().min(1).max(40),
+  template: z.enum(PASS_TEMPLATES),
+  color: z.string().trim().min(1).max(30),
+  background: cardBackgroundSchema.optional(),
+  textColor: cardTextColorSchema.optional(),
+  lockTextColor: z.boolean().optional(),
+  forceShowName: z.boolean().nullable().optional(),
+  forceShowLogo: z.boolean().nullable().optional(),
+  country: z.string().trim().max(60).nullable().optional(),
+});
+
+// Admin-only — just the approve/reject/re-review action (no full-field
+// edit surface for pass templates, see updatePassTemplateStatus in db.ts).
+export const passTemplateStatusSchema = z.object({
+  status: z.enum(["pending", "approved", "rejected"]),
+});
+
 export const walletTransferInputSchema = z
   .object({
     fromWalletId: z.number().int().positive(),

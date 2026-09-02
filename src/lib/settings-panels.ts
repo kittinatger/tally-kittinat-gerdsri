@@ -27,6 +27,7 @@ export const PANEL_VALUES = [
   "appLock",
   "pendingChanges",
   "templateReviews",
+  "passTemplateReviews",
   "codeGenerator",
   "codeScanner",
   "currencyConverter",

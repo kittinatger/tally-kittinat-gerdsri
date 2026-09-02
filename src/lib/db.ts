@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 54;
+const CURRENT_SCHEMA_VERSION = 55;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1324,6 +1324,35 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS show_logo BOOLEAN NOT NULL DEFAULT true;`;
       await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS show_name BOOLEAN NOT NULL DEFAULT true;`;
 
+      // User-submitted "premade pass" designs — the pass equivalent of
+      // card_templates above, but deliberately smaller: a pass's fields
+      // are structurally tied to its template (a boarding pass's FROM/TO
+      // vs. a coupon's discount), so a premade pass design always carries
+      // a fixed `template` rather than leaving it force-able/optional like
+      // a wallet card's category is. Same review workflow (pending ->
+      // admin approves/rejects, see isAdminUser) and the same "visual skin
+      // only" idea — background/color/textColor plus a couple of
+      // force_show_* overrides, never the pass's own field values.
+      await sql`
+        CREATE TABLE IF NOT EXISTS pass_templates (
+          id SERIAL PRIMARY KEY,
+          submitted_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+          name TEXT NOT NULL,
+          template TEXT NOT NULL,
+          color TEXT NOT NULL,
+          background TEXT,
+          text_color TEXT,
+          lock_text_color BOOLEAN NOT NULL DEFAULT false,
+          force_show_name BOOLEAN,
+          force_show_logo BOOLEAN,
+          country TEXT,
+          status TEXT NOT NULL DEFAULT 'pending',
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          reviewed_at TIMESTAMPTZ
+        );
+      `;
+      await sql`CREATE INDEX IF NOT EXISTS pass_templates_status_idx ON pass_templates (status);`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -2287,6 +2316,118 @@ export async function updateCardTemplate(
 export async function deleteCardTemplate(id: number): Promise<boolean> {
   await ensureSchema();
   const { rows } = await sql<{ id: number }>`DELETE FROM card_templates WHERE id = ${id} RETURNING id;`;
+  return rows.length > 0;
+}
+
+// ---- Pass templates (user-submitted "premade pass" designs) ---------------
+// The pass equivalent of card_templates above — see the ensureSchema
+// comment on pass_templates for why it's a smaller shape (a fixed
+// `template` rather than card_templates' long list of force_* overrides).
+
+export type PassTemplateRow = {
+  id: number;
+  submitted_by: number | null;
+  submitted_by_username: string | null;
+  name: string;
+  template: string;
+  color: string;
+  background: string | null;
+  text_color: string | null;
+  lock_text_color: boolean;
+  force_show_name: boolean | null;
+  force_show_logo: boolean | null;
+  country: string | null;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+  reviewed_at: string | null;
+};
+
+const PASS_TEMPLATE_COLUMNS =
+  "id, submitted_by, name, template, color, background, text_color, lock_text_color, force_show_name, force_show_logo, country, status, created_at, reviewed_at";
+
+export async function createPassTemplate(
+  userId: number,
+  input: {
+    name: string;
+    template: string;
+    color: string;
+    background?: unknown;
+    textColor?: string | null;
+    lockTextColor?: boolean;
+    forceShowName?: boolean | null;
+    forceShowLogo?: boolean | null;
+    country?: string | null;
+  },
+): Promise<PassTemplateRow> {
+  await ensureSchema();
+  const backgroundJson = input.background ? JSON.stringify(input.background) : null;
+  const { rows } = await sql.query<PassTemplateRow>(
+    `INSERT INTO pass_templates (
+       submitted_by, name, template, color, background, text_color, lock_text_color, force_show_name, force_show_logo, country, status
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending')
+     RETURNING ${PASS_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
+    [
+      userId,
+      input.name,
+      input.template,
+      input.color,
+      backgroundJson,
+      input.textColor ?? null,
+      input.lockTextColor ?? false,
+      input.forceShowName ?? null,
+      input.forceShowLogo ?? null,
+      input.country ?? null,
+    ],
+  );
+  return rows[0];
+}
+
+// Public — every user picking a premade pass sees the same approved list,
+// newest-approved first.
+export async function listApprovedPassTemplates(): Promise<PassTemplateRow[]> {
+  await ensureSchema();
+  const { rows } = await sql.query<PassTemplateRow>(
+    `SELECT ${PASS_TEMPLATE_COLUMNS.split(", ").map((c) => "pt." + c).join(", ")}, u.username AS submitted_by_username
+     FROM pass_templates pt
+     LEFT JOIN users u ON u.id = pt.submitted_by
+     WHERE pt.status = 'approved'
+     ORDER BY pt.reviewed_at DESC NULLS LAST, pt.created_at DESC;`,
+  );
+  return rows;
+}
+
+// Admin-only — every template regardless of status, for the review panel.
+export async function listAllPassTemplates(): Promise<PassTemplateRow[]> {
+  await ensureSchema();
+  const { rows } = await sql.query<PassTemplateRow>(
+    `SELECT ${PASS_TEMPLATE_COLUMNS.split(", ").map((c) => "pt." + c).join(", ")}, u.username AS submitted_by_username
+     FROM pass_templates pt
+     LEFT JOIN users u ON u.id = pt.submitted_by
+     ORDER BY pt.created_at DESC;`,
+  );
+  return rows;
+}
+
+// Admin-only — just the approve/reject/re-review action; bumps reviewed_at
+// whenever status changes. No full-field edit surface for pass templates
+// (unlike card templates' TemplateEditModal) — the shape is small enough
+// that a rejected submission is cheap to just resubmit correctly.
+export async function updatePassTemplateStatus(id: number, status: "pending" | "approved" | "rejected"): Promise<PassTemplateRow | null> {
+  await ensureSchema();
+  const { rows } = await sql.query<PassTemplateRow>(
+    `UPDATE pass_templates SET status = $1, reviewed_at = now() WHERE id = $2
+     RETURNING ${PASS_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
+    [status, id],
+  );
+  return rows[0] ?? null;
+}
+
+// Admin-only, permanent — same reasoning as deleteCardTemplate: never
+// referenced by a saved pass, only copied from at pick time.
+export async function deletePassTemplate(id: number): Promise<boolean> {
+  await ensureSchema();
+  const { rows } = await sql<{ id: number }>`DELETE FROM pass_templates WHERE id = ${id} RETURNING id;`;
   return rows.length > 0;
 }
 

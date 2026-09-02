@@ -41,6 +41,7 @@ const PendingChangesPanel = dynamic(() => import("./PendingChangesPanel"), { ssr
 const BackupSettingsPanel = dynamic(() => import("./BackupSettingsPanel"), { ssr: false });
 const AppLockSettingsPanel = dynamic(() => import("./AppLockSettingsPanel"), { ssr: false });
 const TemplateReviewPanel = dynamic(() => import("./TemplateReviewPanel"), { ssr: false });
+const PassTemplateReviewPanel = dynamic(() => import("./PassTemplateReviewPanel"), { ssr: false });
 const CodeGeneratorPanel = dynamic(() => import("./CodeGeneratorPanel"), { ssr: false });
 const CodeScannerPanel = dynamic(() => import("./CodeScannerPanel"), { ssr: false });
 const CurrencyConverterPanel = dynamic(() => import("./CurrencyConverterPanel"), { ssr: false });
@@ -72,6 +73,7 @@ const PANEL_TITLES: Record<Panel, string> = {
   backup: "Backup & restore",
   appLock: "App lock",
   templateReviews: "Template Reviews",
+  passTemplateReviews: "Pass Template Reviews",
   codeGenerator: "Code generator",
   codeScanner: "Code scanner",
   currencyConverter: "Currency converter",
@@ -192,6 +194,7 @@ export default function SettingsView({
       {panel === "backup" && <BackupSettingsPanel />}
       {panel === "appLock" && <AppLockSettingsPanel />}
       {panel === "templateReviews" && <TemplateReviewPanel />}
+      {panel === "passTemplateReviews" && <PassTemplateReviewPanel />}
       {panel === "codeGenerator" && <CodeGeneratorPanel />}
       {panel === "codeScanner" && <CodeScannerPanel />}
       {panel === "currencyConverter" && <CurrencyConverterPanel />}

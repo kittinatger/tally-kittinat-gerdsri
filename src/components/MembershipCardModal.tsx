@@ -10,6 +10,8 @@ import ColorGlowPreview from "./ColorGlowPreview";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import CardBackgroundPicker from "./CardBackgroundPicker";
 import CardTextColorPicker from "./CardTextColorPicker";
+import PremadePassPicker from "./PremadePassPicker";
+import ForceToggleField from "./ForceToggleField";
 import { backgroundGlowColor, cardForegroundFor } from "@/lib/card-backgrounds";
 import type { CardBackground } from "@/lib/card-backgrounds";
 import { CATEGORY_ICON_KEYS, CATEGORY_ICON_LABEL_KEYS } from "@/lib/category-icons";
@@ -163,6 +165,23 @@ export default function MembershipCardModal({
   const [newCustomFieldLabel, setNewCustomFieldLabel] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Locked by a picked premade pass's lockTextColor — see PremadePassPicker
+  // onSelect below. Same convention as WalletModal's own textColorLocked:
+  // hides the manual text-color control entirely rather than disabling it.
+  const [textColorLocked, setTextColorLocked] = useState(false);
+  // Whether a premade pass has been applied this session — once true, the
+  // "Submit as template" tab hides (nothing left to upload that isn't
+  // already someone else's submitted design), same idea as WalletModal's
+  // templateApplied.
+  const [templateApplied, setTemplateApplied] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [templateCountry, setTemplateCountry] = useState("");
+  const [templateLockTextColor, setTemplateLockTextColor] = useState(false);
+  const [templateForceShowName, setTemplateForceShowName] = useState<boolean | null>(null);
+  const [templateForceShowLogo, setTemplateForceShowLogo] = useState<boolean | null>(null);
+  const [templateSubmitting, setTemplateSubmitting] = useState(false);
+  const [templateSubmitted, setTemplateSubmitted] = useState(false);
+  const [templateError, setTemplateError] = useState<string | null>(null);
   const category = CATEGORY_BY_TEMPLATE[template];
   // The modal used to be one long scroll of 5 FormSections (name+template,
   // code, the field editor, color/icon/images, notes) — same problem the
@@ -171,7 +190,7 @@ export default function MembershipCardModal({
   // own tab since the guided/custom editor is the single biggest chunk of
   // UI, and Look folds in notes at the end (matching how the wallet
   // editor's "Card details" tab also ends with Notes).
-  const [tab, setTab] = useState<"basics" | "code" | "fields" | "look">("basics");
+  const [tab, setTab] = useState<"basics" | "code" | "fields" | "look" | "template">("basics");
 
   // Logo/banner: a staged File replaces whatever's already saved (shown via
   // the /logo|/banner API routes for an existing card); "removed" clears a
@@ -263,6 +282,42 @@ export default function MembershipCardModal({
     return { hasLogo, hasBanner };
   }
 
+  // Submits the current pass's look — not its data — as a "premade pass"
+  // for admin review, same idea as WalletModal's handleUploadTemplate.
+  // `template` travels along unconditionally (a pass template is always
+  // tied to one, unlike a wallet card's optional category).
+  async function handleUploadTemplate() {
+    setTemplateSubmitting(true);
+    setTemplateError(null);
+    try {
+      const res = await fetch("/api/pass-templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: templateName.trim() || name || t("membership.namePlaceholder"),
+          template,
+          color,
+          background,
+          textColor,
+          lockTextColor: templateLockTextColor,
+          forceShowName: templateForceShowName,
+          forceShowLogo: templateForceShowLogo,
+          country: templateCountry.trim() || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setTemplateError(typeof data.error === "string" ? data.error : "Could not submit.");
+        return;
+      }
+      setTemplateSubmitted(true);
+    } catch (err) {
+      setTemplateError(describeFetchError(err));
+    } finally {
+      setTemplateSubmitting(false);
+    }
+  }
+
   const categoryIconLabels = Object.fromEntries(
     Object.entries(CATEGORY_ICON_LABEL_KEYS).map(([k, v]) => [k, t(v)]),
   ) as Record<string, string>;
@@ -290,8 +345,9 @@ export default function MembershipCardModal({
       ["code", "membership.tabCode"],
       ["fields", "membership.tabFields"],
       ["look", "wallet.tabLook"],
+      ["template", "wallet.tabTemplate"],
     ] as const
-  ).filter(([key]) => key !== "fields" || hasAnyFields);
+  ).filter(([key]) => (key !== "fields" || hasAnyFields) && (key !== "template" || !templateApplied));
 
   function handleTemplateChange(next: PassTemplate) {
     setTemplate(next);
@@ -771,12 +827,26 @@ export default function MembershipCardModal({
         {tab === "look" && (
         <>
         <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("membership.colorLabel")}>
+          <PremadePassPicker
+            onSelect={(tpl) => {
+              setTemplateApplied(true);
+              handleTemplateChange(tpl.template);
+              setBackground(tpl.background);
+              setColor(tpl.color);
+              setTextColor(tpl.textColor);
+              setTextColorLocked(tpl.lockTextColor);
+              if (tpl.forceShowName !== null) setShowName(tpl.forceShowName);
+              if (tpl.forceShowLogo !== null) setShowLogo(tpl.forceShowLogo);
+            }}
+          />
           <CardBackgroundPicker value={background} onChange={setBackground} plainColor={color} onPlainColorChange={setColor} />
 
+          {!textColorLocked && (
           <div className="border-t border-line pt-3">
             <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("background.textColorLabel")}</label>
             <CardTextColorPicker value={textColor} onChange={setTextColor} autoColor={cardForegroundFor(null, background, color).full} />
           </div>
+          )}
 
           <div className="border-t border-line pt-3">
             <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("membership.iconLabel")}</label>
@@ -883,6 +953,92 @@ export default function MembershipCardModal({
             className="w-full resize-none rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />
         </FormSection>
+        </>
+        )}
+
+        {tab === "template" && !templateApplied && (
+        <>
+        {templateSubmitted ? (
+        <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("wallet.uploadTemplateLabel")}>
+          <p className="text-xs text-ink-soft">{t("wallet.templateSubmittedDesc")}</p>
+        </FormSection>
+        ) : (
+        <>
+        <p className="text-xs text-ink-soft">{t("membership.uploadPassTemplateDesc")}</p>
+
+        <FormSection icon={<MembershipCardIcon className="h-4 w-4" />} title={t("wallet.templateDetailsLabel")}>
+          <div>
+            <label htmlFor="passTemplateNameInput" className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              {t("wallet.templateNameLabel")}
+            </label>
+            <input
+              id="passTemplateNameInput"
+              type="text"
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              placeholder={name || t("membership.namePlaceholder")}
+              className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="passTemplateCountryInput" className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              {t("wallet.templateCountryLabel")}
+            </label>
+            <input
+              id="passTemplateCountryInput"
+              type="text"
+              value={templateCountry}
+              onChange={(e) => setTemplateCountry(e.target.value)}
+              placeholder={t("wallet.templateCountryPlaceholder")}
+              className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+            />
+          </div>
+        </FormSection>
+
+        <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("wallet.forceTogglesLabel")}>
+          <p className="text-xs text-ink-soft">{t("wallet.forceTogglesDesc")}</p>
+          <div className="space-y-1.5">
+            <ForceToggleField label={t("membership.showNameOnCardLabel")} value={templateForceShowName} onChange={setTemplateForceShowName} />
+            <ForceToggleField label={t("membership.showLogoOnCardLabel")} value={templateForceShowLogo} onChange={setTemplateForceShowLogo} />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setTemplateLockTextColor((v) => !v)}
+            className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+          >
+            <span>
+              <span className="block text-sm font-medium text-foreground">{t("wallet.lockTextColorLabel")}</span>
+              <span className="block text-xs text-ink-soft">{t("wallet.lockTextColorDesc")}</span>
+            </span>
+            <span
+              role="switch"
+              aria-checked={templateLockTextColor}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                templateLockTextColor ? "bg-navy" : "bg-line"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                  templateLockTextColor ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </span>
+          </button>
+        </FormSection>
+
+        {templateError && <p className="text-sm text-red-600 dark:text-red-400">{templateError}</p>}
+        <button
+          type="button"
+          onClick={handleUploadTemplate}
+          disabled={templateSubmitting}
+          className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-[var(--nav-hover-bg)] disabled:opacity-60"
+        >
+          {templateSubmitting ? t("common.saving") : t("wallet.uploadTemplateLabel")}
+        </button>
+        </>
+        )}
         </>
         )}
 
