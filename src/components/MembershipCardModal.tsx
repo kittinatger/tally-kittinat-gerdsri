@@ -10,7 +10,6 @@ import ColorGlowPreview from "./ColorGlowPreview";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import CardBackgroundPicker from "./CardBackgroundPicker";
 import CardTextColorPicker from "./CardTextColorPicker";
-import PremadeCardPicker from "./PremadeCardPicker";
 import { backgroundGlowColor, cardForegroundFor } from "@/lib/card-backgrounds";
 import type { CardBackground } from "@/lib/card-backgrounds";
 import { CATEGORY_ICON_KEYS, CATEGORY_ICON_LABEL_KEYS } from "@/lib/category-icons";
@@ -152,10 +151,6 @@ export default function MembershipCardModal({
   const [notes, setNotes] = useState(card?.notes ?? "");
   const [showLogo, setShowLogo] = useState(card?.showLogo ?? true);
   const [showName, setShowName] = useState(card?.showName ?? true);
-  // Locked by a picked premade design's lockTextColor — same convention as
-  // WalletModal's own textColorLocked, hiding the manual text-color control
-  // entirely rather than just disabling it (see the matching note there).
-  const [textColorLocked, setTextColorLocked] = useState(false);
   const [template, setTemplate] = useState<PassTemplate>(card?.template ?? "generic");
   const [fields, setFields] = useState<Record<string, string>>(card?.fields ?? {});
   const [layout, setLayout] = useState(card?.layout ?? defaultLayoutFor(template));
@@ -776,30 +771,12 @@ export default function MembershipCardModal({
         {tab === "look" && (
         <>
         <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("membership.colorLabel")}>
-          <PremadeCardPicker
-            onSelect={(tpl) => {
-              setBackground(tpl.background);
-              setColor(tpl.color);
-              setTextColor(tpl.textColor);
-              setTextColorLocked(tpl.lockTextColor);
-              if (tpl.forceShowName !== null) setShowName(tpl.forceShowName);
-              // A premade design is purely a visual skin sourced from a
-              // different card entirely — carrying over this card's own
-              // field values (member number, points balance, etc.) onto it
-              // would show stale/mismatched data, so applying one blanks
-              // every field's value. The field keys/labels/layout stay put;
-              // only the values are cleared, same as a fresh template pick.
-              setFields({});
-            }}
-          />
           <CardBackgroundPicker value={background} onChange={setBackground} plainColor={color} onPlainColorChange={setColor} />
 
-          {!textColorLocked && (
           <div className="border-t border-line pt-3">
             <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("background.textColorLabel")}</label>
             <CardTextColorPicker value={textColor} onChange={setTextColor} autoColor={cardForegroundFor(null, background, color).full} />
           </div>
-          )}
 
           <div className="border-t border-line pt-3">
             <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("membership.iconLabel")}</label>
