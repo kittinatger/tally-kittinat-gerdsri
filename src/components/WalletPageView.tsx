@@ -264,6 +264,9 @@ export default function WalletPageView({
           codeSize="small"
           logoUrl={card.hasLogo ? `/api/memberships/${card.id}/logo` : null}
           bannerUrl={card.hasBanner ? `/api/memberships/${card.id}/banner` : null}
+          customFieldLabels={card.customFieldLabels}
+          showLogo={card.showLogo}
+          showName={card.showName}
         />
       ),
       onOpen: () => setViewingPass(card),
