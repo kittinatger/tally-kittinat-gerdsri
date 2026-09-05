@@ -87,11 +87,21 @@ export default function ImageCropModal({
   }, []);
 
   // Frame size: fixed-aspect ones are derived straight from the stage
-  // (recomputed whenever the stage resizes); freeform starts at a
-  // reasonable default the first time the stage is known, then is only
-  // ever changed by the user dragging a corner handle.
+  // (recomputed whenever the stage resizes); freeform starts at a default
+  // sized to the *picked image's own* aspect ratio (fit within the stage
+  // the same way a fixed-aspect frame is), then is only ever changed by
+  // the user dragging a corner handle. It used to default to a plain
+  // square before imgNatural was even known, and — since the "only set
+  // once" guard fired on that first (wrong) square — never adjusted to
+  // the actual image once its real dimensions loaded a moment later. A
+  // wide banner photo then started out cropped into a square with no
+  // visual cue that dragging a corner would fix it, so the wideness that
+  // was clearly visible right up until confirming just vanished from the
+  // saved crop. Waiting for imgNatural before ever setting a default
+  // fixes that: the initial frame now actually matches the source image's
+  // shape.
   useEffect(() => {
-    if (!stageSize) return;
+    if (!stageSize || !imgNatural) return;
     const timer = setTimeout(() => {
       if (aspect !== null) {
         let w = stageSize.w * 0.9;
@@ -102,11 +112,21 @@ export default function ImageCropModal({
         }
         setFrameSize({ w, h });
       } else {
-        setFrameSize((prev) => prev ?? { w: Math.min(stageSize.w, stageSize.h) * 0.7, h: Math.min(stageSize.w, stageSize.h) * 0.7 });
+        setFrameSize((prev) => {
+          if (prev) return prev;
+          const ratio = imgNatural.w / imgNatural.h;
+          let w = stageSize.w * 0.9;
+          let h = w / ratio;
+          if (h > stageSize.h * 0.9) {
+            h = stageSize.h * 0.9;
+            w = h * ratio;
+          }
+          return { w, h };
+        });
       }
     }, 0);
     return () => clearTimeout(timer);
-  }, [stageSize, aspect]);
+  }, [stageSize, aspect, imgNatural]);
 
   const baseScale = useMemo(() => {
     if (!imgNatural || !frameSize) return 1;
