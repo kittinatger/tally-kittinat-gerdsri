@@ -148,6 +148,18 @@ export default function MembershipCardModal({
   const [name, setName] = useState(card?.name ?? "");
   const [codeValue, setCodeValue] = useState(scannedValue?.value ?? card?.codeValue ?? "");
   const [codeFormat, setCodeFormat] = useState<MembershipCodeFormat>(scannedValue?.format ?? card?.codeFormat ?? "qr");
+  // Re-scanning via onScanRequested keeps this modal mounted the whole time
+  // (see WalletPageView) so every other field survives — but that means a
+  // fresh scannedValue arrives as a prop change, not a fresh mount, so it
+  // needs its own effect rather than just the useState initializers above.
+  useEffect(() => {
+    if (!scannedValue) return;
+    const timer = setTimeout(() => {
+      setCodeValue(scannedValue.value);
+      setCodeFormat(scannedValue.format);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [scannedValue]);
   const [color, setColor] = useState<string>(card?.color ?? CATEGORY_PALETTE[0]);
   const [background, setBackground] = useState<CardBackground | null>(card?.background ?? null);
   const [textColor, setTextColor] = useState<string | null>(card?.textColor ?? null);

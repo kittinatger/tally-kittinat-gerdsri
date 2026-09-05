@@ -75,11 +75,16 @@ export default function WalletPageView({
 
   const [entryOpen, setEntryOpen] = useState(false);
   const [accountModal, setAccountModal] = useState<{ mode: "edit"; wallet: WalletOption } | { mode: "add" } | null>(null);
-  const [passModal, setPassModal] = useState<
-    | { mode: "add"; scannedValue?: { value: string; format: MembershipCodeFormat } | null }
-    | { mode: "edit"; card: MembershipCard }
-    | null
-  >(null);
+  const [passModal, setPassModal] = useState<{ mode: "add" } | { mode: "edit"; card: MembershipCard } | null>(null);
+  // A scan result waiting to be applied to whichever pass modal is (or is
+  // about to be) open — kept separate from `passModal` itself so that
+  // scanning again from *within* an already-open modal (MembershipCardModal's
+  // onScanRequested) can hand the new code back to that same modal instance
+  // instead of closing and recreating it, which used to discard every other
+  // field the user had already filled in. See MembershipCardModal's
+  // scannedValue prop, applied via an effect there rather than just its
+  // initial state.
+  const [pendingScan, setPendingScan] = useState<{ value: string; format: MembershipCodeFormat } | null>(null);
   const [viewingPass, setViewingPass] = useState<MembershipCard | null>(null);
   const [viewingAccount, setViewingAccount] = useState<WalletOption | null>(null);
   const [accountArchiveError, setAccountArchiveError] = useState<string | null>(null);
@@ -126,6 +131,7 @@ export default function WalletPageView({
     // to be in — a no-op filter on the list it's actually in.
     setPassesFor(card.category === "pass" ? "membership" : "pass")((prev) => prev.filter((c) => c.id !== card.id));
     setPassModal(null);
+    setPendingScan(null);
     setViewingPass(null);
   }
 
@@ -441,6 +447,7 @@ export default function WalletPageView({
             key={viewingPass.id}
             card={viewingPass}
             onEdit={() => {
+              setPendingScan(null);
               setPassModal({ mode: "edit", card: viewingPass });
               setViewingPass(null);
             }}
@@ -454,21 +461,28 @@ export default function WalletPageView({
           onClose={() => setPassEntryOpen(false)}
           onNewPass={() => {
             setPassEntryOpen(false);
+            setPendingScan(null);
             setPassModal({ mode: "add" });
           }}
           onScanned={(result) => {
             setPassEntryOpen(false);
-            setPassModal({ mode: "add", scannedValue: result });
+            setPendingScan(result);
+            setPassModal({ mode: "add" });
           }}
         />
       )}
 
+      {/* Rescanning from *inside* an already-open MembershipCardModal (its
+       * own onScanRequested below) — passModal deliberately stays mounted
+       * underneath instead of being closed, so every other field the user
+       * already filled in survives; only the scanned code gets handed back
+       * via pendingScan. */}
       {passScanOpen && (
         <ScanCardModal
           onClose={() => setPassScanOpen(false)}
           onScanned={(result) => {
             setPassScanOpen(false);
-            setPassModal({ mode: "add", scannedValue: result });
+            setPendingScan(result);
           }}
         />
       )}
@@ -476,13 +490,13 @@ export default function WalletPageView({
       {passModal && (
         <MembershipCardModal
           card={passModal.mode === "edit" ? passModal.card : undefined}
-          scannedValue={passModal.mode === "add" ? (passModal.scannedValue ?? null) : null}
-          onClose={() => setPassModal(null)}
-          onSaved={handlePassSaved}
-          onScanRequested={() => {
+          scannedValue={pendingScan}
+          onClose={() => {
             setPassModal(null);
-            setPassScanOpen(true);
+            setPendingScan(null);
           }}
+          onSaved={handlePassSaved}
+          onScanRequested={() => setPassScanOpen(true)}
         />
       )}
     </div>
