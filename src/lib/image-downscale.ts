@@ -11,6 +11,8 @@
 // correctness requirement, so a failure here should never block the user
 // from submitting their original photo.
 
+import { loadImageElement } from "@/lib/load-image-element";
+
 const MAX_DIMENSION = 1800;
 const JPEG_QUALITY = 0.82;
 
@@ -22,23 +24,21 @@ export async function downscaleImage(file: File): Promise<File> {
   if (!file.type.startsWith("image/")) return file;
 
   try {
-    // Without imageOrientation: "from-image", createImageBitmap ignores
-    // EXIF orientation and returns the raw sensor pixels — a phone photo
-    // shot in portrait can come back sideways relative to how every <img>
-    // (and every viewer's Photos app) already displays it. See the
-    // matching fix/comment in image-crop.ts for where this actually bit.
-    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
-    const scale = Math.min(1, MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
-    const width = Math.round(bitmap.width * scale);
-    const height = Math.round(bitmap.height * scale);
+    // A plain <img> (loadImageElement), not createImageBitmap — see that
+    // function's own comment for why: a phone photo shot in portrait can
+    // come back sideways otherwise, relative to how every <img> (and every
+    // viewer's Photos app) already displays it.
+    const img = await loadImageElement(file);
+    const scale = Math.min(1, MAX_DIMENSION / Math.max(img.naturalWidth, img.naturalHeight));
+    const width = Math.round(img.naturalWidth * scale);
+    const height = Math.round(img.naturalHeight * scale);
 
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext("2d");
     if (!ctx) return file;
-    ctx.drawImage(bitmap, 0, 0, width, height);
-    bitmap.close();
+    ctx.drawImage(img, 0, 0, width, height);
 
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", JPEG_QUALITY));
     if (!blob) return file;
