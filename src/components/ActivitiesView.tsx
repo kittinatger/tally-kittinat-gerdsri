@@ -67,6 +67,7 @@ export default function ActivitiesView({
   const [editing, setEditing] = useState<Expense | null>(null);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [walletFilter, setWalletFilter] = useState(initialWalletFilter);
+  const [search, setSearch] = useState("");
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
 
   const activeWallets = wallets.filter((w) => !w.archived);
@@ -93,6 +94,15 @@ export default function ActivitiesView({
 
   function handleEditFromDetail() {
     setEditing(viewing);
+    setViewing(null);
+  }
+
+  // Tapping a merchant name in the transaction detail view jumps to that
+  // merchant's other transactions — reuses the list's own search filter
+  // (merchant is part of what it matches against) rather than a separate
+  // filter mechanism.
+  function handleMerchantClick(merchant: string) {
+    setSearch(merchant);
     setViewing(null);
   }
 
@@ -136,6 +146,8 @@ export default function ActivitiesView({
                   onTypeFilterChange={setTypeFilter}
                   walletFilter={walletFilter}
                   onWalletFilterChange={setWalletFilter}
+                  search={search}
+                  onSearchChange={setSearch}
                 />
               </div>
 
@@ -146,7 +158,7 @@ export default function ActivitiesView({
               <div className="hidden lg:sticky lg:top-20 lg:block lg:flex-1">
                 {viewing ? (
                   <div className="rounded-card border border-surface-line bg-surface p-5 sm:p-6">
-                    <ExpenseDetailContent expense={viewing} onEdit={handleEditFromDetail} />
+                    <ExpenseDetailContent expense={viewing} onEdit={handleEditFromDetail} onMerchantClick={handleMerchantClick} />
                   </div>
                 ) : (
                   <div className="flex h-64 flex-col items-center justify-center gap-1 rounded-card border border-dashed border-surface-line px-6 text-center">
@@ -160,7 +172,12 @@ export default function ActivitiesView({
 
           {addOpen && <AddExpenseModal onClose={() => setAddOpen(false)} onCreated={handleCreated} />}
           {viewing && !isDesktop && (
-            <ExpenseDetailModal expense={viewing} onClose={() => setViewing(null)} onEdit={handleEditFromDetail} />
+            <ExpenseDetailModal
+              expense={viewing}
+              onClose={() => setViewing(null)}
+              onEdit={handleEditFromDetail}
+              onMerchantClick={handleMerchantClick}
+            />
           )}
           {editing && (
             <EditExpenseModal

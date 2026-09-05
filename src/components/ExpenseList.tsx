@@ -66,6 +66,8 @@ export default function ExpenseList({
   onTypeFilterChange,
   walletFilter,
   onWalletFilterChange,
+  search,
+  onSearchChange,
 }: {
   expenses: Expense[];
   onSelect: (expense: Expense) => void;
@@ -83,13 +85,18 @@ export default function ExpenseList({
    * selector drives the same wallet filter as the dropdown below. */
   walletFilter: string;
   onWalletFilterChange: (wallet: string) => void;
+  /** Controlled from ActivitiesView so tapping a merchant name in the
+   * transaction detail view can jump straight to that merchant's other
+   * transactions here, instead of living as private state only this list
+   * could ever set. */
+  search: string;
+  onSearchChange: (search: string) => void;
 }) {
   const t = useT();
   const language = useLanguage();
   const allCategories = useAllCategories();
   const wallets = useWallets();
   const currency = useCurrency();
-  const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
@@ -345,7 +352,7 @@ export default function ExpenseList({
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => onSearchChange(e.target.value)}
             placeholder={t("activities.searchPlaceholder")}
             className="w-full rounded-full border border-line bg-surface py-2.5 pl-9 pr-3 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
           />

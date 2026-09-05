@@ -44,7 +44,19 @@ function ReceiptIcon() {
  * rendered inline beside the list, no modal chrome). Keeping this as one
  * component means both surfaces always show the same transaction detail.
  */
-export default function ExpenseDetailContent({ expense, onEdit }: { expense: Expense; onEdit: () => void }) {
+export default function ExpenseDetailContent({
+  expense,
+  onEdit,
+  onMerchantClick,
+}: {
+  expense: Expense;
+  onEdit: () => void;
+  /** When provided, the merchant name becomes tappable — jumps to that
+   * merchant's other transactions (see ActivitiesView.handleMerchantClick).
+   * Optional because this content is also used in contexts with no
+   * transaction list to jump to. */
+  onMerchantClick?: (merchant: string) => void;
+}) {
   const t = useT();
   const color = useCategoryColor(expense.type, expense.category);
   const icon = useCategoryIcon(expense.type, expense.category);
@@ -82,7 +94,17 @@ export default function ExpenseDetailContent({ expense, onEdit }: { expense: Exp
             {signedAmount(expense) >= 0 ? "+" : "-"}
             {formatCurrency(expense.amount, currency)}
           </p>
-          <p className="mt-1 text-lg font-semibold text-white/90">{expense.merchant}</p>
+          {onMerchantClick ? (
+            <button
+              type="button"
+              onClick={() => onMerchantClick(expense.merchant)}
+              className="mt-1 text-lg font-semibold text-white/90 underline decoration-white/40 underline-offset-2 transition hover:decoration-white/80"
+            >
+              {expense.merchant}
+            </button>
+          ) : (
+            <p className="mt-1 text-lg font-semibold text-white/90">{expense.merchant}</p>
+          )}
           <span
             className={`mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold backdrop-blur-sm`}
           >
