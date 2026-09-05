@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { BrowserMultiFormatReader, type IScannerControls } from "@zxing/browser";
 import { describeMediaError } from "@/lib/media-error";
 import { decodePassImage, toMembershipFormat } from "@/lib/decode-pass-image";
@@ -68,7 +69,15 @@ export default function ScanCardModal({
     setDecodingPhoto(false);
   }
 
-  return (
+  // Portaled to document.body — see Modal.tsx/ImageCropModal.tsx's own
+  // comments for why. This one in particular is now routinely opened
+  // *on top of* an already-open MembershipCardModal (which is itself
+  // portaled) rather than replacing it, so that pass's fields survive a
+  // rescan — without its own portal, this rendered inside WalletPageView's
+  // normal DOM position, and any ancestor establishing a stacking context
+  // there (even with the same z-50) could put it visually *behind* the
+  // body-level modal it was supposed to be covering.
+  return createPortal(
     <div className="fixed inset-0 z-50 flex flex-col bg-black">
       <div className="flex items-center justify-between px-4 py-3">
         <p className="text-sm font-semibold text-white">{t("membership.scanTitle")}</p>
@@ -120,6 +129,7 @@ export default function ScanCardModal({
           {t("membership.typeItInstead")}
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
