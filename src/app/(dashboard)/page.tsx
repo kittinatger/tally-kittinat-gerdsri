@@ -19,9 +19,9 @@ export const dynamic = "force-dynamic";
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ add?: string }>;
+  searchParams: Promise<{ add?: string; vendor?: string }>;
 }) {
-  const { add } = await searchParams;
+  const { add, vendor } = await searchParams;
   const userId = await getUserId();
   const [rows, categoryRows, currency, walletRows, activitiesDefaultWalletId] = await Promise.all([
     listExpenses(userId),
@@ -66,6 +66,7 @@ export default async function HomePage({
       wallets={wallets}
       initialWalletFilter={initialWalletFilter}
       initialAddOpen={add === "expense"}
+      initialVendorFilter={vendor}
     />
   );
 }

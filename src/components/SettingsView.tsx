@@ -25,6 +25,7 @@ const DashboardWidgetsSettings = dynamic(() => import("./DashboardWidgetsSetting
 const PermissionsSettings = dynamic(() => import("./PermissionsSettings"), { ssr: false });
 const CategoryManager = dynamic(() => import("./CategoryManager"), { ssr: false });
 const TagManager = dynamic(() => import("./TagManager"), { ssr: false });
+const VendorManager = dynamic(() => import("./VendorManager"), { ssr: false });
 const WalletManager = dynamic(() => import("./WalletManager"), { ssr: false });
 const RecurringManager = dynamic(() => import("./RecurringManager"), { ssr: false });
 const BudgetManager = dynamic(() => import("./BudgetManager"), { ssr: false });
@@ -54,6 +55,7 @@ const PANEL_TITLES: Record<Panel, string> = {
   permissions: "Permissions",
   categories: "Manage categories",
   tags: "Manage tags",
+  vendors: "Vendors",
   wallets: "Wallets",
   friends: "Friends & Family",
   challenges: "Challenges",
@@ -154,7 +156,7 @@ export default function SettingsView({
        * "wallets", LoanManager/AssistantPanel render their own <h3> heading
        * (unlike e.g. SplitBillManager, which has none), so adding them here
        * would double up. */}
-      {(panel === "currency" || panel === "language" || panel === "tags" || panel === "calendar" || panel === "friends" || panel === "challenges" || panel === "splitBills") && (
+      {(panel === "currency" || panel === "language" || panel === "tags" || panel === "vendors" || panel === "calendar" || panel === "friends" || panel === "challenges" || panel === "splitBills") && (
         <h2 className="mb-5 font-display text-2xl text-foreground">{PANEL_TITLES[panel]}</h2>
       )}
 
@@ -169,6 +171,7 @@ export default function SettingsView({
       {panel === "permissions" && <PermissionsSettings hasEmail={Boolean(email)} />}
       {panel === "categories" && <CategoryManager categories={categories} />}
       {panel === "tags" && <TagManager />}
+      {panel === "vendors" && <VendorManager />}
       {panel === "wallets" && (
         <WalletManager wallets={wallets} initialActivitiesDefaultWalletId={activitiesDefaultWalletId} />
       )}

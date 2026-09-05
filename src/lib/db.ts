@@ -3081,6 +3081,40 @@ export async function listDistinctMerchants(userId: number): Promise<string[]> {
   return rows.map((r) => r.merchant);
 }
 
+export type VendorStat = { name: string; count: number; totalSpent: number; lastUsed: string };
+
+// Powers the Vendors settings panel — every merchant name the user has
+// ever logged, with enough per-vendor stats (count/spend/recency) to
+// support several sort orders client-side without refetching.
+export async function listVendorStats(userId: number): Promise<VendorStat[]> {
+  await ensureSchema();
+  const { rows } = await sql<{ merchant: string; count: number; total_spent: number; last_used: string }>`
+    SELECT
+      merchant,
+      COUNT(*)::int AS count,
+      COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0)::float8 AS total_spent,
+      MAX(date) AS last_used
+    FROM expenses
+    WHERE user_id = ${userId}
+    GROUP BY merchant
+    ORDER BY merchant ASC;
+  `;
+  return rows.map((r) => ({ name: r.merchant, count: r.count, totalSpent: r.total_spent, lastUsed: r.last_used }));
+}
+
+// Backs both the Vendors panel's rename action and (indirectly) the
+// merge-inconsistent-spellings banner in ExpenseList — renaming onto an
+// existing merchant string just merges the two, since a "vendor" is
+// nothing but a shared merchant string.
+export async function renameMerchant(userId: number, oldName: string, newName: string): Promise<void> {
+  await ensureSchema();
+  await sql`
+    UPDATE expenses
+    SET merchant = ${newName}
+    WHERE user_id = ${userId} AND merchant = ${oldName};
+  `;
+}
+
 export type TagCount = { name: string; count: number };
 
 export async function listTags(userId: number): Promise<TagCount[]> {

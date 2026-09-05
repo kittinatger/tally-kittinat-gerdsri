@@ -36,6 +36,7 @@ export default function ActivitiesView({
   wallets,
   initialWalletFilter = "all",
   initialAddOpen = false,
+  initialVendorFilter,
 }: {
   initialExpenses: Expense[];
   categories: CategoryOption[];
@@ -50,16 +51,21 @@ export default function ActivitiesView({
    * page.tsx), same pattern Dashboard.tsx used before Activities became
    * the root page. */
   initialAddOpen?: boolean;
+  /** Scopes the list to one exact merchant on load — from the Vendors
+   * settings panel's row links (`?vendor=NAME`, read server-side in
+   * page.tsx) or a same-session merchant-name click (see
+   * handleMerchantClick), both driving the same vendorFilter state. */
+  initialVendorFilter?: string;
 }) {
   const t = useT();
   const router = useRouter();
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [addOpen, setAddOpen] = useState(initialAddOpen);
 
-  // Strips the `?add=expense` param once consumed (replace, not push) so
-  // it doesn't linger in history and reopen the modal on back/refresh.
+  // Strips the `?add=expense`/`?vendor=` params once consumed (replace, not
+  // push) so they don't linger in history and reopen/reapply on back/refresh.
   useEffect(() => {
-    if (!initialAddOpen) return;
+    if (!initialAddOpen && !initialVendorFilter) return;
     router.replace("/", { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only
   }, []);
@@ -68,6 +74,7 @@ export default function ActivitiesView({
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [walletFilter, setWalletFilter] = useState(initialWalletFilter);
   const [search, setSearch] = useState("");
+  const [vendorFilter, setVendorFilter] = useState<string | null>(initialVendorFilter ?? null);
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
 
   const activeWallets = wallets.filter((w) => !w.archived);
@@ -98,11 +105,12 @@ export default function ActivitiesView({
   }
 
   // Tapping a merchant name in the transaction detail view jumps to that
-  // merchant's other transactions — reuses the list's own search filter
-  // (merchant is part of what it matches against) rather than a separate
-  // filter mechanism.
+  // merchant's other transactions via a dedicated exact-match filter (shown
+  // as a dismissible chip in ExpenseList) — distinct from the free-text
+  // search box, so clearing it (the chip's ✕) cleanly returns to the normal,
+  // unfiltered Activities view instead of leaving stale search text behind.
   function handleMerchantClick(merchant: string) {
-    setSearch(merchant);
+    setVendorFilter(merchant);
     setViewing(null);
   }
 
@@ -148,6 +156,8 @@ export default function ActivitiesView({
                   onWalletFilterChange={setWalletFilter}
                   search={search}
                   onSearchChange={setSearch}
+                  vendorFilter={vendorFilter}
+                  onVendorFilterChange={setVendorFilter}
                 />
               </div>
 

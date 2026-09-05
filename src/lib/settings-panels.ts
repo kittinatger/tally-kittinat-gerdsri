@@ -8,6 +8,7 @@ export const PANEL_VALUES = [
   "permissions",
   "categories",
   "tags",
+  "vendors",
   "wallets",
   "friends",
   "challenges",

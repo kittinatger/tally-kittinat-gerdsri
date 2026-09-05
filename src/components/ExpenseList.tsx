@@ -68,6 +68,8 @@ export default function ExpenseList({
   onWalletFilterChange,
   search,
   onSearchChange,
+  vendorFilter,
+  onVendorFilterChange,
 }: {
   expenses: Expense[];
   onSelect: (expense: Expense) => void;
@@ -91,6 +93,13 @@ export default function ExpenseList({
    * could ever set. */
   search: string;
   onSearchChange: (search: string) => void;
+  /** An exact-match merchant filter, distinct from the free-text search
+   * above — set by clicking a merchant name in the transaction detail view
+   * or a row in the Vendors settings panel. Shown as its own dismissible
+   * chip rather than populating the search box, so clearing it (its ✕)
+   * cleanly returns to the normal, unfiltered view. */
+  vendorFilter: string | null;
+  onVendorFilterChange: (vendor: string | null) => void;
 }) {
   const t = useT();
   const language = useLanguage();
@@ -258,6 +267,7 @@ export default function ExpenseList({
     tagFilter !== "all",
     walletFilter !== "all",
     Boolean(dateFrom || dateTo),
+    Boolean(vendorFilter),
   ].filter(Boolean).length;
 
   function clearAllFilters() {
@@ -267,11 +277,13 @@ export default function ExpenseList({
     onWalletFilterChange("all");
     setDateFrom("");
     setDateTo("");
+    onVendorFilterChange(null);
   }
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return expenses.filter((e) => {
+      if (vendorFilter && e.merchant !== vendorFilter) return false;
       if (typeFilter !== "all" && e.type !== typeFilter) return false;
       if (effectiveCategoryFilter !== "all" && e.category !== effectiveCategoryFilter) return false;
       if (tagFilter !== "all" && !e.tags.includes(tagFilter)) return false;
@@ -284,7 +296,7 @@ export default function ExpenseList({
       }
       return true;
     });
-  }, [expenses, search, typeFilter, effectiveCategoryFilter, tagFilter, walletFilter, dateFrom, dateTo]);
+  }, [expenses, search, typeFilter, effectiveCategoryFilter, tagFilter, walletFilter, dateFrom, dateTo, vendorFilter]);
 
   // When a search matches more than one distinct merchant spelling — the
   // exact "Siyapat Sanyanitipong" vs "Ms. Siyapat Sanyanitipong" case the AI
@@ -410,6 +422,26 @@ export default function ExpenseList({
 
   return (
     <div>
+      {vendorFilter && (
+        <div className="mb-3 flex items-center gap-1.5 self-start">
+          <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-navy bg-navy/10 py-1 pl-3 pr-1.5 text-xs font-semibold text-navy dark:text-blue-300">
+            <span className="truncate">
+              {t("activities.vendorFilterPrefix")}: {vendorFilter}
+            </span>
+            <button
+              type="button"
+              onClick={() => onVendorFilterChange(null)}
+              aria-label={t("common.clear")}
+              className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full transition hover:bg-navy/20"
+            >
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-3 w-3">
+                <path d="M5 5l10 10M15 5 5 15" />
+              </svg>
+            </button>
+          </span>
+        </div>
+      )}
+
       <div className="mb-3 flex items-center gap-2">
         <div className="relative flex-1">
           <svg
