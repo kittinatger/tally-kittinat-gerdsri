@@ -103,10 +103,18 @@ export default function PassTemplateReviewPanel() {
         <div className="space-y-3">
           {templates.map((tpl) => (
             <div key={tpl.id} className="flex items-center gap-3 rounded-card border border-line bg-surface p-3">
-              <span
-                className={`h-14 w-24 shrink-0 rounded-lg border border-line shadow-sm ${tpl.background ? "" : heroGradientClasses(tpl.color)}`}
-                style={tpl.background ? cardBackgroundStyle(tpl.background) : colorHeroStyle(tpl.color)}
-              />
+              {/* A pass isn't credit-card-shaped (that's what the wallet
+               * card template swatch this was copy-pasted from actually
+               * is) — portrait, with a plain light strip at the bottom
+               * standing in for the code area, reads as "a pass" instead
+               * of "a bank card" at a glance. */}
+              <div className="h-24 w-16 shrink-0 overflow-hidden rounded-lg border border-line shadow-sm">
+                <div
+                  className={`h-2/3 w-full ${tpl.background ? "" : heroGradientClasses(tpl.color)}`}
+                  style={tpl.background ? cardBackgroundStyle(tpl.background) : colorHeroStyle(tpl.color)}
+                />
+                <div className="h-1/3 w-full bg-white" />
+              </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <p className="truncate text-sm font-semibold text-foreground">{tpl.name}</p>

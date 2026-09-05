@@ -10,11 +10,17 @@ import type { PassTemplateOption } from "@/types/pass-template";
 
 function TemplateSwatch({ tpl, onSelect }: { tpl: PassTemplateOption; onSelect: (template: PassTemplateOption) => void }) {
   return (
-    <button type="button" onClick={() => onSelect(tpl)} className="flex w-20 shrink-0 flex-col items-center gap-1">
-      <span
-        className={`h-12 w-20 shrink-0 rounded-lg border border-line shadow-sm ${tpl.background ? "" : heroGradientClasses(tpl.color)}`}
-        style={tpl.background ? cardBackgroundStyle(tpl.background) : colorHeroStyle(tpl.color)}
-      />
+    <button type="button" onClick={() => onSelect(tpl)} className="flex w-16 shrink-0 flex-col items-center gap-1">
+      {/* Portrait, not credit-card-shaped — a pass isn't a bank card, and
+       * the plain light strip standing in for the code area reads as "a
+       * pass" at a glance. */}
+      <div className="h-24 w-16 shrink-0 overflow-hidden rounded-lg border border-line shadow-sm">
+        <div
+          className={`h-2/3 w-full ${tpl.background ? "" : heroGradientClasses(tpl.color)}`}
+          style={tpl.background ? cardBackgroundStyle(tpl.background) : colorHeroStyle(tpl.color)}
+        />
+        <div className="h-1/3 w-full bg-white" />
+      </div>
       <span className="w-full truncate text-center text-[11px] text-ink-soft">{tpl.name}</span>
     </button>
   );
