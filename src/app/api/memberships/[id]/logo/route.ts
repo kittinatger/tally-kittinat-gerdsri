@@ -58,7 +58,14 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   return new NextResponse(new Uint8Array(image.bytes), {
     headers: {
       "Content-Type": image.mimeType,
-      "Cache-Control": "private, max-age=86400",
+      // Was "private, max-age=86400" — this URL never changes when the
+      // logo itself is replaced (no version/ETag in the path or headers),
+      // so the browser kept serving the old cached bytes for a full day
+      // after a re-crop/re-upload with no way to tell it's stale. Editing
+      // a logo, saving, then reopening the pass showed the old image —
+      // and re-editing it read that same stale cache right back in,
+      // making it look like the crop itself hadn't taken effect.
+      "Cache-Control": "private, no-store",
     },
   });
 }

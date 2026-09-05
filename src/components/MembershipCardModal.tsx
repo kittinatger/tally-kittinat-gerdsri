@@ -17,6 +17,7 @@ import type { CardBackground } from "@/lib/card-backgrounds";
 import { CATEGORY_ICON_KEYS, CATEGORY_ICON_LABEL_KEYS } from "@/lib/category-icons";
 import { CATEGORY_ICON_COMPONENTS, PlusIcon, CloseIcon, TagIcon, PaletteIcon, FileIcon, MembershipCardIcon } from "@/lib/icons";
 import { downscaleImage } from "@/lib/image-downscale";
+import { invalidateApiCache } from "@/lib/offline/api-cache";
 import { MEMBERSHIP_CODE_FORMATS, type MembershipCodeFormat } from "@/lib/memberships";
 import {
   PASS_KINDS,
@@ -294,18 +295,26 @@ export default function MembershipCardModal({
       fd.set("image", logoFile);
       const res = await fetch(`/api/memberships/${cardId}/logo`, { method: "POST", body: fd });
       if (res.ok) hasLogo = true;
+      // The service worker's GET cache for this same URL doesn't know this
+      // POST just replaced what it holds — see invalidateApiCache's own
+      // comment. Without this, the pass detail view (and this very modal,
+      // reopened) kept showing the pre-edit logo/banner.
+      await invalidateApiCache(`/api/memberships/${cardId}/logo`);
     } else if (logoRemoved) {
       await fetch(`/api/memberships/${cardId}/logo`, { method: "DELETE" });
       hasLogo = false;
+      await invalidateApiCache(`/api/memberships/${cardId}/logo`);
     }
     if (bannerFile) {
       const fd = new FormData();
       fd.set("image", bannerFile);
       const res = await fetch(`/api/memberships/${cardId}/banner`, { method: "POST", body: fd });
       if (res.ok) hasBanner = true;
+      await invalidateApiCache(`/api/memberships/${cardId}/banner`);
     } else if (bannerRemoved) {
       await fetch(`/api/memberships/${cardId}/banner`, { method: "DELETE" });
       hasBanner = false;
+      await invalidateApiCache(`/api/memberships/${cardId}/banner`);
     }
     return { hasLogo, hasBanner };
   }

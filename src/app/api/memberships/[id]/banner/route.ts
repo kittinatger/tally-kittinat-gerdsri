@@ -58,7 +58,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   return new NextResponse(new Uint8Array(image.bytes), {
     headers: {
       "Content-Type": image.mimeType,
-      "Cache-Control": "private, max-age=86400",
+      // See the matching comment in the logo route — same stale-cache bug:
+      // this URL doesn't change when the banner is replaced, so a day-long
+      // max-age kept serving the pre-edit crop after saving a new one.
+      "Cache-Control": "private, no-store",
     },
   });
 }
