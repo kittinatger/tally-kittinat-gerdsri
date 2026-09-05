@@ -9,6 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.20.0] - 2026-09-05
+
+### Added
+- Premade passes — a gallery of admin-reviewed pass designs (background/color/logo/name visibility) you can pick from, separate from the wallet card-template gallery; submit your own pass's look for review from the pass editor's Template tab
+- Two more pass kinds: Gift card (balance) and Transit pass (rides remaining), alongside Generic/Store card/Coupon/Event ticket/Boarding pass
+- Custom-named fields on a pass — type your own field name instead of only picking from the kind's preset list, with a per-field "hide label, show only value" toggle
+- A real pan/pinch-zoom crop tool for a pass's logo and banner, freeform (sized to the image's own ratio, not a fixed box) with a one-tap Reset
+- Independent show/hide toggles for a pass's logo, name, and the human-readable text under its QR/barcode
+- An AI/Tools settings section: a standalone QR/barcode/PDF417/Aztec code generator (SVG/JPG download) and scanner, a currency converter, and discount/tip and loan calculators
+- A redesigned in-app spending assistant with a real chat interface, a lighter fallback Gemini model when the main one is rate-limited, and retries on transient API errors
+- Card templates now support locking name position, text color, network, and a combined "hide card information" force; grouped by country and card-type category in the picker
+- Card-number position (Top/Middle/Bottom) and a last4-only display option for wallet cards
+- Click-and-hold drag-to-reorder for wallets/cards is now more reliable on mobile, without fighting pull-to-refresh
+
+### Changed
+- The pass "template" concept (which kind of pass a card is) is now called "kind" throughout, to stop it being confused with the separate premade-design template galleries
+- The pass/membership editor's Basics/Code/Fields/Look tabs got a Template tab (for submitting/picking a premade look); the wallet editor's own tabs were similarly reorganized into Basics/Card details/Look, with Card details split into four clearly-grouped sections
+- The pass card face now looks closer to a real Wallet pass, with a redesigned code area and notes
+- The "Create pass" entry menu collapsed from 4 tiles to 2
+
+### Fixed
+- Rescanning a code from inside the pass editor (mid add/edit) used to wipe out every other field already filled in
+- A re-cropped logo or banner could keep showing the old image after saving, caused by two separate caching layers (the browser's HTTP cache and the app's offline service-worker cache) not knowing the image had changed
+- A crop could come out cut off differently than what was framed on screen, caused by EXIF photo orientation being read inconsistently between the crop preview and the saved output
+- "Could not save" when a pass had a custom field, from a generated field key that was one character too long
+- A concurrent-migration race that could briefly 500 the whole app right after a schema update, if multiple requests landed during the same deploy
+- Several wallet card-layout bugs: chip vertical centering, chip/card-number row overlap, and a gold chip icon losing its fill when several same-colored chips were on screen at once
+- Drag-reorder on mobile being hijacked by the page's own scroll, and flickering on desktop
+
 ## [0.19.0] - 2026-08-30
 
 ### Added

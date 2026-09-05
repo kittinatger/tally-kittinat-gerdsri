@@ -6,6 +6,46 @@ export const dynamic = "force-dynamic";
 
 const RELEASES: { version: string; date: string; sections: { heading: string; items: string[] }[] }[] = [
   {
+    version: "0.20.0",
+    date: "2026-09-05",
+    sections: [
+      {
+        heading: "Added",
+        items: [
+          "Premade passes — a gallery of admin-reviewed pass designs you can pick from, separate from the wallet card-template gallery; submit your own from the pass editor's Template tab",
+          "Two more pass kinds: Gift card and Transit pass, alongside Generic/Store card/Coupon/Event ticket/Boarding pass",
+          "Custom-named fields on a pass, with a per-field \"hide label, show only value\" toggle",
+          "A real pan/pinch-zoom crop tool for a pass's logo and banner, freeform with a one-tap Reset",
+          "Independent show/hide toggles for a pass's logo, name, and the text under its QR/barcode",
+          "An AI/Tools settings section: code generator/scanner, currency converter, and discount/tip and loan calculators",
+          "A redesigned spending assistant chat, with a lighter fallback model when the main one is rate-limited",
+          "Card templates now support locking name position, text color, and network, plus a combined \"hide card information\" force",
+          "Card-number position (Top/Middle/Bottom) and a last4-only display option for wallet cards",
+        ],
+      },
+      {
+        heading: "Changed",
+        items: [
+          "A pass's own \"template\" (which kind it is) is now called \"kind\", to stop it being confused with the separate premade-design galleries",
+          "The pass editor gained a Template tab; the wallet editor's tabs were reorganized into Basics/Card details/Look",
+          "The pass card face now looks closer to a real Wallet pass",
+        ],
+      },
+      {
+        heading: "Fixed",
+        items: [
+          "Rescanning a code from inside the pass editor used to wipe out every other field already filled in",
+          "A re-cropped logo or banner could keep showing the old image after saving (a caching bug)",
+          "A crop could come out cut off differently than what was framed on screen (an EXIF photo-orientation bug)",
+          "\"Could not save\" when a pass had a custom field",
+          "A rare race during a schema update that could briefly 500 the whole app right after a deploy",
+          "Several wallet card-layout bugs (chip centering, chip/card-number overlap, a chip icon losing its fill)",
+          "Drag-reorder on mobile being hijacked by the page's own scroll, and flickering on desktop",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.19.0",
     date: "2026-08-30",
     sections: [
