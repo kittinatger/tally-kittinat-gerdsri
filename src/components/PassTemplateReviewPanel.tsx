@@ -6,6 +6,7 @@ import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { describeFetchError } from "@/lib/fetch-error";
 import { CheckCircleIcon, XCircleIcon, TrashIcon } from "@/lib/icons";
 import { KIND_LABEL_KEYS } from "@/lib/membership-templates";
+import { PASS_TEMPLATE_CATEGORY_LABEL_KEYS } from "@/lib/pass-template-category";
 import { useT } from "@/lib/language-context";
 import type { PassTemplateOption } from "@/types/pass-template";
 
@@ -116,7 +117,7 @@ export default function PassTemplateReviewPanel() {
                 <p className="truncate text-xs text-ink-soft">
                   {tpl.submittedByUsername ?? t("wallet.unknownSubmitter")}
                   {` · ${t(KIND_LABEL_KEYS[tpl.kind])}`}
-                  {tpl.country ? ` · ${tpl.country}` : ""}
+                  {tpl.category ? ` · ${t(PASS_TEMPLATE_CATEGORY_LABEL_KEYS[tpl.category])}` : ""}
                 </p>
                 {forcedSummary(tpl) && <p className="truncate text-[11px] text-ink-soft">{forcedSummary(tpl)}</p>}
               </div>

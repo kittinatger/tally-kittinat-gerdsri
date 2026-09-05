@@ -21,6 +21,7 @@ import { BADGE_POSITIONS } from "@/lib/badge-position";
 import { NAME_POSITIONS } from "@/lib/name-position";
 import { CARD_NUMBER_POSITIONS } from "@/lib/card-number-position";
 import { CARD_TEMPLATE_CATEGORIES } from "@/lib/card-template-category";
+import { PASS_TEMPLATE_CATEGORIES } from "@/lib/pass-template-category";
 import { CHIP_POSITIONS } from "@/lib/chip-position";
 import { isLanguageCode } from "@/lib/languages";
 
@@ -319,7 +320,7 @@ export const passTemplateInputSchema = z.object({
   lockTextColor: z.boolean().optional(),
   forceShowName: z.boolean().nullable().optional(),
   forceShowLogo: z.boolean().nullable().optional(),
-  country: z.string().trim().max(60).nullable().optional(),
+  category: z.enum(PASS_TEMPLATE_CATEGORIES).nullable().optional(),
 });
 
 // Admin-only — just the approve/reject/re-review action (no full-field

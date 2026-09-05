@@ -1,12 +1,12 @@
 import type { CardBackground } from "@/lib/card-backgrounds";
 import type { PassKind } from "@/lib/membership-templates";
+import type { PassTemplateCategory } from "@/lib/pass-template-category";
 
 // A user-submitted "premade pass" design — see pass_templates in db.ts.
 // The visual skin (background + colors) plus a couple of force_show_*
 // overrides, tied to a fixed `kind` since a pass's fields are structurally
 // dependent on which one it is (a boarding pass's FROM/TO vs. a coupon's
-// discount) — unlike a wallet card template, there's no "category" left
-// as freely optional metadata here.
+// discount).
 export type PassTemplateOption = {
   id: number;
   name: string;
@@ -21,9 +21,11 @@ export type PassTemplateOption = {
   // showName toggles — null means "leave whatever the pass already has".
   forceShowName: boolean | null;
   forceShowLogo: boolean | null;
-  /** Which country this template is grouped under in PremadePassPicker —
-   * null lands it in an "Other" bucket. Metadata only. */
-  country: string | null;
+  /** Which industry/program category this design represents (airline,
+   * hotel, retail, ...) — groups PremadePassPicker's gallery; null lands
+   * it in an "Other" bucket. See pass-template-category.ts. Metadata
+   * only, never applied to the picking pass. */
+  category: PassTemplateCategory | null;
   status: "pending" | "approved" | "rejected";
   submittedByUsername: string | null;
   createdAt: string;

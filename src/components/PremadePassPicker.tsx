@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { cardBackgroundStyle } from "@/lib/card-backgrounds";
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { PASS_KINDS, KIND_LABEL_KEYS, type PassKind } from "@/lib/membership-templates";
+import { PASS_TEMPLATE_CATEGORIES, PASS_TEMPLATE_CATEGORY_LABEL_KEYS } from "@/lib/pass-template-category";
 import { useT } from "@/lib/language-context";
 import type { PassTemplateOption } from "@/types/pass-template";
 
@@ -20,12 +21,13 @@ function TemplateSwatch({ tpl, onSelect }: { tpl: PassTemplateOption; onSelect: 
 }
 
 // The pass equivalent of PremadeCardPicker — a gallery of admin-approved
-// "premade pass" designs (see pass_templates in db.ts) grouped by country,
-// filtered by which PassKind they're built for (reusing the pass editor's
-// own kind enum as the filter, rather than a separate category enum the
-// way card templates have — a pass's fields already depend on its kind,
-// so that's the natural grouping here). Renders nothing once loaded if
-// there's nothing approved yet.
+// "premade pass" designs (see pass_templates in db.ts) grouped by category
+// (airline, hotel, retail, ... — see pass-template-category.ts), filtered
+// by which PassKind they're built for (reusing the pass editor's own kind
+// enum, since a pass's fields already depend on its kind). Category and
+// kind are deliberately different axes — an airline's boarding pass and
+// an airline's loyalty card share a category but not a kind. Renders
+// nothing once loaded if there's nothing approved yet.
 export default function PremadePassPicker({ onSelect }: { onSelect: (template: PassTemplateOption) => void }) {
   const t = useT();
   const [templates, setTemplates] = useState<PassTemplateOption[] | null>(null);
@@ -60,19 +62,18 @@ export default function PremadePassPicker({ onSelect }: { onSelect: (template: P
 
   const filtered = kindFilter ? templates.filter((tpl) => tpl.kind === kindFilter) : templates;
 
-  const otherLabel = t("wallet.templateOtherCountryLabel");
+  const otherLabel = t("membership.passCategoryOther");
   const groups = new Map<string, PassTemplateOption[]>();
   for (const tpl of filtered) {
-    const group = tpl.country?.trim() || otherLabel;
+    const group = tpl.category ? t(PASS_TEMPLATE_CATEGORY_LABEL_KEYS[tpl.category]) : otherLabel;
     const existing = groups.get(group);
     if (existing) existing.push(tpl);
     else groups.set(group, [tpl]);
   }
-  const sortedGroups = [...groups.entries()].sort(([a], [b]) => {
-    if (a === otherLabel) return 1;
-    if (b === otherLabel) return -1;
-    return a.localeCompare(b);
-  });
+  // Fixed enum order (not alphabetical) — "Other" naturally sorts last
+  // since it's the last entry in PASS_TEMPLATE_CATEGORIES.
+  const categoryOrder = [...PASS_TEMPLATE_CATEGORIES.map((c) => t(PASS_TEMPLATE_CATEGORY_LABEL_KEYS[c]))];
+  const sortedGroups = [...groups.entries()].sort(([a], [b]) => categoryOrder.indexOf(a) - categoryOrder.indexOf(b));
 
   return (
     <div className="space-y-3 border-b border-line pb-3">
@@ -106,9 +107,9 @@ export default function PremadePassPicker({ onSelect }: { onSelect: (template: P
           ))}
         </div>
       )}
-      {sortedGroups.map(([country, group]) => (
-        <div key={country}>
-          <p className="mb-1 text-[11px] font-semibold text-ink-soft">{country}</p>
+      {sortedGroups.map(([category, group]) => (
+        <div key={category}>
+          <p className="mb-1 text-[11px] font-semibold text-ink-soft">{category}</p>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {group.map((tpl) => (
               <TemplateSwatch key={tpl.id} tpl={tpl} onSelect={onSelect} />

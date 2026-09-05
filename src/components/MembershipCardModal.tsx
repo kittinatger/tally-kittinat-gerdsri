@@ -29,6 +29,7 @@ import {
   type PassKind,
   type PassZone,
 } from "@/lib/membership-templates";
+import { PASS_TEMPLATE_CATEGORIES, PASS_TEMPLATE_CATEGORY_LABEL_KEYS, type PassTemplateCategory } from "@/lib/pass-template-category";
 import { toMembershipCard, membershipImageUrl, type MembershipCardApiRow } from "@/lib/membership-card-mapper";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -205,7 +206,7 @@ export default function MembershipCardModal({
   // templateApplied.
   const [templateApplied, setTemplateApplied] = useState(false);
   const [templateName, setTemplateName] = useState("");
-  const [templateCountry, setTemplateCountry] = useState("");
+  const [templateCategory, setTemplateCategory] = useState<PassTemplateCategory | null>(null);
   const [templateLockTextColor, setTemplateLockTextColor] = useState(false);
   const [templateForceShowName, setTemplateForceShowName] = useState<boolean | null>(null);
   const [templateForceShowLogo, setTemplateForceShowLogo] = useState<boolean | null>(null);
@@ -357,7 +358,7 @@ export default function MembershipCardModal({
           lockTextColor: templateLockTextColor,
           forceShowName: templateForceShowName,
           forceShowLogo: templateForceShowLogo,
-          country: templateCountry.trim() || null,
+          category: templateCategory,
         }),
       });
       const data = await res.json();
@@ -1098,17 +1099,23 @@ export default function MembershipCardModal({
           </div>
 
           <div>
-            <label htmlFor="passTemplateCountryInput" className="mb-1.5 block text-xs font-semibold text-ink-soft">
-              {t("wallet.templateCountryLabel")}
-            </label>
-            <input
-              id="passTemplateCountryInput"
-              type="text"
-              value={templateCountry}
-              onChange={(e) => setTemplateCountry(e.target.value)}
-              placeholder={t("wallet.templateCountryPlaceholder")}
-              className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-            />
+            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("membership.passTemplateCategoryLabel")}</label>
+            <div className="flex flex-wrap gap-1.5">
+              {PASS_TEMPLATE_CATEGORIES.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setTemplateCategory((prev) => (prev === c ? null : c))}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    templateCategory === c
+                      ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                      : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                  }`}
+                >
+                  {t(PASS_TEMPLATE_CATEGORY_LABEL_KEYS[c])}
+                </button>
+              ))}
+            </div>
           </div>
         </FormSection>
 

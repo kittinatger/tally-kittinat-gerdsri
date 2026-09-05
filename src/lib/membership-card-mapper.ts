@@ -8,6 +8,7 @@ import {
   normalizeHiddenFieldLabels,
 } from "@/lib/membership-templates";
 import { parseCardBackground } from "@/lib/card-backgrounds";
+import { isPassTemplateCategory } from "@/lib/pass-template-category";
 import type { MembershipCard } from "@/types/membership";
 import type { PassTemplateOption } from "@/types/pass-template";
 import type { PassTemplateRow } from "@/lib/db";
@@ -128,7 +129,7 @@ export function toPassTemplateOption(row: PassTemplateRow): PassTemplateOption {
     lockTextColor: row.lock_text_color,
     forceShowName: row.force_show_name,
     forceShowLogo: row.force_show_logo,
-    country: row.country,
+    category: row.category && isPassTemplateCategory(row.category) ? row.category : null,
     status: row.status,
     submittedByUsername: row.submitted_by_username,
     createdAt: row.created_at,

@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 59;
+const CURRENT_SCHEMA_VERSION = 60;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1432,6 +1432,17 @@ function ensureSchema(): Promise<void> {
       // showText prop. Defaults to true so nothing existing changes.
       await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS show_code_text BOOLEAN NOT NULL DEFAULT true;`;
 
+      // Premade pass templates are now grouped by category (airline,
+      // hotel, retail, dining, transit, entertainment, other — see
+      // pass-template-category.ts) instead of by free-text country. A
+      // fixed enum groups a growing gallery far more usefully than
+      // country did (a "boarding pass" and a "loyalty card" from the
+      // same airline landed in the same country bucket with nothing
+      // distinguishing them) — same reasoning PremadeCardPicker's own
+      // category already uses for wallet cards.
+      await sql`ALTER TABLE pass_templates DROP COLUMN IF EXISTS country;`;
+      await sql`ALTER TABLE pass_templates ADD COLUMN IF NOT EXISTS category TEXT;`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -2415,14 +2426,17 @@ export type PassTemplateRow = {
   lock_text_color: boolean;
   force_show_name: boolean | null;
   force_show_logo: boolean | null;
-  country: string | null;
+  /** What industry/program category this design represents — see
+   * pass-template-category.ts. Nullable metadata only, like
+   * card_templates.category. */
+  category: string | null;
   status: "pending" | "approved" | "rejected";
   created_at: string;
   reviewed_at: string | null;
 };
 
 const PASS_TEMPLATE_COLUMNS =
-  "id, submitted_by, name, kind, color, background, text_color, lock_text_color, force_show_name, force_show_logo, country, status, created_at, reviewed_at";
+  "id, submitted_by, name, kind, color, background, text_color, lock_text_color, force_show_name, force_show_logo, category, status, created_at, reviewed_at";
 
 export async function createPassTemplate(
   userId: number,
@@ -2435,14 +2449,14 @@ export async function createPassTemplate(
     lockTextColor?: boolean;
     forceShowName?: boolean | null;
     forceShowLogo?: boolean | null;
-    country?: string | null;
+    category?: string | null;
   },
 ): Promise<PassTemplateRow> {
   await ensureSchema();
   const backgroundJson = input.background ? JSON.stringify(input.background) : null;
   const { rows } = await sql.query<PassTemplateRow>(
     `INSERT INTO pass_templates (
-       submitted_by, name, kind, color, background, text_color, lock_text_color, force_show_name, force_show_logo, country, status
+       submitted_by, name, kind, color, background, text_color, lock_text_color, force_show_name, force_show_logo, category, status
      )
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending')
      RETURNING ${PASS_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
@@ -2456,7 +2470,7 @@ export async function createPassTemplate(
       input.lockTextColor ?? false,
       input.forceShowName ?? null,
       input.forceShowLogo ?? null,
-      input.country ?? null,
+      input.category ?? null,
     ],
   );
   return rows[0];
