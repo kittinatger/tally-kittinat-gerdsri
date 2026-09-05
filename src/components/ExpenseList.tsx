@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { signedAmount, type Expense } from "@/types/expense";
 import type { TransactionType } from "@/lib/categories";
 import { monthKey, monthLabel, formatCurrency, formatAmountRaw, todayInputValue } from "@/lib/format";
@@ -115,6 +115,10 @@ export default function ExpenseList({
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkError, setBulkError] = useState<string | null>(null);
   const [bulkTagInput, setBulkTagInput] = useState("");
+  const [renameTarget, setRenameTarget] = useState("");
+  const [renaming, setRenaming] = useState(false);
+  const [renameError, setRenameError] = useState<string | null>(null);
+  const [renameDismissed, setRenameDismissed] = useState("");
 
   function toggleSelectMode() {
     setSelectMode((v) => !v);
@@ -282,6 +286,77 @@ export default function ExpenseList({
     });
   }, [expenses, search, typeFilter, effectiveCategoryFilter, tagFilter, walletFilter, dateFrom, dateTo]);
 
+  // When a search matches more than one distinct merchant spelling — the
+  // exact "Siyapat Sanyanitipong" vs "Ms. Siyapat Sanyanitipong" case the AI
+  // consistency fix can't retroactively clean up in already-saved data —
+  // offer to consolidate them all onto one spelling in one tap. Only
+  // computed while searching, since outside a search "3 merchants differ"
+  // is meaningless (the whole point is the user has already narrowed this
+  // down to what they believe is one vendor).
+  const merchantVariants = useMemo(() => {
+    const q = search.trim();
+    if (!q) return [];
+    const counts = new Map<string, number>();
+    for (const e of filtered) {
+      counts.set(e.merchant, (counts.get(e.merchant) ?? 0) + 1);
+    }
+    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+  }, [filtered, search]);
+  const showRenameBanner = merchantVariants.length > 1 && search.trim() !== renameDismissed;
+
+  // Re-pick the default target (most common spelling) whenever the search
+  // changes to a different merchant — otherwise a stale target from a
+  // previous search could linger and get applied to the wrong vendor.
+  useEffect(() => {
+    setRenameTarget(merchantVariants[0]?.[0] ?? "");
+    setRenameError(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-derive when the search query itself changes
+  }, [search]);
+
+  async function handleRenameMerchants() {
+    const target = renameTarget.trim();
+    if (!target) return;
+    setRenaming(true);
+    setRenameError(null);
+    const targets = filtered.filter((e) => e.merchant !== target);
+    const updated: Expense[] = [];
+    let failed = 0;
+    for (const e of targets) {
+      try {
+        const res = await mutateFetch(`/api/expenses/${e.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: e.type,
+            direction: e.type === "transfer" ? (e.direction ?? "out") : undefined,
+            date: e.date,
+            amount: e.amount,
+            merchant: target,
+            category: e.category,
+            notes: e.notes || undefined,
+            tags: e.tags,
+            walletId: e.walletId,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          updated.push({ ...e, merchant: data.expense?.merchant ?? target });
+        } else {
+          failed++;
+        }
+      } catch {
+        failed++;
+      }
+    }
+    if (updated.length > 0) onBulkUpdated(updated);
+    if (failed > 0) {
+      setRenameError(`Renamed ${updated.length} of ${targets.length} — ${failed} couldn't be updated.`);
+    } else {
+      setRenameDismissed(search.trim());
+    }
+    setRenaming(false);
+  }
+
   function exportCsv() {
     const header = ["Date", "Type", "Merchant", "Category", "Tags", "Amount", "Notes"];
     const escape = (value: string) => `"${value.replace(/"/g, '""')}"`;
@@ -378,6 +453,44 @@ export default function ExpenseList({
           )}
         </button>
       </div>
+
+      {showRenameBanner && (
+        <div className="mb-3 space-y-2 rounded-card border border-amber-300 bg-amber-50 p-3 dark:border-amber-700/50 dark:bg-amber-900/15">
+          <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+            {t("activities.mergeMerchantsPrompt")}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={renameTarget}
+              onChange={(e) => setRenameTarget(e.target.value)}
+              className="min-w-0 flex-1 rounded-full border border-amber-300 bg-surface px-3 py-1.5 text-xs font-medium text-foreground outline-none dark:border-amber-700/50"
+            >
+              {merchantVariants.map(([name, count]) => (
+                <option key={name} value={name}>
+                  {name} ({count})
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={handleRenameMerchants}
+              disabled={renaming}
+              className="shrink-0 rounded-full bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:opacity-60"
+            >
+              {renaming ? t("common.saving") : t("activities.mergeMerchantsButton")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setRenameDismissed(search.trim())}
+              disabled={renaming}
+              className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold text-amber-800 transition hover:bg-amber-100 disabled:opacity-60 dark:text-amber-300 dark:hover:bg-amber-900/30"
+            >
+              {t("common.dismiss")}
+            </button>
+          </div>
+          {renameError && <p className="text-[11px] text-red-600 dark:text-red-400">{renameError}</p>}
+        </div>
+      )}
 
       {filterOpen && (
         <Modal onClose={() => setFilterOpen(false)} title={t("modal.filters")}>
