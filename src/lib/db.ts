@@ -1368,18 +1368,37 @@ function ensureSchema(): Promise<void> {
       // this function is safe to re-run after a partial failure (ADD
       // COLUMN IF NOT EXISTS, CREATE TABLE IF NOT EXISTS, ...); a bare
       // rename wouldn't be, since a retry would hit a column that's
-      // already gone.
+      // already gone. That existence check alone still isn't race-safe
+      // across concurrent serverless instances, though: schemaReady is
+      // per-instance, so a fresh deploy can have several cold-started
+      // lambdas all see version < CURRENT_SCHEMA_VERSION and run this
+      // whole function at once. Two of them can both read "template"
+      // exists (true) before either commits its rename, then both attempt
+      // it — the loser's ALTER fails with duplicate_column (42701)
+      // because by the time it runs, the winner has already renamed the
+      // column out from under it. This bit the app in production right
+      // after this migration shipped. The exception handler below makes
+      // the actual outcome (someone renamed it) the only thing that
+      // matters, regardless of which instance's guard read went stale.
       await sql`
         DO $$ BEGIN
           IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'membership_cards' AND column_name = 'template') THEN
-            ALTER TABLE membership_cards RENAME COLUMN template TO kind;
+            BEGIN
+              ALTER TABLE membership_cards RENAME COLUMN template TO kind;
+            EXCEPTION WHEN duplicate_column THEN
+              NULL;
+            END;
           END IF;
         END $$;
       `;
       await sql`
         DO $$ BEGIN
           IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'pass_templates' AND column_name = 'template') THEN
-            ALTER TABLE pass_templates RENAME COLUMN template TO kind;
+            BEGIN
+              ALTER TABLE pass_templates RENAME COLUMN template TO kind;
+            EXCEPTION WHEN duplicate_column THEN
+              NULL;
+            END;
           END IF;
         END $$;
       `;
