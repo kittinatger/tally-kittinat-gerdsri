@@ -22,7 +22,12 @@ export async function downscaleImage(file: File): Promise<File> {
   if (!file.type.startsWith("image/")) return file;
 
   try {
-    const bitmap = await createImageBitmap(file);
+    // Without imageOrientation: "from-image", createImageBitmap ignores
+    // EXIF orientation and returns the raw sensor pixels — a phone photo
+    // shot in portrait can come back sideways relative to how every <img>
+    // (and every viewer's Photos app) already displays it. See the
+    // matching fix/comment in image-crop.ts for where this actually bit.
+    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
     const scale = Math.min(1, MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
     const width = Math.round(bitmap.width * scale);
     const height = Math.round(bitmap.height * scale);

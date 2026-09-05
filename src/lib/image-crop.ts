@@ -9,7 +9,18 @@ export async function cropImageToFile(
   outputWidth: number,
   outputHeight: number,
 ): Promise<File> {
-  const bitmap = await createImageBitmap(file);
+  // imageOrientation: "from-image" matches what a plain <img> (and its
+  // naturalWidth/naturalHeight) already shows — ImageCropModal's frame
+  // math is entirely based on that <img>'s dimensions/orientation. Without
+  // this, createImageBitmap defaults to ignoring EXIF orientation and
+  // hands back the raw, un-rotated sensor pixels — for a phone photo shot
+  // in portrait (extremely common for e.g. a card banner), that's a
+  // different orientation/dimensions than what the user actually framed,
+  // so the exact crop rectangle they positioned gets applied to the wrong
+  // orientation of the image. Everything looked right while dragging the
+  // frame (that used the correctly-oriented <img>); only the saved result
+  // came out wrong.
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
   try {
     const canvas = document.createElement("canvas");
     canvas.width = Math.max(1, Math.round(outputWidth));
