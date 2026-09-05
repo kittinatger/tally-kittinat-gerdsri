@@ -100,33 +100,45 @@ export default function ImageCropModal({
   // saved crop. Waiting for imgNatural before ever setting a default
   // fixes that: the initial frame now actually matches the source image's
   // shape.
+  // Shared by the initial default below and by the "Reset" button — fits a
+  // frame of the given ratio within 90% of the stage, same "cover as much
+  // of the stage as reasonable" sizing either way uses.
+  const fitFrame = useCallback(
+    (ratio: number, stage: Size): Size => {
+      let w = stage.w * 0.9;
+      let h = w / ratio;
+      if (h > stage.h * 0.9) {
+        h = stage.h * 0.9;
+        w = h * ratio;
+      }
+      return { w, h };
+    },
+    [],
+  );
+
   useEffect(() => {
     if (!stageSize || !imgNatural) return;
     const timer = setTimeout(() => {
       if (aspect !== null) {
-        let w = stageSize.w * 0.9;
-        let h = w / aspect;
-        if (h > stageSize.h * 0.9) {
-          h = stageSize.h * 0.9;
-          w = h * aspect;
-        }
-        setFrameSize({ w, h });
+        setFrameSize(fitFrame(aspect, stageSize));
       } else {
-        setFrameSize((prev) => {
-          if (prev) return prev;
-          const ratio = imgNatural.w / imgNatural.h;
-          let w = stageSize.w * 0.9;
-          let h = w / ratio;
-          if (h > stageSize.h * 0.9) {
-            h = stageSize.h * 0.9;
-            w = h * ratio;
-          }
-          return { w, h };
-        });
+        setFrameSize((prev) => (prev ? prev : fitFrame(imgNatural.w / imgNatural.h, stageSize)));
       }
     }, 0);
     return () => clearTimeout(timer);
-  }, [stageSize, aspect, imgNatural]);
+  }, [stageSize, aspect, imgNatural, fitFrame]);
+
+  // Undoes a corner-handle resize (including an accidental one — the
+  // handles are small touch targets right next to the pan gesture) by
+  // putting the frame straight back to fit the picked image's own ratio
+  // with no cropping at all, and resetting pan/zoom to match. Freeform
+  // only; a fixed-aspect frame is never user-resizable in the first place.
+  function resetFrame() {
+    if (!stageSize || !imgNatural) return;
+    setFrameSize(fitFrame(imgNatural.w / imgNatural.h, stageSize));
+    setZoom(1);
+    setOffset({ x: 0, y: 0 });
+  }
 
   const baseScale = useMemo(() => {
     if (!imgNatural || !frameSize) return 1;
@@ -329,11 +341,17 @@ export default function ImageCropModal({
                 className="absolute left-1/2 top-1/2"
                 style={{ width: frameSize.w, height: frameSize.h, transform: "translate(-50%, -50%)" }}
               >
+                {/* The visible dot stays 20x20 (h-5 w-5); the actual touch
+                 * target is a much larger 44x44 centered on the same
+                 * corner point (Apple HIG's own minimum), invisible around
+                 * it — a mis-tap that used to land right next to a 20px
+                 * dot and accidentally reshape the whole frame instead of
+                 * panning is a lot less likely at 44px. */}
                 {[
-                  { corner: "nw", cls: "-left-2.5 -top-2.5" },
-                  { corner: "ne", cls: "-right-2.5 -top-2.5" },
-                  { corner: "sw", cls: "-left-2.5 -bottom-2.5" },
-                  { corner: "se", cls: "-right-2.5 -bottom-2.5" },
+                  { corner: "nw", cls: "-left-[22px] -top-[22px]" },
+                  { corner: "ne", cls: "-right-[22px] -top-[22px]" },
+                  { corner: "sw", cls: "-left-[22px] -bottom-[22px]" },
+                  { corner: "se", cls: "-right-[22px] -bottom-[22px]" },
                 ].map(({ corner, cls }) => (
                   <div
                     key={corner}
@@ -341,10 +359,21 @@ export default function ImageCropModal({
                     onPointerMove={handleResizePointerMove}
                     onPointerUp={handleResizePointerUp}
                     onPointerCancel={handleResizePointerUp}
-                    className={`absolute h-5 w-5 touch-none rounded-full border-2 border-black bg-white shadow ${cls}`}
-                  />
+                    className={`absolute flex h-11 w-11 touch-none items-center justify-center ${cls}`}
+                  >
+                    <div className="h-5 w-5 rounded-full border-2 border-black bg-white shadow" />
+                  </div>
                 ))}
               </div>
+            )}
+            {aspect === null && (
+              <button
+                type="button"
+                onClick={resetFrame}
+                className="absolute right-3 top-3 rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-black/80"
+              >
+                {t("membership.cropReset")}
+              </button>
             )}
           </>
         )}
