@@ -1,6 +1,6 @@
 import { getUserById } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
-import { GearIcon } from "@/lib/icons";
+import { GearIcon, MembershipCardIcon } from "@/lib/icons";
 import SettingsSubpageLayout from "@/components/SettingsSubpageLayout";
 import SupportScreenshot from "@/components/SupportScreenshot";
 import T from "@/components/T";
@@ -186,6 +186,25 @@ const SECTIONS: { id: string; title: MessageKey; icon: React.ReactNode; body: Re
           <T k="usageGuide.s4Part3" />
         </p>
         <SupportScreenshot src="wallets.jpg" alt="Settings > Wallets panel" />
+      </>
+    ),
+  },
+  {
+    id: "wallet-passes",
+    title: "usageGuide.sPassesTitle",
+    icon: <MembershipCardIcon className="h-4.5 w-4.5" />,
+    body: (
+      <>
+        <p>
+          <T k="usageGuide.sPassesPart1" />{" "}
+          <span className="font-semibold text-foreground">
+            <T k="usageGuide.sPassesSpan" />
+          </span>
+          <T k="usageGuide.sPassesPart2" />
+        </p>
+        {/* No screenshot yet — add wallet-passes-desktop.jpg / wallet-passes-mobile.jpg
+         * to public/screenshots and screenshots/, then restore this line:
+         * <SupportScreenshot src="wallet-passes-desktop.jpg" mobileSrc="wallet-passes-mobile.jpg" alt="Wallet page with a loyalty pass, and its editor" /> */}
       </>
     ),
   },
