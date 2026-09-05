@@ -35,7 +35,28 @@ export type MembershipCardApiRow = {
   show_logo: boolean;
   show_name: boolean;
   hidden_field_labels: string;
+  logo_updated_at: string | null;
+  banner_updated_at: string | null;
 };
+
+// The GET /api/memberships/[id]/logo|banner URL never changed on a
+// re-upload, so every caching layer between the server and the screen
+// (the browser's own HTTP cache, the service worker's stale-while-
+// revalidate cache in public/sw.js) had no way to tell a freshly re-
+// cropped image apart from whatever was already sitting in cache — a
+// page-side cache eviction (invalidateApiCache) reaches the service
+// worker's own cache but can't reach the browser's native HTTP cache,
+// which can keep serving old bytes for a URL it already fetched once
+// under the old Cache-Control regardless. Appending the stored
+// logo/banner_updated_at timestamp makes a re-uploaded image a
+// genuinely different URL every time, which sidesteps needing to reason
+// about any caching layer at all — every one of them already treats an
+// unseen URL as, correctly, something to fetch fresh. `updatedAt` null
+// (an image uploaded before this existed) just omits the query entirely.
+export function membershipImageUrl(cardId: number, kind: "logo" | "banner", updatedAt: string | null): string {
+  const base = `/api/memberships/${cardId}/${kind}`;
+  return updatedAt ? `${base}?v=${encodeURIComponent(updatedAt)}` : base;
+}
 
 export function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
   const kind = isPassKind(row.kind) ? row.kind : "generic";
@@ -86,6 +107,8 @@ export function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
     showLogo: row.show_logo,
     showName: row.show_name,
     hiddenFieldLabels: normalizeHiddenFieldLabels(parsedHiddenFieldLabels),
+    logoUpdatedAt: row.logo_updated_at,
+    bannerUpdatedAt: row.banner_updated_at,
   };
 }
 

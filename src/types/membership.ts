@@ -27,6 +27,12 @@ export type MembershipCard = {
   /** Whether an image is stored at /api/memberships/[id]/logo|banner. */
   hasLogo: boolean;
   hasBanner: boolean;
+  /** Bumped on every (re)upload, null until the first one — build the
+   * actual URL via membershipImageUrl (membership-card-mapper.ts) rather
+   * than the bare path, so a re-cropped image isn't served stale out of
+   * the browser's or service worker's cache under the old URL. */
+  logoUpdatedAt: string | null;
+  bannerUpdatedAt: string | null;
   /** Which tab on the /wallet page this card lives in. */
   category: "pass" | "membership";
   /** User-named fields (key -> plain-text label) beyond the current

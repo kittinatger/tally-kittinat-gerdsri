@@ -4,6 +4,7 @@ import { useState } from "react";
 import { EditIcon, TrashIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 import PassShape from "./PassShape";
+import { membershipImageUrl } from "@/lib/membership-card-mapper";
 import type { MembershipCard } from "@/types/membership";
 
 // Rendered with key={card.id} by the caller (WalletPageView) so switching
@@ -45,8 +46,8 @@ export default function MembershipCardDetail({
         codeValue={card.codeValue}
         codeFormat={card.codeFormat}
         codeSize="large"
-        logoUrl={card.hasLogo ? `/api/memberships/${card.id}/logo` : null}
-        bannerUrl={card.hasBanner ? `/api/memberships/${card.id}/banner` : null}
+        logoUrl={card.hasLogo ? membershipImageUrl(card.id, "logo", card.logoUpdatedAt) : null}
+        bannerUrl={card.hasBanner ? membershipImageUrl(card.id, "banner", card.bannerUpdatedAt) : null}
         notes={card.notes}
         customFieldLabels={card.customFieldLabels}
         showLogo={card.showLogo}

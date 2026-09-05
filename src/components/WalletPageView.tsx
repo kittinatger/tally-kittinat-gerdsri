@@ -12,6 +12,7 @@ import CardGrid from "./CardGrid";
 import AccountCardShape from "./AccountCardShape";
 import WalletCardShape from "./WalletCardShape";
 import PassShape from "./PassShape";
+import { membershipImageUrl } from "@/lib/membership-card-mapper";
 import { useT } from "@/lib/language-context";
 import { useCurrency } from "@/lib/currency-context";
 import { describeFetchError } from "@/lib/fetch-error";
@@ -268,8 +269,8 @@ export default function WalletPageView({
           codeValue={card.codeValue}
           codeFormat={card.codeFormat}
           codeSize="small"
-          logoUrl={card.hasLogo ? `/api/memberships/${card.id}/logo` : null}
-          bannerUrl={card.hasBanner ? `/api/memberships/${card.id}/banner` : null}
+          logoUrl={card.hasLogo ? membershipImageUrl(card.id, "logo", card.logoUpdatedAt) : null}
+          bannerUrl={card.hasBanner ? membershipImageUrl(card.id, "banner", card.bannerUpdatedAt) : null}
           customFieldLabels={card.customFieldLabels}
           showLogo={card.showLogo}
           showName={card.showName}

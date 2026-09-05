@@ -29,7 +29,7 @@ import {
   type PassKind,
   type PassZone,
 } from "@/lib/membership-templates";
-import { toMembershipCard, type MembershipCardApiRow } from "@/lib/membership-card-mapper";
+import { toMembershipCard, membershipImageUrl, type MembershipCardApiRow } from "@/lib/membership-card-mapper";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 import type { MembershipCard } from "@/types/membership";
@@ -243,8 +243,10 @@ export default function MembershipCardModal({
   useEffect(() => () => { if (logoObjectUrl) URL.revokeObjectURL(logoObjectUrl); }, [logoObjectUrl]);
   useEffect(() => () => { if (bannerObjectUrl) URL.revokeObjectURL(bannerObjectUrl); }, [bannerObjectUrl]);
 
-  const logoPreviewUrl = logoFile ? logoObjectUrl : logoRemoved ? null : card?.hasLogo ? `/api/memberships/${card.id}/logo` : null;
-  const bannerPreviewUrl = bannerFile ? bannerObjectUrl : bannerRemoved ? null : card?.hasBanner ? `/api/memberships/${card.id}/banner` : null;
+  const logoPreviewUrl =
+    logoFile ? logoObjectUrl : logoRemoved ? null : card?.hasLogo ? membershipImageUrl(card.id, "logo", card.logoUpdatedAt) : null;
+  const bannerPreviewUrl =
+    bannerFile ? bannerObjectUrl : bannerRemoved ? null : card?.hasBanner ? membershipImageUrl(card.id, "banner", card.bannerUpdatedAt) : null;
 
   function handleLogoSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -287,36 +289,51 @@ export default function MembershipCardModal({
   // exists) — uploads/deletes the logo and banner, then folds the result
   // into the flags the rest of the app reads (MembershipCard.hasLogo/
   // hasBanner) so the caller doesn't need a second fetch to see them.
-  async function syncImages(cardId: number, current: { hasLogo: boolean; hasBanner: boolean }) {
+  // Also mints a fresh logo/bannerUpdatedAt on a successful upload — every
+  // URL built from it (membershipImageUrl) changes as a result, which is
+  // what actually defeats the browser's/service worker's caching (see
+  // that function's own comment); invalidateApiCache below only reaches
+  // the service worker's cache, not the browser's native HTTP cache, so
+  // it alone wasn't enough.
+  async function syncImages(
+    cardId: number,
+    current: { hasLogo: boolean; hasBanner: boolean; logoUpdatedAt: string | null; bannerUpdatedAt: string | null },
+  ) {
     let hasLogo = current.hasLogo;
     let hasBanner = current.hasBanner;
+    let logoUpdatedAt = current.logoUpdatedAt;
+    let bannerUpdatedAt = current.bannerUpdatedAt;
     if (logoFile) {
       const fd = new FormData();
       fd.set("image", logoFile);
       const res = await fetch(`/api/memberships/${cardId}/logo`, { method: "POST", body: fd });
-      if (res.ok) hasLogo = true;
-      // The service worker's GET cache for this same URL doesn't know this
-      // POST just replaced what it holds — see invalidateApiCache's own
-      // comment. Without this, the pass detail view (and this very modal,
-      // reopened) kept showing the pre-edit logo/banner.
+      if (res.ok) {
+        hasLogo = true;
+        logoUpdatedAt = new Date().toISOString();
+      }
       await invalidateApiCache(`/api/memberships/${cardId}/logo`);
     } else if (logoRemoved) {
       await fetch(`/api/memberships/${cardId}/logo`, { method: "DELETE" });
       hasLogo = false;
+      logoUpdatedAt = null;
       await invalidateApiCache(`/api/memberships/${cardId}/logo`);
     }
     if (bannerFile) {
       const fd = new FormData();
       fd.set("image", bannerFile);
       const res = await fetch(`/api/memberships/${cardId}/banner`, { method: "POST", body: fd });
-      if (res.ok) hasBanner = true;
+      if (res.ok) {
+        hasBanner = true;
+        bannerUpdatedAt = new Date().toISOString();
+      }
       await invalidateApiCache(`/api/memberships/${cardId}/banner`);
     } else if (bannerRemoved) {
       await fetch(`/api/memberships/${cardId}/banner`, { method: "DELETE" });
       hasBanner = false;
+      bannerUpdatedAt = null;
       await invalidateApiCache(`/api/memberships/${cardId}/banner`);
     }
-    return { hasLogo, hasBanner };
+    return { hasLogo, hasBanner, logoUpdatedAt, bannerUpdatedAt };
   }
 
   // Submits the current pass's look — not its data — as a "premade pass"

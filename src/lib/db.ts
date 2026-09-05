@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 57;
+const CURRENT_SCHEMA_VERSION = 58;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1409,6 +1409,22 @@ function ensureSchema(): Promise<void> {
       // same idea as show_logo/show_name — the field's value and layout
       // placement are untouched.
       await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS hidden_field_labels TEXT NOT NULL DEFAULT '[]';`;
+
+      // A per-image version stamp, bumped every time a logo/banner is
+      // (re)uploaded. The GET /api/memberships/[id]/logo|banner URL never
+      // changed on a re-upload, which meant both the browser's own HTTP
+      // cache and the service worker's stale-while-revalidate cache
+      // (public/sw.js) had no way to tell a re-cropped image apart from
+      // the one already sitting in cache — a page-side cache eviction
+      // (invalidateApiCache) helped but couldn't reach the browser's own
+      // native HTTP cache, so a URL fetched even once under the old
+      // Cache-Control could keep serving 24h-stale bytes regardless.
+      // Appending this timestamp as a query param (see membership-card-
+      // mapper.ts) makes a re-uploaded image a genuinely different URL
+      // every time, which every caching layer already treats correctly
+      // with zero special-casing.
+      await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS logo_updated_at TIMESTAMPTZ;`;
+      await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS banner_updated_at TIMESTAMPTZ;`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -5139,12 +5155,18 @@ export type MembershipCardRow = {
   show_name: boolean;
   /** Raw JSON text (string[] of field keys) — see normalizeHiddenFieldLabels in membership-templates.ts. */
   hidden_field_labels: string;
+  /** Bumped on every (re)upload — see the schema-v58 comment in
+   * ensureSchema. Appended as a cache-busting query param wherever the
+   * logo/banner URL is built (membership-card-mapper.ts), null until the
+   * first upload. */
+  logo_updated_at: string | null;
+  banner_updated_at: string | null;
 };
 
 export async function listMembershipCards(userId: number): Promise<MembershipCardRow[]> {
   await ensureSchema();
   const { rows } = await sql<MembershipCardRow>`
-    SELECT id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels,
+    SELECT id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner
     FROM membership_cards
     WHERE user_id = ${userId}
@@ -5191,7 +5213,7 @@ export async function createMembershipCard(
   const { rows } = await sql<MembershipCardRow>`
     INSERT INTO membership_cards (user_id, name, code_value, code_format, color, icon, notes, sort_order, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels)
     VALUES (${userId}, ${input.name}, ${input.codeValue}, ${input.codeFormat}, ${input.color}, ${input.icon ?? null}, ${input.notes ?? null}, ${nextSort}, ${kind}, ${fields}, ${layout}, ${background}, ${input.textColor ?? null}, ${category}, ${customFieldLabels}, ${showLogo}, ${showName}, ${hiddenFieldLabels})
-    RETURNING id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels,
+    RETURNING id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner;
   `;
   return rows[0];
@@ -5221,7 +5243,7 @@ export async function updateMembershipCard(
 ): Promise<MembershipCardRow | null> {
   await ensureSchema();
   const { rows: existingRows } = await sql<MembershipCardRow>`
-    SELECT id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels,
+    SELECT id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner
     FROM membership_cards WHERE id = ${id} AND user_id = ${userId};
   `;
@@ -5255,7 +5277,7 @@ export async function updateMembershipCard(
         text_color = ${newTextColor}, category = ${newCategory}, custom_field_labels = ${newCustomFieldLabels},
         show_logo = ${newShowLogo}, show_name = ${newShowName}, hidden_field_labels = ${newHiddenFieldLabels}
     WHERE id = ${id} AND user_id = ${userId}
-    RETURNING id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels,
+    RETURNING id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner;
   `;
   return rows[0];
@@ -5273,7 +5295,7 @@ export async function attachMembershipLogo(userId: number, id: number, bytes: Bu
   await ensureSchema();
   const { rowCount } = await sql`
     UPDATE membership_cards
-    SET logo_image = decode(${bytes.toString("hex")}, 'hex'), logo_image_type = ${mimeType}
+    SET logo_image = decode(${bytes.toString("hex")}, 'hex'), logo_image_type = ${mimeType}, logo_updated_at = now()
     WHERE id = ${id} AND user_id = ${userId};
   `;
   return (rowCount ?? 0) > 0;
@@ -5294,7 +5316,7 @@ export async function getMembershipLogo(userId: number, id: number): Promise<{ b
 export async function removeMembershipLogo(userId: number, id: number): Promise<boolean> {
   await ensureSchema();
   const { rowCount } = await sql`
-    UPDATE membership_cards SET logo_image = NULL, logo_image_type = NULL
+    UPDATE membership_cards SET logo_image = NULL, logo_image_type = NULL, logo_updated_at = NULL
     WHERE id = ${id} AND user_id = ${userId};
   `;
   return (rowCount ?? 0) > 0;
@@ -5304,7 +5326,7 @@ export async function attachMembershipBanner(userId: number, id: number, bytes: 
   await ensureSchema();
   const { rowCount } = await sql`
     UPDATE membership_cards
-    SET banner_image = decode(${bytes.toString("hex")}, 'hex'), banner_image_type = ${mimeType}
+    SET banner_image = decode(${bytes.toString("hex")}, 'hex'), banner_image_type = ${mimeType}, banner_updated_at = now()
     WHERE id = ${id} AND user_id = ${userId};
   `;
   return (rowCount ?? 0) > 0;
@@ -5325,7 +5347,7 @@ export async function getMembershipBanner(userId: number, id: number): Promise<{
 export async function removeMembershipBanner(userId: number, id: number): Promise<boolean> {
   await ensureSchema();
   const { rowCount } = await sql`
-    UPDATE membership_cards SET banner_image = NULL, banner_image_type = NULL
+    UPDATE membership_cards SET banner_image = NULL, banner_image_type = NULL, banner_updated_at = NULL
     WHERE id = ${id} AND user_id = ${userId};
   `;
   return (rowCount ?? 0) > 0;
