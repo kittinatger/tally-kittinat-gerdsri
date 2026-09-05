@@ -6,6 +6,7 @@ import {
   getCurrency,
   listCategories,
   listWallets,
+  listDistinctMerchants,
   countRecentGeminiUsage,
   recordGeminiUsage,
 } from "@/lib/db";
@@ -58,11 +59,12 @@ export async function POST(req: NextRequest) {
 
   try {
     await recordGeminiUsage(userId);
-    const [categoryRows, defaultCurrency, autoConvertEnabled, walletRows] = await Promise.all([
+    const [categoryRows, defaultCurrency, autoConvertEnabled, walletRows, knownMerchants] = await Promise.all([
       listCategories(userId),
       getCurrency(userId),
       getAutoConvertCurrency(userId),
       listWallets(userId),
+      listDistinctMerchants(userId),
     ]);
     const categories = {
       expense: categoryRows.filter((c) => c.type === "expense").map((c) => c.name),
@@ -74,6 +76,7 @@ export async function POST(req: NextRequest) {
       file.type,
       categories,
       walletRows.map((w) => w.name),
+      knownMerchants,
       fallbackDate,
     );
     const result = await maybeAutoConvert(extraction, defaultCurrency, autoConvertEnabled);

@@ -107,7 +107,18 @@ export async function withGeminiFallback<T>(run: (model: string) => Promise<T>, 
   }
 }
 
-function buildPrompt(categories: CategoriesByType, walletNames: string[]): string {
+// Shared by both prompts — instructs the model to reuse an existing
+// merchant's exact spelling instead of inventing a new variant every time
+// (e.g. "Siyapat Sanyanitipong" one scan, "Ms. Siyapat Sanyanitipong" the
+// next), while still keeping different branches/locations of the same
+// chain as distinct entries rather than merging them. See listDistinctMerchants
+// in db.ts for where the list itself comes from.
+function knownMerchantsInstruction(knownMerchants: string[]): string {
+  if (knownMerchants.length === 0) return "";
+  return ` Known merchant names already on file for this user: ${knownMerchants.join(", ")}. If this document is clearly the same vendor as one of these — even if this document spells, punctuates, or titles it differently (e.g. adds "Mr./Ms.", different capitalization, a trailing store code) — use that EXACT existing spelling rather than creating a new variant of the same name. If instead this is a different branch/location of the same chain (e.g. two physical stores of the same franchise in different areas), keep them as separate merchant entries — don't merge distinct branches into one — but still spell the shared brand name exactly like the existing entries for that chain, only the branch/location part should differ (e.g. if "Mixue - Bang Sue" is already on file and this receipt is clearly the same chain but a different location, use "Mixue - <that location>", not a differently-spelled brand name).`;
+}
+
+function buildPrompt(categories: CategoriesByType, walletNames: string[], knownMerchants: string[] = []): string {
   const currentYear = new Date().getFullYear();
   const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
 
@@ -119,7 +130,7 @@ function buildPrompt(categories: CategoriesByType, walletNames: string[]): strin
 First decide which of the three it is, then extract:
 - type: exactly "expense", "income", or "transfer"
 - direction: ONLY if type is "transfer" -- "out" if money left the account/cash the user tracks in this app (e.g. topping up an e-wallet), or "in" if money came back into it (e.g. withdrawing from the e-wallet back to the tracked account). Omit this field entirely if type is not "transfer".
-- merchant: for an expense, the store or business name; for income, the source of the money (employer, client, company, or platform); for a transfer, a short description of where the money went/came from (e.g. "E-wallet top-up", "Savings transfer"). Cleaned up (title case, no trailing numbers/codes).
+- merchant: for an expense, the store or business name; for income, the source of the money (employer, client, company, or platform); for a transfer, a short description of where the money went/came from (e.g. "E-wallet top-up", "Savings transfer"). Cleaned up (title case, no trailing numbers/codes).${knownMerchantsInstruction(knownMerchants)}
 - amount: the total amount (paid, for an expense; received, for income; moved, for a transfer), as a plain number (no currency symbols, no thousands separators)
 - date: the transaction/payment date in strict YYYY-MM-DD format. If the year is missing, assume the current year: ${currentYear}.
 - category: the single best-fit category.
@@ -136,7 +147,7 @@ If any field is illegible or absent, make your best reasonable guess rather than
 Respond with JSON only, matching the provided schema.`;
 }
 
-function buildVoicePrompt(categories: CategoriesByType, walletNames: string[]): string {
+function buildVoicePrompt(categories: CategoriesByType, walletNames: string[], knownMerchants: string[] = []): string {
   const currentYear = new Date().getFullYear();
   const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
 
@@ -162,7 +173,7 @@ then extract, for that transaction:
 - merchant: for an expense, the store/business/person paid; for income, the source of the money
   (employer, client, company, platform); for a transfer, a short description (e.g. "E-wallet top-up",
   "Savings transfer"). Cleaned up (title case). If genuinely not mentioned, use a short generic
-  label like "Cash purchase" or "Cash received".
+  label like "Cash purchase" or "Cash received".${knownMerchantsInstruction(knownMerchants)}
 - amount: the amount spoken (handle spoken numbers like "twelve fifty" -> 12.50, "twenty bucks" ->
   20), as a plain number, no currency symbols.
 - date: the transaction date in strict YYYY-MM-DD format. Resolve relative terms like "today",
@@ -296,6 +307,7 @@ export async function extractTransaction(
   mimeType: string,
   categories: CategoriesByType,
   walletNames: string[] = [],
+  knownMerchants: string[] = [],
   fallbackDate: string = serverTodayIso(),
 ): Promise<{ extraction: TransactionExtraction; model: string }> {
   const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
@@ -307,7 +319,10 @@ export async function extractTransaction(
       contents: [
         {
           role: "user",
-          parts: [{ text: buildPrompt(categories, walletNames) }, { inlineData: { mimeType, data: imageBase64 } }],
+          parts: [
+            { text: buildPrompt(categories, walletNames, knownMerchants) },
+            { inlineData: { mimeType, data: imageBase64 } },
+          ],
         },
       ],
       config: {
@@ -333,6 +348,7 @@ export async function extractTransactionsFromAudio(
   mimeType: string,
   categories: CategoriesByType,
   walletNames: string[] = [],
+  knownMerchants: string[] = [],
   fallbackDate: string = serverTodayIso(),
 ): Promise<{ extractions: TransactionExtraction[]; model: string }> {
   const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
@@ -344,7 +360,10 @@ export async function extractTransactionsFromAudio(
       contents: [
         {
           role: "user",
-          parts: [{ text: buildVoicePrompt(categories, walletNames) }, { inlineData: { mimeType, data: audioBase64 } }],
+          parts: [
+            { text: buildVoicePrompt(categories, walletNames, knownMerchants) },
+            { inlineData: { mimeType, data: audioBase64 } },
+          ],
         },
       ],
       config: {
