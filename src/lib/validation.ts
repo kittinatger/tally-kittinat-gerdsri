@@ -511,6 +511,7 @@ export const membershipInputSchema = z.object({
   showLogo: z.boolean().default(true),
   showName: z.boolean().default(true),
   hiddenFieldLabels: hiddenFieldLabelsSchema.default([]),
+  showCodeText: z.boolean().default(true),
 });
 
 export const membershipUpdateSchema = z
@@ -531,6 +532,7 @@ export const membershipUpdateSchema = z
     showLogo: z.boolean().optional(),
     showName: z.boolean().optional(),
     hiddenFieldLabels: hiddenFieldLabelsSchema.optional(),
+    showCodeText: z.boolean().optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
     message: "Provide at least one field to update",

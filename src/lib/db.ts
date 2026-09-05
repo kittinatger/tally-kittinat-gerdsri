@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 58;
+const CURRENT_SCHEMA_VERSION = 59;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1425,6 +1425,12 @@ function ensureSchema(): Promise<void> {
       // with zero special-casing.
       await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS logo_updated_at TIMESTAMPTZ;`;
       await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS banner_updated_at TIMESTAMPTZ;`;
+
+      // Whether the human-readable code value shows alongside the
+      // QR/barcode itself — a purely cosmetic toggle (the code still
+      // scans exactly the same either way); see MembershipCardCode's
+      // showText prop. Defaults to true so nothing existing changes.
+      await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS show_code_text BOOLEAN NOT NULL DEFAULT true;`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -5161,12 +5167,13 @@ export type MembershipCardRow = {
    * first upload. */
   logo_updated_at: string | null;
   banner_updated_at: string | null;
+  show_code_text: boolean;
 };
 
 export async function listMembershipCards(userId: number): Promise<MembershipCardRow[]> {
   await ensureSchema();
   const { rows } = await sql<MembershipCardRow>`
-    SELECT id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at,
+    SELECT id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at, show_code_text,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner
     FROM membership_cards
     WHERE user_id = ${userId}
@@ -5194,6 +5201,7 @@ export async function createMembershipCard(
     showLogo?: boolean;
     showName?: boolean;
     hiddenFieldLabels?: string[];
+    showCodeText?: boolean;
   },
 ): Promise<MembershipCardRow> {
   await ensureSchema();
@@ -5210,10 +5218,11 @@ export async function createMembershipCard(
   const showLogo = input.showLogo ?? true;
   const showName = input.showName ?? true;
   const hiddenFieldLabels = JSON.stringify(input.hiddenFieldLabels ?? []);
+  const showCodeText = input.showCodeText ?? true;
   const { rows } = await sql<MembershipCardRow>`
-    INSERT INTO membership_cards (user_id, name, code_value, code_format, color, icon, notes, sort_order, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels)
-    VALUES (${userId}, ${input.name}, ${input.codeValue}, ${input.codeFormat}, ${input.color}, ${input.icon ?? null}, ${input.notes ?? null}, ${nextSort}, ${kind}, ${fields}, ${layout}, ${background}, ${input.textColor ?? null}, ${category}, ${customFieldLabels}, ${showLogo}, ${showName}, ${hiddenFieldLabels})
-    RETURNING id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at,
+    INSERT INTO membership_cards (user_id, name, code_value, code_format, color, icon, notes, sort_order, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, show_code_text)
+    VALUES (${userId}, ${input.name}, ${input.codeValue}, ${input.codeFormat}, ${input.color}, ${input.icon ?? null}, ${input.notes ?? null}, ${nextSort}, ${kind}, ${fields}, ${layout}, ${background}, ${input.textColor ?? null}, ${category}, ${customFieldLabels}, ${showLogo}, ${showName}, ${hiddenFieldLabels}, ${showCodeText})
+    RETURNING id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at, show_code_text,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner;
   `;
   return rows[0];
@@ -5239,11 +5248,12 @@ export async function updateMembershipCard(
     showLogo?: boolean;
     showName?: boolean;
     hiddenFieldLabels?: string[];
+    showCodeText?: boolean;
   },
 ): Promise<MembershipCardRow | null> {
   await ensureSchema();
   const { rows: existingRows } = await sql<MembershipCardRow>`
-    SELECT id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at,
+    SELECT id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at, show_code_text,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner
     FROM membership_cards WHERE id = ${id} AND user_id = ${userId};
   `;
@@ -5268,6 +5278,7 @@ export async function updateMembershipCard(
   const newShowName = input.showName !== undefined ? input.showName : existing.show_name;
   const newHiddenFieldLabels =
     input.hiddenFieldLabels !== undefined ? JSON.stringify(input.hiddenFieldLabels) : existing.hidden_field_labels;
+  const newShowCodeText = input.showCodeText !== undefined ? input.showCodeText : existing.show_code_text;
 
   const { rows } = await sql<MembershipCardRow>`
     UPDATE membership_cards
@@ -5275,9 +5286,9 @@ export async function updateMembershipCard(
         color = ${newColor}, icon = ${newIcon}, notes = ${newNotes},
         kind = ${newKind}, fields = ${newFields}, layout = ${newLayout}, background = ${newBackground},
         text_color = ${newTextColor}, category = ${newCategory}, custom_field_labels = ${newCustomFieldLabels},
-        show_logo = ${newShowLogo}, show_name = ${newShowName}, hidden_field_labels = ${newHiddenFieldLabels}
+        show_logo = ${newShowLogo}, show_name = ${newShowName}, hidden_field_labels = ${newHiddenFieldLabels}, show_code_text = ${newShowCodeText}
     WHERE id = ${id} AND user_id = ${userId}
-    RETURNING id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at,
+    RETURNING id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at, show_code_text,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner;
   `;
   return rows[0];

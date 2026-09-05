@@ -24,6 +24,7 @@ export default function MembershipCardCode({
   value,
   format,
   size = "large",
+  showText = true,
 }: {
   value: string;
   format: MembershipCodeFormat;
@@ -32,6 +33,12 @@ export default function MembershipCardCode({
    * since a full error explanation doesn't fit and the full code is always
    * one tap away in the detail view). */
   size?: "large" | "small" | "thumb";
+  /** Whether the human-readable code value shows alongside the code itself
+   * — under a 2D code (qr/aztec) as its own line, or baked into a 1D
+   * barcode's own rendering via bwip's includetext. Off just for a
+   * cleaner-looking pass; the code itself still scans exactly the same
+   * either way. Ignored for "thumb" (never shows text regardless). */
+  showText?: boolean;
 }) {
   const t = useT();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -65,7 +72,7 @@ export default function MembershipCardCode({
         bcid: BCID[format],
         text: value,
         scale: size === "large" ? (is2d ? 6 : 3) : size === "small" ? (is2d ? 3 : 2) : is2d ? 2 : 1.4,
-        includetext: size !== "thumb" && !is2d,
+        includetext: size !== "thumb" && !is2d && showText,
         textxalign: "center" as const,
         ...(!is2d && { height: size === "large" ? 16 : size === "small" ? 9 : 5 }),
         ...(size === "thumb" && { paddingwidth: 0, paddingheight: 0 }),
@@ -80,7 +87,7 @@ export default function MembershipCardCode({
     return () => {
       cancelled = true;
     };
-  }, [value, format, size, t, isEmpty]);
+  }, [value, format, size, t, isEmpty, showText]);
 
   if (size === "thumb") {
     if (isEmpty) return null;
@@ -113,7 +120,7 @@ export default function MembershipCardCode({
       ) : (
         <>
           <canvas ref={canvasRef} className="mx-auto block max-w-full" />
-          {is2d && (
+          {is2d && showText && (
             <p className="mt-2 break-all text-center font-mono text-xs text-gray-500">{value}</p>
           )}
         </>

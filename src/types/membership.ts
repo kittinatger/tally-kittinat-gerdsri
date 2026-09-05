@@ -33,6 +33,10 @@ export type MembershipCard = {
    * the browser's or service worker's cache under the old URL. */
   logoUpdatedAt: string | null;
   bannerUpdatedAt: string | null;
+  /** Whether the human-readable code value shows alongside the code
+   * itself — purely cosmetic, the code still scans identically either
+   * way. See MembershipCardCode's showText prop. */
+  showCodeText: boolean;
   /** Which tab on the /wallet page this card lives in. */
   category: "pass" | "membership";
   /** User-named fields (key -> plain-text label) beyond the current

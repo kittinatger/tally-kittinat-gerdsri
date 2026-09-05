@@ -275,6 +275,7 @@ export default function WalletPageView({
           showLogo={card.showLogo}
           showName={card.showName}
           hiddenFieldLabels={card.hiddenFieldLabels}
+          showCodeText={card.showCodeText}
         />
       ),
       onOpen: () => setViewingPass(card),

@@ -168,6 +168,7 @@ export default function MembershipCardModal({
   const [notes, setNotes] = useState(card?.notes ?? "");
   const [showLogo, setShowLogo] = useState(card?.showLogo ?? true);
   const [showName, setShowName] = useState(card?.showName ?? true);
+  const [showCodeText, setShowCodeText] = useState(card?.showCodeText ?? true);
   const [kind, setKind] = useState<PassKind>(card?.kind ?? "generic");
   const [fields, setFields] = useState<Record<string, string>>(card?.fields ?? {});
   const [layout, setLayout] = useState(card?.layout ?? defaultLayoutFor(kind));
@@ -499,6 +500,7 @@ export default function MembershipCardModal({
         showLogo,
         showName,
         hiddenFieldLabels: [...hiddenFieldLabels],
+        showCodeText,
       };
       const res = isEdit
         ? await fetch(`/api/memberships/${card!.id}`, {
@@ -568,6 +570,7 @@ export default function MembershipCardModal({
             showLogo={showLogo}
             showName={showName}
             hiddenFieldLabels={[...hiddenFieldLabels]}
+            showCodeText={showCodeText}
           />
         </ColorGlowPreview>
 
@@ -693,6 +696,29 @@ export default function MembershipCardModal({
               ))}
             </div>
           </div>
+
+          {/* The code itself still scans exactly the same either way —
+           * this only controls whether the human-readable value is also
+           * shown (underneath a QR/Aztec code, or baked into a 1D
+           * barcode's own rendering). See MembershipCardCode's showText. */}
+          <button
+            type="button"
+            onClick={() => setShowCodeText((v) => !v)}
+            className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+          >
+            <span className="text-sm font-medium text-foreground">{t("membership.showCodeTextLabel")}</span>
+            <span
+              role="switch"
+              aria-checked={showCodeText}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${showCodeText ? "bg-navy" : "bg-line"}`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                  showCodeText ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </span>
+          </button>
         </FormSection>
         )}
 

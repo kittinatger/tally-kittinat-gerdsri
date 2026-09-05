@@ -38,6 +38,7 @@ export default function PassShape({
   showLogo = true,
   showName = true,
   hiddenFieldLabels = [],
+  showCodeText = true,
 }: {
   name: string;
   color: string;
@@ -73,6 +74,9 @@ export default function PassShape({
    * suppressed on the card face — only the value shows for that field.
    * Doesn't affect the field's value or its layout placement. */
   hiddenFieldLabels?: string[];
+  /** Whether the human-readable code value shows alongside the code itself
+   * — see MembershipCardCode's own showText prop. */
+  showCodeText?: boolean;
 }) {
   const t = useT();
   const effectiveLayout = layout ?? defaultLayoutFor(kind);
@@ -234,7 +238,7 @@ export default function PassShape({
       )}
 
       <div className="mt-3">
-        <MembershipCardCode value={codeValue} format={codeFormat} size={codeSize} />
+        <MembershipCardCode value={codeValue} format={codeFormat} size={codeSize} showText={showCodeText} />
       </div>
     </div>
   );
