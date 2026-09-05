@@ -489,6 +489,10 @@ const customFieldLabelsSchema = z.record(z.string().max(40), z.string().trim().m
 );
 
 const membershipCategorySchema = z.enum(["pass", "membership"]);
+// Field keys (kind-defined or custom) whose label is hidden on the card
+// face — capped generously above what a pass could realistically place
+// (kind fields + MAX_CUSTOM_FIELDS), just to bound the payload size.
+const hiddenFieldLabelsSchema = z.array(z.string().max(40)).max(50);
 
 export const membershipInputSchema = z.object({
   name: z.string().trim().min(1).max(60),
@@ -506,6 +510,7 @@ export const membershipInputSchema = z.object({
   customFieldLabels: customFieldLabelsSchema.default({}),
   showLogo: z.boolean().default(true),
   showName: z.boolean().default(true),
+  hiddenFieldLabels: hiddenFieldLabelsSchema.default([]),
 });
 
 export const membershipUpdateSchema = z
@@ -525,6 +530,7 @@ export const membershipUpdateSchema = z
     customFieldLabels: customFieldLabelsSchema.optional(),
     showLogo: z.boolean().optional(),
     showName: z.boolean().optional(),
+    hiddenFieldLabels: hiddenFieldLabelsSchema.optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
     message: "Provide at least one field to update",

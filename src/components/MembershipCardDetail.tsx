@@ -51,6 +51,7 @@ export default function MembershipCardDetail({
         customFieldLabels={card.customFieldLabels}
         showLogo={card.showLogo}
         showName={card.showName}
+        hiddenFieldLabels={card.hiddenFieldLabels}
       />
 
       {card.notes && (

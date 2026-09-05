@@ -39,4 +39,8 @@ export type MembershipCard = {
    * the name itself, so either can be hidden without deleting either. */
   showLogo: boolean;
   showName: boolean;
+  /** Field keys (kind-defined or custom) whose small uppercase label is
+   * suppressed on the card face — only the value shows. Purely a display
+   * toggle; the field's value and layout placement are untouched. */
+  hiddenFieldLabels: string[];
 };

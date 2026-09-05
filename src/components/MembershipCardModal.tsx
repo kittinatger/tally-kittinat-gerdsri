@@ -165,6 +165,20 @@ export default function MembershipCardModal({
   // custom editor, same as any other field, once added here.
   const [customFieldLabels, setCustomFieldLabels] = useState<Record<string, string>>(card?.customFieldLabels ?? {});
   const [newCustomFieldLabel, setNewCustomFieldLabel] = useState("");
+  // Field keys (kind-defined or custom) whose small uppercase label is
+  // hidden on the card face — only the value shows. Per-field, not a
+  // whole-card switch, since e.g. a "Member ID" label might be worth
+  // keeping while a self-explanatory one ("KF" -> "Hello") isn't.
+  const [hiddenFieldLabels, setHiddenFieldLabels] = useState<Set<string>>(new Set(card?.hiddenFieldLabels ?? []));
+
+  function toggleFieldLabelHidden(key: string) {
+    setHiddenFieldLabels((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Locked by a picked premade pass's lockTextColor — see PremadePassPicker
@@ -362,6 +376,7 @@ export default function MembershipCardModal({
     // placed under the old kind wouldn't have anywhere meaningful to live
     // either — same reset as fields/layout above.
     setCustomFieldLabels({});
+    setHiddenFieldLabels(new Set());
     // Switching to a kind with no fields (e.g. "generic" used to) makes
     // the "Fields" tab disappear from the strip above — bail out of it so
     // the user isn't left on a tab that no longer renders anything.
@@ -415,6 +430,12 @@ export default function MembershipCardModal({
     setLayout((prev) =>
       Object.fromEntries(PASS_ZONES.map((zone) => [zone, (prev[zone] ?? []).filter((k) => k !== key)])) as typeof prev,
     );
+    setHiddenFieldLabels((prev) => {
+      if (!prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
     if (selectedFieldKey === key) setSelectedFieldKey(null);
   }
 
@@ -439,6 +460,7 @@ export default function MembershipCardModal({
         customFieldLabels,
         showLogo,
         showName,
+        hiddenFieldLabels: [...hiddenFieldLabels],
       };
       const res = isEdit
         ? await fetch(`/api/memberships/${card!.id}`, {
@@ -507,6 +529,7 @@ export default function MembershipCardModal({
             customFieldLabels={customFieldLabels}
             showLogo={showLogo}
             showName={showName}
+            hiddenFieldLabels={[...hiddenFieldLabels]}
           />
         </ColorGlowPreview>
 
@@ -669,7 +692,18 @@ export default function MembershipCardModal({
               <div className="space-y-3">
                 {kindFieldDefs.map((def) => (
                   <div key={def.key}>
-                    <label className="mb-1 block text-xs font-semibold text-ink-soft">{t(def.labelKey)}</label>
+                    <div className="mb-1 flex items-center justify-between gap-2">
+                      <label className="text-xs font-semibold text-ink-soft">{t(def.labelKey)}</label>
+                      <button
+                        type="button"
+                        onClick={() => toggleFieldLabelHidden(def.key)}
+                        className={`text-[11px] font-semibold ${
+                          hiddenFieldLabels.has(def.key) ? "text-navy dark:text-blue-300" : "text-ink-soft hover:text-foreground"
+                        }`}
+                      >
+                        {t("membership.hideFieldLabel")}
+                      </button>
+                    </div>
                     <input
                       type="text"
                       value={fields[def.key] ?? ""}
@@ -801,15 +835,26 @@ export default function MembershipCardModal({
                           <div key={key}>
                             <div className="mb-1 flex items-center justify-between gap-2">
                               <label className="text-xs font-semibold text-ink-soft">{labelForKey(key)}</label>
-                              {isCustom && (
+                              <div className="flex shrink-0 items-center gap-2.5">
                                 <button
                                   type="button"
-                                  onClick={() => removeCustomField(key)}
-                                  className="text-[11px] font-semibold text-ink-soft hover:text-red-600 dark:hover:text-red-400"
+                                  onClick={() => toggleFieldLabelHidden(key)}
+                                  className={`text-[11px] font-semibold ${
+                                    hiddenFieldLabels.has(key) ? "text-navy dark:text-blue-300" : "text-ink-soft hover:text-foreground"
+                                  }`}
                                 >
-                                  {t("membership.removeCustomField")}
+                                  {t("membership.hideFieldLabel")}
                                 </button>
-                              )}
+                                {isCustom && (
+                                  <button
+                                    type="button"
+                                    onClick={() => removeCustomField(key)}
+                                    className="text-[11px] font-semibold text-ink-soft hover:text-red-600 dark:hover:text-red-400"
+                                  >
+                                    {t("membership.removeCustomField")}
+                                  </button>
+                                )}
+                              </div>
                             </div>
                             <input
                               type="text"

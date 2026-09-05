@@ -37,6 +37,7 @@ export default function PassShape({
   customFieldLabels = {},
   showLogo = true,
   showName = true,
+  hiddenFieldLabels = [],
 }: {
   name: string;
   color: string;
@@ -68,6 +69,10 @@ export default function PassShape({
   showLogo?: boolean;
   /** Whether the name shows in the header. */
   showName?: boolean;
+  /** Field keys (kind-defined or custom) whose small uppercase label is
+   * suppressed on the card face — only the value shows for that field.
+   * Doesn't affect the field's value or its layout placement. */
+  hiddenFieldLabels?: string[];
 }) {
   const t = useT();
   const effectiveLayout = layout ?? defaultLayoutFor(kind);
@@ -87,7 +92,7 @@ export default function PassShape({
       .map((key) => {
         const def = fieldByKey[key];
         const label = def ? t(def.labelKey) : customFieldLabels[key];
-        return { key, label, value: fields[key] };
+        return { key, label, value: fields[key], labelHidden: hiddenFieldLabels.includes(key) };
       })
       .filter((f) => f.label && f.value);
   }
@@ -136,13 +141,15 @@ export default function PassShape({
         <div className="min-w-0 flex-1">{showName && <p className="truncate font-semibold">{name}</p>}</div>
         {headerFields.length > 0 && (
           <div className="flex shrink-0 items-center gap-2 text-right">
-            {headerFields.map(({ key, label, value }, i) => (
+            {headerFields.map(({ key, label, value, labelHidden }, i) => (
               <div key={key} className="flex items-center gap-2">
                 {i > 0 && <span style={{ color: fg.a60 }}>→</span>}
                 <div>
-                  <p className="text-[9px] uppercase tracking-wide" style={{ color: fg.a70 }}>
-                    {label}
-                  </p>
+                  {!labelHidden && (
+                    <p className="text-[9px] uppercase tracking-wide" style={{ color: fg.a70 }}>
+                      {label}
+                    </p>
+                  )}
                   <p className="text-sm font-semibold">{value}</p>
                 </div>
               </div>
@@ -163,11 +170,13 @@ export default function PassShape({
 
       {primaryFields.length > 0 && (
         <div className="mt-3">
-          {primaryFields.map(({ key, label, value }) => (
+          {primaryFields.map(({ key, label, value, labelHidden }) => (
             <div key={key}>
-              <p className="text-[10px] uppercase tracking-wide" style={{ color: fg.a70 }}>
-                {label}
-              </p>
+              {!labelHidden && (
+                <p className="text-[10px] uppercase tracking-wide" style={{ color: fg.a70 }}>
+                  {label}
+                </p>
+              )}
               <p className="text-2xl font-bold">{value}</p>
             </div>
           ))}
@@ -183,11 +192,13 @@ export default function PassShape({
              * label/value rows (MEMBER SINCE / MEMBER NAME, MEMBER STATUS /
              * MEMBER SINCE, ...) every real loyalty/boarding pass uses. */}
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-              {stubFields.map(({ key, label, value }) => (
+              {stubFields.map(({ key, label, value, labelHidden }) => (
                 <div key={key} className="min-w-0">
-                  <p className="text-[9px] uppercase tracking-wide" style={{ color: fg.a70 }}>
-                    {label}
-                  </p>
+                  {!labelHidden && (
+                    <p className="text-[9px] uppercase tracking-wide" style={{ color: fg.a70 }}>
+                      {label}
+                    </p>
+                  )}
                   <p className="truncate text-sm font-semibold">{value}</p>
                 </div>
               ))}
@@ -197,11 +208,13 @@ export default function PassShape({
       ) : (
         stubFields.length > 0 && (
           <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
-            {stubFields.map(({ key, label, value }) => (
+            {stubFields.map(({ key, label, value, labelHidden }) => (
               <div key={key} className="min-w-0">
-                <p className="text-[9px] uppercase tracking-wide" style={{ color: fg.a70 }}>
-                  {label}
-                </p>
+                {!labelHidden && (
+                  <p className="text-[9px] uppercase tracking-wide" style={{ color: fg.a70 }}>
+                    {label}
+                  </p>
+                )}
                 <p className="truncate text-sm font-semibold">{value}</p>
               </div>
             ))}

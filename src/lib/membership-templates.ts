@@ -154,3 +154,20 @@ export function normalizeCustomFieldLabels(raw: unknown): Record<string, string>
   }
   return result;
 }
+
+// Which placed fields (by key — a kind's own or a custom one) show only
+// their value on the card face, with the small uppercase label above it
+// suppressed entirely — e.g. a "KF" label over "Hello" becomes just
+// "Hello". Purely a display toggle: the field's value and its layout
+// placement are untouched, same idea as MembershipCard.showLogo/showName.
+// Tolerant parse for the `hidden_field_labels` TEXT column, same
+// defensiveness as normalizePassFields above.
+export function normalizeHiddenFieldLabels(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const result: string[] = [];
+  for (const v of raw) {
+    if (typeof v === "string" && v) result.push(v);
+    if (result.length >= 50) break;
+  }
+  return result;
+}

@@ -5,6 +5,7 @@ import {
   normalizePassFields,
   normalizePassLayout,
   normalizeCustomFieldLabels,
+  normalizeHiddenFieldLabels,
 } from "@/lib/membership-templates";
 import { parseCardBackground } from "@/lib/card-backgrounds";
 import type { MembershipCard } from "@/types/membership";
@@ -33,6 +34,7 @@ export type MembershipCardApiRow = {
   custom_field_labels: string;
   show_logo: boolean;
   show_name: boolean;
+  hidden_field_labels: string;
 };
 
 export function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
@@ -56,6 +58,12 @@ export function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
     parsedCustomFieldLabels = null;
   }
   const customFieldLabels = normalizeCustomFieldLabels(parsedCustomFieldLabels);
+  let parsedHiddenFieldLabels: unknown = null;
+  try {
+    parsedHiddenFieldLabels = JSON.parse(row.hidden_field_labels);
+  } catch {
+    parsedHiddenFieldLabels = null;
+  }
   return {
     id: row.id,
     name: row.name,
@@ -77,6 +85,7 @@ export function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
     customFieldLabels,
     showLogo: row.show_logo,
     showName: row.show_name,
+    hiddenFieldLabels: normalizeHiddenFieldLabels(parsedHiddenFieldLabels),
   };
 }
 
