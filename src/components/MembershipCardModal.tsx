@@ -948,11 +948,14 @@ export default function MembershipCardModal({
             {cropTarget && (
               <ImageCropModal
                 file={cropTarget.file}
-                // Banner is always the pass's fixed 16:9 hero strip, so its
-                // crop frame is locked to that shape; the logo has no fixed
-                // shape of its own — freeform, so whatever the user drags
-                // the frame to becomes the logo's own aspect ratio.
-                aspect={cropTarget.kind === "banner" ? 16 / 9 : null}
+                // Freeform for both — neither the logo nor the banner has a
+                // fixed shape of its own; whatever the user drags the frame
+                // to becomes that image's own aspect ratio (see PassShape,
+                // which sizes each to its own ratio rather than forcing a
+                // fixed box). Banner used to be locked to 16:9, which meant
+                // its ratio (and crop) couldn't be changed the way the
+                // logo's already could.
+                aspect={null}
                 onCancel={() => setCropTarget(null)}
                 onCropped={handleCropped}
               />

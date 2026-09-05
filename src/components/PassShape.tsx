@@ -163,9 +163,14 @@ export default function PassShape({
         // cards especially) run the hero photo flush to both sides with no
         // inset or corner rounding of its own, unlike the rounded/padded
         // thumbnail this used to be. -mx-4 cancels the card's own p-4 so
-        // the image reaches the same edges the card outline does.
+        // the image reaches the same edges the card outline does. Sized to
+        // the banner's own aspect ratio (fixed width, auto height) rather
+        // than forced into a fixed 16:9 box — the crop tool this comes from
+        // already lets the user pick whatever shape they want, same as the
+        // logo; a max-height keeps a very tall freeform crop from taking
+        // over the whole card.
         // eslint-disable-next-line @next/next/no-img-element -- user-uploaded, not a build-time asset
-        <img src={bannerUrl} alt="" className="-mx-4 mt-3 aspect-[16/9] w-[calc(100%+2rem)] max-w-none object-cover" />
+        <img src={bannerUrl} alt="" className="-mx-4 mt-3 h-auto max-h-56 w-[calc(100%+2rem)] max-w-none object-contain" />
       )}
 
       {primaryFields.length > 0 && (
