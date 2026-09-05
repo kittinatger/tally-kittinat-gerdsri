@@ -3084,18 +3084,24 @@ export async function listDistinctMerchants(userId: number): Promise<string[]> {
 export type VendorStat = { name: string; count: number; totalSpent: number; lastUsed: string };
 
 // Powers the Vendors settings panel — every merchant name the user has
-// ever logged, with enough per-vendor stats (count/spend/recency) to
-// support several sort orders client-side without refetching.
+// logged against an actual purchase, with enough per-vendor stats
+// (count/spend/recency) to support several sort orders client-side
+// without refetching. Restricted to type='expense': income rows are
+// often a person's name (a payer, not a vendor) rather than a business,
+// and transfer rows are wallet-to-wallet moves whose "merchant" is an
+// auto-generated description like "Transfer to Cash" or whatever the
+// user typed for something like an e-wallet top-up — neither is a
+// vendor in any meaningful sense, so both would just pollute this list.
 export async function listVendorStats(userId: number): Promise<VendorStat[]> {
   await ensureSchema();
   const { rows } = await sql<{ merchant: string; count: number; total_spent: number; last_used: string }>`
     SELECT
       merchant,
       COUNT(*)::int AS count,
-      COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0)::float8 AS total_spent,
+      COALESCE(SUM(amount), 0)::float8 AS total_spent,
       MAX(date) AS last_used
     FROM expenses
-    WHERE user_id = ${userId}
+    WHERE user_id = ${userId} AND type = 'expense'
     GROUP BY merchant
     ORDER BY merchant ASC;
   `;
