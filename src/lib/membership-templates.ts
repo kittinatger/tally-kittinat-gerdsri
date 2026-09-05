@@ -1,25 +1,35 @@
 import type { MessageKey } from "@/lib/i18n/messages";
 
-export const PASS_TEMPLATES = ["generic", "storeCard", "coupon", "eventTicket", "boardingPass"] as const;
-export type PassTemplate = (typeof PASS_TEMPLATES)[number];
+// Called "kind" (not "template") deliberately — this is which shape of
+// pass a card is (a boarding pass vs. a coupon vs. a loyalty card), fixed
+// for the card's whole lifetime. It used to be named PassTemplate/
+// PASS_TEMPLATES, which read as the same thing as the *actual* templates
+// feature (pass_templates in db.ts / PremadePassPicker — admin-reviewed
+// premade designs a user can pick from). Two unrelated concepts sharing
+// the word "template" was a real source of confusion once both existed
+// side by side, so this one was renamed to "kind" instead.
+export const PASS_KINDS = ["generic", "storeCard", "coupon", "eventTicket", "boardingPass", "giftCard", "transitPass"] as const;
+export type PassKind = (typeof PASS_KINDS)[number];
 
-export function isPassTemplate(value: string): value is PassTemplate {
-  return (PASS_TEMPLATES as readonly string[]).includes(value);
+export function isPassKind(value: string): value is PassKind {
+  return (PASS_KINDS as readonly string[]).includes(value);
 }
 
-export const TEMPLATE_LABEL_KEYS: Record<PassTemplate, MessageKey> = {
+export const KIND_LABEL_KEYS: Record<PassKind, MessageKey> = {
   generic: "membership.templateGeneric",
   storeCard: "membership.templateStoreCard",
   coupon: "membership.templateCoupon",
   eventTicket: "membership.templateEventTicket",
   boardingPass: "membership.templateBoardingPass",
+  giftCard: "membership.templateGiftCard",
+  transitPass: "membership.templateTransitPass",
 };
 
 // PassKit-style zones: header sits beside the name/icon, primary is the
 // single big field a pass is "about" (a discount, a route), secondary/
 // auxiliary are smaller supporting fields. Only coupon/eventTicket/
-// boardingPass get a "primary" field — see PassShape.tsx for why those
-// three (and only those three) get the notch-divider stub treatment.
+// boardingPass/transitPass get a "primary" field — see PassShape.tsx for
+// why those (and only those) get the notch-divider stub treatment.
 export type PassZone = "header" | "primary" | "secondary" | "auxiliary";
 export const PASS_ZONES: readonly PassZone[] = ["header", "primary", "secondary", "auxiliary"];
 
@@ -30,10 +40,10 @@ export type PassFieldDef = {
   placeholderKey: MessageKey;
 };
 
-// Only the fields relevant to each template — deliberately not a shared
-// field set reskinned. Kept short (2-5 fields) so adding a card stays a
-// quick flow rather than filling out a full PassKit pass.json.
-export const TEMPLATE_FIELDS: Record<PassTemplate, PassFieldDef[]> = {
+// Only the fields relevant to each kind — deliberately not a shared field
+// set reskinned. Kept short (2-5 fields) so adding a card stays a quick
+// flow rather than filling out a full PassKit pass.json.
+export const KIND_FIELDS: Record<PassKind, PassFieldDef[]> = {
   generic: [
     { key: "memberId", zone: "secondary", labelKey: "membership.fieldMemberId", placeholderKey: "membership.fieldMemberIdPlaceholder" },
     { key: "memberSince", zone: "auxiliary", labelKey: "membership.fieldMemberSince", placeholderKey: "membership.fieldMemberSincePlaceholder" },
@@ -59,20 +69,35 @@ export const TEMPLATE_FIELDS: Record<PassTemplate, PassFieldDef[]> = {
     { key: "seat", zone: "auxiliary", labelKey: "membership.fieldSeat", placeholderKey: "membership.fieldSeatPlaceholder" },
     { key: "boardingTime", zone: "auxiliary", labelKey: "membership.fieldBoardingTime", placeholderKey: "membership.fieldBoardingTimePlaceholder" },
   ],
+  // A stored-value card (a retailer gift card, not a points/loyalty
+  // balance) — the "primary" field is the remaining balance itself, same
+  // treatment as coupon's discount, since that's the one number the whole
+  // card is about.
+  giftCard: [
+    { key: "balance", zone: "primary", labelKey: "membership.fieldBalance", placeholderKey: "membership.fieldBalancePlaceholder" },
+    { key: "expiry", zone: "secondary", labelKey: "membership.fieldExpiry", placeholderKey: "membership.fieldExpiryPlaceholder" },
+  ],
+  // A transit/rides pass (a subway card, a bus pass) — ridesRemaining as
+  // the primary field, same "one number this card is about" idea, plus
+  // the tear-off stub treatment a physical transit ticket actually has.
+  transitPass: [
+    { key: "ridesRemaining", zone: "primary", labelKey: "membership.fieldRidesRemaining", placeholderKey: "membership.fieldRidesRemainingPlaceholder" },
+    { key: "expiry", zone: "secondary", labelKey: "membership.fieldExpiry", placeholderKey: "membership.fieldExpiryPlaceholder" },
+  ],
 };
 
-// Templates whose pass gets the notch-divider "stub" treatment in
-// PassShape — the ones a real person would picture as having a tear-off
-// part (a ticket, a boarding pass, a coupon), vs. a plain card.
-export const STUB_TEMPLATES: readonly PassTemplate[] = ["coupon", "eventTicket", "boardingPass"];
+// Kinds whose pass gets the notch-divider "stub" treatment in PassShape —
+// the ones a real person would picture as having a tear-off part (a
+// ticket, a boarding pass, a coupon, a transit ticket), vs. a plain card.
+export const STUB_KINDS: readonly PassKind[] = ["coupon", "eventTicket", "boardingPass", "transitPass"];
 
 export type PassLayout = Record<PassZone, (string | null)[]>;
 
 // What renders when a card has no custom `layout` — each zone's fields,
-// in TEMPLATE_FIELDS order, one slot per field.
-export function defaultLayoutFor(template: PassTemplate): PassLayout {
+// in KIND_FIELDS order, one slot per field.
+export function defaultLayoutFor(kind: PassKind): PassLayout {
   const layout: PassLayout = { header: [], primary: [], secondary: [], auxiliary: [] };
-  for (const field of TEMPLATE_FIELDS[template]) {
+  for (const field of KIND_FIELDS[kind]) {
     layout[field.zone].push(field.key);
   }
   return layout;
@@ -91,15 +116,15 @@ export function normalizePassFields(raw: unknown): Record<string, string> {
 }
 
 // Tolerant parse for the `layout` TEXT column — null/malformed falls back
-// to the template's default layout rather than an empty/broken canvas.
+// to the kind's default layout rather than an empty/broken canvas.
 // `customKeys` are the card's own user-named custom fields (see
 // normalizeCustomFieldLabels below) — a placed custom field's key is just
-// as valid a layout slot as one of the template's own, so it's accepted
-// alongside TEMPLATE_FIELDS[template] rather than getting silently
-// stripped out as unrecognized.
-export function normalizePassLayout(raw: unknown, template: PassTemplate, customKeys: Iterable<string> = []): PassLayout {
-  if (typeof raw !== "object" || raw === null) return defaultLayoutFor(template);
-  const validKeys = new Set([...TEMPLATE_FIELDS[template].map((f) => f.key), ...customKeys]);
+// as valid a layout slot as one of the kind's own, so it's accepted
+// alongside KIND_FIELDS[kind] rather than getting silently stripped out
+// as unrecognized.
+export function normalizePassLayout(raw: unknown, kind: PassKind, customKeys: Iterable<string> = []): PassLayout {
+  if (typeof raw !== "object" || raw === null) return defaultLayoutFor(kind);
+  const validKeys = new Set([...KIND_FIELDS[kind].map((f) => f.key), ...customKeys]);
   const result: PassLayout = { header: [], primary: [], secondary: [], auxiliary: [] };
   let any = false;
   for (const zone of PASS_ZONES) {
@@ -108,12 +133,12 @@ export function normalizePassLayout(raw: unknown, template: PassTemplate, custom
     result[zone] = slots.map((v) => (typeof v === "string" && validKeys.has(v) ? v : null));
     any = true;
   }
-  return any ? result : defaultLayoutFor(template);
+  return any ? result : defaultLayoutFor(kind);
 }
 
 // A pass can only have this many user-named custom fields — same
-// "kept short" reasoning as TEMPLATE_FIELDS itself: this is meant to stay
-// a quick flow, not a full PassKit pass.json editor.
+// "kept short" reasoning as KIND_FIELDS itself: this is meant to stay a
+// quick flow, not a full PassKit pass.json editor.
 export const MAX_CUSTOM_FIELDS = 10;
 
 // Tolerant parse for the `custom_field_labels` TEXT column — same shape

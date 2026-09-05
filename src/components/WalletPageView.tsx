@@ -108,7 +108,7 @@ export default function WalletPageView({
   const [passScanOpen, setPassScanOpen] = useState(false);
 
   // A saved card's own `category` (derived in MembershipCardModal from
-  // whichever template was picked — see CATEGORY_BY_TEMPLATE there) says
+  // whichever kind was picked — see CATEGORY_BY_KIND there) says
   // which of the two locally-patched lists it belongs in; the entry menu
   // no longer asks the user this up front, so it has to be read back off
   // the card instead of threaded through from the "add" flow.
@@ -256,7 +256,7 @@ export default function WalletPageView({
           background={card.background}
           textColor={card.textColor}
           icon={card.icon}
-          template={card.template}
+          kind={card.kind}
           fields={card.fields}
           layout={card.layout}
           codeValue={card.codeValue}

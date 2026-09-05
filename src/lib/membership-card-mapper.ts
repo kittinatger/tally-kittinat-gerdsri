@@ -1,7 +1,7 @@
 import { isMembershipCodeFormat } from "@/lib/memberships";
 import { isCategoryIconKey } from "@/lib/category-icons";
 import {
-  isPassTemplate,
+  isPassKind,
   normalizePassFields,
   normalizePassLayout,
   normalizeCustomFieldLabels,
@@ -22,7 +22,7 @@ export type MembershipCardApiRow = {
   color: string;
   icon: string | null;
   notes: string | null;
-  template: string;
+  kind: string;
   fields: string;
   layout: string | null;
   background: string | null;
@@ -36,7 +36,7 @@ export type MembershipCardApiRow = {
 };
 
 export function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
-  const template = isPassTemplate(row.template) ? row.template : "generic";
+  const kind = isPassKind(row.kind) ? row.kind : "generic";
   let parsedFields: unknown = null;
   try {
     parsedFields = JSON.parse(row.fields);
@@ -64,11 +64,11 @@ export function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
     color: row.color,
     icon: row.icon && isCategoryIconKey(row.icon) ? row.icon : null,
     notes: row.notes,
-    template,
+    kind,
     fields: normalizePassFields(parsedFields),
-    // Custom field keys are just as valid a layout slot as the template's
-    // own — see normalizePassLayout's customKeys param.
-    layout: row.layout ? normalizePassLayout(parsedLayout, template, Object.keys(customFieldLabels)) : null,
+    // Custom field keys are just as valid a layout slot as the kind's own
+    // — see normalizePassLayout's customKeys param.
+    layout: row.layout ? normalizePassLayout(parsedLayout, kind, Object.keys(customFieldLabels)) : null,
     background: parseCardBackground(row.background),
     textColor: row.text_color,
     hasLogo: row.has_logo,
@@ -81,13 +81,13 @@ export function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
 }
 
 // pass_templates row -> PassTemplateOption — same shape-narrowing idea as
-// toMembershipCard above (an unrecognized/stale template value falls back
-// to "generic" rather than the whole option failing to render).
+// toMembershipCard above (an unrecognized/stale kind value falls back to
+// "generic" rather than the whole option failing to render).
 export function toPassTemplateOption(row: PassTemplateRow): PassTemplateOption {
   return {
     id: row.id,
     name: row.name,
-    template: isPassTemplate(row.template) ? row.template : "generic",
+    kind: isPassKind(row.kind) ? row.kind : "generic",
     color: row.color,
     background: parseCardBackground(row.background),
     textColor: row.text_color,

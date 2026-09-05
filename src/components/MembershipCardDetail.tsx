@@ -39,7 +39,7 @@ export default function MembershipCardDetail({
         background={card.background}
         textColor={card.textColor}
         icon={card.icon}
-        template={card.template}
+        kind={card.kind}
         fields={card.fields}
         layout={card.layout}
         codeValue={card.codeValue}

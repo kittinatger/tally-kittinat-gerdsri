@@ -5,7 +5,7 @@ import { cardBackgroundStyle } from "@/lib/card-backgrounds";
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { describeFetchError } from "@/lib/fetch-error";
 import { CheckCircleIcon, XCircleIcon, TrashIcon } from "@/lib/icons";
-import { TEMPLATE_LABEL_KEYS } from "@/lib/membership-templates";
+import { KIND_LABEL_KEYS } from "@/lib/membership-templates";
 import { useT } from "@/lib/language-context";
 import type { PassTemplateOption } from "@/types/pass-template";
 
@@ -115,7 +115,7 @@ export default function PassTemplateReviewPanel() {
                 </div>
                 <p className="truncate text-xs text-ink-soft">
                   {tpl.submittedByUsername ?? t("wallet.unknownSubmitter")}
-                  {` · ${t(TEMPLATE_LABEL_KEYS[tpl.template])}`}
+                  {` · ${t(KIND_LABEL_KEYS[tpl.kind])}`}
                   {tpl.country ? ` · ${tpl.country}` : ""}
                 </p>
                 {forcedSummary(tpl) && <p className="truncate text-[11px] text-ink-soft">{forcedSummary(tpl)}</p>}

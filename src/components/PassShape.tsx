@@ -7,10 +7,10 @@ import { CategoryIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 import MembershipCardCode from "./MembershipCardCode";
 import {
-  STUB_TEMPLATES,
-  TEMPLATE_FIELDS,
+  STUB_KINDS,
+  KIND_FIELDS,
   defaultLayoutFor,
-  type PassTemplate,
+  type PassKind,
   type PassLayout,
   type PassZone,
 } from "@/lib/membership-templates";
@@ -25,7 +25,7 @@ export default function PassShape({
   background = null,
   textColor = null,
   icon,
-  template,
+  kind,
   fields,
   layout,
   codeValue,
@@ -44,7 +44,7 @@ export default function PassShape({
   /** Manual text-color override — null means auto-contrast against the background. */
   textColor?: string | null;
   icon: string | null;
-  template: PassTemplate;
+  kind: PassKind;
   fields: Record<string, string>;
   layout: PassLayout | null;
   codeValue: string;
@@ -59,8 +59,8 @@ export default function PassShape({
    * pass surfaces "back field" text the same way) — the full text still
    * gets its own unclamped block in the detail view below the card. */
   notes?: string | null;
-  /** User-named fields beyond the template's own fixed set — key -> plain
-   * text label (not an i18n key, since the user typed it themselves). */
+  /** User-named fields beyond the kind's own fixed set — key -> plain text
+   * label (not an i18n key, since the user typed it themselves). */
   customFieldLabels?: Record<string, string>;
   /** Whether the logo/icon avatar shows in the header — when false, the
    * whole slot disappears (not just the image; the icon/initial fallback
@@ -70,16 +70,16 @@ export default function PassShape({
   showName?: boolean;
 }) {
   const t = useT();
-  const effectiveLayout = layout ?? defaultLayoutFor(template);
-  const fieldByKey = Object.fromEntries(TEMPLATE_FIELDS[template].map((f) => [f.key, f]));
+  const effectiveLayout = layout ?? defaultLayoutFor(kind);
+  const fieldByKey = Object.fromEntries(KIND_FIELDS[kind].map((f) => [f.key, f]));
   // The "tear-off stub" notch-divider treatment — see membership-templates.ts
-  // for why exactly these three templates get it and not the others.
-  const hasStub = STUB_TEMPLATES.includes(template);
+  // for why exactly these kinds get it and not the others.
+  const hasStub = STUB_KINDS.includes(kind);
 
-  // A field's label either comes from the template def's i18n key, or —
+  // A field's label either comes from the kind's field def i18n key, or —
   // for a user-named custom field — is already plain text stored on the
   // card itself. Resolved once here so every render site below just uses
-  // `label` instead of juggling "is this a template field or a custom
+  // `label` instead of juggling "is this a kind's own field or a custom
   // one" at each call site.
   function zoneEntries(zone: PassZone) {
     return (effectiveLayout[zone] ?? [])

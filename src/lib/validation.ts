@@ -13,7 +13,7 @@ import { SPLIT_METHODS, SPLIT_PAYMENT_METHODS } from "@/lib/splits";
 import { LOAN_DIRECTIONS } from "@/lib/loans";
 import { CATEGORY_ICON_KEYS } from "@/lib/category-icons";
 import { MEMBERSHIP_CODE_FORMATS } from "@/lib/memberships";
-import { PASS_TEMPLATES, PASS_ZONES, MAX_CUSTOM_FIELDS, type PassZone } from "@/lib/membership-templates";
+import { PASS_KINDS, PASS_ZONES, MAX_CUSTOM_FIELDS, type PassZone } from "@/lib/membership-templates";
 import { CARD_NETWORKS } from "@/lib/wallet-cards";
 import { CARD_PATTERNS, PATTERN_COLOR_COUNT } from "@/lib/card-backgrounds";
 import { CHIP_COLORS } from "@/lib/chip-colors";
@@ -307,12 +307,12 @@ export const cardTemplateUpdateSchema = z
   });
 
 // A submitted "premade pass" design — the pass equivalent of
-// cardTemplateInputSchema above, but tied to a fixed `template` (a pass's
+// cardTemplateInputSchema above, but tied to a fixed `kind` (a pass's
 // fields are structurally dependent on which one it is) rather than
 // carrying a long list of force_* overrides. See pass_templates in db.ts.
 export const passTemplateInputSchema = z.object({
   name: z.string().trim().min(1).max(40),
-  template: z.enum(PASS_TEMPLATES),
+  kind: z.enum(PASS_KINDS),
   color: z.string().trim().min(1).max(30),
   background: cardBackgroundSchema.optional(),
   textColor: cardTextColorSchema.optional(),
@@ -497,7 +497,7 @@ export const membershipInputSchema = z.object({
   color: z.string().trim().min(1).max(30),
   icon: categoryIconSchema.optional(),
   notes: z.string().trim().max(500).nullable().optional(),
-  template: z.enum(PASS_TEMPLATES).default("generic"),
+  kind: z.enum(PASS_KINDS).default("generic"),
   fields: passFieldsSchema.default({}),
   layout: passLayoutSchema.optional(),
   background: cardBackgroundSchema.optional(),
@@ -516,7 +516,7 @@ export const membershipUpdateSchema = z
     color: z.string().trim().min(1).max(30).optional(),
     icon: categoryIconSchema.optional(),
     notes: z.string().trim().max(500).nullable().optional(),
-    template: z.enum(PASS_TEMPLATES).optional(),
+    kind: z.enum(PASS_KINDS).optional(),
     fields: passFieldsSchema.optional(),
     layout: passLayoutSchema.optional(),
     background: cardBackgroundSchema.optional(),

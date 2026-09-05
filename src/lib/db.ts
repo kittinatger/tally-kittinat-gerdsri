@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 55;
+const CURRENT_SCHEMA_VERSION = 56;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1353,6 +1353,37 @@ function ensureSchema(): Promise<void> {
       `;
       await sql`CREATE INDEX IF NOT EXISTS pass_templates_status_idx ON pass_templates (status);`;
 
+      // Renamed membership_cards.template -> .kind and pass_templates.
+      // template -> .kind (data-preserving, RENAME COLUMN doesn't touch
+      // any rows). "Template" was ambiguous once the pass_templates
+      // feature above shipped: a card's own template (boarding pass vs.
+      // coupon vs. loyalty card, fixed for its lifetime) and an admin-
+      // reviewed *premade design* someone can pick from are two different
+      // things, and both being called "template" in code/UI was
+      // confusing them together. The card's own one is now called "kind"
+      // instead — "template" stays reserved for the premade-design
+      // gallery (pass_templates/PremadePassPicker) it actually means.
+      // Plain RENAME COLUMN has no IF EXISTS guard in Postgres, so it's
+      // wrapped in an existence check instead — every other statement in
+      // this function is safe to re-run after a partial failure (ADD
+      // COLUMN IF NOT EXISTS, CREATE TABLE IF NOT EXISTS, ...); a bare
+      // rename wouldn't be, since a retry would hit a column that's
+      // already gone.
+      await sql`
+        DO $$ BEGIN
+          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'membership_cards' AND column_name = 'template') THEN
+            ALTER TABLE membership_cards RENAME COLUMN template TO kind;
+          END IF;
+        END $$;
+      `;
+      await sql`
+        DO $$ BEGIN
+          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'pass_templates' AND column_name = 'template') THEN
+            ALTER TABLE pass_templates RENAME COLUMN template TO kind;
+          END IF;
+        END $$;
+      `;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -2321,15 +2352,15 @@ export async function deleteCardTemplate(id: number): Promise<boolean> {
 
 // ---- Pass templates (user-submitted "premade pass" designs) ---------------
 // The pass equivalent of card_templates above — see the ensureSchema
-// comment on pass_templates for why it's a smaller shape (a fixed
-// `template` rather than card_templates' long list of force_* overrides).
+// comment on pass_templates for why it's a smaller shape (a fixed `kind`
+// rather than card_templates' long list of force_* overrides).
 
 export type PassTemplateRow = {
   id: number;
   submitted_by: number | null;
   submitted_by_username: string | null;
   name: string;
-  template: string;
+  kind: string;
   color: string;
   background: string | null;
   text_color: string | null;
@@ -2343,13 +2374,13 @@ export type PassTemplateRow = {
 };
 
 const PASS_TEMPLATE_COLUMNS =
-  "id, submitted_by, name, template, color, background, text_color, lock_text_color, force_show_name, force_show_logo, country, status, created_at, reviewed_at";
+  "id, submitted_by, name, kind, color, background, text_color, lock_text_color, force_show_name, force_show_logo, country, status, created_at, reviewed_at";
 
 export async function createPassTemplate(
   userId: number,
   input: {
     name: string;
-    template: string;
+    kind: string;
     color: string;
     background?: unknown;
     textColor?: string | null;
@@ -2363,14 +2394,14 @@ export async function createPassTemplate(
   const backgroundJson = input.background ? JSON.stringify(input.background) : null;
   const { rows } = await sql.query<PassTemplateRow>(
     `INSERT INTO pass_templates (
-       submitted_by, name, template, color, background, text_color, lock_text_color, force_show_name, force_show_logo, country, status
+       submitted_by, name, kind, color, background, text_color, lock_text_color, force_show_name, force_show_logo, country, status
      )
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending')
      RETURNING ${PASS_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
     [
       userId,
       input.name,
-      input.template,
+      input.kind,
       input.color,
       backgroundJson,
       input.textColor ?? null,
@@ -5063,10 +5094,10 @@ export type MembershipCardRow = {
   color: string;
   icon: string | null;
   notes: string | null;
-  template: string;
+  kind: string;
   /** Raw JSON text — see normalizePassFields in membership-templates.ts. */
   fields: string;
-  /** Raw JSON text, or null for "use the template's default layout" — see
+  /** Raw JSON text, or null for "use the kind's default layout" — see
    * normalizePassLayout in membership-templates.ts. */
   layout: string | null;
   /** Raw JSON text, or null — see parseCardBackground in card-backgrounds.ts. */
@@ -5085,7 +5116,7 @@ export type MembershipCardRow = {
 export async function listMembershipCards(userId: number): Promise<MembershipCardRow[]> {
   await ensureSchema();
   const { rows } = await sql<MembershipCardRow>`
-    SELECT id, name, code_value, code_format, color, icon, notes, template, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name,
+    SELECT id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner
     FROM membership_cards
     WHERE user_id = ${userId}
@@ -5103,7 +5134,7 @@ export async function createMembershipCard(
     color: string;
     icon?: string | null;
     notes?: string | null;
-    template?: string;
+    kind?: string;
     fields?: Record<string, string>;
     layout?: unknown;
     background?: unknown;
@@ -5119,7 +5150,7 @@ export async function createMembershipCard(
     SELECT MAX(sort_order) AS max FROM membership_cards WHERE user_id = ${userId};
   `;
   const nextSort = (maxRows[0]?.max ?? -1) + 1;
-  const template = input.template ?? "generic";
+  const kind = input.kind ?? "generic";
   const fields = JSON.stringify(input.fields ?? {});
   const layout = input.layout ? JSON.stringify(input.layout) : null;
   const background = input.background ? JSON.stringify(input.background) : null;
@@ -5128,9 +5159,9 @@ export async function createMembershipCard(
   const showLogo = input.showLogo ?? true;
   const showName = input.showName ?? true;
   const { rows } = await sql<MembershipCardRow>`
-    INSERT INTO membership_cards (user_id, name, code_value, code_format, color, icon, notes, sort_order, template, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name)
-    VALUES (${userId}, ${input.name}, ${input.codeValue}, ${input.codeFormat}, ${input.color}, ${input.icon ?? null}, ${input.notes ?? null}, ${nextSort}, ${template}, ${fields}, ${layout}, ${background}, ${input.textColor ?? null}, ${category}, ${customFieldLabels}, ${showLogo}, ${showName})
-    RETURNING id, name, code_value, code_format, color, icon, notes, template, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name,
+    INSERT INTO membership_cards (user_id, name, code_value, code_format, color, icon, notes, sort_order, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name)
+    VALUES (${userId}, ${input.name}, ${input.codeValue}, ${input.codeFormat}, ${input.color}, ${input.icon ?? null}, ${input.notes ?? null}, ${nextSort}, ${kind}, ${fields}, ${layout}, ${background}, ${input.textColor ?? null}, ${category}, ${customFieldLabels}, ${showLogo}, ${showName})
+    RETURNING id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner;
   `;
   return rows[0];
@@ -5146,7 +5177,7 @@ export async function updateMembershipCard(
     color?: string;
     icon?: string | null;
     notes?: string | null;
-    template?: string;
+    kind?: string;
     fields?: Record<string, string>;
     layout?: unknown;
     background?: unknown;
@@ -5159,7 +5190,7 @@ export async function updateMembershipCard(
 ): Promise<MembershipCardRow | null> {
   await ensureSchema();
   const { rows: existingRows } = await sql<MembershipCardRow>`
-    SELECT id, name, code_value, code_format, color, icon, notes, template, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name,
+    SELECT id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner
     FROM membership_cards WHERE id = ${id} AND user_id = ${userId};
   `;
@@ -5172,7 +5203,7 @@ export async function updateMembershipCard(
   const newColor = input.color ?? existing.color;
   const newIcon = input.icon !== undefined ? input.icon : existing.icon;
   const newNotes = input.notes !== undefined ? input.notes : existing.notes;
-  const newTemplate = input.template ?? existing.template;
+  const newKind = input.kind ?? existing.kind;
   const newFields = input.fields !== undefined ? JSON.stringify(input.fields) : existing.fields;
   const newLayout = input.layout !== undefined ? (input.layout ? JSON.stringify(input.layout) : null) : existing.layout;
   const newBackground = input.background !== undefined ? (input.background ? JSON.stringify(input.background) : null) : existing.background;
@@ -5187,11 +5218,11 @@ export async function updateMembershipCard(
     UPDATE membership_cards
     SET name = ${newName}, code_value = ${newCodeValue}, code_format = ${newCodeFormat},
         color = ${newColor}, icon = ${newIcon}, notes = ${newNotes},
-        template = ${newTemplate}, fields = ${newFields}, layout = ${newLayout}, background = ${newBackground},
+        kind = ${newKind}, fields = ${newFields}, layout = ${newLayout}, background = ${newBackground},
         text_color = ${newTextColor}, category = ${newCategory}, custom_field_labels = ${newCustomFieldLabels},
         show_logo = ${newShowLogo}, show_name = ${newShowName}
     WHERE id = ${id} AND user_id = ${userId}
-    RETURNING id, name, code_value, code_format, color, icon, notes, template, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name,
+    RETURNING id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner;
   `;
   return rows[0];

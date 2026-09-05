@@ -19,13 +19,13 @@ import { CATEGORY_ICON_COMPONENTS, PlusIcon, CloseIcon, TagIcon, PaletteIcon, Fi
 import { downscaleImage } from "@/lib/image-downscale";
 import { MEMBERSHIP_CODE_FORMATS, type MembershipCodeFormat } from "@/lib/memberships";
 import {
-  PASS_TEMPLATES,
+  PASS_KINDS,
   PASS_ZONES,
-  TEMPLATE_FIELDS,
-  TEMPLATE_LABEL_KEYS,
+  KIND_FIELDS,
+  KIND_LABEL_KEYS,
   MAX_CUSTOM_FIELDS,
   defaultLayoutFor,
-  type PassTemplate,
+  type PassKind,
   type PassZone,
 } from "@/lib/membership-templates";
 import { toMembershipCard, type MembershipCardApiRow } from "@/lib/membership-card-mapper";
@@ -51,17 +51,19 @@ const ZONE_LABEL_KEYS: Record<PassZone, MessageKey> = {
 
 // Which /wallet stack ("pass" vs. "membership") a card belongs to used to
 // be a question the entry menu asked up front (separate "Add pass" and
-// "Add loyalty card" rows). That was redundant with the Template picker
+// "Add loyalty card" rows). That was redundant with the Kind picker
 // below, which already distinguishes a store/loyalty card from a
 // ticket/coupon/boarding pass — so category is now just derived from
-// whichever template is selected, and the two entry-menu rows collapsed
-// into one ("Add pass" in WalletEntryModal).
-const CATEGORY_BY_TEMPLATE: Record<PassTemplate, "pass" | "membership"> = {
+// whichever kind is selected, and the two entry-menu rows collapsed into
+// one ("Add pass" in WalletEntryModal).
+const CATEGORY_BY_KIND: Record<PassKind, "pass" | "membership"> = {
   generic: "membership",
   storeCard: "membership",
   coupon: "pass",
   eventTicket: "pass",
   boardingPass: "pass",
+  giftCard: "membership",
+  transitPass: "pass",
 };
 
 // A slot for attaching an image — a dashed "+" tile when empty, or the
@@ -153,14 +155,14 @@ export default function MembershipCardModal({
   const [notes, setNotes] = useState(card?.notes ?? "");
   const [showLogo, setShowLogo] = useState(card?.showLogo ?? true);
   const [showName, setShowName] = useState(card?.showName ?? true);
-  const [template, setTemplate] = useState<PassTemplate>(card?.template ?? "generic");
+  const [kind, setKind] = useState<PassKind>(card?.kind ?? "generic");
   const [fields, setFields] = useState<Record<string, string>>(card?.fields ?? {});
-  const [layout, setLayout] = useState(card?.layout ?? defaultLayoutFor(template));
+  const [layout, setLayout] = useState(card?.layout ?? defaultLayoutFor(kind));
   const [editorMode, setEditorMode] = useState<"guided" | "custom">("guided");
   const [selectedFieldKey, setSelectedFieldKey] = useState<string | null>(null);
-  // User-named fields beyond the template's own fixed set — key -> the
-  // label the user typed (not an i18n key). Only placeable/editable from
-  // the custom editor, same as any other field, once added here.
+  // User-named fields beyond the kind's own fixed set — key -> the label
+  // the user typed (not an i18n key). Only placeable/editable from the
+  // custom editor, same as any other field, once added here.
   const [customFieldLabels, setCustomFieldLabels] = useState<Record<string, string>>(card?.customFieldLabels ?? {});
   const [newCustomFieldLabel, setNewCustomFieldLabel] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -182,8 +184,8 @@ export default function MembershipCardModal({
   const [templateSubmitting, setTemplateSubmitting] = useState(false);
   const [templateSubmitted, setTemplateSubmitted] = useState(false);
   const [templateError, setTemplateError] = useState<string | null>(null);
-  const category = CATEGORY_BY_TEMPLATE[template];
-  // The modal used to be one long scroll of 5 FormSections (name+template,
+  const category = CATEGORY_BY_KIND[kind];
+  // The modal used to be one long scroll of 5 FormSections (name+kind,
   // code, the field editor, color/icon/images, notes) — same problem the
   // wallet editor had before its own tab split. Grouped the same way here:
   // Basics/Code stay separate (both short, both essential), Fields is its
@@ -284,8 +286,8 @@ export default function MembershipCardModal({
 
   // Submits the current pass's look — not its data — as a "premade pass"
   // for admin review, same idea as WalletModal's handleUploadTemplate.
-  // `template` travels along unconditionally (a pass template is always
-  // tied to one, unlike a wallet card's optional category).
+  // `kind` travels along unconditionally (a pass template is always tied
+  // to one, unlike a wallet card's optional category).
   async function handleUploadTemplate() {
     setTemplateSubmitting(true);
     setTemplateError(null);
@@ -295,7 +297,7 @@ export default function MembershipCardModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: templateName.trim() || name || t("membership.namePlaceholder"),
-          template,
+          kind,
           color,
           background,
           textColor,
@@ -322,23 +324,25 @@ export default function MembershipCardModal({
     Object.entries(CATEGORY_ICON_LABEL_KEYS).map(([k, v]) => [k, t(v)]),
   ) as Record<string, string>;
 
-  const templateFieldDefs = TEMPLATE_FIELDS[template];
-  const fieldByKey = Object.fromEntries(templateFieldDefs.map((f) => [f.key, f]));
+  const kindFieldDefs = KIND_FIELDS[kind];
+  const fieldByKey = Object.fromEntries(kindFieldDefs.map((f) => [f.key, f]));
   const customFieldKeys = Object.keys(customFieldLabels);
   const placedKeys = new Set(Object.values(layout).flat().filter((k): k is string => Boolean(k)));
-  const unplacedKeys = [...templateFieldDefs.map((f) => f.key), ...customFieldKeys].filter((k) => !placedKeys.has(k));
-  const hasAnyFields = templateFieldDefs.length > 0 || customFieldKeys.length > 0;
+  const unplacedKeys = [...kindFieldDefs.map((f) => f.key), ...customFieldKeys].filter((k) => !placedKeys.has(k));
+  const hasAnyFields = kindFieldDefs.length > 0 || customFieldKeys.length > 0;
 
-  // A field's label either comes from the template's own i18n key, or —
-  // for a custom field — is whatever plain text the user typed for it.
+  // A field's label either comes from the kind's own i18n key, or — for a
+  // custom field — is whatever plain text the user typed for it.
   function labelForKey(key: string): string {
     const def = fieldByKey[key];
     return def ? t(def.labelKey) : (customFieldLabels[key] ?? key);
   }
 
-  // "Fields" only shows up once the current template actually has fields
-  // to place, template-defined or custom — same idea as the wallet
-  // editor's Template tab disappearing once it's no longer relevant.
+  // "Fields" only shows up once the current kind actually has fields to
+  // place, kind-defined or custom — same idea as the wallet editor's
+  // Template tab disappearing once it's no longer relevant. The "template"
+  // tab here is the *actual* premade-design submission tab (see
+  // handleUploadTemplate) — unrelated to a card's own `kind`.
   const tabs = (
     [
       ["basics", "wallet.tabBasics"],
@@ -349,19 +353,19 @@ export default function MembershipCardModal({
     ] as const
   ).filter(([key]) => (key !== "fields" || hasAnyFields) && (key !== "template" || !templateApplied));
 
-  function handleTemplateChange(next: PassTemplate) {
-    setTemplate(next);
+  function handleKindChange(next: PassKind) {
+    setKind(next);
     setFields({});
     setLayout(defaultLayoutFor(next));
     setSelectedFieldKey(null);
-    // A template switch starts the field layout fresh, so any custom
-    // fields placed under the old template wouldn't have anywhere
-    // meaningful to live either — same reset as fields/layout above.
+    // A kind switch starts the field layout fresh, so any custom fields
+    // placed under the old kind wouldn't have anywhere meaningful to live
+    // either — same reset as fields/layout above.
     setCustomFieldLabels({});
-    // Switching to a template with no fields (e.g. "generic" used to)
-    // makes the "Fields" tab disappear from the strip above — bail out of
-    // it so the user isn't left on a tab that no longer renders anything.
-    if (tab === "fields" && TEMPLATE_FIELDS[next].length === 0) setTab("basics");
+    // Switching to a kind with no fields (e.g. "generic" used to) makes
+    // the "Fields" tab disappear from the strip above — bail out of it so
+    // the user isn't left on a tab that no longer renders anything.
+    if (tab === "fields" && KIND_FIELDS[next].length === 0) setTab("basics");
   }
 
   function setFieldValue(key: string, value: string) {
@@ -378,7 +382,7 @@ export default function MembershipCardModal({
     setLayout((prev) => ({ ...prev, [zone]: (prev[zone] ?? []).filter((k) => k !== key) }));
   }
 
-  // Custom fields (unlike a template's own fixed set) are the user's own
+  // Custom fields (unlike a kind's own fixed set) are the user's own
   // creation, so — unlike unplaceField, which just moves a field back to
   // the "available" pool — this drops it entirely: its label, its value,
   // and any zone slot it was placed in.
@@ -428,7 +432,7 @@ export default function MembershipCardModal({
         textColor,
         icon,
         notes: notes.trim() || null,
-        template,
+        kind,
         fields,
         layout,
         category,
@@ -479,7 +483,7 @@ export default function MembershipCardModal({
         {/* Always renders through PassShape — the same component the saved
          * detail view uses — rather than swapping in a separate bare
          * placeholder before a code is entered. That previously meant
-         * template/field/layout edits (points balance, discount, seat,
+         * kind/field/layout edits (points balance, discount, seat,
          * etc.) had no visible effect at all until a code existed;
          * MembershipCardCode itself now handles the empty-code case (a
          * dashed placeholder instead of trying to render a barcode for
@@ -491,7 +495,7 @@ export default function MembershipCardModal({
             background={background}
             textColor={textColor}
             icon={icon}
-            template={template}
+            kind={kind}
             fields={fields}
             layout={layout}
             codeValue={codeValue}
@@ -563,20 +567,20 @@ export default function MembershipCardModal({
           </button>
 
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("membership.templateLabel")}</label>
+            <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("membership.kindLabel")}</label>
             <div className="flex flex-wrap gap-1.5">
-              {PASS_TEMPLATES.map((tpl) => (
+              {PASS_KINDS.map((k) => (
                 <button
-                  key={tpl}
+                  key={k}
                   type="button"
-                  onClick={() => handleTemplateChange(tpl)}
+                  onClick={() => handleKindChange(k)}
                   className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                    template === tpl
+                    kind === k
                       ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
                       : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
                   }`}
                 >
-                  {t(TEMPLATE_LABEL_KEYS[tpl])}
+                  {t(KIND_LABEL_KEYS[k])}
                 </button>
               ))}
             </div>
@@ -637,7 +641,7 @@ export default function MembershipCardModal({
               const Icon = CATEGORY_ICON_COMPONENTS.receipt;
               return <Icon className="h-4 w-4" />;
             })()}
-            title={t(TEMPLATE_LABEL_KEYS[template])}
+            title={t(KIND_LABEL_KEYS[kind])}
             action={
               <div className="flex gap-1 rounded-full bg-bg-soft p-1">
                 <button
@@ -663,7 +667,7 @@ export default function MembershipCardModal({
           >
             {editorMode === "guided" ? (
               <div className="space-y-3">
-                {templateFieldDefs.map((def) => (
+                {kindFieldDefs.map((def) => (
                   <div key={def.key}>
                     <label className="mb-1 block text-xs font-semibold text-ink-soft">{t(def.labelKey)}</label>
                     <input
@@ -679,9 +683,9 @@ export default function MembershipCardModal({
             ) : (
               <div className="space-y-3 rounded-card border border-line bg-bg-soft p-3">
                 {/* Every zone is offered here now, not just the ones the
-                 * current template pre-defines a field for — a custom
-                 * field can go anywhere, including a zone (e.g. Header)
-                 * this template's own fixed fields never use. */}
+                 * current kind pre-defines a field for — a custom field
+                 * can go anywhere, including a zone (e.g. Header) this
+                 * kind's own fixed fields never use. */}
                 {PASS_ZONES.map((zone) => {
                   const placed = (layout[zone] ?? []).filter((k): k is string => Boolean(k));
                   return (
@@ -716,7 +720,7 @@ export default function MembershipCardModal({
 
                 {/* Type a name, add it to the available pool below, then
                  * tap-then-place it into a zone the same way as any of the
-                 * template's own fields — the only field-adding path used
+                 * kind's own fields — the only field-adding path used
                  * to be picking from that fixed list. */}
                 <div className="border-t border-line pt-3">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">{t("membership.newFieldLabel")}</p>
@@ -788,7 +792,7 @@ export default function MembershipCardModal({
 
                 {placedKeys.size > 0 && (
                   <div className="space-y-2.5 border-t border-line pt-3">
-                    {[...templateFieldDefs.map((f) => f.key), ...customFieldKeys]
+                    {[...kindFieldDefs.map((f) => f.key), ...customFieldKeys]
                       .filter((key) => placedKeys.has(key))
                       .map((key) => {
                         const def = fieldByKey[key];
@@ -830,7 +834,7 @@ export default function MembershipCardModal({
           <PremadePassPicker
             onSelect={(tpl) => {
               setTemplateApplied(true);
-              handleTemplateChange(tpl.template);
+              handleKindChange(tpl.kind);
               setBackground(tpl.background);
               setColor(tpl.color);
               setTextColor(tpl.textColor);
