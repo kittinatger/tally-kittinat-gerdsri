@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import type { CategoryOption } from "@/types/category";
@@ -127,6 +128,19 @@ export default function SettingsView({
   const [panel, setPanel] = useState<Panel | null>(
     githubLinked || githubError ? "account" : (initialPanel ?? null),
   );
+  const router = useRouter();
+
+  // Keeps the URL's `?panel=` in sync with whichever panel is open, purely
+  // so refreshing (or bookmarking/sharing the URL) lands back on the same
+  // panel instead of always bouncing to the Settings list — `panel` itself
+  // was client-only state before this, so a refresh had nothing to restore
+  // it from. `replace`, not `push`: this mirrors state that already changed
+  // (the panel switch), it doesn't need its own back-button history entry.
+  useEffect(() => {
+    router.replace(panel ? `/settings?panel=${panel}` : "/settings", { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-sync when the panel itself changes
+  }, [panel]);
+
   const activeWallets = wallets.filter((w) => !w.archived);
 
   // Below lg: a drill-down (list OR detail, with a Back button). At lg+: a
