@@ -236,6 +236,56 @@ export const PATTERN_LABEL_KEYS: Partial<Record<CardPattern, MessageKey>> = {
 
 export const COLOR_SLOT_LABEL_KEYS: MessageKey[] = ["background.colorSlot1", "background.colorSlot2", "background.colorSlot3"];
 
+// Which patterns render as an actual inline SVG illustration (via
+// svgBackground below) rather than a pure-CSS gradient/texture — see
+// cardBackgroundStyle's own per-case comment for which is which. Used only
+// to gate CardBackgroundPicker's "Edit colors" lock: an SVG pattern's
+// colors start locked (not directly editable) every time the picker opens,
+// regardless of whether the card/pass is brand new, came from a picked
+// premade template, or already existed before this lock existed — a plain
+// CSS pattern's colors stay always-editable, unaffected.
+const SVG_PATTERNS = new Set<CardPattern>([
+  "diagonalSplit",
+  "ribbonFold",
+  "loopKnot",
+  "spiralCoil",
+  "radialBurst",
+  "colorBlocks",
+  "guilloche",
+  "carbonFiber",
+  "concentricRings",
+  "scallopWave",
+  "petalBloom",
+  "floatingSquares",
+  "ovalCluster",
+  "fragmentShards",
+  "inkBlob",
+  "circuitMaze",
+  "neonRibbon",
+  "prismShard",
+  "bannerFold",
+  "wavyLines",
+  "tearDrop",
+  "chevronBolt",
+  "liquidRibbon",
+  "halfMoonGlow",
+  "inkSplatter",
+  "diamondLattice",
+  "zigzagPulse",
+  "hexGrid",
+  "gemFacet",
+  "cloudDrift",
+  "arcBands",
+  "pixelMosaic",
+  "curvedWing",
+  "arrowGlint",
+  "dotFan",
+]);
+
+export function isSvgPattern(pattern: CardPattern): boolean {
+  return SVG_PATTERNS.has(pattern);
+}
+
 // A literal image background — either the corrected photo from "Scan a
 // card" used as-is, or an AI-generated pattern derived from it (see
 // CardPhotoScanModal.tsx). Both are "just an image", so they share this one

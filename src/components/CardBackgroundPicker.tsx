@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import ColorPicker from "./ColorPicker";
 import CardPhotoScanModal from "./CardPhotoScanModal";
 import { CameraIcon, ChevronIcon } from "@/lib/icons";
@@ -12,8 +12,27 @@ import {
   COLOR_SLOT_LABEL_KEYS,
   defaultCardBackground,
   cardBackgroundStyle,
+  isSvgPattern,
   type CardBackground,
 } from "@/lib/card-backgrounds";
+
+function LockIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect x="4.5" y="9" width="11" height="8" rx="2" />
+      <path d="M6.5 9V6.5a3.5 3.5 0 0 1 7 0V9" />
+    </svg>
+  );
+}
+
+function UnlockIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect x="4.5" y="9" width="11" height="8" rx="2" />
+      <path d="M6.5 9V6.5a3.5 3.5 0 0 1 6.5-1.8" />
+    </svg>
+  );
+}
 
 // Lets a user pick one of the many pattern/gradient treatments for a
 // card/pass background (see card-backgrounds.ts), each with its own
@@ -43,6 +62,18 @@ export default function CardBackgroundPicker({
   const t = useT();
   const [scanOpen, setScanOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  // Whether an SVG pattern's colors are currently editable — starts locked
+  // every time (a brand-new card, one applied from a picked premade
+  // template, or one that already existed before this lock existed all
+  // behave identically: colors read-only until explicitly unlocked here).
+  // Not persisted anywhere; this is purely "am I actively editing right
+  // now", so it resets to locked again whenever the pattern itself changes.
+  const [svgColorsUnlocked, setSvgColorsUnlocked] = useState(false);
+  const currentPattern = value && value.pattern !== "photo" ? value.pattern : null;
+
+  useEffect(() => {
+    setSvgColorsUnlocked(false);
+  }, [currentPattern]);
 
   function selectPattern(pattern: (typeof GALLERY_PATTERNS)[number]) {
     if (value?.pattern === pattern) return;
@@ -142,21 +173,44 @@ export default function CardBackgroundPicker({
         </div>
       ) : (
         <div className="space-y-2.5 rounded-card border border-line bg-bg-soft p-3">
-          <p className="text-xs font-semibold text-ink-soft">{t(PATTERN_LABEL_KEYS[value.pattern]!)}</p>
-          {Array.from({ length: PATTERN_COLOR_COUNT[value.pattern] }).map((_, i) => (
-            <div key={i}>
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t(COLOR_SLOT_LABEL_KEYS[i])}</label>
-              <ColorPicker
-                value={value.colors[i]}
-                onChange={(c) => {
-                  const colors = [...value.colors];
-                  colors[i] = c;
-                  onChange({ pattern: value.pattern, colors });
-                }}
-                palette={[]}
-              />
-            </div>
-          ))}
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold text-ink-soft">{t(PATTERN_LABEL_KEYS[value.pattern]!)}</p>
+            {/* Only SVG-illustration patterns get this lock — a plain CSS
+             * gradient/texture pattern's colors stay always-editable below,
+             * same as before this existed. */}
+            {isSvgPattern(value.pattern) && (
+              <button
+                type="button"
+                onClick={() => setSvgColorsUnlocked((v) => !v)}
+                className={`flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                  svgColorsUnlocked
+                    ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                    : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                }`}
+              >
+                {svgColorsUnlocked ? <UnlockIcon /> : <LockIcon />}
+                {t("background.editColors")}
+              </button>
+            )}
+          </div>
+          {isSvgPattern(value.pattern) && !svgColorsUnlocked ? (
+            <p className="text-[11px] text-ink-soft">{t("background.colorsLockedDesc")}</p>
+          ) : (
+            Array.from({ length: PATTERN_COLOR_COUNT[value.pattern] }).map((_, i) => (
+              <div key={i}>
+                <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t(COLOR_SLOT_LABEL_KEYS[i])}</label>
+                <ColorPicker
+                  value={value.colors[i]}
+                  onChange={(c) => {
+                    const colors = [...value.colors];
+                    colors[i] = c;
+                    onChange({ pattern: value.pattern, colors });
+                  }}
+                  palette={[]}
+                />
+              </div>
+            ))
+          )}
         </div>
       )}
     </div>
