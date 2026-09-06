@@ -133,5 +133,17 @@ export function toPassTemplateOption(row: PassTemplateRow): PassTemplateOption {
     status: row.status,
     submittedByUsername: row.submitted_by_username,
     createdAt: row.created_at,
+    hasLogo: row.has_logo,
+    hasBanner: row.has_banner,
+    logoUpdatedAt: row.logo_updated_at,
+    bannerUpdatedAt: row.banner_updated_at,
+    lockLogo: row.lock_logo,
+    lockBanner: row.lock_banner,
+    lockFields: row.lock_fields,
   };
+}
+
+export function passTemplateImageUrl(templateId: number, kind: "logo" | "banner", updatedAt: string | null): string {
+  const base = `/api/pass-templates/${templateId}/${kind}`;
+  return updatedAt ? `${base}?v=${encodeURIComponent(updatedAt)}` : base;
 }

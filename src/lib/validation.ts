@@ -321,6 +321,9 @@ export const passTemplateInputSchema = z.object({
   forceShowName: z.boolean().nullable().optional(),
   forceShowLogo: z.boolean().nullable().optional(),
   category: z.enum(PASS_TEMPLATE_CATEGORIES).nullable().optional(),
+  lockLogo: z.boolean().optional(),
+  lockBanner: z.boolean().optional(),
+  lockFields: z.boolean().optional(),
 });
 
 // Admin-only full edit — every field optional (same shape as
@@ -337,6 +340,9 @@ export const passTemplateUpdateSchema = z
     forceShowName: z.boolean().nullable().optional(),
     forceShowLogo: z.boolean().nullable().optional(),
     category: z.enum(PASS_TEMPLATE_CATEGORIES).nullable().optional(),
+    lockLogo: z.boolean().optional(),
+    lockBanner: z.boolean().optional(),
+    lockFields: z.boolean().optional(),
     status: z.enum(["pending", "approved", "rejected"]).optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {

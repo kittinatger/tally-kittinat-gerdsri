@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 60;
+const CURRENT_SCHEMA_VERSION = 61;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1443,6 +1443,23 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE pass_templates DROP COLUMN IF EXISTS country;`;
       await sql`ALTER TABLE pass_templates ADD COLUMN IF NOT EXISTS category TEXT;`;
 
+      // A pass template can now carry its own logo/banner (same bytea
+      // storage as membership_cards' own logo_image/banner_image) plus
+      // three lock toggles — lock_logo/lock_banner mean "the picking pass
+      // gets this exact image and can't replace or remove it", lock_fields
+      // means "the picking pass keeps this kind's field layout exactly as
+      // submitted — only the field values are editable". All default
+      // false/null so every existing template behaves exactly as before.
+      await sql`ALTER TABLE pass_templates ADD COLUMN IF NOT EXISTS logo_image BYTEA;`;
+      await sql`ALTER TABLE pass_templates ADD COLUMN IF NOT EXISTS logo_image_type TEXT;`;
+      await sql`ALTER TABLE pass_templates ADD COLUMN IF NOT EXISTS logo_updated_at TIMESTAMPTZ;`;
+      await sql`ALTER TABLE pass_templates ADD COLUMN IF NOT EXISTS banner_image BYTEA;`;
+      await sql`ALTER TABLE pass_templates ADD COLUMN IF NOT EXISTS banner_image_type TEXT;`;
+      await sql`ALTER TABLE pass_templates ADD COLUMN IF NOT EXISTS banner_updated_at TIMESTAMPTZ;`;
+      await sql`ALTER TABLE pass_templates ADD COLUMN IF NOT EXISTS lock_logo BOOLEAN NOT NULL DEFAULT false;`;
+      await sql`ALTER TABLE pass_templates ADD COLUMN IF NOT EXISTS lock_banner BOOLEAN NOT NULL DEFAULT false;`;
+      await sql`ALTER TABLE pass_templates ADD COLUMN IF NOT EXISTS lock_fields BOOLEAN NOT NULL DEFAULT false;`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -2433,10 +2450,29 @@ export type PassTemplateRow = {
   status: "pending" | "approved" | "rejected";
   created_at: string;
   reviewed_at: string | null;
+  has_logo: boolean;
+  has_banner: boolean;
+  logo_updated_at: string | null;
+  banner_updated_at: string | null;
+  /** When true, a pass picking this template gets its exact logo/banner
+   * image and can't replace or remove it — see attachPassTemplateLogo. */
+  lock_logo: boolean;
+  lock_banner: boolean;
+  /** When true, a pass picking this template keeps its kind's field
+   * layout exactly as submitted (no adding/removing/repositioning
+   * fields, no switching kind) — only the field values are editable. */
+  lock_fields: boolean;
 };
 
 const PASS_TEMPLATE_COLUMNS =
-  "id, submitted_by, name, kind, color, background, text_color, lock_text_color, force_show_name, force_show_logo, category, status, created_at, reviewed_at";
+  "id, submitted_by, name, kind, color, background, text_color, lock_text_color, force_show_name, force_show_logo, category, status, created_at, reviewed_at, logo_updated_at, banner_updated_at, lock_logo, lock_banner, lock_fields";
+
+// Every SELECT/RETURNING of pass_templates needs this alongside
+// PASS_TEMPLATE_COLUMNS — has_logo/has_banner are derived, not stored, so
+// callers can tell whether an image is attached without ever fetching the
+// (potentially large) bytea column itself. Mirrors membership_cards' own
+// has_logo/has_banner pattern.
+const PASS_TEMPLATE_HAS_IMAGE_EXPR = "(logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner";
 
 export async function createPassTemplate(
   userId: number,
@@ -2450,16 +2486,19 @@ export async function createPassTemplate(
     forceShowName?: boolean | null;
     forceShowLogo?: boolean | null;
     category?: string | null;
+    lockLogo?: boolean;
+    lockBanner?: boolean;
+    lockFields?: boolean;
   },
 ): Promise<PassTemplateRow> {
   await ensureSchema();
   const backgroundJson = input.background ? JSON.stringify(input.background) : null;
   const { rows } = await sql.query<PassTemplateRow>(
     `INSERT INTO pass_templates (
-       submitted_by, name, kind, color, background, text_color, lock_text_color, force_show_name, force_show_logo, category, status
+       submitted_by, name, kind, color, background, text_color, lock_text_color, force_show_name, force_show_logo, category, lock_logo, lock_banner, lock_fields, status
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending')
-     RETURNING ${PASS_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'pending')
+     RETURNING ${PASS_TEMPLATE_COLUMNS}, ${PASS_TEMPLATE_HAS_IMAGE_EXPR}, NULL AS submitted_by_username;`,
     [
       userId,
       input.name,
@@ -2471,6 +2510,9 @@ export async function createPassTemplate(
       input.forceShowName ?? null,
       input.forceShowLogo ?? null,
       input.category ?? null,
+      input.lockLogo ?? false,
+      input.lockBanner ?? false,
+      input.lockFields ?? false,
     ],
   );
   return rows[0];
@@ -2481,7 +2523,9 @@ export async function createPassTemplate(
 export async function listApprovedPassTemplates(): Promise<PassTemplateRow[]> {
   await ensureSchema();
   const { rows } = await sql.query<PassTemplateRow>(
-    `SELECT ${PASS_TEMPLATE_COLUMNS.split(", ").map((c) => "pt." + c).join(", ")}, u.username AS submitted_by_username
+    `SELECT ${PASS_TEMPLATE_COLUMNS.split(", ").map((c) => "pt." + c).join(", ")},
+            (pt.logo_image IS NOT NULL) AS has_logo, (pt.banner_image IS NOT NULL) AS has_banner,
+            u.username AS submitted_by_username
      FROM pass_templates pt
      LEFT JOIN users u ON u.id = pt.submitted_by
      WHERE pt.status = 'approved'
@@ -2494,7 +2538,9 @@ export async function listApprovedPassTemplates(): Promise<PassTemplateRow[]> {
 export async function listAllPassTemplates(): Promise<PassTemplateRow[]> {
   await ensureSchema();
   const { rows } = await sql.query<PassTemplateRow>(
-    `SELECT ${PASS_TEMPLATE_COLUMNS.split(", ").map((c) => "pt." + c).join(", ")}, u.username AS submitted_by_username
+    `SELECT ${PASS_TEMPLATE_COLUMNS.split(", ").map((c) => "pt." + c).join(", ")},
+            (pt.logo_image IS NOT NULL) AS has_logo, (pt.banner_image IS NOT NULL) AS has_banner,
+            u.username AS submitted_by_username
      FROM pass_templates pt
      LEFT JOIN users u ON u.id = pt.submitted_by
      ORDER BY pt.created_at DESC;`,
@@ -2521,6 +2567,9 @@ export async function updatePassTemplate(
     forceShowName?: boolean | null;
     forceShowLogo?: boolean | null;
     category?: string | null;
+    lockLogo?: boolean;
+    lockBanner?: boolean;
+    lockFields?: boolean;
     status?: "pending" | "approved" | "rejected";
   },
 ): Promise<PassTemplateRow | null> {
@@ -2535,9 +2584,12 @@ export async function updatePassTemplate(
     force_show_name: boolean | null;
     force_show_logo: boolean | null;
     category: string | null;
+    lock_logo: boolean;
+    lock_banner: boolean;
+    lock_fields: boolean;
     status: "pending" | "approved" | "rejected";
   }>`
-    SELECT name, kind, color, background, text_color, lock_text_color, force_show_name, force_show_logo, category, status
+    SELECT name, kind, color, background, text_color, lock_text_color, force_show_name, force_show_logo, category, lock_logo, lock_banner, lock_fields, status
     FROM pass_templates WHERE id = ${id};
   `;
   const existing = existingRows[0];
@@ -2552,18 +2604,110 @@ export async function updatePassTemplate(
   const newForceShowName = input.forceShowName !== undefined ? input.forceShowName : existing.force_show_name;
   const newForceShowLogo = input.forceShowLogo !== undefined ? input.forceShowLogo : existing.force_show_logo;
   const newCategory = input.category !== undefined ? input.category : existing.category;
+  const newLockLogo = input.lockLogo ?? existing.lock_logo;
+  const newLockBanner = input.lockBanner ?? existing.lock_banner;
+  const newLockFields = input.lockFields ?? existing.lock_fields;
   const newStatus = input.status ?? existing.status;
   const bumpReviewedAt = input.status !== undefined;
 
   const { rows } = await sql.query<PassTemplateRow>(
     `UPDATE pass_templates
      SET name = $1, kind = $2, color = $3, background = $4, text_color = $5, lock_text_color = $6,
-         force_show_name = $7, force_show_logo = $8, category = $9, status = $10, reviewed_at = ${bumpReviewedAt ? "now()" : "reviewed_at"}
-     WHERE id = $11
-     RETURNING ${PASS_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
-    [newName, newKind, newColor, newBackground, newTextColor, newLockTextColor, newForceShowName, newForceShowLogo, newCategory, newStatus, id],
+         force_show_name = $7, force_show_logo = $8, category = $9, lock_logo = $10, lock_banner = $11, lock_fields = $12, status = $13,
+         reviewed_at = ${bumpReviewedAt ? "now()" : "reviewed_at"}
+     WHERE id = $14
+     RETURNING ${PASS_TEMPLATE_COLUMNS}, (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner, NULL AS submitted_by_username;`,
+    [
+      newName,
+      newKind,
+      newColor,
+      newBackground,
+      newTextColor,
+      newLockTextColor,
+      newForceShowName,
+      newForceShowLogo,
+      newCategory,
+      newLockLogo,
+      newLockBanner,
+      newLockFields,
+      newStatus,
+      id,
+    ],
   );
   return rows[0] ?? null;
+}
+
+// Looked up by the pass-templates logo/banner routes before writing or
+// serving an image — the submitter can attach/replace/remove their own
+// (still-unreviewed or already-approved) template's image, an admin can
+// touch any template, and reading an image is open to anyone once the
+// template is approved (PremadePassPicker/the applying pass need it),
+// otherwise restricted the same as writing.
+export async function getPassTemplateOwnerAndStatus(
+  id: number,
+): Promise<{ submittedBy: number | null; status: "pending" | "approved" | "rejected" } | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ submitted_by: number | null; status: "pending" | "approved" | "rejected" }>`
+    SELECT submitted_by, status FROM pass_templates WHERE id = ${id};
+  `;
+  const row = rows[0];
+  return row ? { submittedBy: row.submitted_by, status: row.status } : null;
+}
+
+export async function attachPassTemplateLogo(id: number, bytes: Buffer, mimeType: string): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    UPDATE pass_templates
+    SET logo_image = decode(${bytes.toString("hex")}, 'hex'), logo_image_type = ${mimeType}, logo_updated_at = now()
+    WHERE id = ${id};
+  `;
+  return (rowCount ?? 0) > 0;
+}
+
+export async function getPassTemplateLogo(id: number): Promise<{ bytes: Buffer; mimeType: string } | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ hex: string | null; mime: string | null }>`
+    SELECT encode(logo_image, 'hex') AS hex, logo_image_type AS mime FROM pass_templates WHERE id = ${id};
+  `;
+  const row = rows[0];
+  if (!row?.hex || !row.mime) return null;
+  return { bytes: Buffer.from(row.hex, "hex"), mimeType: row.mime };
+}
+
+export async function removePassTemplateLogo(id: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    UPDATE pass_templates SET logo_image = NULL, logo_image_type = NULL, logo_updated_at = NULL WHERE id = ${id};
+  `;
+  return (rowCount ?? 0) > 0;
+}
+
+export async function attachPassTemplateBanner(id: number, bytes: Buffer, mimeType: string): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    UPDATE pass_templates
+    SET banner_image = decode(${bytes.toString("hex")}, 'hex'), banner_image_type = ${mimeType}, banner_updated_at = now()
+    WHERE id = ${id};
+  `;
+  return (rowCount ?? 0) > 0;
+}
+
+export async function getPassTemplateBanner(id: number): Promise<{ bytes: Buffer; mimeType: string } | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ hex: string | null; mime: string | null }>`
+    SELECT encode(banner_image, 'hex') AS hex, banner_image_type AS mime FROM pass_templates WHERE id = ${id};
+  `;
+  const row = rows[0];
+  if (!row?.hex || !row.mime) return null;
+  return { bytes: Buffer.from(row.hex, "hex"), mimeType: row.mime };
+}
+
+export async function removePassTemplateBanner(id: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    UPDATE pass_templates SET banner_image = NULL, banner_image_type = NULL, banner_updated_at = NULL WHERE id = ${id};
+  `;
+  return (rowCount ?? 0) > 0;
 }
 
 // Admin-only, permanent — same reasoning as deleteCardTemplate: never

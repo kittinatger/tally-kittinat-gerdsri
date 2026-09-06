@@ -29,4 +29,15 @@ export type PassTemplateOption = {
   status: "pending" | "approved" | "rejected";
   submittedByUsername: string | null;
   createdAt: string;
+  hasLogo: boolean;
+  hasBanner: boolean;
+  logoUpdatedAt: string | null;
+  bannerUpdatedAt: string | null;
+  /** When true, a pass picking this template gets its exact logo/banner
+   * image (see hasLogo/hasBanner above) and can't replace or remove it. */
+  lockLogo: boolean;
+  lockBanner: boolean;
+  /** When true, a pass picking this template keeps its kind's field
+   * layout exactly as submitted — only the field values are editable. */
+  lockFields: boolean;
 };

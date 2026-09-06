@@ -12,6 +12,7 @@ import CardBackgroundPicker from "./CardBackgroundPicker";
 import CardTextColorPicker from "./CardTextColorPicker";
 import PremadePassPicker from "./PremadePassPicker";
 import ForceToggleField from "./ForceToggleField";
+import LockToggleField from "./LockToggleField";
 import { backgroundGlowColor, cardForegroundFor } from "@/lib/card-backgrounds";
 import type { CardBackground } from "@/lib/card-backgrounds";
 import { CATEGORY_ICON_KEYS, CATEGORY_ICON_LABEL_KEYS } from "@/lib/category-icons";
@@ -30,7 +31,7 @@ import {
   type PassZone,
 } from "@/lib/membership-templates";
 import { PASS_TEMPLATE_CATEGORIES, PASS_TEMPLATE_CATEGORY_LABEL_KEYS, type PassTemplateCategory } from "@/lib/pass-template-category";
-import { toMembershipCard, membershipImageUrl, type MembershipCardApiRow } from "@/lib/membership-card-mapper";
+import { toMembershipCard, membershipImageUrl, passTemplateImageUrl, type MembershipCardApiRow } from "@/lib/membership-card-mapper";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 import type { MembershipCard } from "@/types/membership";
@@ -86,6 +87,7 @@ function ImageSlot({
   className,
   previewClassName,
   fit = "cover",
+  locked = false,
 }: {
   previewUrl: string | null;
   onPick: () => void;
@@ -96,6 +98,12 @@ function ImageSlot({
   className: string;
   previewClassName?: string;
   fit?: "cover" | "contain";
+  /** Set by a picked premade pass's lockLogo/lockBanner — this image is
+   * fixed to whatever the template shipped with, so the remove button
+   * disappears (nothing to replace it with) and, with no image at all,
+   * the whole slot disappears rather than inviting a pick that would just
+   * get overwritten again on save. */
+  locked?: boolean;
 }) {
   if (previewUrl) {
     return (
@@ -106,17 +114,20 @@ function ImageSlot({
           alt=""
           className={`h-full rounded-lg ring-1 ring-line ${fit === "contain" ? "w-auto object-contain" : "w-full object-cover"}`}
         />
-        <button
-          type="button"
-          onClick={onClear}
-          aria-label={removeLabel}
-          className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white transition hover:bg-black"
-        >
-          <CloseIcon className="h-2.5 w-2.5" />
-        </button>
+        {!locked && (
+          <button
+            type="button"
+            onClick={onClear}
+            aria-label={removeLabel}
+            className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white transition hover:bg-black"
+          >
+            <CloseIcon className="h-2.5 w-2.5" />
+          </button>
+        )}
       </div>
     );
   }
+  if (locked) return null;
   return (
     <button
       type="button"
@@ -200,6 +211,16 @@ export default function MembershipCardModal({
   // onSelect below. Same convention as WalletModal's own textColorLocked:
   // hides the manual text-color control entirely rather than disabling it.
   const [textColorLocked, setTextColorLocked] = useState(false);
+  // Same idea as textColorLocked, from a picked premade pass's
+  // lockLogo/lockBanner/lockFields — logoLocked/bannerLocked hide the
+  // upload/remove controls for that image (it's fixed to whatever the
+  // template shipped with), and fieldsLocked hides the kind switcher and
+  // forces the field editor into guided-only mode with no add/remove/
+  // reposition controls, so the only thing left to edit is each field's
+  // value.
+  const [logoLocked, setLogoLocked] = useState(false);
+  const [bannerLocked, setBannerLocked] = useState(false);
+  const [fieldsLocked, setFieldsLocked] = useState(false);
   // Whether a premade pass has been applied this session — once true, the
   // "Submit as template" tab hides (nothing left to upload that isn't
   // already someone else's submitted design), same idea as WalletModal's
@@ -210,6 +231,13 @@ export default function MembershipCardModal({
   const [templateLockTextColor, setTemplateLockTextColor] = useState(false);
   const [templateForceShowName, setTemplateForceShowName] = useState<boolean | null>(null);
   const [templateForceShowLogo, setTemplateForceShowLogo] = useState<boolean | null>(null);
+  // Whether the template being submitted should lock the picking pass's
+  // logo/banner to this pass's current logo/banner (copied over after the
+  // template is created, see handleUploadTemplate) and lock its fields to
+  // this pass's current kind (no custom fields/layout changes).
+  const [templateLockLogo, setTemplateLockLogo] = useState(false);
+  const [templateLockBanner, setTemplateLockBanner] = useState(false);
+  const [templateLockFields, setTemplateLockFields] = useState(false);
   const [templateSubmitting, setTemplateSubmitting] = useState(false);
   const [templateSubmitted, setTemplateSubmitted] = useState(false);
   const [templateError, setTemplateError] = useState<string | null>(null);
@@ -338,6 +366,25 @@ export default function MembershipCardModal({
     return { hasLogo, hasBanner, logoUpdatedAt, bannerUpdatedAt };
   }
 
+  // Best-effort: copies whatever image is currently showing in the Look
+  // tab's preview (a freshly staged File's blob: URL, or an already-saved
+  // pass's /api/memberships/.../logo|banner URL) onto the just-created
+  // template. Only called when the matching lock toggle is on — an
+  // unlocked template has no image of its own, same as before this existed.
+  async function copyImageToTemplate(templateId: number, kind: "logo" | "banner", previewUrl: string | null) {
+    if (!previewUrl) return;
+    try {
+      const blob = await fetch(previewUrl).then((r) => (r.ok ? r.blob() : null));
+      if (!blob) return;
+      const formData = new FormData();
+      formData.append("image", blob, kind);
+      await fetch(`/api/pass-templates/${templateId}/${kind}`, { method: "POST", body: formData });
+    } catch {
+      // Best-effort — the template still saves fine without its lock
+      // image; an admin can attach one later via PassTemplateEditModal.
+    }
+  }
+
   // Submits the current pass's look — not its data — as a "premade pass"
   // for admin review, same idea as WalletModal's handleUploadTemplate.
   // `kind` travels along unconditionally (a pass template is always tied
@@ -359,6 +406,9 @@ export default function MembershipCardModal({
           forceShowName: templateForceShowName,
           forceShowLogo: templateForceShowLogo,
           category: templateCategory,
+          lockLogo: templateLockLogo,
+          lockBanner: templateLockBanner,
+          lockFields: templateLockFields,
         }),
       });
       const data = await res.json();
@@ -366,6 +416,9 @@ export default function MembershipCardModal({
         setTemplateError(typeof data.error === "string" ? data.error : "Could not submit.");
         return;
       }
+      const newTemplateId: number = data.template.id;
+      if (templateLockLogo) await copyImageToTemplate(newTemplateId, "logo", logoPreviewUrl);
+      if (templateLockBanner) await copyImageToTemplate(newTemplateId, "banner", bannerPreviewUrl);
       setTemplateSubmitted(true);
     } catch (err) {
       setTemplateError(describeFetchError(err));
@@ -631,6 +684,11 @@ export default function MembershipCardModal({
             </span>
           </button>
 
+          {/* Switching kind resets the field layout entirely (see
+           * handleKindChange) — hidden once a locked-fields premade pass
+           * is applied, since that's exactly the layout change locking
+           * fields is meant to prevent. */}
+          {!fieldsLocked && (
           <div>
             <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("membership.kindLabel")}</label>
             <div className="flex flex-wrap gap-1.5">
@@ -650,6 +708,7 @@ export default function MembershipCardModal({
               ))}
             </div>
           </div>
+          )}
         </FormSection>
         )}
 
@@ -730,7 +789,12 @@ export default function MembershipCardModal({
               return <Icon className="h-4 w-4" />;
             })()}
             title={t(KIND_LABEL_KEYS[kind])}
+            // The guided/custom switch disappears once fields are locked —
+            // "custom" mode is exactly the add/remove/reposition surface a
+            // locked-fields premade pass is meant to take away, so there's
+            // nothing left to switch to.
             action={
+              fieldsLocked ? undefined : (
               <div className="flex gap-1 rounded-full bg-bg-soft p-1">
                 <button
                   type="button"
@@ -751,6 +815,7 @@ export default function MembershipCardModal({
                   {t("membership.editorCustom")}
                 </button>
               </div>
+              )
             }
           >
             {editorMode === "guided" ? (
@@ -759,6 +824,9 @@ export default function MembershipCardModal({
                   <div key={def.key}>
                     <div className="mb-1 flex items-center justify-between gap-2">
                       <label className="text-xs font-semibold text-ink-soft">{t(def.labelKey)}</label>
+                      {/* Hiding a field's label is itself a layout change,
+                       * same reasoning as the mode switch above. */}
+                      {!fieldsLocked && (
                       <button
                         type="button"
                         onClick={() => toggleFieldLabelHidden(def.key)}
@@ -768,6 +836,7 @@ export default function MembershipCardModal({
                       >
                         {t("membership.hideFieldLabel")}
                       </button>
+                      )}
                     </div>
                     <input
                       type="text"
@@ -942,7 +1011,7 @@ export default function MembershipCardModal({
         <>
         <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("membership.colorLabel")}>
           <PremadePassPicker
-            onSelect={(tpl) => {
+            onSelect={async (tpl) => {
               setTemplateApplied(true);
               handleKindChange(tpl.kind);
               setBackground(tpl.background);
@@ -951,6 +1020,44 @@ export default function MembershipCardModal({
               setTextColorLocked(tpl.lockTextColor);
               if (tpl.forceShowName !== null) setShowName(tpl.forceShowName);
               if (tpl.forceShowLogo !== null) setShowLogo(tpl.forceShowLogo);
+              setLogoLocked(tpl.lockLogo);
+              setBannerLocked(tpl.lockBanner);
+              // handleKindChange above already reset fields/layout to this
+              // kind's defaults — locking fields just means staying there:
+              // force guided mode (no add/remove/reposition controls) so
+              // the only thing left to edit is each field's value.
+              setFieldsLocked(tpl.lockFields);
+              if (tpl.lockFields) setEditorMode("guided");
+              // A locked logo/banner replaces whatever the pass already
+              // had, same "staged file" path a manual upload takes — a
+              // template with the lock on but no image attached still
+              // locks the pass to having none.
+              if (tpl.lockLogo) {
+                setLogoRemoved(true);
+                setLogoFile(null);
+                if (tpl.hasLogo) {
+                  const blob = await fetch(passTemplateImageUrl(tpl.id, "logo", tpl.logoUpdatedAt))
+                    .then((r) => (r.ok ? r.blob() : null))
+                    .catch(() => null);
+                  if (blob) {
+                    setLogoFile(new File([blob], "logo", { type: blob.type }));
+                    setLogoRemoved(false);
+                  }
+                }
+              }
+              if (tpl.lockBanner) {
+                setBannerRemoved(true);
+                setBannerFile(null);
+                if (tpl.hasBanner) {
+                  const blob = await fetch(passTemplateImageUrl(tpl.id, "banner", tpl.bannerUpdatedAt))
+                    .then((r) => (r.ok ? r.blob() : null))
+                    .catch(() => null);
+                  if (blob) {
+                    setBannerFile(new File([blob], "banner", { type: blob.type }));
+                    setBannerRemoved(false);
+                  }
+                }
+              }
             }}
           />
           <CardBackgroundPicker value={background} onChange={setBackground} plainColor={color} onPlainColorChange={setColor} />
@@ -1024,6 +1131,7 @@ export default function MembershipCardModal({
                 className="h-16 w-16"
                 previewClassName="h-16 max-w-[10rem]"
                 fit="contain"
+                locked={logoLocked}
               />
               <ImageSlot
                 previewUrl={bannerPreviewUrl}
@@ -1033,6 +1141,7 @@ export default function MembershipCardModal({
                 removeLabel={t("membership.removeImage")}
                 label={t("membership.addBanner")}
                 className="h-16 flex-1"
+                locked={bannerLocked}
               />
             </div>
 
@@ -1136,29 +1245,30 @@ export default function MembershipCardModal({
             <ForceToggleField label={t("membership.showLogoOnCardLabel")} value={templateForceShowLogo} onChange={setTemplateForceShowLogo} />
           </div>
 
-          <button
-            type="button"
-            onClick={() => setTemplateLockTextColor((v) => !v)}
-            className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
-          >
-            <span>
-              <span className="block text-sm font-medium text-foreground">{t("wallet.lockTextColorLabel")}</span>
-              <span className="block text-xs text-ink-soft">{t("wallet.lockTextColorDesc")}</span>
-            </span>
-            <span
-              role="switch"
-              aria-checked={templateLockTextColor}
-              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
-                templateLockTextColor ? "bg-navy" : "bg-line"
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                  templateLockTextColor ? "translate-x-6" : "translate-x-1"
-                }`}
-              />
-            </span>
-          </button>
+          <LockToggleField
+            label={t("wallet.lockTextColorLabel")}
+            description={t("wallet.lockTextColorDesc")}
+            checked={templateLockTextColor}
+            onChange={setTemplateLockTextColor}
+          />
+          <LockToggleField
+            label={t("membership.lockLogoLabel")}
+            description={t("membership.lockLogoDesc")}
+            checked={templateLockLogo}
+            onChange={setTemplateLockLogo}
+          />
+          <LockToggleField
+            label={t("membership.lockBannerLabel")}
+            description={t("membership.lockBannerDesc")}
+            checked={templateLockBanner}
+            onChange={setTemplateLockBanner}
+          />
+          <LockToggleField
+            label={t("membership.lockFieldsLabel")}
+            description={t("membership.lockFieldsDesc")}
+            checked={templateLockFields}
+            onChange={setTemplateLockFields}
+          />
         </FormSection>
 
         {templateError && <p className="text-sm text-red-600 dark:text-red-400">{templateError}</p>}

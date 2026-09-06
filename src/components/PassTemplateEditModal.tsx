@@ -1,18 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Modal from "./Modal";
 import FormSection from "./FormSection";
 import ColorGlowPreview from "./ColorGlowPreview";
 import CardBackgroundPicker from "./CardBackgroundPicker";
 import CardTextColorPicker from "./CardTextColorPicker";
 import ForceToggleField from "./ForceToggleField";
+import LockToggleField from "./LockToggleField";
 import { backgroundGlowColor, cardForegroundFor, cardBackgroundStyle, type CardBackground } from "@/lib/card-backgrounds";
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import { PASS_KINDS, KIND_LABEL_KEYS, type PassKind } from "@/lib/membership-templates";
 import { PASS_TEMPLATE_CATEGORIES, PASS_TEMPLATE_CATEGORY_LABEL_KEYS, type PassTemplateCategory } from "@/lib/pass-template-category";
-import { PaletteIcon, TrashIcon } from "@/lib/icons";
+import { passTemplateImageUrl } from "@/lib/membership-card-mapper";
+import { PaletteIcon, TrashIcon, CloseIcon } from "@/lib/icons";
 import { describeFetchError } from "@/lib/fetch-error";
 import { useT } from "@/lib/language-context";
 import type { PassTemplateOption } from "@/types/pass-template";
@@ -45,11 +47,75 @@ export default function PassTemplateEditModal({
   const [forceShowName, setForceShowName] = useState<boolean | null>(template.forceShowName);
   const [forceShowLogo, setForceShowLogo] = useState<boolean | null>(template.forceShowLogo);
   const [category, setCategory] = useState<PassTemplateCategory | null>(template.category);
+  const [lockLogo, setLockLogo] = useState(template.lockLogo);
+  const [lockBanner, setLockBanner] = useState(template.lockBanner);
+  const [lockFields, setLockFields] = useState(template.lockFields);
   const [status, setStatus] = useState(template.status);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // The logo/banner images themselves upload/remove immediately (unlike
+  // every other field here, which only saves on form submit) — the
+  // template already has an id, so there's no "create it first" step the
+  // way a brand-new pass needs before it can attach one. hasLogo/hasBanner/
+  // *UpdatedAt are tracked locally so the preview and cache-busting query
+  // param update right after a successful call, without waiting on
+  // onSaved's full-template refresh (which only happens on form submit).
+  const [hasLogo, setHasLogo] = useState(template.hasLogo);
+  const [hasBanner, setHasBanner] = useState(template.hasBanner);
+  const [logoUpdatedAt, setLogoUpdatedAt] = useState(template.logoUpdatedAt);
+  const [bannerUpdatedAt, setBannerUpdatedAt] = useState(template.bannerUpdatedAt);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleImageSelected(kind: "logo" | "banner", file: File | undefined) {
+    if (!file) return;
+    setImageError(null);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const res = await fetch(`/api/pass-templates/${template.id}/${kind}`, { method: "POST", body: formData });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        setImageError(typeof data?.error === "string" ? data.error : "Could not upload that image.");
+        return;
+      }
+      const now = new Date().toISOString();
+      if (kind === "logo") {
+        setHasLogo(true);
+        setLogoUpdatedAt(now);
+      } else {
+        setHasBanner(true);
+        setBannerUpdatedAt(now);
+      }
+    } catch (err) {
+      setImageError(describeFetchError(err));
+    }
+  }
+
+  async function handleImageRemove(kind: "logo" | "banner") {
+    setImageError(null);
+    try {
+      const res = await fetch(`/api/pass-templates/${template.id}/${kind}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setImageError(typeof data?.error === "string" ? data.error : "Could not remove that image.");
+        return;
+      }
+      if (kind === "logo") {
+        setHasLogo(false);
+        setLogoUpdatedAt(null);
+      } else {
+        setHasBanner(false);
+        setBannerUpdatedAt(null);
+      }
+    } catch (err) {
+      setImageError(describeFetchError(err));
+    }
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -69,6 +135,9 @@ export default function PassTemplateEditModal({
           forceShowName,
           forceShowLogo,
           category,
+          lockLogo,
+          lockBanner,
+          lockFields,
           status,
         }),
       });
@@ -202,30 +271,116 @@ export default function PassTemplateEditModal({
           </div>
         </FormSection>
 
-        <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("wallet.lockTextColorLabel")}>
-          <button
-            type="button"
-            onClick={() => setLockTextColor((v) => !v)}
-            className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
-          >
-            <span>
-              <span className="block text-sm font-medium text-foreground">{t("wallet.lockTextColorLabel")}</span>
-              <span className="block text-xs text-ink-soft">{t("wallet.lockTextColorDesc")}</span>
-            </span>
-            <span
-              role="switch"
-              aria-checked={lockTextColor}
-              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
-                lockTextColor ? "bg-navy" : "bg-line"
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                  lockTextColor ? "translate-x-6" : "translate-x-1"
-                }`}
+        {/* Logo/banner images upload/remove immediately (see
+         * handleImageSelected/handleImageRemove) — locking one only makes
+         * sense once an image actually exists to lock, so the toggle and
+         * the image slot live in the same section. */}
+        <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("membership.lockLogoLabel")}>
+          {imageError && <p className="text-xs text-red-600 dark:text-red-400">{imageError}</p>}
+          <input
+            ref={logoInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              handleImageSelected("logo", file);
+            }}
+          />
+          {hasLogo ? (
+            <div className="relative inline-block h-16 w-16">
+              {/* eslint-disable-next-line @next/next/no-img-element -- API-served image, not a build-time asset */}
+              <img
+                src={passTemplateImageUrl(template.id, "logo", logoUpdatedAt)}
+                alt=""
+                className="h-full w-full rounded-lg object-contain ring-1 ring-line"
               />
-            </span>
-          </button>
+              <button
+                type="button"
+                onClick={() => handleImageRemove("logo")}
+                aria-label={t("membership.removeImage")}
+                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white transition hover:bg-black"
+              >
+                <CloseIcon className="h-2.5 w-2.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => logoInputRef.current?.click()}
+              className="flex h-16 w-16 items-center justify-center rounded-lg border border-dashed border-line text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)]"
+            >
+              {t("membership.addLogo")}
+            </button>
+          )}
+          <LockToggleField
+            label={t("membership.lockLogoLabel")}
+            description={t("membership.lockLogoDesc")}
+            checked={lockLogo}
+            onChange={setLockLogo}
+          />
+        </FormSection>
+
+        <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("membership.lockBannerLabel")}>
+          <input
+            ref={bannerInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              handleImageSelected("banner", file);
+            }}
+          />
+          {hasBanner ? (
+            <div className="relative inline-block h-16 w-full max-w-xs">
+              {/* eslint-disable-next-line @next/next/no-img-element -- API-served image, not a build-time asset */}
+              <img
+                src={passTemplateImageUrl(template.id, "banner", bannerUpdatedAt)}
+                alt=""
+                className="h-full w-full rounded-lg object-cover ring-1 ring-line"
+              />
+              <button
+                type="button"
+                onClick={() => handleImageRemove("banner")}
+                aria-label={t("membership.removeImage")}
+                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white transition hover:bg-black"
+              >
+                <CloseIcon className="h-2.5 w-2.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => bannerInputRef.current?.click()}
+              className="flex h-16 w-full max-w-xs items-center justify-center rounded-lg border border-dashed border-line text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)]"
+            >
+              {t("membership.addBanner")}
+            </button>
+          )}
+          <LockToggleField
+            label={t("membership.lockBannerLabel")}
+            description={t("membership.lockBannerDesc")}
+            checked={lockBanner}
+            onChange={setLockBanner}
+          />
+        </FormSection>
+
+        <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("wallet.lockTextColorLabel")}>
+          <LockToggleField
+            label={t("wallet.lockTextColorLabel")}
+            description={t("wallet.lockTextColorDesc")}
+            checked={lockTextColor}
+            onChange={setLockTextColor}
+          />
+          <LockToggleField
+            label={t("membership.lockFieldsLabel")}
+            description={t("membership.lockFieldsDesc")}
+            checked={lockFields}
+            onChange={setLockFields}
+          />
         </FormSection>
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
