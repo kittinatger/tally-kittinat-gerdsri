@@ -2,23 +2,18 @@
 // CardPhotoScanModal's SVG upload path — it applies the raw file as-is via
 // `{ pattern: "photo", photoDataUrl }`, unlike the built-in illustration
 // patterns in card-backgrounds.ts, which already carry a structured
-// `colors` array). A custom SVG has no such structure — its colors are
-// just whatever color values happen to appear in the markup — so editing
-// means: find them, let the user swap one for another, and re-serialize.
+// `colors` array). A custom SVG has no such structure, so this walks the
+// actual DOM (not just regex over the raw text) to find every shape's true
+// *effective* fill color — including one that's never written down
+// anywhere because it's relying on inheritance or SVG's own "unpainted
+// means black" default — and makes each one independently editable.
 
-// Longest-first so the alternation's own \b check doesn't have to fall
-// back through shorter matches first — an 8-digit hex (RGBA) or 4-digit
-// hex (RGBA shorthand) is tried whole before any shorter prefix of it is.
-const HEX_COLOR_RE = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b/g;
-// rgb()/rgba() functional notation — common in design-tool SVG exports
-// (Illustrator/Figma) that don't hex-encode fills.
-const RGB_FUNC_RE = /rgba?\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*(?:,\s*[\d.]+\s*)?\)/gi;
+const HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})$/;
+const RGB_FUNC_RE = /^rgba?\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*(?:,\s*[\d.]+\s*)?\)$/i;
+
 // The full CSS Color Module Level 4 named-color list — an SVG author can
 // (and, especially for plain black/white fills, often does) write
-// fill="white" instead of a hex/rgb value. Scoped to only match right
-// after fill/stroke/stop-color (as an attribute or a CSS declaration) so
-// a bare word match doesn't fire on unrelated text elsewhere in the file
-// (an id="whiteboard", say).
+// fill="white" instead of a hex/rgb value.
 const NAMED_COLOR_HEX: Record<string, string> = {
   aliceblue: "#f0f8ff", antiquewhite: "#faebd7", aqua: "#00ffff", aquamarine: "#7fffd4", azure: "#f0ffff",
   beige: "#f5f5dc", bisque: "#ffe4c4", black: "#000000", blanchedalmond: "#ffebcd", blue: "#0000ff",
@@ -51,7 +46,14 @@ const NAMED_COLOR_HEX: Record<string, string> = {
   tomato: "#ff6347", turquoise: "#40e0d0", violet: "#ee82ee", wheat: "#f5deb3", white: "#ffffff",
   whitesmoke: "#f5f5f5", yellow: "#ffff00", yellowgreen: "#9acd32",
 };
-const NAMED_COLOR_RE = new RegExp(`\\b(?:fill|stroke|stop-color)\\s*[:=]\\s*["']?(${Object.keys(NAMED_COLOR_HEX).join("|")})\\b`, "gi");
+
+// Elements a fill actually paints — text/tspan included since a logo's
+// wordmark is drawn the same way as its shapes.
+const PAINTABLE_TAGS = new Set(["path", "rect", "circle", "ellipse", "polygon", "polyline", "line", "text", "tspan", "use"]);
+// Never-rendered-directly containers — their contents only ever appear via
+// a <use> reference elsewhere, so recoloring them here would either do
+// nothing or double up with whatever recolors the <use> itself.
+const NON_RENDERING_TAGS = new Set(["defs", "clippath", "mask", "symbol", "pattern"]);
 
 export function isSvgDataUrl(url: string): boolean {
   return url.startsWith("data:image/svg+xml");
@@ -93,33 +95,15 @@ function componentToHex(n: number): string {
   return Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, "0");
 }
 
-// One color found in the markup — `raw` is the exact original text (what
-// recolorSvg needs to find and replace), `hex` is always a plain #rrggbb
-// (what ColorPicker, which only understands hex, needs to display and let
-// the user pick a replacement from).
-export type SvgColorMatch = { raw: string; hex: string };
-
-// Every distinct color actually used in the markup — hex (3/4/6/8-digit,
-// alpha channel dropped for display/editing since ColorPicker has no
-// concept of one) and rgb()/rgba() functional notation — in first-seen
-// order, deduped case-insensitively.
-export function extractSvgColors(markup: string): SvgColorMatch[] {
-  const seen = new Set<string>();
-  const colors: SvgColorMatch[] = [];
-
-  function add(raw: string, hex: string) {
-    const key = raw.toLowerCase().replace(/\s+/g, "");
-    if (seen.has(key)) return;
-    seen.add(key);
-    colors.push({ raw, hex: hex.toLowerCase() });
-  }
-
-  for (const match of markup.matchAll(HEX_COLOR_RE)) {
-    const digits = match[0].slice(1);
-    // Expand shorthand (3/4-digit) to full 6-digit for display; an alpha
-    // channel (4th pair of an 8-digit, or 4th nibble of a 4-digit) has no
-    // ColorPicker equivalent, so it's dropped for editing purposes only —
-    // recolorSvg still matches/replaces the original `raw` token whole.
+// Normalizes whatever a fill value's raw text says (hex, rgb()/rgba(),
+// or a named color) into a plain #rrggbb ColorPicker can display — or
+// null for a value with no discrete color to edit (none/transparent/
+// currentColor/a gradient or pattern reference).
+function toHex(raw: string): string | null {
+  const value = raw.trim();
+  if (!value || value === "none" || value === "transparent" || value === "currentColor" || value.startsWith("url(")) return null;
+  if (HEX_COLOR_RE.test(value)) {
+    const digits = value.slice(1);
     const full =
       digits.length === 3 || digits.length === 4
         ? digits
@@ -128,46 +112,109 @@ export function extractSvgColors(markup: string): SvgColorMatch[] {
             .map((c) => c + c)
             .join("")
         : digits.slice(0, 6);
-    add(match[0], `#${full}`);
+    return `#${full}`.toLowerCase();
   }
-
-  for (const match of markup.matchAll(RGB_FUNC_RE)) {
-    add(match[0], `#${componentToHex(Number(match[1]))}${componentToHex(Number(match[2]))}${componentToHex(Number(match[3]))}`);
+  const rgbMatch = value.match(RGB_FUNC_RE);
+  if (rgbMatch) {
+    return `#${componentToHex(Number(rgbMatch[1]))}${componentToHex(Number(rgbMatch[2]))}${componentToHex(Number(rgbMatch[3]))}`;
   }
+  const named = NAMED_COLOR_HEX[value.toLowerCase()];
+  return named ?? null;
+}
 
-  for (const match of markup.matchAll(NAMED_COLOR_RE)) {
-    // match[1] (the color word itself, e.g. "white") is what actually
-    // needs finding/replacing later — recolorSvg's non-hex branch does a
-    // plain substring replace, and the full match[0] also includes
-    // "fill=" or similar, which must stay untouched.
-    add(match[1], NAMED_COLOR_HEX[match[1].toLowerCase()]);
+// A shape's own fill, read directly off it — the `style="fill:...;"`
+// attribute wins over the plain `fill="..."` attribute, matching real CSS
+// cascade rules (presentation attributes are the lowest-priority source).
+// Returns null when this element sets no fill of its own at all (as
+// opposed to explicitly "none"), so the caller knows to keep looking up
+// the tree.
+function ownFill(el: Element): string | null {
+  const style = el.getAttribute("style");
+  if (style) {
+    const match = style.match(/(?:^|;)\s*fill\s*:\s*([^;]+)/i);
+    if (match) return match[1].trim();
   }
+  return el.getAttribute("fill");
+}
 
+// The color this element actually renders with: its own fill if it sets
+// one, otherwise whatever the nearest ancestor sets, otherwise SVG's own
+// spec default (black) — the exact case a plain regex scan can never
+// catch, since there's no literal color text anywhere in the file for it.
+function effectiveFill(el: Element): string {
+  let node: Element | null = el;
+  while (node) {
+    const fill = ownFill(node);
+    if (fill !== null) return fill;
+    node = node.parentElement;
+  }
+  return "black";
+}
+
+function isRenderable(el: Element): boolean {
+  let node: Element | null = el;
+  while (node) {
+    if (NON_RENDERING_TAGS.has(node.tagName.toLowerCase())) return false;
+    node = node.parentElement;
+  }
+  return true;
+}
+
+// One editable color — `hex` is what ColorPicker shows/edits; recoloring
+// happens by hex match, not by remembering which elements contributed it
+// (see recolorSvg), so two shapes that already share a color stay linked
+// exactly like they visually already are.
+export type SvgColorMatch = { hex: string };
+
+// Parses the markup, finds every paintable shape's true effective fill
+// (explicit or inherited/defaulted), and returns the distinct colors
+// among them in first-seen document order. A shape whose fill is only
+// ever inherited/defaulted (no literal color text anywhere for it) still
+// shows up here — recolorSvg is what actually writes an explicit `fill`
+// onto it the first time it's edited.
+export function extractSvgColors(markup: string): SvgColorMatch[] {
+  const doc = new DOMParser().parseFromString(markup, "image/svg+xml");
+  if (doc.querySelector("parsererror")) return [];
+
+  const seen = new Set<string>();
+  const colors: SvgColorMatch[] = [];
+  for (const el of doc.querySelectorAll("*")) {
+    if (!PAINTABLE_TAGS.has(el.tagName.toLowerCase()) || !isRenderable(el)) continue;
+    const hex = toHex(effectiveFill(el));
+    if (hex && !seen.has(hex)) {
+      seen.add(hex);
+      colors.push({ hex });
+    }
+  }
   return colors;
 }
 
-// Swaps every occurrence of one exact color for another — three cases,
-// matching how extractSvgColors found it in the first place:
-//   - hex: full token only (not as a substring of a longer hex code —
-//     "#fff" must not match inside "#ffffff"), case-insensitively (an SVG
-//     author may have typed the same color in different cases in
-//     different places).
-//   - rgb()/rgba() functional: unlikely to collide as a substring of
-//     anything else, so matched and replaced literally.
-//   - a bare named color (e.g. "white"): only ever extracted when it
-//     immediately followed fill/stroke/stop-color, so replacement is
-//     scoped the same way — a plain substring/word replace here would
-//     also corrupt an unrelated id="whiteBox" or similar.
+// Re-parses the markup, finds every paintable shape whose *effective*
+// fill currently resolves to `from`, and sets an explicit `fill="to"`
+// directly on each such shape (never on a shared ancestor — that could
+// silently also recolor sibling shapes that happen to inherit the same
+// default but aren't meant to be linked). This also handles a shape that
+// had no literal fill anywhere before now: the very act of editing it is
+// what gives it its first explicit color.
 export function recolorSvg(markup: string, from: string, to: string): string {
-  if (from.startsWith("#")) {
-    const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const re = new RegExp(`${escaped}\\b(?![0-9a-fA-F])`, "gi");
-    return markup.replace(re, to);
+  const doc = new DOMParser().parseFromString(markup, "image/svg+xml");
+  if (doc.querySelector("parsererror")) return markup;
+
+  for (const el of doc.querySelectorAll("*")) {
+    if (!PAINTABLE_TAGS.has(el.tagName.toLowerCase()) || !isRenderable(el)) continue;
+    if (toHex(effectiveFill(el)) !== from) continue;
+    el.setAttribute("fill", to);
+    // The presentation attribute above is what actually takes effect now,
+    // but a leftover `fill` inside this same element's own `style`
+    // attribute would still outrank it per CSS cascade rules — clear that
+    // one specifically (never touching color/stroke/etc. in the same
+    // style string) so the edit isn't silently overridden.
+    const style = el.getAttribute("style");
+    if (style && /(?:^|;)\s*fill\s*:/i.test(style)) {
+      const cleaned = style.replace(/(?:^|;)\s*fill\s*:[^;]+;?/gi, "").trim();
+      if (cleaned) el.setAttribute("style", cleaned);
+      else el.removeAttribute("style");
+    }
   }
-  if (from.includes("(")) {
-    return markup.split(from).join(to);
-  }
-  const escapedWord = from.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const re = new RegExp(`(fill|stroke|stop-color)(\\s*[:=]\\s*["']?)${escapedWord}\\b`, "gi");
-  return markup.replace(re, (_match, prop: string, sep: string) => `${prop}${sep}${to}`);
+  return new XMLSerializer().serializeToString(doc);
 }
