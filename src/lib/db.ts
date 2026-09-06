@@ -2502,16 +2502,66 @@ export async function listAllPassTemplates(): Promise<PassTemplateRow[]> {
   return rows;
 }
 
-// Admin-only — just the approve/reject/re-review action; bumps reviewed_at
-// whenever status changes. No full-field edit surface for pass templates
-// (unlike card templates' TemplateEditModal) — the shape is small enough
-// that a rejected submission is cheap to just resubmit correctly.
-export async function updatePassTemplateStatus(id: number, status: "pending" | "approved" | "rejected"): Promise<PassTemplateRow | null> {
+// Admin-only — full edit surface, same shape as updateCardTemplate: every
+// field is optional (undefined leaves the existing value alone), so this
+// also serves the quick approve/reject action (just `{status}}`) as well as
+// PassTemplateEditModal's full form. Previously pass templates only had a
+// status-only PATCH ("the shape is small enough to just resubmit") — but an
+// admin fixing a typo or recategorizing one still shouldn't have to reject
+// and wait for the submitter to redo it from scratch.
+export async function updatePassTemplate(
+  id: number,
+  input: {
+    name?: string;
+    kind?: string;
+    color?: string;
+    background?: unknown;
+    textColor?: string | null;
+    lockTextColor?: boolean;
+    forceShowName?: boolean | null;
+    forceShowLogo?: boolean | null;
+    category?: string | null;
+    status?: "pending" | "approved" | "rejected";
+  },
+): Promise<PassTemplateRow | null> {
   await ensureSchema();
+  const { rows: existingRows } = await sql<{
+    name: string;
+    kind: string;
+    color: string;
+    background: string | null;
+    text_color: string | null;
+    lock_text_color: boolean;
+    force_show_name: boolean | null;
+    force_show_logo: boolean | null;
+    category: string | null;
+    status: "pending" | "approved" | "rejected";
+  }>`
+    SELECT name, kind, color, background, text_color, lock_text_color, force_show_name, force_show_logo, category, status
+    FROM pass_templates WHERE id = ${id};
+  `;
+  const existing = existingRows[0];
+  if (!existing) return null;
+
+  const newName = input.name?.trim() ?? existing.name;
+  const newKind = input.kind ?? existing.kind;
+  const newColor = input.color ?? existing.color;
+  const newBackground = input.background !== undefined ? (input.background ? JSON.stringify(input.background) : null) : existing.background;
+  const newTextColor = input.textColor !== undefined ? input.textColor : existing.text_color;
+  const newLockTextColor = input.lockTextColor ?? existing.lock_text_color;
+  const newForceShowName = input.forceShowName !== undefined ? input.forceShowName : existing.force_show_name;
+  const newForceShowLogo = input.forceShowLogo !== undefined ? input.forceShowLogo : existing.force_show_logo;
+  const newCategory = input.category !== undefined ? input.category : existing.category;
+  const newStatus = input.status ?? existing.status;
+  const bumpReviewedAt = input.status !== undefined;
+
   const { rows } = await sql.query<PassTemplateRow>(
-    `UPDATE pass_templates SET status = $1, reviewed_at = now() WHERE id = $2
+    `UPDATE pass_templates
+     SET name = $1, kind = $2, color = $3, background = $4, text_color = $5, lock_text_color = $6,
+         force_show_name = $7, force_show_logo = $8, category = $9, status = $10, reviewed_at = ${bumpReviewedAt ? "now()" : "reviewed_at"}
+     WHERE id = $11
      RETURNING ${PASS_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
-    [status, id],
+    [newName, newKind, newColor, newBackground, newTextColor, newLockTextColor, newForceShowName, newForceShowLogo, newCategory, newStatus, id],
   );
   return rows[0] ?? null;
 }

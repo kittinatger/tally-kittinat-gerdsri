@@ -323,11 +323,25 @@ export const passTemplateInputSchema = z.object({
   category: z.enum(PASS_TEMPLATE_CATEGORIES).nullable().optional(),
 });
 
-// Admin-only — just the approve/reject/re-review action (no full-field
-// edit surface for pass templates, see updatePassTemplateStatus in db.ts).
-export const passTemplateStatusSchema = z.object({
-  status: z.enum(["pending", "approved", "rejected"]),
-});
+// Admin-only full edit — every field optional (same shape as
+// cardTemplateUpdateSchema), so this also covers the quick approve/reject
+// action (just `{status}`). See updatePassTemplate in db.ts.
+export const passTemplateUpdateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(40).optional(),
+    kind: z.enum(PASS_KINDS).optional(),
+    color: z.string().trim().min(1).max(30).optional(),
+    background: cardBackgroundSchema.optional(),
+    textColor: cardTextColorSchema.optional(),
+    lockTextColor: z.boolean().optional(),
+    forceShowName: z.boolean().nullable().optional(),
+    forceShowLogo: z.boolean().nullable().optional(),
+    category: z.enum(PASS_TEMPLATE_CATEGORIES).nullable().optional(),
+    status: z.enum(["pending", "approved", "rejected"]).optional(),
+  })
+  .refine((data) => Object.values(data).some((v) => v !== undefined), {
+    message: "Provide at least one field to update",
+  });
 
 export const walletTransferInputSchema = z
   .object({

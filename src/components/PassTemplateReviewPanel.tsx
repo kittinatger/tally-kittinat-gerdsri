@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { cardBackgroundStyle } from "@/lib/card-backgrounds";
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { describeFetchError } from "@/lib/fetch-error";
-import { CheckCircleIcon, XCircleIcon, TrashIcon } from "@/lib/icons";
+import { CheckCircleIcon, XCircleIcon, TrashIcon, EditIcon } from "@/lib/icons";
 import { KIND_LABEL_KEYS } from "@/lib/membership-templates";
 import { PASS_TEMPLATE_CATEGORY_LABEL_KEYS } from "@/lib/pass-template-category";
 import { useT } from "@/lib/language-context";
+import PassTemplateEditModal from "./PassTemplateEditModal";
 import type { PassTemplateOption } from "@/types/pass-template";
 
 const STATUS_BADGE_CLASSES: Record<PassTemplateOption["status"], string> = {
@@ -18,15 +19,18 @@ const STATUS_BADGE_CLASSES: Record<PassTemplateOption["status"], string> = {
 
 // Admin-only (the route itself 403s anyone else — see
 // /api/pass-templates?status=all) page to review every submitted "premade
-// pass" template. Simpler than TemplateReviewPanel (card templates): a
-// pass template's shape is small enough (no full force-toggle grid) that
-// there's no separate full-edit modal — just approve/reject and, for
-// anything not worth keeping, permanent removal.
+// pass" template. Quick approve/reject stay one tap for the common case;
+// the pencil opens the full editor (PassTemplateEditModal) for anything
+// else, including changing a template's look after the fact or moving it
+// back out of approved — same pattern as TemplateReviewPanel (card
+// templates), just with a smaller force-toggle set since a pass's fields
+// are already fixed by its kind.
 export default function PassTemplateReviewPanel() {
   const t = useT();
   const [templates, setTemplates] = useState<PassTemplateOption[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [actingId, setActingId] = useState<number | null>(null);
+  const [editing, setEditing] = useState<PassTemplateOption | null>(null);
 
   function load() {
     fetch("/api/pass-templates?status=all", { cache: "no-store" })
@@ -155,6 +159,15 @@ export default function PassTemplateReviewPanel() {
               )}
               <button
                 type="button"
+                onClick={() => setEditing(tpl)}
+                aria-label={t("common.edit")}
+                title={t("common.edit")}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
+              >
+                <EditIcon className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
                 onClick={() => remove(tpl.id)}
                 disabled={actingId === tpl.id}
                 aria-label={t("common.delete")}
@@ -166,6 +179,21 @@ export default function PassTemplateReviewPanel() {
             </div>
           ))}
         </div>
+      )}
+
+      {editing && (
+        <PassTemplateEditModal
+          template={editing}
+          onClose={() => setEditing(null)}
+          onSaved={(updated) => {
+            setTemplates((prev) => prev?.map((tpl) => (tpl.id === updated.id ? updated : tpl)) ?? null);
+            setEditing(null);
+          }}
+          onDeleted={(id) => {
+            setTemplates((prev) => prev?.filter((tpl) => tpl.id !== id) ?? null);
+            setEditing(null);
+          }}
+        />
       )}
     </div>
   );

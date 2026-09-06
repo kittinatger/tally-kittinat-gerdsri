@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { updatePassTemplateStatus, deletePassTemplate } from "@/lib/db";
+import { updatePassTemplate, deletePassTemplate } from "@/lib/db";
 import { toPassTemplateOption } from "@/lib/membership-card-mapper";
-import { passTemplateStatusSchema } from "@/lib/validation";
+import { passTemplateUpdateSchema } from "@/lib/validation";
 import { getUserId } from "@/lib/auth";
 import { isAdminUser } from "@/lib/admin";
 
@@ -10,9 +10,9 @@ function parseId(id: string): number | null {
   return Number.isInteger(n) && n > 0 ? n : null;
 }
 
-// Admin-only — approve/reject/re-review (`{status}`). No full-edit surface
-// here, unlike /api/card-templates/[id] — see updatePassTemplateStatus's
-// comment in db.ts for why.
+// Admin-only — approve/reject (just `{status}`) or a full edit (any
+// combination of name/kind/color/background/textColor/force_*/category/
+// status), same shape as /api/card-templates/[id].
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const userId = await getUserId();
   if (!(await isAdminUser(userId))) {
@@ -24,11 +24,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
   const body = await req.json().catch(() => null);
-  const parsed = passTemplateStatusSchema.safeParse(body);
+  const parsed = passTemplateUpdateSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
-  const template = await updatePassTemplateStatus(templateId, parsed.data.status);
+  const template = await updatePassTemplate(templateId, parsed.data);
   if (!template) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
