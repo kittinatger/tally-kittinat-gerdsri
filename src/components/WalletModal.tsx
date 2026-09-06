@@ -1133,7 +1133,17 @@ export default function WalletModal({
         </FormSection>
         ) : (
         <>
-        <p className="text-xs text-ink-soft">{t("wallet.uploadTemplateDesc")}</p>
+        <p className="text-xs text-ink-soft">
+          {t("wallet.uploadTemplateDesc")}{" "}
+          <a
+            href="/card-guidelines"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-navy underline hover:no-underline dark:text-blue-300"
+          >
+            {t("wallet.viewCardGuidelinesLink")}
+          </a>
+        </p>
 
         <FormSection icon={<CategoryIcon iconKey="bank" className="h-4 w-4" />} title={t("wallet.templateDetailsLabel")}>
           <div>

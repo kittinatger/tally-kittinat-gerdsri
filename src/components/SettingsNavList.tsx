@@ -341,6 +341,16 @@ function SparkleIcon() {
   );
 }
 
+function CardGuidelinesIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <rect x="2" y="5.3" width="16" height="9.4" rx="1.8" />
+      <path d="M2 8.2h16" />
+      <path d="M4.5 11.5h3" />
+    </svg>
+  );
+}
+
 function AutoImportIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
@@ -551,6 +561,7 @@ export default function SettingsNavList({
       <SettingsSection title={t("settings.section.support")}>
         <SettingsListItem icon={<GiftIcon />} label={t("settings.referFriend")} accent="pink" href="/refer-a-friend" selected={pathname === "/refer-a-friend"} />
         <SettingsListItem icon={<BookIcon />} label={t("settings.usageGuide")} accent="indigo" href="/usage-guide" selected={pathname === "/usage-guide"} />
+        <SettingsListItem icon={<CardGuidelinesIcon />} label={t("settings.cardGuidelines")} accent="sky" href="/card-guidelines" selected={pathname === "/card-guidelines"} />
         <SettingsListItem icon={<QuestionIcon />} label={t("settings.faqs")} accent="violet" href="/faq" selected={pathname === "/faq"} />
         <SettingsListItem icon={<WrenchIcon />} label={t("settings.troubleshooting")} accent="orange" href="/troubleshooting" selected={pathname === "/troubleshooting"} />
         <SettingsListItem icon={<MailIcon />} label={t("settings.contact")} accent="sky" href="/contact" selected={pathname === "/contact"} />
