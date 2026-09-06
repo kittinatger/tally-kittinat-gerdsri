@@ -512,6 +512,7 @@ export default function SettingsNavList({
         <SettingsListItem icon={<GridIcon />} label={t("settings.manageCategories")} accent="indigo" {...panelItemProps("categories")} />
         <SettingsListItem icon={<HashIcon />} label={t("settings.manageTags")} accent="indigo" {...panelItemProps("tags")} />
         <SettingsListItem icon={<StoreIcon />} label={t("settings.vendors")} accent="indigo" {...panelItemProps("vendors")} />
+        <SettingsListItem icon={<ReceiptNavIcon />} label={t("settings.activities")} accent="indigo" {...panelItemProps("activities")} />
         <SettingsListItem icon={<BudgetIcon />} label={t("settings.budgets")} accent="orange" {...panelItemProps("budgets")} />
         <SettingsListItem icon={<GoalIcon />} label={t("settings.savingsGoals")} accent="emerald" {...panelItemProps("savingsGoals")} />
         <SettingsListItem icon={<RecurringIcon />} label={t("settings.recurring")} accent="teal" {...panelItemProps("recurring")} />

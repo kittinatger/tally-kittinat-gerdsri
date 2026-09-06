@@ -9,6 +9,7 @@ export const PANEL_VALUES = [
   "categories",
   "tags",
   "vendors",
+  "activities",
   "wallets",
   "friends",
   "challenges",

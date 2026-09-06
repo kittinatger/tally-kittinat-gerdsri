@@ -25,6 +25,7 @@ import { PASS_TEMPLATE_CATEGORIES } from "@/lib/pass-template-category";
 import { CHIP_POSITIONS } from "@/lib/chip-position";
 import { NFC_SIZES } from "@/lib/nfc-size";
 import { isLanguageCode } from "@/lib/languages";
+import { ACTIVITIES_TYPE_FILTERS, ACTIVITIES_SORTS, ACTIVITIES_DATE_RANGES } from "@/lib/activities-prefs";
 
 // Shared by wallets and membership_cards' optional background
 // pattern/gradient — see card-backgrounds.ts. Colors are always plain hex
@@ -142,6 +143,21 @@ export const settingsInputSchema = z
 export const activitiesDefaultWalletInputSchema = z.object({
   walletId: z.number().int().positive().nullable(),
 });
+
+export const activitiesPrefsInputSchema = z
+  .object({
+    hideMerchantIcons: z.boolean().optional(),
+    defaultTypeFilter: z.enum(ACTIVITIES_TYPE_FILTERS).optional(),
+    defaultSort: z.enum(ACTIVITIES_SORTS).optional(),
+    groupByMonth: z.boolean().optional(),
+    collapseSplitGroups: z.boolean().optional(),
+    compactRows: z.boolean().optional(),
+    hideTagsInRow: z.boolean().optional(),
+    defaultDateRangeDays: z.enum(ACTIVITIES_DATE_RANGES).optional(),
+  })
+  .refine((data) => Object.values(data).some((v) => v !== undefined), {
+    message: "Provide at least one Activities setting to update",
+  });
 
 export const DEFAULT_VIEWS = ["today", "week", "month", "all"] as const;
 export const TIMEZONE_MODES = ["auto", "custom"] as const;

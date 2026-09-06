@@ -27,6 +27,7 @@ const PermissionsSettings = dynamic(() => import("./PermissionsSettings"), { ssr
 const CategoryManager = dynamic(() => import("./CategoryManager"), { ssr: false });
 const TagManager = dynamic(() => import("./TagManager"), { ssr: false });
 const VendorManager = dynamic(() => import("./VendorManager"), { ssr: false });
+const ActivitiesSettings = dynamic(() => import("./ActivitiesSettings"), { ssr: false });
 const WalletManager = dynamic(() => import("./WalletManager"), { ssr: false });
 const RecurringManager = dynamic(() => import("./RecurringManager"), { ssr: false });
 const BudgetManager = dynamic(() => import("./BudgetManager"), { ssr: false });
@@ -57,6 +58,7 @@ const PANEL_TITLES: Record<Panel, string> = {
   categories: "Manage categories",
   tags: "Manage tags",
   vendors: "Vendors",
+  activities: "Activities",
   wallets: "Wallets",
   friends: "Friends & Family",
   challenges: "Challenges",
@@ -170,7 +172,7 @@ export default function SettingsView({
        * "wallets", LoanManager/AssistantPanel render their own <h3> heading
        * (unlike e.g. SplitBillManager, which has none), so adding them here
        * would double up. */}
-      {(panel === "currency" || panel === "language" || panel === "tags" || panel === "vendors" || panel === "calendar" || panel === "friends" || panel === "challenges" || panel === "splitBills") && (
+      {(panel === "currency" || panel === "language" || panel === "tags" || panel === "vendors" || panel === "activities" || panel === "calendar" || panel === "friends" || panel === "challenges" || panel === "splitBills") && (
         <h2 className="mb-5 font-display text-2xl text-foreground">{PANEL_TITLES[panel]}</h2>
       )}
 
@@ -186,6 +188,7 @@ export default function SettingsView({
       {panel === "categories" && <CategoryManager categories={categories} />}
       {panel === "tags" && <TagManager />}
       {panel === "vendors" && <VendorManager />}
+      {panel === "activities" && <ActivitiesSettings />}
       {panel === "wallets" && (
         <WalletManager wallets={wallets} initialActivitiesDefaultWalletId={activitiesDefaultWalletId} />
       )}

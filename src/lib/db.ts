@@ -3,6 +3,7 @@ import { createHash, randomBytes, randomUUID } from "crypto";
 import type { ExpenseInput } from "@/lib/validation";
 import { hashPassword } from "@/lib/password";
 import { normalizeDashboardWidgets, type DashboardWidgetInstance } from "@/lib/dashboard-widgets";
+import { normalizeActivitiesPrefs, type ActivitiesPrefs } from "@/lib/activities-prefs";
 import type { ChallengeType, ChallengeMode } from "@/lib/challenges";
 import type { SplitMethod, SplitPaymentMethod } from "@/lib/splits";
 
@@ -183,7 +184,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 70;
+const CURRENT_SCHEMA_VERSION = 71;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1531,6 +1532,14 @@ function ensureSchema(): Promise<void> {
       // template whose artwork already displays the card number
       // shouldn't have a picker able to hide it.
       await sql`UPDATE card_templates SET force_show_card_number = true WHERE force_show_card_number IS DISTINCT FROM false;`;
+
+      // User-configurable defaults/display options for the Activities
+      // page (see the Settings > Activities panel) — one JSON-blob
+      // column for the whole group, same convention as
+      // app_settings.dashboard_widgets above rather than a column per
+      // field, since this is one cohesive preferences concept. See
+      // activities-prefs.ts for the shape/defaults.
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS activities_prefs TEXT NOT NULL DEFAULT '{}';`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -3165,6 +3174,34 @@ export async function setDashboardWidgets(
   const normalized = normalizeDashboardWidgets(widgets);
   await sql`
     UPDATE app_settings SET dashboard_widgets = ${JSON.stringify(normalized)} WHERE user_id = ${userId};
+  `;
+  return normalized;
+}
+
+// See activities-prefs.ts for the shape/defaults/normalization —
+// app_settings.activities_prefs is a single JSON-blob column, same
+// convention as dashboard_widgets above, patched (not replaced) on
+// write so a caller only needs to send the fields it's changing.
+export async function getActivitiesPrefs(userId: number): Promise<ActivitiesPrefs> {
+  await ensureSchema();
+  const { rows } = await sql<{ activities_prefs: string }>`
+    SELECT activities_prefs FROM app_settings WHERE user_id = ${userId};
+  `;
+  let parsed: unknown = null;
+  try {
+    parsed = rows[0] ? JSON.parse(rows[0].activities_prefs) : null;
+  } catch {
+    parsed = null;
+  }
+  return normalizeActivitiesPrefs(parsed);
+}
+
+export async function setActivitiesPrefs(userId: number, patch: Partial<ActivitiesPrefs>): Promise<ActivitiesPrefs> {
+  await ensureSchema();
+  const existing = await getActivitiesPrefs(userId);
+  const normalized = normalizeActivitiesPrefs({ ...existing, ...patch });
+  await sql`
+    UPDATE app_settings SET activities_prefs = ${JSON.stringify(normalized)} WHERE user_id = ${userId};
   `;
   return normalized;
 }

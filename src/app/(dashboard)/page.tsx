@@ -1,4 +1,4 @@
-import { listExpenses, listCategories, getCurrency, listWallets, getActivitiesDefaultWalletId } from "@/lib/db";
+import { listExpenses, listCategories, getCurrency, listWallets, getActivitiesDefaultWalletId, getActivitiesPrefs } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import ActivitiesView from "@/components/ActivitiesView";
 import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
@@ -23,12 +23,13 @@ export default async function HomePage({
 }) {
   const { add, vendor } = await searchParams;
   const userId = await getUserId();
-  const [rows, categoryRows, currency, walletRows, activitiesDefaultWalletId] = await Promise.all([
+  const [rows, categoryRows, currency, walletRows, activitiesDefaultWalletId, activitiesPrefs] = await Promise.all([
     listExpenses(userId),
     listCategories(userId),
     getCurrency(userId),
     listWallets(userId),
     getActivitiesDefaultWalletId(userId),
+    getActivitiesPrefs(userId),
   ]);
   const expenses: Expense[] = rows.map((r) => ({
     id: r.id,
@@ -67,6 +68,7 @@ export default async function HomePage({
       initialWalletFilter={initialWalletFilter}
       initialAddOpen={add === "expense"}
       initialVendorFilter={vendor}
+      prefs={activitiesPrefs}
     />
   );
 }

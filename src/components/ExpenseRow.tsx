@@ -56,6 +56,9 @@ export default function ExpenseRow({
   onToggleSelect,
   isOpen = false,
   onOpenChange,
+  hideIcon = false,
+  compact = false,
+  hideTags = false,
 }: {
   expense: Expense;
   onClick: () => void;
@@ -78,6 +81,15 @@ export default function ExpenseRow({
    * A's Share/Delete panel open too, so two different rows could show their
    * action panels at once — the "overlapping icons" bug. */
   onOpenChange?: (open: boolean) => void;
+  /** From Settings > Activities' "Hide merchant icons" — omits the
+   * circular category-icon badge entirely rather than just blanking it. */
+  hideIcon?: boolean;
+  /** From Settings > Activities' "Compact rows" — tighter padding and a
+   * smaller icon. */
+  compact?: boolean;
+  /** From Settings > Activities' "Hide tag chips in list" — tags stay
+   * visible in the expense detail view either way. */
+  hideTags?: boolean;
 }) {
   const color = useCategoryColor(expense.type, expense.category);
   const icon = useCategoryIcon(expense.type, expense.category);
@@ -263,9 +275,9 @@ export default function ExpenseRow({
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
           style={{ touchAction: swipeEnabled ? "pan-y" : undefined }}
-          className={`relative flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left hover:bg-[var(--surface-nav-hover)] ${
-            selected ? "bg-[var(--surface-nav-hover)]" : ""
-          } ${showHoverActions ? "sm:pr-28" : ""}`}
+          className={`relative flex w-full items-center justify-between gap-3 text-left hover:bg-[var(--surface-nav-hover)] ${
+            compact ? "px-3 py-2" : "px-4 py-3.5"
+          } ${selected ? "bg-[var(--surface-nav-hover)]" : ""} ${showHoverActions ? "sm:pr-28" : ""}`}
         >
           {selectMode && (
             <span
@@ -280,21 +292,23 @@ export default function ExpenseRow({
               )}
             </span>
           )}
-          <span
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${badgeClasses(color)}`}
-          >
-            {icon && isCategoryIconKey(icon) ? (
-              <CategoryIcon iconKey={icon} className="h-5 w-5" />
-            ) : (
-              <span className="text-lg">{expense.category.charAt(0).toUpperCase()}</span>
-            )}
-          </span>
+          {!hideIcon && (
+            <span
+              className={`flex shrink-0 items-center justify-center rounded-full ${compact ? "h-9 w-9" : "h-11 w-11"} ${badgeClasses(color)}`}
+            >
+              {icon && isCategoryIconKey(icon) ? (
+                <CategoryIcon iconKey={icon} className={compact ? "h-4 w-4" : "h-5 w-5"} />
+              ) : (
+                <span className={compact ? "text-base" : "text-lg"}>{expense.category.charAt(0).toUpperCase()}</span>
+              )}
+            </span>
+          )}
           <div className="min-w-0 flex-1">
             <p className="truncate font-semibold text-surface-foreground">{expense.merchant}</p>
             <p className="mt-0.5 truncate text-xs text-surface-foreground-soft">
               {expense.category} · {formatDateLong(expense.date)}
             </p>
-            {expense.tags.length > 0 && (
+            {!hideTags && expense.tags.length > 0 && (
               <div className="mt-1 flex flex-wrap items-center gap-1">
                 {expense.tags.map((tag) => (
                   <span

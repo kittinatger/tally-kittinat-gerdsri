@@ -15,6 +15,7 @@ import SplitExpenseGroup from "./SplitExpenseGroup";
 import FilterDropdown from "./FilterDropdown";
 import DateRangeFilter from "./DateRangeFilter";
 import Modal from "./Modal";
+import { DEFAULT_ACTIVITIES_PREFS, compareActivitiesSort, resolveDefaultDateRange, type ActivitiesPrefs } from "@/lib/activities-prefs";
 
 export type TypeFilter = "all" | TransactionType;
 
@@ -70,6 +71,7 @@ export default function ExpenseList({
   onSearchChange,
   vendorFilter,
   onVendorFilterChange,
+  prefs = DEFAULT_ACTIVITIES_PREFS,
 }: {
   expenses: Expense[];
   onSelect: (expense: Expense) => void;
@@ -100,6 +102,12 @@ export default function ExpenseList({
    * cleanly returns to the normal, unfiltered view. */
   vendorFilter: string | null;
   onVendorFilterChange: (vendor: string | null) => void;
+  /** Display/behavior defaults from the Settings > Activities panel — see
+   * activities-prefs.ts. Only ever read for their *initial* value here
+   * (dateFrom/dateTo below) or applied live on every render (sort/
+   * grouping/row display) — none of it disables the list's own filter
+   * controls. */
+  prefs?: ActivitiesPrefs;
 }) {
   const t = useT();
   const language = useLanguage();
@@ -108,8 +116,8 @@ export default function ExpenseList({
   const currency = useCurrency();
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState("all");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [dateFrom, setDateFrom] = useState(() => resolveDefaultDateRange(prefs.defaultDateRangeDays).from);
+  const [dateTo, setDateTo] = useState(() => resolveDefaultDateRange(prefs.defaultDateRangeDays).to);
   const [filterOpen, setFilterOpen] = useState(false);
 
   // Tracks which single expense row (if any) currently has its swipe
@@ -395,15 +403,30 @@ export default function ExpenseList({
     URL.revokeObjectURL(url);
   }
 
+  // Sorted once here (rather than per group) so both the grouped and flat
+  // (groupByMonth off) render paths share the same order.
+  const sortedFiltered = useMemo(
+    () => [...filtered].sort((a, b) => compareActivitiesSort(a, b, prefs.defaultSort)),
+    [filtered, prefs.defaultSort],
+  );
+
+  // groupByMonth off collapses everything into one bucket under a single
+  // empty key — the render below only shows the month-header/net-badge
+  // row when groupByMonth is on, so that empty key is never displayed.
   const groups = useMemo(() => {
+    if (!prefs.groupByMonth) return [["flat", sortedFiltered]] as [string, Expense[]][];
     const map = new Map<string, Expense[]>();
-    for (const e of filtered) {
+    for (const e of sortedFiltered) {
       const key = monthKey(e.date);
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(e);
     }
-    return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  }, [filtered]);
+    // Newest-month-first, except when the chosen sort is itself
+    // oldest-first — an oldest-first sort inside months that still ran
+    // newest-to-oldest would read as contradictory.
+    const ascending = prefs.defaultSort === "oldest";
+    return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? (ascending ? -1 : 1) : ascending ? 1 : -1));
+  }, [sortedFiltered, prefs.groupByMonth, prefs.defaultSort]);
 
   if (expenses.length === 0) {
     return (
@@ -672,19 +695,21 @@ export default function ExpenseList({
             const net = items.reduce((sum, e) => sum + signedAmount(e), 0);
             return (
               <section key={key}>
-                <div className="mb-2 flex items-center justify-between px-1">
-                  <h2 className="font-display text-base text-foreground">{monthLabel(key)}</h2>
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      net >= 0
-                        ? badgeClasses("emerald")
-                        : "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400"
-                    }`}
-                  >
-                    {net >= 0 ? "+" : "-"}
-                    {formatCurrency(Math.abs(net), currency)}
-                  </span>
-                </div>
+                {prefs.groupByMonth && (
+                  <div className="mb-2 flex items-center justify-between px-1">
+                    <h2 className="font-display text-base text-foreground">{monthLabel(key)}</h2>
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        net >= 0
+                          ? badgeClasses("emerald")
+                          : "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400"
+                      }`}
+                    >
+                      {net >= 0 ? "+" : "-"}
+                      {formatCurrency(Math.abs(net), currency)}
+                    </span>
+                  </div>
+                )}
                 <div className="overflow-hidden rounded-card border border-surface-line bg-surface">
                   {selectMode
                     ? items.map((expense, i) => (
@@ -696,6 +721,9 @@ export default function ExpenseList({
                           selectMode
                           selected={selectedIds.has(expense.id)}
                           onToggleSelect={() => toggleSelected(expense.id)}
+                          hideIcon={prefs.hideMerchantIcons}
+                          compact={prefs.compactRows}
+                          hideTags={prefs.hideTagsInRow}
                         />
                       ))
                     : buildDisplayRows(items).map((row, i, arr) =>
@@ -705,6 +733,9 @@ export default function ExpenseList({
                             items={row.items}
                             onSelectLine={onSelect}
                             isLast={i === arr.length - 1}
+                            hideIcon={prefs.hideMerchantIcons}
+                            compact={prefs.compactRows}
+                            collapsedByDefault={prefs.collapseSplitGroups}
                           />
                         ) : (
                           <ExpenseRow
@@ -716,6 +747,9 @@ export default function ExpenseList({
                             isLast={i === arr.length - 1}
                             isOpen={openRowId === row.expense.id}
                             onOpenChange={(open) => setOpenRowId(open ? row.expense.id : null)}
+                            hideIcon={prefs.hideMerchantIcons}
+                            compact={prefs.compactRows}
+                            hideTags={prefs.hideTagsInRow}
                           />
                         ),
                       )}

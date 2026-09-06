@@ -11,6 +11,7 @@ import { CurrencyProvider } from "@/lib/currency-context";
 import { WalletsProvider } from "@/lib/wallets-context";
 import { useMediaQuery, DESKTOP_QUERY } from "@/lib/use-media-query";
 import { useT } from "@/lib/language-context";
+import { DEFAULT_ACTIVITIES_PREFS, type ActivitiesPrefs } from "@/lib/activities-prefs";
 import PullToRefresh from "./PullToRefresh";
 import ExpenseList, { type TypeFilter } from "./ExpenseList";
 import ActivitiesBalanceCard from "./ActivitiesBalanceCard";
@@ -37,6 +38,7 @@ export default function ActivitiesView({
   initialWalletFilter = "all",
   initialAddOpen = false,
   initialVendorFilter,
+  prefs = DEFAULT_ACTIVITIES_PREFS,
 }: {
   initialExpenses: Expense[];
   categories: CategoryOption[];
@@ -56,6 +58,10 @@ export default function ActivitiesView({
    * page.tsx) or a same-session merchant-name click (see
    * handleMerchantClick), both driving the same vendorFilter state. */
   initialVendorFilter?: string;
+  /** Display/behavior defaults from the Settings > Activities panel — see
+   * activities-prefs.ts. Read server-side in page.tsx, same as
+   * activitiesDefaultWalletId above. */
+  prefs?: ActivitiesPrefs;
 }) {
   const t = useT();
   const router = useRouter();
@@ -71,7 +77,7 @@ export default function ActivitiesView({
   }, []);
   const [viewing, setViewing] = useState<Expense | null>(null);
   const [editing, setEditing] = useState<Expense | null>(null);
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>(prefs.defaultTypeFilter);
   const [walletFilter, setWalletFilter] = useState(initialWalletFilter);
   const [search, setSearch] = useState("");
   const [vendorFilter, setVendorFilter] = useState<string | null>(initialVendorFilter ?? null);
@@ -158,6 +164,7 @@ export default function ActivitiesView({
                   onSearchChange={setSearch}
                   vendorFilter={vendorFilter}
                   onVendorFilterChange={setVendorFilter}
+                  prefs={prefs}
                 />
               </div>
 
