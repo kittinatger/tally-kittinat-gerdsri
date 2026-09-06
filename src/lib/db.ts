@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 65;
+const CURRENT_SCHEMA_VERSION = 66;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1494,6 +1494,17 @@ function ensureSchema(): Promise<void> {
       // pick time into ephemeral React state, never persisted on the
       // picking wallet itself.
       await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS lock_svg_colors BOOLEAN NOT NULL DEFAULT false;`;
+
+      // One-time backfill: the column above defaulted every template that
+      // already existed to false (unlocked/editable), but the whole point
+      // of this feature is that colors stay locked unless a template's
+      // author explicitly opts to leave them editable — nobody made that
+      // choice for a template submitted before lock_svg_colors existed.
+      // Retroactively lock every template already in the table as of this
+      // migration; only templates created after this point (via
+      // createCardTemplate, which always passes an explicit value) can
+      // end up unlocked from here on.
+      await sql`UPDATE card_templates SET lock_svg_colors = true WHERE lock_svg_colors = false;`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
