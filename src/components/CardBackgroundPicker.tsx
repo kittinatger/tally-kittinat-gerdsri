@@ -199,8 +199,8 @@ export default function CardBackgroundPicker({
           {isCustomSvg && customSvgColors.length > 0 && (
             svgColorsUnlocked ? (
               <div className="space-y-2.5 border-t border-line pt-2.5">
-                {customSvgColors.map((c) => (
-                  <ColorPicker key={c} value={c} onChange={(next) => recolorCustomSvg(c, next)} palette={[]} />
+                {customSvgColors.map(({ raw, hex }) => (
+                  <ColorPicker key={raw} value={hex} onChange={(next) => recolorCustomSvg(raw, next)} palette={[]} />
                 ))}
               </div>
             ) : (
