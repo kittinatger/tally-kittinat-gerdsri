@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 69;
+const CURRENT_SCHEMA_VERSION = 70;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1523,6 +1523,14 @@ function ensureSchema(): Promise<void> {
       // don't force the card number hidden (force_show_card_number !==
       // false).
       await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS force_card_number_position TEXT;`;
+
+      // One-time: for every template that already exists and doesn't
+      // already force the card number hidden (force_show_card_number is
+      // null — "don't touch it" — or already true), explicitly force it
+      // shown. Same idea as the force_show_nfc backfill above — a
+      // template whose artwork already displays the card number
+      // shouldn't have a picker able to hide it.
+      await sql`UPDATE card_templates SET force_show_card_number = true WHERE force_show_card_number IS DISTINCT FROM false;`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
