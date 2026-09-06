@@ -159,14 +159,18 @@ export default function AccountDetail({
           chipPosition={wallet.chipPosition}
           showNfc={wallet.showNfc}
           nfcPosition={wallet.nfcPosition}
+          nfcSize={wallet.nfcSize}
           balance={wallet.balance}
           currency={walletCurrency}
           showBalance={wallet.showBalance}
           showCurrency={wallet.showCurrency}
           showCardNumber={wallet.showCardNumber}
+          cardNumberLast4Only={wallet.cardNumberLast4Only}
+          cardNumberPosition={wallet.cardNumberPosition}
           showName={wallet.showName}
           showHolderName={wallet.showHolderName}
           showExpiry={wallet.showExpiry}
+          namePosition={wallet.namePosition}
         />
       ) : (
         <AccountCardShape wallet={wallet} currency={appCurrency} />
