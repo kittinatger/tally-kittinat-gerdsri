@@ -82,6 +82,7 @@ export function toCardTemplateOption(t: CardTemplateRow): CardTemplateOption {
     forceShowNfc: t.force_show_nfc,
     forceNfcPosition: t.force_nfc_position && isBadgePosition(t.force_nfc_position) ? t.force_nfc_position : null,
     forceNfcSize: t.force_nfc_size && isNfcSize(t.force_nfc_size) ? t.force_nfc_size : null,
+    lockSvgColors: t.lock_svg_colors,
     status: t.status,
     submittedByUsername: t.submitted_by_username,
     createdAt: t.created_at,

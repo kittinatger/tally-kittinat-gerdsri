@@ -283,6 +283,10 @@ export const cardTemplateInputSchema = z.object({
   forceShowNfc: z.boolean().nullable().optional(),
   forceNfcPosition: z.enum(BADGE_POSITIONS).nullable().optional(),
   forceNfcSize: z.enum(NFC_SIZES).nullable().optional(),
+  // When true, and the background is a custom-uploaded SVG, a wallet
+  // picking this template never sees the "Edit colors" unlock toggle for
+  // it — the shipped colors are final.
+  lockSvgColors: z.boolean().optional(),
 });
 
 // Admin-only edit — every field optional (at least one required), used for
@@ -311,6 +315,7 @@ export const cardTemplateUpdateSchema = z
     forceShowNfc: z.boolean().nullable().optional(),
     forceNfcPosition: z.enum(BADGE_POSITIONS).nullable().optional(),
     forceNfcSize: z.enum(NFC_SIZES).nullable().optional(),
+    lockSvgColors: z.boolean().optional(),
     status: z.enum(["pending", "approved", "rejected"]).optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {

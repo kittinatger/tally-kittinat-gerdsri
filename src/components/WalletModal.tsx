@@ -15,6 +15,7 @@ import ForceToggleField from "./ForceToggleField";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import { CARD_NETWORKS, type CardNetwork } from "@/lib/wallet-cards";
 import { backgroundGlowColor, cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
+import { isSvgDataUrl } from "@/lib/svg-recolor";
 import { CHIP_COLORS, CHIP_COLOR_LABEL_KEYS, CHIP_COLOR_STOPS, DEFAULT_CHIP_COLOR, type ChipColor } from "@/lib/chip-colors";
 import { BADGE_POSITIONS, BADGE_POSITION_LABEL_KEYS, DEFAULT_BADGE_POSITION, DEFAULT_NFC_POSITION, type BadgePosition } from "@/lib/badge-position";
 import { CHIP_POSITIONS, CHIP_POSITION_LABEL_KEYS, DEFAULT_CHIP_POSITION, type ChipPosition } from "@/lib/chip-position";
@@ -241,6 +242,24 @@ export default function WalletModal({
   // NFC corner" (the picker just inherits whatever the wallet already has).
   const [templateForceNfcPosition, setTemplateForceNfcPosition] = useState<BadgePosition | null>(null);
   const [templateForceNfcSize, setTemplateForceNfcSize] = useState<NfcSize | null>(null);
+  // When true, and the background is a custom-uploaded SVG, forces
+  // CardBackgroundPicker's "Edit colors" unlock to stay hidden — set from
+  // a picked template's own lockSvgColors (see card_templates.lock_svg_colors
+  // in db.ts). Also the value submitted for a *new* template upload.
+  const [templateLockSvgColors, setTemplateLockSvgColors] = useState(false);
+  // Set from a picked template's lockSvgColors, purely to drive the
+  // CardBackgroundPicker prop above — kept separate from
+  // templateLockSvgColors because that one doubles as the *next*
+  // submission's own lock value, which the author should be free to pick
+  // independently of what the original template they're varying had.
+  const [svgColorsLockedByTemplate, setSvgColorsLockedByTemplate] = useState(false);
+  // True once a picked template's custom-SVG colors are unlocked (i.e. the
+  // template itself didn't lock them) — lets the author submit a "color
+  // variation" of that template: same name/category/forces, different
+  // colors. Re-enables the Template tab even though templateApplied is
+  // already true (see the tabs filter below), instead of the normal
+  // "already applied a premade design, nothing left to upload" hide.
+  const [allowTemplateVariation, setAllowTemplateVariation] = useState(false);
 
   const month = expiryMonth ? Number(expiryMonth) : null;
   const year = expiryYear ? Number(expiryYear) : null;
@@ -267,7 +286,10 @@ export default function WalletModal({
 
   // The "Template" tab (Upload as template) hides once a premade card's
   // already been picked this session — see templateApplied's own comment
-  // above; there's nothing left there to show.
+  // above; there's nothing left there to show. The one exception is
+  // allowTemplateVariation: a picked template whose custom-SVG colors
+  // aren't locked lets the author submit a recolored "variation" of it,
+  // so the tab stays available for that.
   const tabs = (
     [
       ["basics", "wallet.tabBasics"],
@@ -275,7 +297,7 @@ export default function WalletModal({
       ["look", "wallet.tabLook"],
       ["template", "wallet.tabTemplate"],
     ] as const
-  ).filter(([key]) => key !== "template" || !templateApplied);
+  ).filter(([key]) => key !== "template" || !templateApplied || allowTemplateVariation);
 
   const appDefaultLabel = t("wallet.appDefault");
   const currencyOptions = [`${appDefaultLabel} (${appCurrency})`, ...CURRENCIES.map((c) => `${c.code} — ${c.name}`)];
@@ -312,6 +334,7 @@ export default function WalletModal({
           lockTextColor: templateLockTextColor,
           category: templateCategory,
           forceNetwork: templateForceNetwork,
+          lockSvgColors: templateLockSvgColors,
         }),
       });
       const data = await res.json();
@@ -1208,9 +1231,45 @@ export default function WalletModal({
               } else {
                 setNfcSizeLocked(false);
               }
+              setSvgColorsLockedByTemplate(tpl.lockSvgColors);
+              // A custom-SVG background whose colors this template doesn't
+              // lock can be recolored and resubmitted as a "variation" —
+              // carry the template's own metadata/forces over so the
+              // resubmission reuses them rather than starting blank.
+              const isCustomSvgBackground = tpl.background?.pattern === "photo" && isSvgDataUrl(tpl.background.photoDataUrl);
+              if (isCustomSvgBackground && !tpl.lockSvgColors) {
+                setAllowTemplateVariation(true);
+                setTemplateName(tpl.name);
+                setTemplateCategory(tpl.category);
+                setTemplateForceNamePosition(tpl.forceNamePosition);
+                setTemplateLockTextColor(tpl.lockTextColor);
+                setTemplateForceNetwork(tpl.forceNetwork);
+                setTemplateForceNfcPosition(tpl.forceNfcPosition);
+                setTemplateForceNfcSize(tpl.forceNfcSize);
+                setTemplateLockSvgColors(false);
+                setForceToggles({
+                  showName: tpl.forceShowName,
+                  showNetworkBadge: tpl.forceShowNetworkBadge,
+                  showChip: tpl.forceShowChip,
+                  showCardNumber: tpl.forceShowCardNumber,
+                  showBalance: tpl.forceShowBalance,
+                  showCurrency: tpl.forceShowCurrency,
+                  showHolderName: tpl.forceShowHolderName,
+                  showExpiry: tpl.forceShowExpiry,
+                  showNfc: tpl.forceShowNfc,
+                });
+              } else {
+                setAllowTemplateVariation(false);
+              }
             }}
           />
-          <CardBackgroundPicker value={background} onChange={setBackground} plainColor={color} onPlainColorChange={setColor} />
+          <CardBackgroundPicker
+            value={background}
+            onChange={setBackground}
+            plainColor={color}
+            onPlainColorChange={setColor}
+            svgColorsLocked={svgColorsLockedByTemplate}
+          />
           {/* Hidden entirely once a picked template locks the text color —
            * see the matching name-position section above for why this is a
            * hide, not a disabled/note state. */}
@@ -1258,7 +1317,7 @@ export default function WalletModal({
         </FormSection>
         )}
 
-        {tab === "template" && !templateApplied && (
+        {tab === "template" && (!templateApplied || allowTemplateVariation) && (
         <>
         {templateSubmitted ? (
         <FormSection icon={<UploadIcon className="h-4 w-4" />} title={t("wallet.uploadTemplateLabel")}>
@@ -1267,7 +1326,7 @@ export default function WalletModal({
         ) : (
         <>
         <p className="text-xs text-ink-soft">
-          {t("wallet.uploadTemplateDesc")}{" "}
+          {templateApplied && allowTemplateVariation ? t("wallet.uploadTemplateVariationDesc") : t("wallet.uploadTemplateDesc")}{" "}
           <a
             href="/card-guidelines"
             target="_blank"
@@ -1419,6 +1478,35 @@ export default function WalletModal({
               />
             </span>
           </button>
+
+          {/* Only meaningful when the background is a custom-uploaded SVG
+           * (see svg-recolor.ts) — a plain color or built-in pattern has
+           * no such lock concept on templates. */}
+          {background?.pattern === "photo" && isSvgDataUrl(background.photoDataUrl) && (
+            <button
+              type="button"
+              onClick={() => setTemplateLockSvgColors((v) => !v)}
+              className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+            >
+              <span>
+                <span className="block text-sm font-medium text-foreground">{t("wallet.lockSvgColorsLabel")}</span>
+                <span className="block text-xs text-ink-soft">{t("wallet.lockSvgColorsDesc")}</span>
+              </span>
+              <span
+                role="switch"
+                aria-checked={templateLockSvgColors}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                  templateLockSvgColors ? "bg-navy" : "bg-line"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                    templateLockSvgColors ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </span>
+            </button>
+          )}
 
           {/* Positioning holder-name text makes no sense once "Name on
            * card" is itself forced off — see the matching guard on force

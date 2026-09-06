@@ -53,12 +53,19 @@ export default function CardBackgroundPicker({
   plainColor,
   onPlainColorChange,
   palette,
+  svgColorsLocked,
 }: {
   value: CardBackground | null;
   onChange: (background: CardBackground | null) => void;
   plainColor: string;
   onPlainColorChange: (color: string) => void;
   palette?: readonly string[];
+  // When true, forces the custom-uploaded-SVG "Edit colors" unlock to stay
+  // hidden/locked regardless of local state — set from a picked template's
+  // lockSvgColors. Only ever applies to the custom-SVG (isCustomSvg)
+  // branch below, never to the built-in isSvgPattern branch, which has no
+  // such concept on templates.
+  svgColorsLocked?: boolean;
 }) {
   const t = useT();
   const [scanOpen, setScanOpen] = useState(false);
@@ -176,8 +183,10 @@ export default function CardBackgroundPicker({
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-semibold text-ink-soft">{t("background.scanCard")}</p>
             {/* Only a custom-uploaded SVG has discrete colors to edit — a
-             * real photo is just pixels. */}
-            {isCustomSvg && customSvgColors.length > 0 && (
+             * real photo is just pixels. A template can force this locked
+             * (lockSvgColors), in which case the toggle never appears at
+             * all — the shipped colors are final. */}
+            {isCustomSvg && customSvgColors.length > 0 && !svgColorsLocked && (
               <button
                 type="button"
                 onClick={() => setSvgColorsUnlocked((v) => !v)}
@@ -197,7 +206,7 @@ export default function CardBackgroundPicker({
             <img src={value.photoDataUrl} alt="" className="aspect-[8/5] w-full object-cover" />
           </div>
           {isCustomSvg && customSvgColors.length > 0 && (
-            svgColorsUnlocked ? (
+            svgColorsUnlocked && !svgColorsLocked ? (
               <div className="space-y-2.5 border-t border-line pt-2.5">
                 {customSvgColors.map(({ hex }) => (
                   <ColorPicker key={hex} value={hex} onChange={(next) => recolorCustomSvg(hex, next)} palette={[]} />

@@ -102,6 +102,7 @@ export default function TemplateReviewPanel() {
     if (tpl.forceNfcPosition !== null) parts.push(`${t("wallet.nfcPositionLabel")}: ${t(BADGE_POSITION_LABEL_KEYS[tpl.forceNfcPosition])}`);
     if (tpl.forceNfcSize !== null) parts.push(`${t("wallet.nfcSizeLabel")}: ${t(NFC_SIZE_LABEL_KEYS[tpl.forceNfcSize])}`);
     if (tpl.lockTextColor) parts.push(t("wallet.lockTextColorLabel"));
+    if (tpl.lockSvgColors) parts.push(t("wallet.lockSvgColorsLabel"));
     return parts.length ? parts.join(", ") : "";
   }
 

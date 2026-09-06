@@ -9,6 +9,7 @@ import CardTextColorPicker from "./CardTextColorPicker";
 import ForceToggleField from "./ForceToggleField";
 import SelectDropdown from "./SelectDropdown";
 import { backgroundGlowColor, cardForegroundFor, cardBackgroundStyle, type CardBackground } from "@/lib/card-backgrounds";
+import { isSvgDataUrl } from "@/lib/svg-recolor";
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import { CURRENCIES } from "@/lib/currencies";
@@ -95,6 +96,7 @@ export default function TemplateEditModal({
   const [forceNetwork, setForceNetwork] = useState<CardNetwork | null>(template.forceNetwork);
   const [forceNfcPosition, setForceNfcPosition] = useState<BadgePosition | null>(template.forceNfcPosition);
   const [forceNfcSize, setForceNfcSize] = useState<NfcSize | null>(template.forceNfcSize);
+  const [lockSvgColors, setLockSvgColors] = useState(template.lockSvgColors);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -123,6 +125,7 @@ export default function TemplateEditModal({
           forceNetwork,
           forceNfcPosition,
           forceNfcSize,
+          lockSvgColors,
         }),
       });
       const data = await res.json();
@@ -331,6 +334,35 @@ export default function TemplateEditModal({
               />
             </span>
           </button>
+
+          {/* Only meaningful when the background is a custom-uploaded SVG
+           * (see svg-recolor.ts) — nothing else has editable colors to
+           * lock. */}
+          {background?.pattern === "photo" && isSvgDataUrl(background.photoDataUrl) && (
+            <button
+              type="button"
+              onClick={() => setLockSvgColors((v) => !v)}
+              className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+            >
+              <span>
+                <span className="block text-sm font-medium text-foreground">{t("wallet.lockSvgColorsLabel")}</span>
+                <span className="block text-xs text-ink-soft">{t("wallet.lockSvgColorsDesc")}</span>
+              </span>
+              <span
+                role="switch"
+                aria-checked={lockSvgColors}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                  lockSvgColors ? "bg-navy" : "bg-line"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                    lockSvgColors ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </span>
+            </button>
+          )}
 
           {/* Positioning holder-name text makes no sense once "Name on
            * card" is itself force-hidden — see the matching guard on

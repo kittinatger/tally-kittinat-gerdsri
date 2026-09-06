@@ -59,6 +59,11 @@ export type CardTemplateOption = {
   /** Which size to force the NFC symbol onto — null means "leave whatever
    * the wallet already has". */
   forceNfcSize: NfcSize | null;
+  /** When true, and the background is a custom-uploaded SVG (see
+   * svg-recolor.ts), the picker never even sees CardBackgroundPicker's
+   * "Edit colors" unlock toggle for it — the template's own colors are
+   * final. Meaningless for every other background type. */
+  lockSvgColors: boolean;
   status: "pending" | "approved" | "rejected";
   submittedByUsername: string | null;
   createdAt: string;
