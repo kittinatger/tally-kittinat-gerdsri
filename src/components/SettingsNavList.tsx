@@ -501,22 +501,31 @@ export default function SettingsNavList({
         <SettingsListItem icon={<SparkleIcon />} label={t("settings.aiUsage")} accent="violet" {...panelItemProps("aiUsage")} />
       </SettingsSection>
 
-      {/* "Money" (was "Records") — every panel about what you own or owe:
-       * wallets themselves plus the categorization/budgeting/recurring/
+      {/* "Money" (was "Records") — every panel about what you actually own
+       * or owe: wallets themselves plus the budgeting/savings/recurring/
        * loan features built on top of them. Budgets/savings/recurring
        * used to sit in their own "Budgeting" section, separated from
-       * wallets/categories for no real reason — they're all the same
-       * "manage my money" mental bucket. */}
+       * wallets for no real reason — they're all the same "manage my
+       * money" mental bucket. Categories/tags/vendors/Activities-display
+       * moved out to their own "Organize" section below — they're about
+       * labeling and presenting transactions, not money itself. */}
       <SettingsSection title={t("settings.section.records")}>
         <SettingsListItem icon={<WalletIcon />} label={t("settings.wallets")} accent="sky" {...panelItemProps("wallets")} />
-        <SettingsListItem icon={<GridIcon />} label={t("settings.manageCategories")} accent="indigo" {...panelItemProps("categories")} />
-        <SettingsListItem icon={<HashIcon />} label={t("settings.manageTags")} accent="indigo" {...panelItemProps("tags")} />
-        <SettingsListItem icon={<StoreIcon />} label={t("settings.vendors")} accent="indigo" {...panelItemProps("vendors")} />
-        <SettingsListItem icon={<ReceiptNavIcon />} label={t("settings.activities")} accent="indigo" {...panelItemProps("activities")} />
         <SettingsListItem icon={<BudgetIcon />} label={t("settings.budgets")} accent="orange" {...panelItemProps("budgets")} />
         <SettingsListItem icon={<GoalIcon />} label={t("settings.savingsGoals")} accent="emerald" {...panelItemProps("savingsGoals")} />
         <SettingsListItem icon={<RecurringIcon />} label={t("settings.recurring")} accent="teal" {...panelItemProps("recurring")} />
         <SettingsListItem icon={<LoanIcon />} label={t("settings.loans")} accent="teal" {...panelItemProps("loans")} />
+      </SettingsSection>
+
+      {/* Split out of "Money" — these are about labeling/presenting your
+       * transactions (how they're categorized, tagged, which vendor a
+       * merchant maps to, how the Activities list itself displays), not
+       * what you own or owe. */}
+      <SettingsSection title={t("settings.section.organize")}>
+        <SettingsListItem icon={<GridIcon />} label={t("settings.manageCategories")} accent="indigo" {...panelItemProps("categories")} />
+        <SettingsListItem icon={<HashIcon />} label={t("settings.manageTags")} accent="indigo" {...panelItemProps("tags")} />
+        <SettingsListItem icon={<StoreIcon />} label={t("settings.vendors")} accent="indigo" {...panelItemProps("vendors")} />
+        <SettingsListItem icon={<ReceiptNavIcon />} label={t("settings.activities")} accent="indigo" {...panelItemProps("activities")} />
       </SettingsSection>
 
       <SettingsSection title={t("settings.section.social")}>
