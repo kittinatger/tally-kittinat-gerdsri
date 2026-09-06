@@ -43,6 +43,9 @@ export type WalletOption = {
   showChip: boolean;
   chipColor: ChipColor;
   chipPosition: ChipPosition;
+  /** Whether the contactless/NFC symbol renders — defaults false for any
+   * wallet that existed before this feature shipped. */
+  showNfc: boolean;
   notes: string | null;
   /** Whether the balance amount renders on the card face — independent of
    * whether the wallet has a card look at all. */

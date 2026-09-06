@@ -94,6 +94,12 @@ export default function WalletModal({
   const [showChip, setShowChip] = useState(wallet?.showChip ?? true);
   const [chipColor, setChipColor] = useState<ChipColor>(wallet?.chipColor ?? DEFAULT_CHIP_COLOR);
   const [chipPosition, setChipPosition] = useState<ChipPosition>(wallet?.chipPosition ?? DEFAULT_CHIP_POSITION);
+  // Unlike every other showX default here, this one matters: `wallet` is
+  // only undefined for a brand-new wallet, so this reads true there (NFC
+  // shows by default going forward) but exactly whatever an existing
+  // wallet's own saved value is otherwise (false for one that predates
+  // this feature — see the show_nfc migration comment in db.ts).
+  const [showNfc, setShowNfc] = useState(wallet?.showNfc ?? true);
   const [cardNotes, setCardNotes] = useState(wallet?.notes ?? "");
   const [showBalance, setShowBalance] = useState(wallet?.showBalance ?? true);
   const [showCurrency, setShowCurrency] = useState(wallet?.showCurrency ?? true);
@@ -137,6 +143,7 @@ export default function WalletModal({
     network: boolean;
     showHolderName: boolean;
     showExpiry: boolean;
+    showNfc: boolean;
   }>({
     showName: false,
     showNetworkBadge: false,
@@ -147,6 +154,7 @@ export default function WalletModal({
     network: false,
     showHolderName: false,
     showExpiry: false,
+    showNfc: false,
   });
 
   // "Upload as template" submits the current background/color/textColor
@@ -178,6 +186,7 @@ export default function WalletModal({
     showCurrency: boolean | null;
     showHolderName: boolean | null;
     showExpiry: boolean | null;
+    showNfc: boolean | null;
   }>({
     showName: null,
     showNetworkBadge: null,
@@ -187,6 +196,7 @@ export default function WalletModal({
     showCurrency: null,
     showHolderName: null,
     showExpiry: null,
+    showNfc: null,
   });
   // Separate from forceToggles.showCurrency (which only forces whether a
   // currency renders) — this forces which currency code the wallet itself
@@ -279,6 +289,7 @@ export default function WalletModal({
           forceShowCurrency: forceToggles.showCurrency,
           forceShowHolderName: forceToggles.showHolderName,
           forceShowExpiry: forceToggles.showExpiry,
+          forceShowNfc: forceToggles.showNfc,
           forceCurrency: lockCurrency ? currency : null,
           forceNamePosition: templateForceNamePosition,
           lockTextColor: templateLockTextColor,
@@ -324,6 +335,7 @@ export default function WalletModal({
         showChip,
         chipColor,
         chipPosition,
+        showNfc,
         notes: cardNotes.trim() || null,
         showBalance,
         showCurrency,
@@ -397,6 +409,7 @@ export default function WalletModal({
             showChip={showChip}
             chipColor={chipColor}
             chipPosition={chipPosition}
+            showNfc={showNfc}
             balance={Number(startingBalance) || 0}
             currency={currency ?? appCurrency}
             showBalance={showBalance}
@@ -583,6 +596,33 @@ export default function WalletModal({
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Shares the badge's own corner (see WalletCardShape) rather
+           * than getting its own position control — real contactless
+           * cards carry the two symbols right next to each other. */}
+          {!forcedFields.showNfc && (
+            <button
+              type="button"
+              onClick={() => setShowNfc((v) => !v)}
+              className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+            >
+              <span>
+                <span className="block text-sm font-medium text-foreground">{t("wallet.showNfcLabel")}</span>
+                <span className="block text-xs text-ink-soft">{t("wallet.showNfcDesc")}</span>
+              </span>
+              <span
+                role="switch"
+                aria-checked={showNfc}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${showNfc ? "bg-navy" : "bg-line"}`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                    showNfc ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </span>
+            </button>
           )}
         </FormSection>
         )}
@@ -1058,6 +1098,7 @@ export default function WalletModal({
               if (tpl.forceNetwork !== null) setNetwork(tpl.forceNetwork);
               if (tpl.forceShowHolderName !== null) setShowHolderName(tpl.forceShowHolderName);
               if (tpl.forceShowExpiry !== null) setShowExpiry(tpl.forceShowExpiry);
+              if (tpl.forceShowNfc !== null) setShowNfc(tpl.forceShowNfc);
               setForcedFields({
                 showName: tpl.forceShowName !== null,
                 showNetworkBadge: tpl.forceShowNetworkBadge !== null,
@@ -1068,6 +1109,7 @@ export default function WalletModal({
                 network: tpl.forceNetwork !== null,
                 showHolderName: tpl.forceShowHolderName !== null,
                 showExpiry: tpl.forceShowExpiry !== null,
+                showNfc: tpl.forceShowNfc !== null,
               });
               if (tpl.forceNamePosition !== null) {
                 setNamePosition(tpl.forceNamePosition);
@@ -1214,6 +1256,7 @@ export default function WalletModal({
                 ["showExpiry", "wallet.forceLabelExpiry"],
                 ["showBalance", "wallet.forceLabelBalance"],
                 ["showCurrency", "wallet.forceLabelCurrency"],
+                ["showNfc", "wallet.forceLabelNfc"],
               ] as const
             ).map(([key, labelKey]) => (
               <ForceToggleField

@@ -89,6 +89,7 @@ export default function TemplateReviewPanel() {
       [tpl.forceShowExpiry, t("wallet.showExpiryLabel")],
       [tpl.forceShowBalance, t("wallet.showBalanceOnCardLabel")],
       [tpl.forceShowCurrency, t("wallet.showCurrencyOnCardLabel")],
+      [tpl.forceShowNfc, t("wallet.showNfcLabel")],
     ];
     const parts = entries
       .filter(([value]) => value !== null)

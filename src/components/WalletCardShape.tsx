@@ -82,6 +82,20 @@ function NetworkBadge({ network }: { network: CardNetwork }) {
   );
 }
 
+// The standard contactless-payment "sound wave" glyph — three concentric
+// quarter-arcs, same mark every real contactless-enabled card carries
+// regardless of issuer or network, so (like EMVChip) this renders the
+// literal industry symbol rather than a per-network reinterpretation.
+function NfcIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-5 w-5 shrink-0" aria-hidden="true">
+      <path d="M8.5 4.5a11 11 0 0 1 0 15" />
+      <path d="M5.5 7.5a7 7 0 0 1 0 9" />
+      <path d="M2.5 10.5a3 3 0 0 1 0 3" />
+    </svg>
+  );
+}
+
 // A generic ISO/EMV-style contact chip — the six-pad house-shaped notch
 // pattern is the industry-standard chip look used across every issuer's
 // cards, not any one manufacturer's proprietary design, so it's safe to
@@ -148,6 +162,7 @@ export default function WalletCardShape({
   showChip = true,
   chipColor = DEFAULT_CHIP_COLOR,
   chipPosition = DEFAULT_CHIP_POSITION,
+  showNfc = false,
   balance = null,
   currency = "",
   showBalance = false,
@@ -186,6 +201,11 @@ export default function WalletCardShape({
    * against the card's left edge; "topLeft"/"bottomLeft" pull it into a
    * corner instead — see chip-position.ts. */
   chipPosition?: ChipPosition;
+  /** Whether the contactless/NFC symbol renders — shares the network
+   * badge's corner (badgePosition) rather than having its own, since real
+   * cards carry the two right next to each other. Defaults false so an
+   * existing wallet is unaffected until its owner turns this on. */
+  showNfc?: boolean;
   /** Balance to preview on the card face — only rendered when showBalance
    * is true AND a number is actually passed (so a purely decorative card
    * with no real account behind it, the default, shows nothing extra). */
@@ -280,12 +300,19 @@ export default function WalletCardShape({
   // site below so TypeScript narrows cardNumberPosition to "middle" |
   // "bottom" for CARD_NUMBER_POSITION_CLASSES' lookup).
   const cardNumberText = cardNumberLast4Only ? (last4 ?? "••••") : `•••• •••• •••• ${last4 ?? "••••"}`;
+  // The badge and the NFC symbol share one corner (badgePosition) rather
+  // than each getting their own — real cards carry both right next to each
+  // other. badgeAreaShown covers "there's something in that corner at
+  // all" for reservation purposes; the reserved width grows when both are
+  // present together rather than just one.
+  const badgeAreaShown = showNetworkBadge || showNfc;
   function rowReserveStyle(isTopRow: boolean): CSSProperties {
     let left = 0;
     let right = 0;
-    if (showNetworkBadge && badgeOnTop === isTopRow) {
-      if (badgeOnRight) right = 64;
-      else left = 64;
+    if (badgeAreaShown && badgeOnTop === isTopRow) {
+      const width = showNetworkBadge && showNfc ? 88 : 64;
+      if (badgeOnRight) right = width;
+      else left = width;
     }
     // middleLeft doesn't reserve space in either row — it's vertically
     // centered, not pulled into a corner that could overlap the top or
@@ -304,7 +331,7 @@ export default function WalletCardShape({
   // positions, since middleLeft sits vertically centered and can't
   // coincide with a top or bottom corner.
   const chipSharesCornerWithBadge =
-    chipInCorner && chipPosition !== "middleLeft" && showNetworkBadge && !badgeOnRight && badgeOnTop === chipOnTop;
+    chipInCorner && chipPosition !== "middleLeft" && badgeAreaShown && !badgeOnRight && badgeOnTop === chipOnTop;
   // The card-number row needs its own reservation now that the chip is
   // *always* a free-floating absolutely-positioned element — it used to
   // sit inline as a flex child (in the "top" row specifically), which
@@ -340,9 +367,10 @@ export default function WalletCardShape({
       className={`relative flex aspect-[1.586/1] min-h-[190px] w-full flex-col rounded-2xl p-4 shadow-soft ${background ? "" : heroGradientClasses(color)}`}
       style={{ color: fg.full, ...(background ? cardBackgroundStyle(background) : colorHeroStyle(color)) }}
     >
-      {showNetworkBadge && (
+      {badgeAreaShown && (
         <div className={`absolute flex items-center gap-1.5 ${BADGE_POSITION_CLASSES[badgePosition]}`} style={{ color: iconFg.a85 }}>
-          {RECOLORABLE_BADGE_ASPECT[network] && !isOriginalIcon ? (
+          {showNfc && <NfcIcon />}
+          {showNetworkBadge && (RECOLORABLE_BADGE_ASPECT[network] && !isOriginalIcon ? (
             <div
               aria-label={network}
               className="h-5"
@@ -366,7 +394,7 @@ export default function WalletCardShape({
               <NetworkBadge network={network} />
               <p className="text-xs font-bold uppercase tracking-wide">{t(NETWORK_LABEL_KEYS[network])}</p>
             </>
-          )}
+          ))}
         </div>
       )}
 

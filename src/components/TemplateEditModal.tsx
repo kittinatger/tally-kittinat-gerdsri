@@ -45,6 +45,7 @@ const FORCE_FIELDS = [
   ["forceShowExpiry", "wallet.forceLabelExpiry"],
   ["forceShowBalance", "wallet.forceLabelBalance"],
   ["forceShowCurrency", "wallet.forceLabelCurrency"],
+  ["forceShowNfc", "wallet.forceLabelNfc"],
 ] as const;
 
 // The admin's full edit surface for one existing card template — unlike
@@ -79,6 +80,7 @@ export default function TemplateEditModal({
     forceShowExpiry: template.forceShowExpiry,
     forceShowBalance: template.forceShowBalance,
     forceShowCurrency: template.forceShowCurrency,
+    forceShowNfc: template.forceShowNfc,
   });
   // Distinct from force.forceShowCurrency above (whether a currency
   // renders at all) — this is which currency code the wallet itself gets

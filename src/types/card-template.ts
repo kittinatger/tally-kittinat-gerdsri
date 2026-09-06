@@ -48,6 +48,9 @@ export type CardTemplateOption = {
    * force_show_holder_name/force_show_expiry in db.ts. */
   forceShowHolderName: boolean | null;
   forceShowExpiry: boolean | null;
+  /** Whether to force the contactless/NFC symbol shown or hidden — null
+   * means "leave whatever the wallet already has". */
+  forceShowNfc: boolean | null;
   status: "pending" | "approved" | "rejected";
   submittedByUsername: string | null;
   createdAt: string;

@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 61;
+const CURRENT_SCHEMA_VERSION = 62;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1460,6 +1460,18 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE pass_templates ADD COLUMN IF NOT EXISTS lock_banner BOOLEAN NOT NULL DEFAULT false;`;
       await sql`ALTER TABLE pass_templates ADD COLUMN IF NOT EXISTS lock_fields BOOLEAN NOT NULL DEFAULT false;`;
 
+      // The card-look wallet visual can now show a contactless/NFC symbol,
+      // same corner-badge treatment as the network logo. DEFAULT false
+      // here so every existing card is unaffected by this migration —
+      // createWallet's own `input.showNfc ?? true` is what actually makes
+      // it show up by default, but only for a wallet created *after* this
+      // shipped (its INSERT always states the column explicitly, so this
+      // DEFAULT never applies to it). Same idea for card_templates'
+      // force_show_nfc: an existing template's author never opted into
+      // forcing anything about a symbol that didn't exist yet.
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS show_nfc BOOLEAN NOT NULL DEFAULT false;`;
+      await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS force_show_nfc BOOLEAN;`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -1682,6 +1694,10 @@ export type WalletRow = {
   show_chip: boolean;
   chip_color: string;
   chip_position: string;
+  /** Whether the contactless/NFC symbol renders — same corner-badge
+   * treatment as show_network_badge, defaulting false so an existing
+   * wallet stays unaffected (see the show_nfc migration comment). */
+  show_nfc: boolean;
   notes: string | null;
   show_balance: boolean;
   show_currency: boolean;
@@ -1707,7 +1723,7 @@ const WALLET_COLUMNS = `
   w.id, w.name, w.color, w.background, w.text_color, w.kind, w.currency, w.is_default, w.archived,
   w.holder_name, w.last4, w.expiry_month, w.expiry_year, w.network,
   w.show_network_badge, w.badge_position, w.icon_color, w.show_chip, w.chip_color,
-  w.chip_position, w.notes, w.show_balance, w.show_currency, w.show_card_number, w.show_name,
+  w.chip_position, w.show_nfc, w.notes, w.show_balance, w.show_currency, w.show_card_number, w.show_name,
   w.show_holder_name, w.show_expiry, w.name_position, w.card_number_position, w.card_number_last4_only,
   w.category
 `;
@@ -1770,6 +1786,7 @@ export async function createWallet(
     showChip?: boolean;
     chipColor?: string;
     chipPosition?: string;
+    showNfc?: boolean;
     notes?: string | null;
     showBalance?: boolean;
     showCurrency?: boolean;
@@ -1794,6 +1811,10 @@ export async function createWallet(
   const showChip = input.showChip ?? true;
   const chipColor = input.chipColor ?? "gold";
   const chipPosition = input.chipPosition ?? "middleLeft";
+  // New (not editing an existing wallet), so unlike the DB column's own
+  // false default, a freshly created wallet shows the NFC symbol unless
+  // the caller explicitly opts out — see the show_nfc migration comment.
+  const showNfc = input.showNfc ?? true;
   const showBalance = input.showBalance ?? true;
   const showCurrency = input.showCurrency ?? true;
   const showCardNumber = input.showCardNumber ?? true;
@@ -1822,6 +1843,7 @@ export async function createWallet(
     show_chip: boolean;
     chip_color: string;
     chip_position: string;
+    show_nfc: boolean;
     notes: string | null;
     show_balance: boolean;
     show_currency: boolean;
@@ -1837,21 +1859,21 @@ export async function createWallet(
     INSERT INTO wallets (
       user_id, name, color, background, text_color, kind, currency, sort_order,
       holder_name, last4, expiry_month, expiry_year, network,
-      show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
+      show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, show_nfc, notes,
       show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position,
       card_number_position, card_number_last4_only, category
     )
     VALUES (
       ${userId}, ${input.name}, ${input.color}, ${backgroundJson}, ${input.textColor ?? null}, ${input.kind}, ${input.currency ?? null}, ${nextSort},
       ${input.holderName ?? null}, ${input.last4 ?? null}, ${input.expiryMonth ?? null}, ${input.expiryYear ?? null}, ${input.network ?? null},
-      ${showNetworkBadge}, ${badgePosition}, ${input.iconColor ?? null}, ${showChip}, ${chipColor}, ${chipPosition}, ${input.notes ?? null},
+      ${showNetworkBadge}, ${badgePosition}, ${input.iconColor ?? null}, ${showChip}, ${chipColor}, ${chipPosition}, ${showNfc}, ${input.notes ?? null},
       ${showBalance}, ${showCurrency}, ${showCardNumber}, ${showName}, ${showHolderName}, ${showExpiry}, ${namePosition},
       ${cardNumberPosition}, ${cardNumberLast4Only}, ${input.category ?? null}
     )
     RETURNING
       id, name, color, background, text_color, kind, currency,
       holder_name, last4, expiry_month, expiry_year, network,
-      show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
+      show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, show_nfc, notes,
       show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position,
       card_number_position, card_number_last4_only, category;
   `;
@@ -1882,6 +1904,7 @@ export async function updateWallet(
     showChip?: boolean;
     chipColor?: string;
     chipPosition?: string;
+    showNfc?: boolean;
     notes?: string | null;
     showBalance?: boolean;
     showCurrency?: boolean;
@@ -1916,6 +1939,7 @@ export async function updateWallet(
     show_chip: boolean;
     chip_color: string;
     chip_position: string;
+    show_nfc: boolean;
     notes: string | null;
     show_balance: boolean;
     show_currency: boolean;
@@ -1931,7 +1955,7 @@ export async function updateWallet(
     SELECT
       name, color, background, text_color, kind, currency, is_default, archived,
       holder_name, last4, expiry_month, expiry_year, network,
-      show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, notes,
+      show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, show_nfc, notes,
       show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position,
       card_number_position, card_number_last4_only, category
     FROM wallets WHERE id = ${id} AND user_id = ${userId};
@@ -1967,6 +1991,7 @@ export async function updateWallet(
   const newShowChip = input.showChip ?? existing.show_chip;
   const newChipColor = input.chipColor ?? existing.chip_color;
   const newChipPosition = input.chipPosition ?? existing.chip_position;
+  const newShowNfc = input.showNfc ?? existing.show_nfc;
   const newNotes = input.notes !== undefined ? input.notes : existing.notes;
   const newShowBalance = input.showBalance ?? existing.show_balance;
   const newShowCurrency = input.showCurrency ?? existing.show_currency;
@@ -1990,7 +2015,7 @@ export async function updateWallet(
             archived = ${newArchived}, starting_balance = ${input.startingBalance}, starting_balance_set_at = now(),
             holder_name = ${newHolderName}, last4 = ${newLast4}, expiry_month = ${newExpiryMonth}, expiry_year = ${newExpiryYear}, network = ${newNetwork},
             show_network_badge = ${newShowNetworkBadge}, badge_position = ${newBadgePosition}, icon_color = ${newIconColor},
-            show_chip = ${newShowChip}, chip_color = ${newChipColor}, chip_position = ${newChipPosition}, notes = ${newNotes},
+            show_chip = ${newShowChip}, chip_color = ${newChipColor}, chip_position = ${newChipPosition}, show_nfc = ${newShowNfc}, notes = ${newNotes},
             show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}, show_card_number = ${newShowCardNumber}, show_name = ${newShowName},
             show_holder_name = ${newShowHolderName}, show_expiry = ${newShowExpiry}, name_position = ${newNamePosition},
             card_number_position = ${newCardNumberPosition}, card_number_last4_only = ${newCardNumberLast4Only}, category = ${newCategory}
@@ -2002,7 +2027,7 @@ export async function updateWallet(
         SET name = ${newName}, color = ${newColor}, background = ${newBackground}, text_color = ${newTextColor}, kind = ${newKind}, currency = ${newCurrency}, archived = ${newArchived},
             holder_name = ${newHolderName}, last4 = ${newLast4}, expiry_month = ${newExpiryMonth}, expiry_year = ${newExpiryYear}, network = ${newNetwork},
             show_network_badge = ${newShowNetworkBadge}, badge_position = ${newBadgePosition}, icon_color = ${newIconColor},
-            show_chip = ${newShowChip}, chip_color = ${newChipColor}, chip_position = ${newChipPosition}, notes = ${newNotes},
+            show_chip = ${newShowChip}, chip_color = ${newChipColor}, chip_position = ${newChipPosition}, show_nfc = ${newShowNfc}, notes = ${newNotes},
             show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}, show_card_number = ${newShowCardNumber}, show_name = ${newShowName},
             show_holder_name = ${newShowHolderName}, show_expiry = ${newShowExpiry}, name_position = ${newNamePosition},
             card_number_position = ${newCardNumberPosition}, card_number_last4_only = ${newCardNumberLast4Only}, category = ${newCategory}
@@ -2203,6 +2228,11 @@ export type CardTemplateRow = {
   // force_show_* columns.
   force_show_holder_name: boolean | null;
   force_show_expiry: boolean | null;
+  // Whether to force the contactless/NFC symbol shown or hidden — same
+  // three-state convention as the other force_show_* columns. NULL (the
+  // only possible value for any template submitted before this existed)
+  // means "don't touch it".
+  force_show_nfc: boolean | null;
   status: "pending" | "approved" | "rejected";
   created_at: string;
   reviewed_at: string | null;
@@ -2214,7 +2244,7 @@ export type CardTemplateRow = {
 // against the users join), bare column names for INSERT/UPDATE...RETURNING
 // where there's no alias to strip.
 const CARD_TEMPLATE_COLUMNS =
-  "id, submitted_by, name, color, background, text_color, force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency, country, force_name_position, lock_text_color, category, force_network, force_show_holder_name, force_show_expiry, status, created_at, reviewed_at";
+  "id, submitted_by, name, color, background, text_color, force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency, country, force_name_position, lock_text_color, category, force_network, force_show_holder_name, force_show_expiry, force_show_nfc, status, created_at, reviewed_at";
 
 export async function createCardTemplate(
   userId: number,
@@ -2237,6 +2267,7 @@ export async function createCardTemplate(
     forceNetwork?: string | null;
     forceShowHolderName?: boolean | null;
     forceShowExpiry?: boolean | null;
+    forceShowNfc?: boolean | null;
   },
 ): Promise<CardTemplateRow> {
   await ensureSchema();
@@ -2245,9 +2276,9 @@ export async function createCardTemplate(
     `INSERT INTO card_templates (
        submitted_by, name, color, background, text_color,
        force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency,
-       country, force_name_position, lock_text_color, category, force_network, force_show_holder_name, force_show_expiry, status
+       country, force_name_position, lock_text_color, category, force_network, force_show_holder_name, force_show_expiry, force_show_nfc, status
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, 'pending')
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, 'pending')
      RETURNING ${CARD_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
     [
       userId,
@@ -2269,6 +2300,7 @@ export async function createCardTemplate(
       input.forceNetwork ?? null,
       input.forceShowHolderName ?? null,
       input.forceShowExpiry ?? null,
+      input.forceShowNfc ?? null,
     ],
   );
   return rows[0];
@@ -2330,6 +2362,7 @@ export async function updateCardTemplate(
     forceNetwork?: string | null;
     forceShowHolderName?: boolean | null;
     forceShowExpiry?: boolean | null;
+    forceShowNfc?: boolean | null;
     status?: "pending" | "approved" | "rejected";
   },
 ): Promise<CardTemplateRow | null> {
@@ -2353,11 +2386,12 @@ export async function updateCardTemplate(
     force_network: string | null;
     force_show_holder_name: boolean | null;
     force_show_expiry: boolean | null;
+    force_show_nfc: boolean | null;
     status: "pending" | "approved" | "rejected";
   }>`
     SELECT name, color, background, text_color,
            force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency,
-           country, force_name_position, lock_text_color, category, force_network, force_show_holder_name, force_show_expiry, status
+           country, force_name_position, lock_text_color, category, force_network, force_show_holder_name, force_show_expiry, force_show_nfc, status
     FROM card_templates WHERE id = ${id};
   `;
   const existing = existingRows[0];
@@ -2381,6 +2415,7 @@ export async function updateCardTemplate(
   const newForceNetwork = input.forceNetwork !== undefined ? input.forceNetwork : existing.force_network;
   const newForceShowHolderName = input.forceShowHolderName !== undefined ? input.forceShowHolderName : existing.force_show_holder_name;
   const newForceShowExpiry = input.forceShowExpiry !== undefined ? input.forceShowExpiry : existing.force_show_expiry;
+  const newForceShowNfc = input.forceShowNfc !== undefined ? input.forceShowNfc : existing.force_show_nfc;
   const newStatus = input.status ?? existing.status;
   const bumpReviewedAt = input.status !== undefined;
 
@@ -2388,8 +2423,8 @@ export async function updateCardTemplate(
     `UPDATE card_templates
      SET name = $1, color = $2, background = $3, text_color = $4,
          force_show_name = $5, force_show_network_badge = $6, force_show_chip = $7, force_show_card_number = $8, force_show_balance = $9, force_show_currency = $10,
-         force_currency = $11, country = $12, force_name_position = $13, lock_text_color = $14, category = $15, force_network = $16, force_show_holder_name = $17, force_show_expiry = $18, status = $19, reviewed_at = ${bumpReviewedAt ? "now()" : "reviewed_at"}
-     WHERE id = $20
+         force_currency = $11, country = $12, force_name_position = $13, lock_text_color = $14, category = $15, force_network = $16, force_show_holder_name = $17, force_show_expiry = $18, force_show_nfc = $19, status = $20, reviewed_at = ${bumpReviewedAt ? "now()" : "reviewed_at"}
+     WHERE id = $21
      RETURNING ${CARD_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
     [
       newName,
@@ -2410,6 +2445,7 @@ export async function updateCardTemplate(
       newForceNetwork,
       newForceShowHolderName,
       newForceShowExpiry,
+      newForceShowNfc,
       newStatus,
       id,
     ],

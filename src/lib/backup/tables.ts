@@ -94,6 +94,7 @@ export const BACKUP_TABLES: BackupTable[] = [
       { name: "show_chip" },
       { name: "chip_color" },
       { name: "chip_position" },
+      { name: "show_nfc" },
       { name: "notes" },
       { name: "show_balance" },
       { name: "show_currency" },
