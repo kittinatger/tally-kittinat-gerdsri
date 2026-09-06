@@ -277,7 +277,7 @@ export default function ExpenseRow({
           style={{ touchAction: swipeEnabled ? "pan-y" : undefined }}
           className={`relative flex w-full items-center justify-between gap-3 text-left hover:bg-[var(--surface-nav-hover)] ${
             compact ? "px-3 py-2" : "px-4 py-3.5"
-          } ${selected ? "bg-[var(--surface-nav-hover)]" : ""} ${showHoverActions ? "sm:pr-28" : ""}`}
+          } ${selected ? "bg-[var(--surface-nav-hover)]" : ""}`}
         >
           {selectMode && (
             <span
@@ -340,12 +340,20 @@ export default function ExpenseRow({
        * so showing both at once (e.g. a trackpad/touchscreen hybrid device
        * where a swiped-open row is also hovered) overlapped them into an
        * unreadable mess of stacked icons. Forced visible via `heldOpen`
-       * when a mouse user click-and-holds instead of hovering. */}
+       * when a mouse user click-and-holds instead of hovering.
+       *
+       * No permanent pr-* reservation on the row for this anymore — that
+       * left a dead gap between the amount and the card's edge even while
+       * not hovered (the whole point was space that only exists when the
+       * icons actually show). Instead this floats on top of the amount, a
+       * soft leftward fade (matching the row's own background) easing it
+       * out of the way instead of a hard edge. */}
       {showHoverActions && liveX === 0 && (
         <div
-          className={`pointer-events-none absolute inset-y-0 right-2 hidden items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto sm:flex ${
+          className={`pointer-events-none absolute inset-y-0 right-0 hidden items-center gap-1 py-1 pl-12 pr-3 opacity-0 transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto sm:flex ${
             heldOpen ? "!opacity-100 !pointer-events-auto" : ""
           }`}
+          style={{ background: "linear-gradient(to left, var(--surface) 60%, transparent)" }}
         >
           {onEdit && (
             <button
