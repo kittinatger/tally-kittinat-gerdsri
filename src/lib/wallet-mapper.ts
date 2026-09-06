@@ -10,6 +10,7 @@ import { isChipPosition, DEFAULT_CHIP_POSITION } from "@/lib/chip-position";
 import { isNamePosition, DEFAULT_NAME_POSITION } from "@/lib/name-position";
 import { isCardNumberPosition, DEFAULT_CARD_NUMBER_POSITION } from "@/lib/card-number-position";
 import { isCardTemplateCategory } from "@/lib/card-template-category";
+import { isNfcSize, DEFAULT_NFC_SIZE } from "@/lib/nfc-size";
 
 // Every server page that lists wallets (Activities, Analytics, Settings,
 // the Wallet page itself) maps the raw DB row the same way — pulled out
@@ -42,6 +43,7 @@ export function toWalletOption(w: WalletRow): WalletOption {
     chipPosition: isChipPosition(w.chip_position) ? w.chip_position : DEFAULT_CHIP_POSITION,
     showNfc: w.show_nfc,
     nfcPosition: isBadgePosition(w.nfc_position) ? w.nfc_position : DEFAULT_NFC_POSITION,
+    nfcSize: isNfcSize(w.nfc_size) ? w.nfc_size : DEFAULT_NFC_SIZE,
     notes: w.notes,
     showBalance: w.show_balance,
     showCurrency: w.show_currency,
@@ -79,6 +81,7 @@ export function toCardTemplateOption(t: CardTemplateRow): CardTemplateOption {
     forceShowExpiry: t.force_show_expiry,
     forceShowNfc: t.force_show_nfc,
     forceNfcPosition: t.force_nfc_position && isBadgePosition(t.force_nfc_position) ? t.force_nfc_position : null,
+    forceNfcSize: t.force_nfc_size && isNfcSize(t.force_nfc_size) ? t.force_nfc_size : null,
     status: t.status,
     submittedByUsername: t.submitted_by_username,
     createdAt: t.created_at,

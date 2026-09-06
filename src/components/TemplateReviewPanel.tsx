@@ -7,6 +7,7 @@ import { describeFetchError } from "@/lib/fetch-error";
 import { CheckCircleIcon, XCircleIcon, EditIcon } from "@/lib/icons";
 import { NAME_POSITION_LABEL_KEYS } from "@/lib/name-position";
 import { BADGE_POSITION_LABEL_KEYS } from "@/lib/badge-position";
+import { NFC_SIZE_LABEL_KEYS } from "@/lib/nfc-size";
 import { CARD_TEMPLATE_CATEGORY_LABEL_KEYS } from "@/lib/card-template-category";
 import type { CardNetwork } from "@/lib/wallet-cards";
 import { useT } from "@/lib/language-context";
@@ -99,6 +100,7 @@ export default function TemplateReviewPanel() {
     if (tpl.forceNetwork !== null) parts.push(`${t("wallet.networkLabel")}: ${t(NETWORK_LABEL_KEYS[tpl.forceNetwork])}`);
     if (tpl.forceNamePosition !== null) parts.push(`${t("wallet.namePositionLabel")}: ${t(NAME_POSITION_LABEL_KEYS[tpl.forceNamePosition])}`);
     if (tpl.forceNfcPosition !== null) parts.push(`${t("wallet.nfcPositionLabel")}: ${t(BADGE_POSITION_LABEL_KEYS[tpl.forceNfcPosition])}`);
+    if (tpl.forceNfcSize !== null) parts.push(`${t("wallet.nfcSizeLabel")}: ${t(NFC_SIZE_LABEL_KEYS[tpl.forceNfcSize])}`);
     if (tpl.lockTextColor) parts.push(t("wallet.lockTextColorLabel"));
     return parts.length ? parts.join(", ") : "";
   }

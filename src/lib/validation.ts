@@ -23,6 +23,7 @@ import { CARD_NUMBER_POSITIONS } from "@/lib/card-number-position";
 import { CARD_TEMPLATE_CATEGORIES } from "@/lib/card-template-category";
 import { PASS_TEMPLATE_CATEGORIES } from "@/lib/pass-template-category";
 import { CHIP_POSITIONS } from "@/lib/chip-position";
+import { NFC_SIZES } from "@/lib/nfc-size";
 import { isLanguageCode } from "@/lib/languages";
 
 // Shared by wallets and membership_cards' optional background
@@ -194,6 +195,7 @@ const walletCardVisualFields = {
   chipPosition: z.enum(CHIP_POSITIONS).optional(),
   showNfc: z.boolean().optional(),
   nfcPosition: z.enum(BADGE_POSITIONS).optional(),
+  nfcSize: z.enum(NFC_SIZES).optional(),
   notes: z.string().trim().max(500).nullable().optional(),
   // Per-card toggles for what shows on the card face, independent of
   // whether it has a card look at all.
@@ -280,6 +282,7 @@ export const cardTemplateInputSchema = z.object({
   forceShowExpiry: z.boolean().nullable().optional(),
   forceShowNfc: z.boolean().nullable().optional(),
   forceNfcPosition: z.enum(BADGE_POSITIONS).nullable().optional(),
+  forceNfcSize: z.enum(NFC_SIZES).nullable().optional(),
 });
 
 // Admin-only edit — every field optional (at least one required), used for
@@ -307,6 +310,7 @@ export const cardTemplateUpdateSchema = z
     forceShowExpiry: z.boolean().nullable().optional(),
     forceShowNfc: z.boolean().nullable().optional(),
     forceNfcPosition: z.enum(BADGE_POSITIONS).nullable().optional(),
+    forceNfcSize: z.enum(NFC_SIZES).nullable().optional(),
     status: z.enum(["pending", "approved", "rejected"]).optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {

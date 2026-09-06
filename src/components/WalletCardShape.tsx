@@ -7,6 +7,7 @@ import { formatCurrency } from "@/lib/format";
 import { CHIP_COLOR_STOPS, DEFAULT_CHIP_COLOR, type ChipColor } from "@/lib/chip-colors";
 import { BADGE_POSITION_CLASSES, DEFAULT_BADGE_POSITION, DEFAULT_NFC_POSITION, type BadgePosition } from "@/lib/badge-position";
 import { CHIP_POSITION_CLASSES, DEFAULT_CHIP_POSITION, chipRow, chipColumn, type ChipPosition } from "@/lib/chip-position";
+import { NFC_SIZE_CLASSES, DEFAULT_NFC_SIZE, type NfcSize } from "@/lib/nfc-size";
 import { NAME_POSITION_CLASSES, DEFAULT_NAME_POSITION, type NamePosition } from "@/lib/name-position";
 import {
   CARD_NUMBER_POSITION_CLASSES,
@@ -86,9 +87,17 @@ function NetworkBadge({ network }: { network: CardNetwork }) {
 // quarter-arcs, same mark every real contactless-enabled card carries
 // regardless of issuer or network, so (like EMVChip) this renders the
 // literal industry symbol rather than a per-network reinterpretation.
-function NfcIcon() {
+function NfcIcon({ size = DEFAULT_NFC_SIZE }: { size?: NfcSize }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-5 w-5 shrink-0" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      className={`shrink-0 ${NFC_SIZE_CLASSES[size]}`}
+      aria-hidden="true"
+    >
       <path d="M8.5 4.5a11 11 0 0 1 0 15" />
       <path d="M5.5 7.5a7 7 0 0 1 0 9" />
       <path d="M2.5 10.5a3 3 0 0 1 0 3" />
@@ -164,6 +173,7 @@ export default function WalletCardShape({
   chipPosition = DEFAULT_CHIP_POSITION,
   showNfc = false,
   nfcPosition = DEFAULT_NFC_POSITION,
+  nfcSize = DEFAULT_NFC_SIZE,
   balance = null,
   currency = "",
   showBalance = false,
@@ -210,6 +220,8 @@ export default function WalletCardShape({
    * stack neatly when pointed at the same corner — see badge-position.ts,
    * reused here rather than a near-identical position enum of its own. */
   nfcPosition?: BadgePosition;
+  /** How big the NFC symbol renders — see nfc-size.ts. */
+  nfcSize?: NfcSize;
   /** Balance to preview on the card face — only rendered when showBalance
    * is true AND a number is actually passed (so a purely decorative card
    * with no real account behind it, the default, shows nothing extra). */
@@ -405,7 +417,7 @@ export default function WalletCardShape({
           if (showNfc && nfcPosition === badgePosition) {
             return (
               <div className={`absolute flex items-center gap-1.5 ${BADGE_POSITION_CLASSES[badgePosition]}`} style={{ color: iconFg.a85 }}>
-                <NfcIcon />
+                <NfcIcon size={nfcSize} />
                 {networkBadgeContent}
               </div>
             );
@@ -419,7 +431,7 @@ export default function WalletCardShape({
 
       {showNfc && !(showNetworkBadge && nfcPosition === badgePosition) && (
         <div className={`absolute ${BADGE_POSITION_CLASSES[nfcPosition]}`} style={{ color: iconFg.a85 }}>
-          <NfcIcon />
+          <NfcIcon size={nfcSize} />
         </div>
       )}
 

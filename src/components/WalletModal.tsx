@@ -18,6 +18,7 @@ import { backgroundGlowColor, cardForegroundFor, type CardBackground } from "@/l
 import { CHIP_COLORS, CHIP_COLOR_LABEL_KEYS, CHIP_COLOR_STOPS, DEFAULT_CHIP_COLOR, type ChipColor } from "@/lib/chip-colors";
 import { BADGE_POSITIONS, BADGE_POSITION_LABEL_KEYS, DEFAULT_BADGE_POSITION, DEFAULT_NFC_POSITION, type BadgePosition } from "@/lib/badge-position";
 import { CHIP_POSITIONS, CHIP_POSITION_LABEL_KEYS, DEFAULT_CHIP_POSITION, type ChipPosition } from "@/lib/chip-position";
+import { NFC_SIZES, NFC_SIZE_LABEL_KEYS, DEFAULT_NFC_SIZE, type NfcSize } from "@/lib/nfc-size";
 import { NAME_POSITIONS, NAME_POSITION_LABEL_KEYS, DEFAULT_NAME_POSITION, type NamePosition } from "@/lib/name-position";
 import {
   CARD_NUMBER_POSITIONS,
@@ -106,6 +107,10 @@ export default function WalletModal({
   // "set by template" note rather than leaving it interactive-but-
   // overridable.
   const [nfcPositionLocked, setNfcPositionLocked] = useState(false);
+  const [nfcSize, setNfcSize] = useState<NfcSize>(wallet?.nfcSize ?? DEFAULT_NFC_SIZE);
+  // Same convention as nfcPositionLocked, from a picked template's
+  // forceNfcSize.
+  const [nfcSizeLocked, setNfcSizeLocked] = useState(false);
   const [cardNotes, setCardNotes] = useState(wallet?.notes ?? "");
   const [showBalance, setShowBalance] = useState(wallet?.showBalance ?? true);
   const [showCurrency, setShowCurrency] = useState(wallet?.showCurrency ?? true);
@@ -235,6 +240,7 @@ export default function WalletModal({
   // Same idea as templateForceNamePosition — null means "don't force an
   // NFC corner" (the picker just inherits whatever the wallet already has).
   const [templateForceNfcPosition, setTemplateForceNfcPosition] = useState<BadgePosition | null>(null);
+  const [templateForceNfcSize, setTemplateForceNfcSize] = useState<NfcSize | null>(null);
 
   const month = expiryMonth ? Number(expiryMonth) : null;
   const year = expiryYear ? Number(expiryYear) : null;
@@ -300,6 +306,7 @@ export default function WalletModal({
           forceShowExpiry: forceToggles.showExpiry,
           forceShowNfc: forceToggles.showNfc,
           forceNfcPosition: templateForceNfcPosition,
+          forceNfcSize: templateForceNfcSize,
           forceCurrency: lockCurrency ? currency : null,
           forceNamePosition: templateForceNamePosition,
           lockTextColor: templateLockTextColor,
@@ -347,6 +354,7 @@ export default function WalletModal({
         chipPosition,
         showNfc,
         nfcPosition,
+        nfcSize,
         notes: cardNotes.trim() || null,
         showBalance,
         showCurrency,
@@ -422,6 +430,7 @@ export default function WalletModal({
             chipPosition={chipPosition}
             showNfc={showNfc}
             nfcPosition={nfcPosition}
+            nfcSize={nfcSize}
             balance={Number(startingBalance) || 0}
             currency={currency ?? appCurrency}
             showBalance={showBalance}
@@ -659,6 +668,30 @@ export default function WalletModal({
                     } p-1.5`}
                   >
                     <span className={`h-2 w-2 rounded-full ${nfcPosition === p ? "bg-navy" : "bg-ink-soft/50"}`} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Hidden entirely once a picked template's forceNfcSize locks
+           * this — same convention as the position picker above. */}
+          {showNfc && !nfcSizeLocked && (
+            <div className="border-t border-line pt-3">
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.nfcSizeLabel")}</label>
+              <div className="flex gap-1.5">
+                {NFC_SIZES.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setNfcSize(s)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                      nfcSize === s
+                        ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                        : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                    }`}
+                  >
+                    {t(NFC_SIZE_LABEL_KEYS[s])}
                   </button>
                 ))}
               </div>
@@ -1169,6 +1202,12 @@ export default function WalletModal({
               } else {
                 setNfcPositionLocked(false);
               }
+              if (tpl.forceNfcSize !== null) {
+                setNfcSize(tpl.forceNfcSize);
+                setNfcSizeLocked(true);
+              } else {
+                setNfcSizeLocked(false);
+              }
             }}
           />
           <CardBackgroundPicker value={background} onChange={setBackground} plainColor={color} onPlainColorChange={setColor} />
@@ -1484,6 +1523,42 @@ export default function WalletModal({
                     }`}
                   >
                     {t(BADGE_POSITION_LABEL_KEYS[p])}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Forcing an NFC size makes no sense once the symbol itself is
+           * forced off. */}
+          {forceToggles.showNfc !== false && (
+            <div className="border-t border-line pt-3">
+              <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceNfcSizeLabel")}</p>
+              <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceNfcSizeDesc")}</p>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setTemplateForceNfcSize(null)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    templateForceNfcSize === null
+                      ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                      : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                  }`}
+                >
+                  {t("wallet.forceAuto")}
+                </button>
+                {NFC_SIZES.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setTemplateForceNfcSize(s)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                      templateForceNfcSize === s
+                        ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                        : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                    }`}
+                  >
+                    {t(NFC_SIZE_LABEL_KEYS[s])}
                   </button>
                 ))}
               </div>

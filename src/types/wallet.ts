@@ -3,6 +3,7 @@ import type { CardBackground } from "@/lib/card-backgrounds";
 import type { CardNetwork } from "@/lib/wallet-cards";
 import type { ChipColor } from "@/lib/chip-colors";
 import type { BadgePosition } from "@/lib/badge-position";
+import type { NfcSize } from "@/lib/nfc-size";
 import type { ChipPosition } from "@/lib/chip-position";
 import type { NamePosition } from "@/lib/name-position";
 import type { CardNumberPosition } from "@/lib/card-number-position";
@@ -48,6 +49,8 @@ export type WalletOption = {
   showNfc: boolean;
   /** Which corner the NFC symbol sits in — independent of badgePosition. */
   nfcPosition: BadgePosition;
+  /** How big the NFC symbol renders — see nfc-size.ts. */
+  nfcSize: NfcSize;
   notes: string | null;
   /** Whether the balance amount renders on the card face — independent of
    * whether the wallet has a card look at all. */
