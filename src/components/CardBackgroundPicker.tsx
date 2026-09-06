@@ -213,7 +213,15 @@ export default function CardBackgroundPicker({
                 ))}
               </div>
             ) : (
-              <p className="text-[11px] text-ink-soft">{t("background.colorsLockedDesc")}</p>
+              // Two different locked states read differently: a
+              // template-forced lock (svgColorsLocked) has no "Edit
+              // colors" button at all to tap (see the button's own
+              // !svgColorsLocked guard above), so telling the user to tap
+              // it would be pointing at nothing — only the ordinary
+              // self-locked state gets that instruction.
+              <p className="text-[11px] text-ink-soft">
+                {svgColorsLocked ? t("background.colorsLockedByTemplateDesc") : t("background.colorsLockedDesc")}
+              </p>
             )
           )}
           <button
