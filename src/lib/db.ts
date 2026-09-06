@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 66;
+const CURRENT_SCHEMA_VERSION = 67;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1505,6 +1505,13 @@ function ensureSchema(): Promise<void> {
       // createCardTemplate, which always passes an explicit value) can
       // end up unlocked from here on.
       await sql`UPDATE card_templates SET lock_svg_colors = true WHERE lock_svg_colors = false;`;
+
+      // One-time: force every template that already exists to hide the
+      // NFC/contactless badge (force_show_nfc = false) rather than leaving
+      // it untouched (null). Only affects rows present when this migration
+      // runs; a template submitted afterward keeps whatever forceShowNfc
+      // its author actually picked on the upload form.
+      await sql`UPDATE card_templates SET force_show_nfc = false;`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
