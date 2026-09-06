@@ -4,6 +4,7 @@ import type { CardTemplateCategory } from "@/lib/card-template-category";
 import type { CardNetwork } from "@/lib/wallet-cards";
 import type { BadgePosition } from "@/lib/badge-position";
 import type { NfcSize } from "@/lib/nfc-size";
+import type { ChipPosition } from "@/lib/chip-position";
 
 // A user-submitted "premade card" design — see card_templates in db.ts.
 // Purely the visual skin (background + colors); a picker applies these
@@ -64,6 +65,11 @@ export type CardTemplateOption = {
    * "Edit colors" unlock toggle for it — the template's own colors are
    * final. Meaningless for every other background type. */
   lockSvgColors: boolean;
+  /** Which corner to force the EMV chip into — null means "leave whatever
+   * the wallet already has". Only meaningful when the chip itself is
+   * shown (forceShowChip !== false) — a template can't sensibly position
+   * a chip it also force-hides. See chip-position.ts. */
+  forceChipPosition: ChipPosition | null;
   status: "pending" | "approved" | "rejected";
   submittedByUsername: string | null;
   createdAt: string;

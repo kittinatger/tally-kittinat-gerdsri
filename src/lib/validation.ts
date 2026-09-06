@@ -287,6 +287,9 @@ export const cardTemplateInputSchema = z.object({
   // picking this template never sees the "Edit colors" unlock toggle for
   // it — the shipped colors are final.
   lockSvgColors: z.boolean().optional(),
+  // Which corner to force the EMV chip into — only meaningful when the
+  // chip itself is forced shown, same convention as forceNfcPosition.
+  forceChipPosition: z.enum(CHIP_POSITIONS).nullable().optional(),
 });
 
 // Admin-only edit — every field optional (at least one required), used for
@@ -316,6 +319,7 @@ export const cardTemplateUpdateSchema = z
     forceNfcPosition: z.enum(BADGE_POSITIONS).nullable().optional(),
     forceNfcSize: z.enum(NFC_SIZES).nullable().optional(),
     lockSvgColors: z.boolean().optional(),
+    forceChipPosition: z.enum(CHIP_POSITIONS).nullable().optional(),
     status: z.enum(["pending", "approved", "rejected"]).optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {

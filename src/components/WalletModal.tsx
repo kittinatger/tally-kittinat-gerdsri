@@ -96,6 +96,10 @@ export default function WalletModal({
   const [showChip, setShowChip] = useState(wallet?.showChip ?? true);
   const [chipColor, setChipColor] = useState<ChipColor>(wallet?.chipColor ?? DEFAULT_CHIP_COLOR);
   const [chipPosition, setChipPosition] = useState<ChipPosition>(wallet?.chipPosition ?? DEFAULT_CHIP_POSITION);
+  // Same convention as nfcPositionLocked — set by a picked premade
+  // template's forceChipPosition, hiding the chip-corner picker in favor
+  // of the template's own placement.
+  const [chipPositionLocked, setChipPositionLocked] = useState(false);
   // Unlike every other showX default here, this one matters: `wallet` is
   // only undefined for a brand-new wallet, so this reads true there (NFC
   // shows by default going forward) but exactly whatever an existing
@@ -242,6 +246,11 @@ export default function WalletModal({
   // NFC corner" (the picker just inherits whatever the wallet already has).
   const [templateForceNfcPosition, setTemplateForceNfcPosition] = useState<BadgePosition | null>(null);
   const [templateForceNfcSize, setTemplateForceNfcSize] = useState<NfcSize | null>(null);
+  // Same idea as templateForceNfcPosition — null means "don't force a
+  // chip corner". Only meaningful (shown in the form at all) when
+  // forceToggles.showChip isn't forced off, since locking the position of
+  // a chip the template also force-hides makes no sense.
+  const [templateForceChipPosition, setTemplateForceChipPosition] = useState<ChipPosition | null>(null);
   // When true, and the background is a custom-uploaded SVG, forces
   // CardBackgroundPicker's "Edit colors" unlock to stay hidden — set from
   // a picked template's own lockSvgColors (see card_templates.lock_svg_colors
@@ -329,6 +338,7 @@ export default function WalletModal({
           forceShowNfc: forceToggles.showNfc,
           forceNfcPosition: templateForceNfcPosition,
           forceNfcSize: templateForceNfcSize,
+          forceChipPosition: forceToggles.showChip === false ? null : templateForceChipPosition,
           forceCurrency: lockCurrency ? currency : null,
           forceNamePosition: templateForceNamePosition,
           lockTextColor: templateLockTextColor,
@@ -772,7 +782,9 @@ export default function WalletModal({
             </div>
           )}
 
-          {showChip && (
+          {/* Hidden entirely once a picked template's forceChipPosition
+           * locks this — same convention as nfcPositionLocked above. */}
+          {showChip && !chipPositionLocked && (
             <div className="border-t border-line pt-3">
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.chipPositionLabel")}</label>
               {/* A full 3x3 grid now (was three left-anchored spots) — the
@@ -1231,6 +1243,12 @@ export default function WalletModal({
               } else {
                 setNfcSizeLocked(false);
               }
+              if (tpl.forceChipPosition !== null) {
+                setChipPosition(tpl.forceChipPosition);
+                setChipPositionLocked(true);
+              } else {
+                setChipPositionLocked(false);
+              }
               setSvgColorsLockedByTemplate(tpl.lockSvgColors);
               // A custom-SVG background whose colors this template doesn't
               // lock can be recolored and resubmitted as a "variation" —
@@ -1246,6 +1264,7 @@ export default function WalletModal({
                 setTemplateForceNetwork(tpl.forceNetwork);
                 setTemplateForceNfcPosition(tpl.forceNfcPosition);
                 setTemplateForceNfcSize(tpl.forceNfcSize);
+                setTemplateForceChipPosition(tpl.forceChipPosition);
                 setTemplateLockSvgColors(false);
                 setForceToggles({
                   showName: tpl.forceShowName,
@@ -1647,6 +1666,43 @@ export default function WalletModal({
                     }`}
                   >
                     {t(NFC_SIZE_LABEL_KEYS[s])}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Forcing a chip corner makes no sense once the chip itself is
+           * forced off — same convention as the NFC position/size guards
+           * above. */}
+          {forceToggles.showChip !== false && (
+            <div className="border-t border-line pt-3">
+              <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceChipPositionLabel")}</p>
+              <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceChipPositionDesc")}</p>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setTemplateForceChipPosition(null)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    templateForceChipPosition === null
+                      ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                      : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                  }`}
+                >
+                  {t("wallet.forceAuto")}
+                </button>
+                {CHIP_POSITIONS.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setTemplateForceChipPosition(p)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                      templateForceChipPosition === p
+                        ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                        : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                    }`}
+                  >
+                    {t(CHIP_POSITION_LABEL_KEYS[p])}
                   </button>
                 ))}
               </div>

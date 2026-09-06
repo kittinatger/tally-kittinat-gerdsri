@@ -8,6 +8,7 @@ import { CheckCircleIcon, XCircleIcon, EditIcon } from "@/lib/icons";
 import { NAME_POSITION_LABEL_KEYS } from "@/lib/name-position";
 import { BADGE_POSITION_LABEL_KEYS } from "@/lib/badge-position";
 import { NFC_SIZE_LABEL_KEYS } from "@/lib/nfc-size";
+import { CHIP_POSITION_LABEL_KEYS } from "@/lib/chip-position";
 import { CARD_TEMPLATE_CATEGORY_LABEL_KEYS } from "@/lib/card-template-category";
 import type { CardNetwork } from "@/lib/wallet-cards";
 import { useT } from "@/lib/language-context";
@@ -103,6 +104,7 @@ export default function TemplateReviewPanel() {
     if (tpl.forceNfcSize !== null) parts.push(`${t("wallet.nfcSizeLabel")}: ${t(NFC_SIZE_LABEL_KEYS[tpl.forceNfcSize])}`);
     if (tpl.lockTextColor) parts.push(t("wallet.lockTextColorLabel"));
     if (tpl.lockSvgColors) parts.push(t("wallet.lockSvgColorsLabel"));
+    if (tpl.forceChipPosition !== null) parts.push(`${t("wallet.chipPositionLabel")}: ${t(CHIP_POSITION_LABEL_KEYS[tpl.forceChipPosition])}`);
     return parts.length ? parts.join(", ") : "";
   }
 

@@ -18,6 +18,7 @@ import { countryForCurrency, KNOWN_COUNTRIES } from "@/lib/currency-country";
 import { NAME_POSITIONS, NAME_POSITION_LABEL_KEYS, type NamePosition } from "@/lib/name-position";
 import { BADGE_POSITIONS, BADGE_POSITION_LABEL_KEYS, type BadgePosition } from "@/lib/badge-position";
 import { NFC_SIZES, NFC_SIZE_LABEL_KEYS, type NfcSize } from "@/lib/nfc-size";
+import { CHIP_POSITIONS, CHIP_POSITION_LABEL_KEYS, type ChipPosition } from "@/lib/chip-position";
 import { CARD_TEMPLATE_CATEGORIES, CARD_TEMPLATE_CATEGORY_LABEL_KEYS, type CardTemplateCategory } from "@/lib/card-template-category";
 import { CARD_NETWORKS, type CardNetwork } from "@/lib/wallet-cards";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -97,6 +98,7 @@ export default function TemplateEditModal({
   const [forceNfcPosition, setForceNfcPosition] = useState<BadgePosition | null>(template.forceNfcPosition);
   const [forceNfcSize, setForceNfcSize] = useState<NfcSize | null>(template.forceNfcSize);
   const [lockSvgColors, setLockSvgColors] = useState(template.lockSvgColors);
+  const [forceChipPosition, setForceChipPosition] = useState<ChipPosition | null>(template.forceChipPosition);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -126,6 +128,7 @@ export default function TemplateEditModal({
           forceNfcPosition,
           forceNfcSize,
           lockSvgColors,
+          forceChipPosition,
         }),
       });
       const data = await res.json();
@@ -503,6 +506,42 @@ export default function TemplateEditModal({
                     }`}
                   >
                     {t(NFC_SIZE_LABEL_KEYS[s])}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Forcing a chip corner makes no sense once the chip itself is
+           * force-hidden. */}
+          {force.forceShowChip !== false && (
+            <div className="border-t border-line pt-3">
+              <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceChipPositionLabel")}</p>
+              <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceChipPositionDesc")}</p>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setForceChipPosition(null)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    forceChipPosition === null
+                      ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                      : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                  }`}
+                >
+                  {t("wallet.forceAuto")}
+                </button>
+                {CHIP_POSITIONS.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setForceChipPosition(p)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                      forceChipPosition === p
+                        ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                        : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                    }`}
+                  >
+                    {t(CHIP_POSITION_LABEL_KEYS[p])}
                   </button>
                 ))}
               </div>
