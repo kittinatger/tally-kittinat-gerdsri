@@ -158,6 +158,7 @@ export default function AccountDetail({
           chipColor={wallet.chipColor}
           chipPosition={wallet.chipPosition}
           showNfc={wallet.showNfc}
+          nfcPosition={wallet.nfcPosition}
           balance={wallet.balance}
           currency={walletCurrency}
           showBalance={wallet.showBalance}

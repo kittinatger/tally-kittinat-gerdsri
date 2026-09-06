@@ -5,8 +5,8 @@ import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { cardBackgroundStyle, cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
 import { formatCurrency } from "@/lib/format";
 import { CHIP_COLOR_STOPS, DEFAULT_CHIP_COLOR, type ChipColor } from "@/lib/chip-colors";
-import { BADGE_POSITION_CLASSES, DEFAULT_BADGE_POSITION, type BadgePosition } from "@/lib/badge-position";
-import { CHIP_POSITION_CLASSES, DEFAULT_CHIP_POSITION, type ChipPosition } from "@/lib/chip-position";
+import { BADGE_POSITION_CLASSES, DEFAULT_BADGE_POSITION, DEFAULT_NFC_POSITION, type BadgePosition } from "@/lib/badge-position";
+import { CHIP_POSITION_CLASSES, DEFAULT_CHIP_POSITION, chipRow, chipColumn, type ChipPosition } from "@/lib/chip-position";
 import { NAME_POSITION_CLASSES, DEFAULT_NAME_POSITION, type NamePosition } from "@/lib/name-position";
 import {
   CARD_NUMBER_POSITION_CLASSES,
@@ -163,6 +163,7 @@ export default function WalletCardShape({
   chipColor = DEFAULT_CHIP_COLOR,
   chipPosition = DEFAULT_CHIP_POSITION,
   showNfc = false,
+  nfcPosition = DEFAULT_NFC_POSITION,
   balance = null,
   currency = "",
   showBalance = false,
@@ -197,15 +198,18 @@ export default function WalletCardShape({
   badgePosition?: BadgePosition;
   showChip?: boolean;
   chipColor?: ChipColor;
-  /** Where the chip sits — "middleLeft" (default) centers it vertically
-   * against the card's left edge; "topLeft"/"bottomLeft" pull it into a
-   * corner instead — see chip-position.ts. */
+  /** Where the chip sits — a full 3x3 grid (see chip-position.ts);
+   * "middleLeft" (default) centers it vertically against the card's left
+   * edge, same as before that grid existed. */
   chipPosition?: ChipPosition;
-  /** Whether the contactless/NFC symbol renders — shares the network
-   * badge's corner (badgePosition) rather than having its own, since real
-   * cards carry the two right next to each other. Defaults false so an
+  /** Whether the contactless/NFC symbol renders. Defaults false so an
    * existing wallet is unaffected until its owner turns this on. */
   showNfc?: boolean;
+  /** Which corner the NFC symbol sits in — independent of badgePosition
+   * (its own selector, not tied to the network badge), though the two
+   * stack neatly when pointed at the same corner — see badge-position.ts,
+   * reused here rather than a near-identical position enum of its own. */
+  nfcPosition?: BadgePosition;
   /** Balance to preview on the card face — only rendered when showBalance
    * is true AND a number is actually passed (so a purely decorative card
    * with no real account behind it, the default, shows nothing extra). */
@@ -270,23 +274,32 @@ export default function WalletCardShape({
   // row's own layout logic four different ways. The label and holder-name
   // rows instead reserve horizontal space on whichever side the badge
   // shares their row with, so long text truncates before running under it.
-  const badgeOnTop = badgePosition === "topLeft" || badgePosition === "topRight";
-  const badgeOnRight = badgePosition === "topRight" || badgePosition === "bottomRight";
+  // The badge and NFC symbol each pick their own corner independently now
+  // (previously NFC always shared the badge's) — cornerOccupants tells the
+  // reservation/stacking logic below how many of the two land in a given
+  // corner, so two things sharing one corner reserve more room and stack
+  // instead of drawing on top of each other.
+  const badgeCorner: BadgePosition | null = showNetworkBadge ? badgePosition : null;
+  const nfcCorner: BadgePosition | null = showNfc ? nfcPosition : null;
+  function cornerOccupants(corner: BadgePosition): number {
+    return (badgeCorner === corner ? 1 : 0) + (nfcCorner === corner ? 1 : 0);
+  }
   // The chip is always a free-floating absolutely-positioned element now
   // (like the badge) rather than only when pulled into a corner — its
   // default "middleLeft" is a real vertical center against the card's
   // left edge, not just "inline with the card-number row" (which used to
-  // read as "near the top", not the middle its label promised).
-  // "topLeft"/"bottomLeft" share whichever text row sits in that corner,
-  // so that row reserves space too. Both reservations are computed as
-  // plain pixel widths (not stacked Tailwind classes) since a row can need
-  // space from the badge and the chip on the same side at once, and two
-  // conflicting padding-left utility classes in one className don't
-  // reliably combine — the larger of the two wins here, which is correct
-  // since they overlap the same horizontal band rather than sitting side
-  // by side.
+  // read as "near the top", not the middle its label promised). It now
+  // moves on a full 3x3 grid (chip-position.ts) rather than only the left
+  // edge, so a corner spot ("topLeft", "bottomRight", ...) can coincide
+  // with the badge/NFC corner and needs the same reservation/stacking
+  // treatment; "Center" columns never correspond to a real corner.
   const chipInCorner = showChip;
-  const chipOnTop = chipPosition === "topLeft";
+  const chipRowValue = chipRow(chipPosition);
+  const chipColumnValue = chipColumn(chipPosition);
+  const chipCorner: BadgePosition | null =
+    chipRowValue === "middle" || chipColumnValue === "center"
+      ? null
+      : (`${chipRowValue}${chipColumnValue === "left" ? "Left" : "Right"}` as BadgePosition);
   // At the default position, the holder name stays exactly where it always
   // rendered — inline in the bottom row next to the expiry date — so no
   // existing card's layout changes. Any other corner pulls it out into its
@@ -300,101 +313,113 @@ export default function WalletCardShape({
   // site below so TypeScript narrows cardNumberPosition to "middle" |
   // "bottom" for CARD_NUMBER_POSITION_CLASSES' lookup).
   const cardNumberText = cardNumberLast4Only ? (last4 ?? "••••") : `•••• •••• •••• ${last4 ?? "••••"}`;
-  // The badge and the NFC symbol share one corner (badgePosition) rather
-  // than each getting their own — real cards carry both right next to each
-  // other. badgeAreaShown covers "there's something in that corner at
-  // all" for reservation purposes; the reserved width grows when both are
-  // present together rather than just one.
-  const badgeAreaShown = showNetworkBadge || showNfc;
+  // Both reservations are computed as plain pixel widths (not stacked
+  // Tailwind classes) since a row can need space from more than one
+  // corner element at once, and conflicting padding utility classes in one
+  // className don't reliably combine — the larger reservation on each side
+  // wins, which is correct since they overlap the same horizontal band
+  // rather than sitting side by side.
   function rowReserveStyle(isTopRow: boolean): CSSProperties {
-    let left = 0;
-    let right = 0;
-    if (badgeAreaShown && badgeOnTop === isTopRow) {
-      const width = showNetworkBadge && showNfc ? 88 : 64;
-      if (badgeOnRight) right = width;
-      else left = width;
-    }
-    // middleLeft doesn't reserve space in either row — it's vertically
-    // centered, not pulled into a corner that could overlap the top or
-    // bottom text row the way topLeft/bottomLeft can.
-    if (chipInCorner && chipPosition !== "middleLeft" && chipOnTop === isTopRow) {
-      left = Math.max(left, 40);
+    const leftCorner: BadgePosition = isTopRow ? "topLeft" : "bottomLeft";
+    const rightCorner: BadgePosition = isTopRow ? "topRight" : "bottomRight";
+    let left = cornerOccupants(leftCorner) > 0 ? (cornerOccupants(leftCorner) === 2 ? 88 : 64) : 0;
+    let right = cornerOccupants(rightCorner) > 0 ? (cornerOccupants(rightCorner) === 2 ? 88 : 64) : 0;
+    // "Center" chip columns never correspond to a real corner (see
+    // chipCorner above), so they never reserve row space either — the
+    // designer picking "center" is choosing to let it float over whatever
+    // else is centered there.
+    if (chipInCorner && chipRowValue === (isTopRow ? "top" : "bottom")) {
+      if (chipColumnValue === "left") left = Math.max(left, 40);
+      else if (chipColumnValue === "right") right = Math.max(right, 40);
     }
     const style: CSSProperties = {};
     if (left) style.paddingLeft = left;
     if (right) style.paddingRight = right;
     return style;
   }
-  // When both the badge and the chip land in the same top/bottom-left
-  // corner, stack the chip below (or above) the badge instead of drawing
-  // them on top of each other — only possible for the top/bottom chip
-  // positions, since middleLeft sits vertically centered and can't
-  // coincide with a top or bottom corner.
-  const chipSharesCornerWithBadge =
-    chipInCorner && chipPosition !== "middleLeft" && badgeAreaShown && !badgeOnRight && badgeOnTop === chipOnTop;
+  // When the chip lands in the same corner as the badge and/or NFC symbol,
+  // stack it below (or above) them instead of drawing on top — only
+  // possible when the chip is actually in a corner (see chipCorner above).
+  const chipCornerOccupants = chipCorner ? cornerOccupants(chipCorner) : 0;
+  const chipSharesCorner = chipCornerOccupants > 0;
   // The card-number row needs its own reservation now that the chip is
   // *always* a free-floating absolutely-positioned element — it used to
   // sit inline as a flex child (in the "top" row specifically), which
   // pushed the number text over for free; nothing does that automatically
   // anymore, for any of the three number positions. Both chip and number
   // default to "middle" now, so they land in the exact same spot
-  // (top-1/2, left-4) unless reserved for. Compared zone-by-zone —
-  // chipPosition's "…Left" suffix stripped so "topLeft"↔"top",
-  // "middleLeft"↔"middle", "bottomLeft"↔"bottom" — rather than only
-  // guarding the "top" case, since any matching pair can now collide.
-  const chipZone = chipPosition === "topLeft" ? "top" : chipPosition === "bottomLeft" ? "bottom" : "middle";
+  // (top-1/2, left-4) unless reserved for. Compared by row only (a chip's
+  // horizontal column doesn't matter here — the card number is always a
+  // single centered/left row, never split left vs. right) — rather than
+  // only guarding the "top" case, since any matching pair can now collide.
   // "top" keeps the broader guard from before (anything but a
   // bottom-anchored chip is plausibly close enough on a short card) since
-  // that's empirically what the original overlap report needed — a
-  // middleLeft chip and a "top" number aren't the same zone, yet still
-  // collided. "middle"/"bottom" use exact zone matching.
+  // that's empirically what the original overlap report needed —
+  // "middle"/"bottom" use exact row matching.
   const cardNumberReservesForChip =
-    showCardNumber && chipInCorner && (cardNumberPosition === "top" ? chipPosition !== "bottomLeft" : chipZone === cardNumberPosition);
+    showCardNumber && chipInCorner && (cardNumberPosition === "top" ? chipRowValue !== "bottom" : chipRowValue === cardNumberPosition);
   const chipCornerClass = !chipInCorner
     ? ""
-    : chipPosition === "middleLeft"
-      ? CHIP_POSITION_CLASSES.middleLeft
-      : chipOnTop
-        ? chipSharesCornerWithBadge
-          ? "top-14 left-4"
-          : CHIP_POSITION_CLASSES.topLeft
-        : chipSharesCornerWithBadge
-          ? "bottom-14 left-4"
-          : CHIP_POSITION_CLASSES.bottomLeft;
+    : !chipCorner
+      ? CHIP_POSITION_CLASSES[chipPosition]
+      : chipSharesCorner
+        ? `${chipRowValue === "top" ? "top-14" : "bottom-14"} ${chipColumnValue === "left" ? "left-4" : "right-4"}`
+        : CHIP_POSITION_CLASSES[chipPosition];
 
   return (
     <div
       className={`relative flex aspect-[1.586/1] min-h-[190px] w-full flex-col rounded-2xl p-4 shadow-soft ${background ? "" : heroGradientClasses(color)}`}
       style={{ color: fg.full, ...(background ? cardBackgroundStyle(background) : colorHeroStyle(color)) }}
     >
-      {badgeAreaShown && (
-        <div className={`absolute flex items-center gap-1.5 ${BADGE_POSITION_CLASSES[badgePosition]}`} style={{ color: iconFg.a85 }}>
-          {showNfc && <NfcIcon />}
-          {showNetworkBadge && (RECOLORABLE_BADGE_ASPECT[network] && !isOriginalIcon ? (
-            <div
-              aria-label={network}
-              className="h-5"
-              style={{
-                aspectRatio: RECOLORABLE_BADGE_ASPECT[network],
-                backgroundColor: "currentColor",
-                maskImage: `url(/badges/${network}.svg)`,
-                maskSize: "contain",
-                maskRepeat: "no-repeat",
-                maskPosition: "center",
-                WebkitMaskImage: `url(/badges/${network}.svg)`,
-                WebkitMaskSize: "contain",
-                WebkitMaskRepeat: "no-repeat",
-                WebkitMaskPosition: "center",
-              }}
-            />
-          ) : network !== "other" ? (
-            <img src={`/badges/${network}.svg`} alt={network} className="h-6 w-auto object-contain" />
-          ) : (
-            <>
-              <NetworkBadge network={network} />
-              <p className="text-xs font-bold uppercase tracking-wide">{t(NETWORK_LABEL_KEYS[network])}</p>
-            </>
-          ))}
+      {showNetworkBadge &&
+        (() => {
+          const networkBadgeContent =
+            RECOLORABLE_BADGE_ASPECT[network] && !isOriginalIcon ? (
+              <div
+                aria-label={network}
+                className="h-5"
+                style={{
+                  aspectRatio: RECOLORABLE_BADGE_ASPECT[network],
+                  backgroundColor: "currentColor",
+                  maskImage: `url(/badges/${network}.svg)`,
+                  maskSize: "contain",
+                  maskRepeat: "no-repeat",
+                  maskPosition: "center",
+                  WebkitMaskImage: `url(/badges/${network}.svg)`,
+                  WebkitMaskSize: "contain",
+                  WebkitMaskRepeat: "no-repeat",
+                  WebkitMaskPosition: "center",
+                }}
+              />
+            ) : network !== "other" ? (
+              <img src={`/badges/${network}.svg`} alt={network} className="h-6 w-auto object-contain" />
+            ) : (
+              <>
+                <NetworkBadge network={network} />
+                <p className="text-xs font-bold uppercase tracking-wide">{t(NETWORK_LABEL_KEYS[network])}</p>
+              </>
+            );
+          // The badge and NFC symbol render as one flex row (icon-by-icon,
+          // like a real card) when pointed at the same corner; otherwise
+          // each gets its own independent absolutely-positioned spot.
+          if (showNfc && nfcPosition === badgePosition) {
+            return (
+              <div className={`absolute flex items-center gap-1.5 ${BADGE_POSITION_CLASSES[badgePosition]}`} style={{ color: iconFg.a85 }}>
+                <NfcIcon />
+                {networkBadgeContent}
+              </div>
+            );
+          }
+          return (
+            <div className={`absolute flex items-center gap-1.5 ${BADGE_POSITION_CLASSES[badgePosition]}`} style={{ color: iconFg.a85 }}>
+              {networkBadgeContent}
+            </div>
+          );
+        })()}
+
+      {showNfc && !(showNetworkBadge && nfcPosition === badgePosition) && (
+        <div className={`absolute ${BADGE_POSITION_CLASSES[nfcPosition]}`} style={{ color: iconFg.a85 }}>
+          <NfcIcon />
         </div>
       )}
 
@@ -416,7 +441,13 @@ export default function WalletCardShape({
       {showCardNumber && cardNumberPosition !== "top" && (
         <p
           className={`absolute truncate text-base font-semibold tracking-[0.15em] ${CARD_NUMBER_POSITION_CLASSES[cardNumberPosition]}`}
-          style={cardNumberReservesForChip ? { paddingLeft: 40 } : undefined}
+          style={
+            cardNumberReservesForChip
+              ? chipColumnValue === "right"
+                ? { paddingRight: 40 }
+                : { paddingLeft: 40 }
+              : undefined
+          }
         >
           {cardNumberText}
         </p>

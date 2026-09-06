@@ -2,6 +2,7 @@ import type { CardBackground } from "@/lib/card-backgrounds";
 import type { NamePosition } from "@/lib/name-position";
 import type { CardTemplateCategory } from "@/lib/card-template-category";
 import type { CardNetwork } from "@/lib/wallet-cards";
+import type { BadgePosition } from "@/lib/badge-position";
 
 // A user-submitted "premade card" design — see card_templates in db.ts.
 // Purely the visual skin (background + colors); a picker applies these
@@ -51,6 +52,9 @@ export type CardTemplateOption = {
   /** Whether to force the contactless/NFC symbol shown or hidden — null
    * means "leave whatever the wallet already has". */
   forceShowNfc: boolean | null;
+  /** Which corner to force the NFC symbol into — null means "leave
+   * whatever the wallet already has". */
+  forceNfcPosition: BadgePosition | null;
   status: "pending" | "approved" | "rejected";
   submittedByUsername: string | null;
   createdAt: string;

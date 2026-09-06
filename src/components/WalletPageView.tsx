@@ -233,6 +233,7 @@ export default function WalletPageView({
           chipColor={wallet.chipColor}
           chipPosition={wallet.chipPosition}
           showNfc={wallet.showNfc}
+          nfcPosition={wallet.nfcPosition}
           balance={wallet.balance}
           currency={wallet.currency ?? currency}
           showBalance={wallet.showBalance}

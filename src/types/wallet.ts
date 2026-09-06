@@ -46,6 +46,8 @@ export type WalletOption = {
   /** Whether the contactless/NFC symbol renders — defaults false for any
    * wallet that existed before this feature shipped. */
   showNfc: boolean;
+  /** Which corner the NFC symbol sits in — independent of badgePosition. */
+  nfcPosition: BadgePosition;
   notes: string | null;
   /** Whether the balance amount renders on the card face — independent of
    * whether the wallet has a card look at all. */

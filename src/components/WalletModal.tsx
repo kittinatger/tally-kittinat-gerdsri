@@ -16,7 +16,7 @@ import { CATEGORY_PALETTE } from "@/lib/categories";
 import { CARD_NETWORKS, type CardNetwork } from "@/lib/wallet-cards";
 import { backgroundGlowColor, cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
 import { CHIP_COLORS, CHIP_COLOR_LABEL_KEYS, CHIP_COLOR_STOPS, DEFAULT_CHIP_COLOR, type ChipColor } from "@/lib/chip-colors";
-import { BADGE_POSITIONS, BADGE_POSITION_LABEL_KEYS, DEFAULT_BADGE_POSITION, type BadgePosition } from "@/lib/badge-position";
+import { BADGE_POSITIONS, BADGE_POSITION_LABEL_KEYS, DEFAULT_BADGE_POSITION, DEFAULT_NFC_POSITION, type BadgePosition } from "@/lib/badge-position";
 import { CHIP_POSITIONS, CHIP_POSITION_LABEL_KEYS, DEFAULT_CHIP_POSITION, type ChipPosition } from "@/lib/chip-position";
 import { NAME_POSITIONS, NAME_POSITION_LABEL_KEYS, DEFAULT_NAME_POSITION, type NamePosition } from "@/lib/name-position";
 import {
@@ -100,6 +100,12 @@ export default function WalletModal({
   // wallet's own saved value is otherwise (false for one that predates
   // this feature — see the show_nfc migration comment in db.ts).
   const [showNfc, setShowNfc] = useState(wallet?.showNfc ?? true);
+  const [nfcPosition, setNfcPosition] = useState<BadgePosition>(wallet?.nfcPosition ?? DEFAULT_NFC_POSITION);
+  // Same convention as namePositionLocked — set by a picked premade
+  // template's forceNfcPosition, hiding the corner picker in favor of a
+  // "set by template" note rather than leaving it interactive-but-
+  // overridable.
+  const [nfcPositionLocked, setNfcPositionLocked] = useState(false);
   const [cardNotes, setCardNotes] = useState(wallet?.notes ?? "");
   const [showBalance, setShowBalance] = useState(wallet?.showBalance ?? true);
   const [showCurrency, setShowCurrency] = useState(wallet?.showCurrency ?? true);
@@ -226,6 +232,9 @@ export default function WalletModal({
   // artwork, so it doesn't make sense to let the picker choose a
   // different one.
   const [templateForceNetwork, setTemplateForceNetwork] = useState<CardNetwork | null>(null);
+  // Same idea as templateForceNamePosition — null means "don't force an
+  // NFC corner" (the picker just inherits whatever the wallet already has).
+  const [templateForceNfcPosition, setTemplateForceNfcPosition] = useState<BadgePosition | null>(null);
 
   const month = expiryMonth ? Number(expiryMonth) : null;
   const year = expiryYear ? Number(expiryYear) : null;
@@ -290,6 +299,7 @@ export default function WalletModal({
           forceShowHolderName: forceToggles.showHolderName,
           forceShowExpiry: forceToggles.showExpiry,
           forceShowNfc: forceToggles.showNfc,
+          forceNfcPosition: templateForceNfcPosition,
           forceCurrency: lockCurrency ? currency : null,
           forceNamePosition: templateForceNamePosition,
           lockTextColor: templateLockTextColor,
@@ -336,6 +346,7 @@ export default function WalletModal({
         chipColor,
         chipPosition,
         showNfc,
+        nfcPosition,
         notes: cardNotes.trim() || null,
         showBalance,
         showCurrency,
@@ -410,6 +421,7 @@ export default function WalletModal({
             chipColor={chipColor}
             chipPosition={chipPosition}
             showNfc={showNfc}
+            nfcPosition={nfcPosition}
             balance={Number(startingBalance) || 0}
             currency={currency ?? appCurrency}
             showBalance={showBalance}
@@ -624,6 +636,34 @@ export default function WalletModal({
               </span>
             </button>
           )}
+
+          {/* Hidden entirely once a picked template's forceNfcPosition
+           * locks this — same convention as namePositionLocked above. */}
+          {showNfc && !nfcPositionLocked && (
+            <div className="border-t border-line pt-3">
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.nfcPositionLabel")}</label>
+              <div className="grid w-24 grid-cols-2 gap-1.5">
+                {BADGE_POSITIONS.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setNfcPosition(p)}
+                    aria-label={t(BADGE_POSITION_LABEL_KEYS[p])}
+                    title={t(BADGE_POSITION_LABEL_KEYS[p])}
+                    className={`flex h-10 w-10 items-center rounded-lg border transition ${
+                      p === "topLeft" || p === "topRight" ? "items-start" : "items-end"
+                    } ${p === "topLeft" || p === "bottomLeft" ? "justify-start" : "justify-end"} ${
+                      nfcPosition === p
+                        ? "border-navy bg-navy/10"
+                        : "border-line bg-bg-soft hover:bg-[var(--nav-hover-bg)]"
+                    } p-1.5`}
+                  >
+                    <span className={`h-2 w-2 rounded-full ${nfcPosition === p ? "bg-navy" : "bg-ink-soft/50"}`} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </FormSection>
         )}
 
@@ -679,19 +719,25 @@ export default function WalletModal({
           {showChip && (
             <div className="border-t border-line pt-3">
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.chipPositionLabel")}</label>
-              <div className="flex gap-1.5">
+              {/* A full 3x3 grid now (was three left-anchored spots) — the
+               * array is already in row-major order (top row, middle row,
+               * bottom row, each left/center/right), so it maps straight
+               * onto grid-cols-3 with no separate row/col bookkeeping. */}
+              <div className="grid w-24 grid-cols-3 gap-1.5">
                 {CHIP_POSITIONS.map((p) => (
                   <button
                     key={p}
                     type="button"
                     onClick={() => setChipPosition(p)}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    aria-label={t(CHIP_POSITION_LABEL_KEYS[p])}
+                    title={t(CHIP_POSITION_LABEL_KEYS[p])}
+                    className={`flex h-7 w-7 items-center justify-center rounded-lg border transition ${
                       chipPosition === p
-                        ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
-                        : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                        ? "border-navy bg-navy/10"
+                        : "border-line bg-bg-soft hover:bg-[var(--nav-hover-bg)]"
                     }`}
                   >
-                    {t(CHIP_POSITION_LABEL_KEYS[p])}
+                    <span className={`h-2 w-2 rounded-full ${chipPosition === p ? "bg-navy" : "bg-ink-soft/50"}`} />
                   </button>
                 ))}
               </div>
@@ -1117,6 +1163,12 @@ export default function WalletModal({
               } else {
                 setNamePositionLocked(false);
               }
+              if (tpl.forceNfcPosition !== null) {
+                setNfcPosition(tpl.forceNfcPosition);
+                setNfcPositionLocked(true);
+              } else {
+                setNfcPositionLocked(false);
+              }
             }}
           />
           <CardBackgroundPicker value={background} onChange={setBackground} plainColor={color} onPlainColorChange={setColor} />
@@ -1396,6 +1448,42 @@ export default function WalletModal({
                     }`}
                   >
                     {t(NETWORK_LABEL_KEYS[n])}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Forcing an NFC corner makes no sense once the symbol itself
+           * is forced off. */}
+          {forceToggles.showNfc !== false && (
+            <div className="border-t border-line pt-3">
+              <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceNfcPositionLabel")}</p>
+              <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceNfcPositionDesc")}</p>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setTemplateForceNfcPosition(null)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    templateForceNfcPosition === null
+                      ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                      : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                  }`}
+                >
+                  {t("wallet.forceAuto")}
+                </button>
+                {BADGE_POSITIONS.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setTemplateForceNfcPosition(p)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                      templateForceNfcPosition === p
+                        ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                        : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                    }`}
+                  >
+                    {t(BADGE_POSITION_LABEL_KEYS[p])}
                   </button>
                 ))}
               </div>

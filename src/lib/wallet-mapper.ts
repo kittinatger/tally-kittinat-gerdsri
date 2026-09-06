@@ -5,7 +5,7 @@ import { isWalletKind } from "@/lib/wallets";
 import { isCardNetwork } from "@/lib/wallet-cards";
 import { parseCardBackground } from "@/lib/card-backgrounds";
 import { isChipColor, DEFAULT_CHIP_COLOR } from "@/lib/chip-colors";
-import { isBadgePosition, DEFAULT_BADGE_POSITION } from "@/lib/badge-position";
+import { isBadgePosition, DEFAULT_BADGE_POSITION, DEFAULT_NFC_POSITION } from "@/lib/badge-position";
 import { isChipPosition, DEFAULT_CHIP_POSITION } from "@/lib/chip-position";
 import { isNamePosition, DEFAULT_NAME_POSITION } from "@/lib/name-position";
 import { isCardNumberPosition, DEFAULT_CARD_NUMBER_POSITION } from "@/lib/card-number-position";
@@ -41,6 +41,7 @@ export function toWalletOption(w: WalletRow): WalletOption {
     chipColor: isChipColor(w.chip_color) ? w.chip_color : DEFAULT_CHIP_COLOR,
     chipPosition: isChipPosition(w.chip_position) ? w.chip_position : DEFAULT_CHIP_POSITION,
     showNfc: w.show_nfc,
+    nfcPosition: isBadgePosition(w.nfc_position) ? w.nfc_position : DEFAULT_NFC_POSITION,
     notes: w.notes,
     showBalance: w.show_balance,
     showCurrency: w.show_currency,
@@ -77,6 +78,7 @@ export function toCardTemplateOption(t: CardTemplateRow): CardTemplateOption {
     forceShowHolderName: t.force_show_holder_name,
     forceShowExpiry: t.force_show_expiry,
     forceShowNfc: t.force_show_nfc,
+    forceNfcPosition: t.force_nfc_position && isBadgePosition(t.force_nfc_position) ? t.force_nfc_position : null,
     status: t.status,
     submittedByUsername: t.submitted_by_username,
     createdAt: t.created_at,

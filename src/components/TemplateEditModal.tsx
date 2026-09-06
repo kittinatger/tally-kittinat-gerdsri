@@ -15,6 +15,7 @@ import { CURRENCIES } from "@/lib/currencies";
 import { useCurrency } from "@/lib/currency-context";
 import { countryForCurrency, KNOWN_COUNTRIES } from "@/lib/currency-country";
 import { NAME_POSITIONS, NAME_POSITION_LABEL_KEYS, type NamePosition } from "@/lib/name-position";
+import { BADGE_POSITIONS, BADGE_POSITION_LABEL_KEYS, type BadgePosition } from "@/lib/badge-position";
 import { CARD_TEMPLATE_CATEGORIES, CARD_TEMPLATE_CATEGORY_LABEL_KEYS, type CardTemplateCategory } from "@/lib/card-template-category";
 import { CARD_NETWORKS, type CardNetwork } from "@/lib/wallet-cards";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -91,6 +92,7 @@ export default function TemplateEditModal({
   const [forceNamePosition, setForceNamePosition] = useState<NamePosition | null>(template.forceNamePosition);
   const [lockTextColor, setLockTextColor] = useState(template.lockTextColor);
   const [forceNetwork, setForceNetwork] = useState<CardNetwork | null>(template.forceNetwork);
+  const [forceNfcPosition, setForceNfcPosition] = useState<BadgePosition | null>(template.forceNfcPosition);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -117,6 +119,7 @@ export default function TemplateEditModal({
           forceNamePosition,
           lockTextColor,
           forceNetwork,
+          forceNfcPosition,
         }),
       });
       const data = await res.json();
@@ -393,6 +396,42 @@ export default function TemplateEditModal({
                     }`}
                   >
                     {t(NETWORK_LABEL_KEYS[n])}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Forcing an NFC corner makes no sense once the symbol itself
+           * is force-hidden. */}
+          {force.forceShowNfc !== false && (
+            <div className="border-t border-line pt-3">
+              <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceNfcPositionLabel")}</p>
+              <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceNfcPositionDesc")}</p>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setForceNfcPosition(null)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    forceNfcPosition === null
+                      ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                      : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                  }`}
+                >
+                  {t("wallet.forceAuto")}
+                </button>
+                {BADGE_POSITIONS.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setForceNfcPosition(p)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                      forceNfcPosition === p
+                        ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                        : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                    }`}
+                  >
+                    {t(BADGE_POSITION_LABEL_KEYS[p])}
                   </button>
                 ))}
               </div>

@@ -193,6 +193,7 @@ const walletCardVisualFields = {
   chipColor: z.enum(CHIP_COLORS).optional(),
   chipPosition: z.enum(CHIP_POSITIONS).optional(),
   showNfc: z.boolean().optional(),
+  nfcPosition: z.enum(BADGE_POSITIONS).optional(),
   notes: z.string().trim().max(500).nullable().optional(),
   // Per-card toggles for what shows on the card face, independent of
   // whether it has a card look at all.
@@ -278,6 +279,7 @@ export const cardTemplateInputSchema = z.object({
   forceShowHolderName: z.boolean().nullable().optional(),
   forceShowExpiry: z.boolean().nullable().optional(),
   forceShowNfc: z.boolean().nullable().optional(),
+  forceNfcPosition: z.enum(BADGE_POSITIONS).nullable().optional(),
 });
 
 // Admin-only edit — every field optional (at least one required), used for
@@ -304,6 +306,7 @@ export const cardTemplateUpdateSchema = z
     forceShowHolderName: z.boolean().nullable().optional(),
     forceShowExpiry: z.boolean().nullable().optional(),
     forceShowNfc: z.boolean().nullable().optional(),
+    forceNfcPosition: z.enum(BADGE_POSITIONS).nullable().optional(),
     status: z.enum(["pending", "approved", "rejected"]).optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {

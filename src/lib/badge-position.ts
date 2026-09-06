@@ -15,6 +15,13 @@ export function isBadgePosition(value: string): value is BadgePosition {
 // cards look unchanged until someone picks a different corner.
 export const DEFAULT_BADGE_POSITION: BadgePosition = "topRight";
 
+// The NFC symbol reuses this same corner type (see WalletCardShape.tsx's
+// nfcPosition prop) rather than a near-identical enum of its own — this is
+// its own default, the opposite corner from DEFAULT_BADGE_POSITION, so
+// turning NFC on with everything else left at its defaults doesn't
+// immediately land it on top of the network badge.
+export const DEFAULT_NFC_POSITION: BadgePosition = "topLeft";
+
 export const BADGE_POSITION_LABEL_KEYS: Record<BadgePosition, MessageKey> = {
   topLeft: "wallet.badgePositionTopLeft",
   topRight: "wallet.badgePositionTopRight",
