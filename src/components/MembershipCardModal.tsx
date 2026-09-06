@@ -1081,7 +1081,17 @@ export default function MembershipCardModal({
         </FormSection>
         ) : (
         <>
-        <p className="text-xs text-ink-soft">{t("membership.uploadPassTemplateDesc")}</p>
+        <p className="text-xs text-ink-soft">
+          {t("membership.uploadPassTemplateDesc")}{" "}
+          <a
+            href="/pass-guidelines"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-navy underline hover:no-underline dark:text-blue-300"
+          >
+            {t("membership.viewPassGuidelinesLink")}
+          </a>
+        </p>
 
         <FormSection icon={<MembershipCardIcon className="h-4 w-4" />} title={t("wallet.templateDetailsLabel")}>
           <div>

@@ -562,6 +562,7 @@ export default function SettingsNavList({
         <SettingsListItem icon={<GiftIcon />} label={t("settings.referFriend")} accent="pink" href="/refer-a-friend" selected={pathname === "/refer-a-friend"} />
         <SettingsListItem icon={<BookIcon />} label={t("settings.usageGuide")} accent="indigo" href="/usage-guide" selected={pathname === "/usage-guide"} />
         <SettingsListItem icon={<CardGuidelinesIcon />} label={t("settings.cardGuidelines")} accent="sky" href="/card-guidelines" selected={pathname === "/card-guidelines"} />
+        <SettingsListItem icon={<ReceiptNavIcon />} label={t("settings.passGuidelines")} accent="sky" href="/pass-guidelines" selected={pathname === "/pass-guidelines"} />
         <SettingsListItem icon={<QuestionIcon />} label={t("settings.faqs")} accent="violet" href="/faq" selected={pathname === "/faq"} />
         <SettingsListItem icon={<WrenchIcon />} label={t("settings.troubleshooting")} accent="orange" href="/troubleshooting" selected={pathname === "/troubleshooting"} />
         <SettingsListItem icon={<MailIcon />} label={t("settings.contact")} accent="sky" href="/contact" selected={pathname === "/contact"} />
