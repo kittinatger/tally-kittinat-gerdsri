@@ -15,6 +15,7 @@ import {
   isSvgPattern,
   type CardBackground,
 } from "@/lib/card-backgrounds";
+import { isSvgDataUrl, decodeSvgDataUrl, encodeSvgDataUrl, extractSvgColors, recolorSvg } from "@/lib/svg-recolor";
 
 function LockIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
   return (
@@ -62,18 +63,32 @@ export default function CardBackgroundPicker({
   const t = useT();
   const [scanOpen, setScanOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
-  // Whether an SVG pattern's colors are currently editable — starts locked
-  // every time (a brand-new card, one applied from a picked premade
-  // template, or one that already existed before this lock existed all
-  // behave identically: colors read-only until explicitly unlocked here).
-  // Not persisted anywhere; this is purely "am I actively editing right
-  // now", so it resets to locked again whenever the pattern itself changes.
+  // Whether an SVG's colors are currently editable — either one of the
+  // built-in SVG-illustration patterns, or a custom SVG file the user
+  // uploaded themselves via "Scan a card" (see CardPhotoScanModal's SVG
+  // upload path — it applies the raw file as-is, `{ pattern: "photo",
+  // photoDataUrl }`, unlike every other pattern's structured `colors`
+  // array). Starts locked every time (a brand-new card, one applied from a
+  // picked premade template, or one that already existed before this lock
+  // existed all behave identically: colors read-only until explicitly
+  // unlocked here). Not persisted anywhere; this is purely "am I actively
+  // editing right now", so it resets to locked again whenever the
+  // background itself changes (a different pattern, or a newly
+  // scanned/uploaded photo/SVG).
   const [svgColorsUnlocked, setSvgColorsUnlocked] = useState(false);
-  const currentPattern = value && value.pattern !== "photo" ? value.pattern : null;
+  const lockResetKey = !value ? null : value.pattern === "photo" ? value.photoDataUrl : value.pattern;
+  const isCustomSvg = value?.pattern === "photo" && isSvgDataUrl(value.photoDataUrl);
+  const customSvgColors = isCustomSvg ? extractSvgColors(decodeSvgDataUrl((value as { photoDataUrl: string }).photoDataUrl)) : [];
 
   useEffect(() => {
     setSvgColorsUnlocked(false);
-  }, [currentPattern]);
+  }, [lockResetKey]);
+
+  function recolorCustomSvg(from: string, to: string) {
+    if (!value || value.pattern !== "photo") return;
+    const markup = recolorSvg(decodeSvgDataUrl(value.photoDataUrl), from, to);
+    onChange({ pattern: "photo", photoDataUrl: encodeSvgDataUrl(markup) });
+  }
 
   function selectPattern(pattern: (typeof GALLERY_PATTERNS)[number]) {
     if (value?.pattern === pattern) return;
@@ -158,11 +173,40 @@ export default function CardBackgroundPicker({
         <ColorPicker value={plainColor} onChange={onPlainColorChange} palette={palette} />
       ) : value.pattern === "photo" ? (
         <div className="space-y-2.5 rounded-card border border-line bg-bg-soft p-3">
-          <p className="text-xs font-semibold text-ink-soft">{t("background.scanCard")}</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold text-ink-soft">{t("background.scanCard")}</p>
+            {/* Only a custom-uploaded SVG has discrete colors to edit — a
+             * real photo is just pixels. */}
+            {isCustomSvg && customSvgColors.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setSvgColorsUnlocked((v) => !v)}
+                className={`flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                  svgColorsUnlocked
+                    ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                    : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                }`}
+              >
+                {svgColorsUnlocked ? <UnlockIcon /> : <LockIcon />}
+                {t("background.editColors")}
+              </button>
+            )}
+          </div>
           <div className="overflow-hidden rounded-xl border border-line">
             {/* eslint-disable-next-line @next/next/no-img-element -- stored/generated data URL, not a build-time asset */}
             <img src={value.photoDataUrl} alt="" className="aspect-[8/5] w-full object-cover" />
           </div>
+          {isCustomSvg && customSvgColors.length > 0 && (
+            svgColorsUnlocked ? (
+              <div className="space-y-2.5 border-t border-line pt-2.5">
+                {customSvgColors.map((c) => (
+                  <ColorPicker key={c} value={c} onChange={(next) => recolorCustomSvg(c, next)} palette={[]} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-[11px] text-ink-soft">{t("background.colorsLockedDesc")}</p>
+            )
+          )}
           <button
             type="button"
             onClick={() => setScanOpen(true)}
