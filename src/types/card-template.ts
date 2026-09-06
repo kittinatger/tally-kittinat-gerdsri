@@ -5,6 +5,7 @@ import type { CardNetwork } from "@/lib/wallet-cards";
 import type { BadgePosition } from "@/lib/badge-position";
 import type { NfcSize } from "@/lib/nfc-size";
 import type { ChipPosition } from "@/lib/chip-position";
+import type { CardNumberPosition } from "@/lib/card-number-position";
 
 // A user-submitted "premade card" design — see card_templates in db.ts.
 // Purely the visual skin (background + colors); a picker applies these
@@ -70,6 +71,11 @@ export type CardTemplateOption = {
    * shown (forceShowChip !== false) — a template can't sensibly position
    * a chip it also force-hides. See chip-position.ts. */
   forceChipPosition: ChipPosition | null;
+  /** Where to force the masked card-number row — null means "leave
+   * whatever the wallet already has". Only meaningful when the card
+   * number itself is shown (forceShowCardNumber !== false). See
+   * card-number-position.ts. */
+  forceCardNumberPosition: CardNumberPosition | null;
   status: "pending" | "approved" | "rejected";
   submittedByUsername: string | null;
   createdAt: string;

@@ -84,6 +84,8 @@ export function toCardTemplateOption(t: CardTemplateRow): CardTemplateOption {
     forceNfcSize: t.force_nfc_size && isNfcSize(t.force_nfc_size) ? t.force_nfc_size : null,
     lockSvgColors: t.lock_svg_colors,
     forceChipPosition: t.force_chip_position && isChipPosition(t.force_chip_position) ? t.force_chip_position : null,
+    forceCardNumberPosition:
+      t.force_card_number_position && isCardNumberPosition(t.force_card_number_position) ? t.force_card_number_position : null,
     status: t.status,
     submittedByUsername: t.submitted_by_username,
     createdAt: t.created_at,

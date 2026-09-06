@@ -290,6 +290,10 @@ export const cardTemplateInputSchema = z.object({
   // Which corner to force the EMV chip into — only meaningful when the
   // chip itself is forced shown, same convention as forceNfcPosition.
   forceChipPosition: z.enum(CHIP_POSITIONS).nullable().optional(),
+  // Where to force the masked card-number row — only meaningful when the
+  // card number itself is forced shown, same convention as
+  // forceChipPosition.
+  forceCardNumberPosition: z.enum(CARD_NUMBER_POSITIONS).nullable().optional(),
 });
 
 // Admin-only edit — every field optional (at least one required), used for
@@ -320,6 +324,7 @@ export const cardTemplateUpdateSchema = z
     forceNfcSize: z.enum(NFC_SIZES).nullable().optional(),
     lockSvgColors: z.boolean().optional(),
     forceChipPosition: z.enum(CHIP_POSITIONS).nullable().optional(),
+    forceCardNumberPosition: z.enum(CARD_NUMBER_POSITIONS).nullable().optional(),
     status: z.enum(["pending", "approved", "rejected"]).optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {

@@ -124,6 +124,10 @@ export default function WalletModal({
   const [cardNumberPosition, setCardNumberPosition] = useState<CardNumberPosition>(
     wallet?.cardNumberPosition ?? DEFAULT_CARD_NUMBER_POSITION,
   );
+  // Same convention as chipPositionLocked — set by a picked premade
+  // template's forceCardNumberPosition, hiding the position picker in
+  // favor of the template's own placement.
+  const [cardNumberPositionLocked, setCardNumberPositionLocked] = useState(false);
   const [showName, setShowName] = useState(wallet?.showName ?? true);
   const [showHolderName, setShowHolderName] = useState(wallet?.showHolderName ?? true);
   const [showExpiry, setShowExpiry] = useState(wallet?.showExpiry ?? true);
@@ -251,6 +255,11 @@ export default function WalletModal({
   // forceToggles.showChip isn't forced off, since locking the position of
   // a chip the template also force-hides makes no sense.
   const [templateForceChipPosition, setTemplateForceChipPosition] = useState<ChipPosition | null>(null);
+  // Same idea as templateForceChipPosition — only meaningful (shown at
+  // all) when forceToggles.showCardNumber isn't forced off, since locking
+  // the position of a number the template also force-hides makes no
+  // sense.
+  const [templateForceCardNumberPosition, setTemplateForceCardNumberPosition] = useState<CardNumberPosition | null>(null);
   // When true, and the background is a custom-uploaded SVG, forces
   // CardBackgroundPicker's "Edit colors" unlock to stay hidden — set from
   // a picked template's own lockSvgColors (see card_templates.lock_svg_colors
@@ -339,6 +348,7 @@ export default function WalletModal({
           forceNfcPosition: templateForceNfcPosition,
           forceNfcSize: templateForceNfcSize,
           forceChipPosition: forceToggles.showChip === false ? null : templateForceChipPosition,
+          forceCardNumberPosition: forceToggles.showCardNumber === false ? null : templateForceCardNumberPosition,
           forceCurrency: lockCurrency ? currency : null,
           forceNamePosition: templateForceNamePosition,
           lockTextColor: templateLockTextColor,
@@ -868,7 +878,9 @@ export default function WalletModal({
             </button>
           )}
 
-          {showCardNumber && (
+          {/* Hidden entirely once a picked template's forceCardNumberPosition
+           * locks this — same convention as chipPositionLocked above. */}
+          {showCardNumber && !cardNumberPositionLocked && (
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.cardNumberPositionLabel")}</label>
               <div className="flex gap-1.5">
@@ -1249,6 +1261,12 @@ export default function WalletModal({
               } else {
                 setChipPositionLocked(false);
               }
+              if (tpl.forceCardNumberPosition !== null) {
+                setCardNumberPosition(tpl.forceCardNumberPosition);
+                setCardNumberPositionLocked(true);
+              } else {
+                setCardNumberPositionLocked(false);
+              }
               setSvgColorsLockedByTemplate(tpl.lockSvgColors);
               // A custom-SVG background whose colors this template doesn't
               // lock can be recolored and resubmitted as a "variation" —
@@ -1265,6 +1283,7 @@ export default function WalletModal({
                 setTemplateForceNfcPosition(tpl.forceNfcPosition);
                 setTemplateForceNfcSize(tpl.forceNfcSize);
                 setTemplateForceChipPosition(tpl.forceChipPosition);
+                setTemplateForceCardNumberPosition(tpl.forceCardNumberPosition);
                 setTemplateLockSvgColors(false);
                 setForceToggles({
                   showName: tpl.forceShowName,
@@ -1703,6 +1722,43 @@ export default function WalletModal({
                     }`}
                   >
                     {t(CHIP_POSITION_LABEL_KEYS[p])}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Forcing a card-number position makes no sense once the
+           * number itself is forced off — same convention as the chip/NFC
+           * position guards above. */}
+          {forceToggles.showCardNumber !== false && (
+            <div className="border-t border-line pt-3">
+              <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceCardNumberPositionLabel")}</p>
+              <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceCardNumberPositionDesc")}</p>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setTemplateForceCardNumberPosition(null)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    templateForceCardNumberPosition === null
+                      ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                      : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                  }`}
+                >
+                  {t("wallet.forceAuto")}
+                </button>
+                {CARD_NUMBER_POSITIONS.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setTemplateForceCardNumberPosition(p)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                      templateForceCardNumberPosition === p
+                        ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                        : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                    }`}
+                  >
+                    {t(CARD_NUMBER_POSITION_LABEL_KEYS[p])}
                   </button>
                 ))}
               </div>

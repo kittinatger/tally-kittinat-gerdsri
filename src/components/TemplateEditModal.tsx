@@ -19,6 +19,7 @@ import { NAME_POSITIONS, NAME_POSITION_LABEL_KEYS, type NamePosition } from "@/l
 import { BADGE_POSITIONS, BADGE_POSITION_LABEL_KEYS, type BadgePosition } from "@/lib/badge-position";
 import { NFC_SIZES, NFC_SIZE_LABEL_KEYS, type NfcSize } from "@/lib/nfc-size";
 import { CHIP_POSITIONS, CHIP_POSITION_LABEL_KEYS, type ChipPosition } from "@/lib/chip-position";
+import { CARD_NUMBER_POSITIONS, CARD_NUMBER_POSITION_LABEL_KEYS, type CardNumberPosition } from "@/lib/card-number-position";
 import { CARD_TEMPLATE_CATEGORIES, CARD_TEMPLATE_CATEGORY_LABEL_KEYS, type CardTemplateCategory } from "@/lib/card-template-category";
 import { CARD_NETWORKS, type CardNetwork } from "@/lib/wallet-cards";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -99,6 +100,7 @@ export default function TemplateEditModal({
   const [forceNfcSize, setForceNfcSize] = useState<NfcSize | null>(template.forceNfcSize);
   const [lockSvgColors, setLockSvgColors] = useState(template.lockSvgColors);
   const [forceChipPosition, setForceChipPosition] = useState<ChipPosition | null>(template.forceChipPosition);
+  const [forceCardNumberPosition, setForceCardNumberPosition] = useState<CardNumberPosition | null>(template.forceCardNumberPosition);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -129,6 +131,7 @@ export default function TemplateEditModal({
           forceNfcSize,
           lockSvgColors,
           forceChipPosition,
+          forceCardNumberPosition,
         }),
       });
       const data = await res.json();
@@ -542,6 +545,42 @@ export default function TemplateEditModal({
                     }`}
                   >
                     {t(CHIP_POSITION_LABEL_KEYS[p])}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Forcing a card-number position makes no sense once the
+           * number itself is force-hidden. */}
+          {force.forceShowCardNumber !== false && (
+            <div className="border-t border-line pt-3">
+              <p className="mb-0.5 text-xs font-semibold text-foreground">{t("wallet.forceCardNumberPositionLabel")}</p>
+              <p className="mb-2 text-[11px] text-ink-soft">{t("wallet.forceCardNumberPositionDesc")}</p>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setForceCardNumberPosition(null)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    forceCardNumberPosition === null
+                      ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                      : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                  }`}
+                >
+                  {t("wallet.forceAuto")}
+                </button>
+                {CARD_NUMBER_POSITIONS.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setForceCardNumberPosition(p)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                      forceCardNumberPosition === p
+                        ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
+                        : "border-line text-ink-soft hover:bg-[var(--nav-hover-bg)]"
+                    }`}
+                  >
+                    {t(CARD_NUMBER_POSITION_LABEL_KEYS[p])}
                   </button>
                 ))}
               </div>

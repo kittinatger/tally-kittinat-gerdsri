@@ -183,7 +183,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 68;
+const CURRENT_SCHEMA_VERSION = 69;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1518,6 +1518,12 @@ function ensureSchema(): Promise<void> {
       // the chip shown (only makes sense on cards with "Show chip" on).
       await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS force_chip_position TEXT;`;
 
+      // Which spot to force the masked card-number row into — same idea
+      // as force_chip_position, only meaningful for templates that also
+      // don't force the card number hidden (force_show_card_number !==
+      // false).
+      await sql`ALTER TABLE card_templates ADD COLUMN IF NOT EXISTS force_card_number_position TEXT;`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -2311,6 +2317,10 @@ export type CardTemplateRow = {
   // force_nfc_position, only meaningful when the chip itself is shown
   // (force_show_chip !== false). NULL means "don't touch it".
   force_chip_position: string | null;
+  // Which spot to force the masked card-number row into — same idea as
+  // force_chip_position, only meaningful when the card number itself is
+  // shown (force_show_card_number !== false). NULL means "don't touch it".
+  force_card_number_position: string | null;
   status: "pending" | "approved" | "rejected";
   created_at: string;
   reviewed_at: string | null;
@@ -2322,7 +2332,7 @@ export type CardTemplateRow = {
 // against the users join), bare column names for INSERT/UPDATE...RETURNING
 // where there's no alias to strip.
 const CARD_TEMPLATE_COLUMNS =
-  "id, submitted_by, name, color, background, text_color, force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency, country, force_name_position, lock_text_color, category, force_network, force_show_holder_name, force_show_expiry, force_show_nfc, force_nfc_position, force_nfc_size, lock_svg_colors, force_chip_position, status, created_at, reviewed_at";
+  "id, submitted_by, name, color, background, text_color, force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency, country, force_name_position, lock_text_color, category, force_network, force_show_holder_name, force_show_expiry, force_show_nfc, force_nfc_position, force_nfc_size, lock_svg_colors, force_chip_position, force_card_number_position, status, created_at, reviewed_at";
 
 export async function createCardTemplate(
   userId: number,
@@ -2350,6 +2360,7 @@ export async function createCardTemplate(
     forceNfcSize?: string | null;
     lockSvgColors?: boolean;
     forceChipPosition?: string | null;
+    forceCardNumberPosition?: string | null;
   },
 ): Promise<CardTemplateRow> {
   await ensureSchema();
@@ -2358,9 +2369,9 @@ export async function createCardTemplate(
     `INSERT INTO card_templates (
        submitted_by, name, color, background, text_color,
        force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency,
-       country, force_name_position, lock_text_color, category, force_network, force_show_holder_name, force_show_expiry, force_show_nfc, force_nfc_position, force_nfc_size, lock_svg_colors, force_chip_position, status
+       country, force_name_position, lock_text_color, category, force_network, force_show_holder_name, force_show_expiry, force_show_nfc, force_nfc_position, force_nfc_size, lock_svg_colors, force_chip_position, force_card_number_position, status
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, 'pending')
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, 'pending')
      RETURNING ${CARD_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
     [
       userId,
@@ -2387,6 +2398,7 @@ export async function createCardTemplate(
       input.forceNfcSize ?? null,
       input.lockSvgColors ?? false,
       input.forceChipPosition ?? null,
+      input.forceCardNumberPosition ?? null,
     ],
   );
   return rows[0];
@@ -2453,6 +2465,7 @@ export async function updateCardTemplate(
     forceNfcSize?: string | null;
     lockSvgColors?: boolean;
     forceChipPosition?: string | null;
+    forceCardNumberPosition?: string | null;
     status?: "pending" | "approved" | "rejected";
   },
 ): Promise<CardTemplateRow | null> {
@@ -2481,11 +2494,12 @@ export async function updateCardTemplate(
     force_nfc_size: string | null;
     lock_svg_colors: boolean;
     force_chip_position: string | null;
+    force_card_number_position: string | null;
     status: "pending" | "approved" | "rejected";
   }>`
     SELECT name, color, background, text_color,
            force_show_name, force_show_network_badge, force_show_chip, force_show_card_number, force_show_balance, force_show_currency, force_currency,
-           country, force_name_position, lock_text_color, category, force_network, force_show_holder_name, force_show_expiry, force_show_nfc, force_nfc_position, force_nfc_size, lock_svg_colors, force_chip_position, status
+           country, force_name_position, lock_text_color, category, force_network, force_show_holder_name, force_show_expiry, force_show_nfc, force_nfc_position, force_nfc_size, lock_svg_colors, force_chip_position, force_card_number_position, status
     FROM card_templates WHERE id = ${id};
   `;
   const existing = existingRows[0];
@@ -2514,6 +2528,8 @@ export async function updateCardTemplate(
   const newForceNfcSize = input.forceNfcSize !== undefined ? input.forceNfcSize : existing.force_nfc_size;
   const newLockSvgColors = input.lockSvgColors ?? existing.lock_svg_colors;
   const newForceChipPosition = input.forceChipPosition !== undefined ? input.forceChipPosition : existing.force_chip_position;
+  const newForceCardNumberPosition =
+    input.forceCardNumberPosition !== undefined ? input.forceCardNumberPosition : existing.force_card_number_position;
   const newStatus = input.status ?? existing.status;
   const bumpReviewedAt = input.status !== undefined;
 
@@ -2521,8 +2537,8 @@ export async function updateCardTemplate(
     `UPDATE card_templates
      SET name = $1, color = $2, background = $3, text_color = $4,
          force_show_name = $5, force_show_network_badge = $6, force_show_chip = $7, force_show_card_number = $8, force_show_balance = $9, force_show_currency = $10,
-         force_currency = $11, country = $12, force_name_position = $13, lock_text_color = $14, category = $15, force_network = $16, force_show_holder_name = $17, force_show_expiry = $18, force_show_nfc = $19, force_nfc_position = $20, force_nfc_size = $21, lock_svg_colors = $22, force_chip_position = $23, status = $24, reviewed_at = ${bumpReviewedAt ? "now()" : "reviewed_at"}
-     WHERE id = $25
+         force_currency = $11, country = $12, force_name_position = $13, lock_text_color = $14, category = $15, force_network = $16, force_show_holder_name = $17, force_show_expiry = $18, force_show_nfc = $19, force_nfc_position = $20, force_nfc_size = $21, lock_svg_colors = $22, force_chip_position = $23, force_card_number_position = $24, status = $25, reviewed_at = ${bumpReviewedAt ? "now()" : "reviewed_at"}
+     WHERE id = $26
      RETURNING ${CARD_TEMPLATE_COLUMNS}, NULL AS submitted_by_username;`,
     [
       newName,
@@ -2548,6 +2564,7 @@ export async function updateCardTemplate(
       newForceNfcSize,
       newLockSvgColors,
       newForceChipPosition,
+      newForceCardNumberPosition,
       newStatus,
       id,
     ],
