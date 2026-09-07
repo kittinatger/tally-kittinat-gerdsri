@@ -12,6 +12,7 @@ import CardBackgroundPicker from "./CardBackgroundPicker";
 import CardTextColorPicker from "./CardTextColorPicker";
 import PremadeCardPicker from "./PremadeCardPicker";
 import ForceToggleField from "./ForceToggleField";
+import SegmentedControl from "./SegmentedControl";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import { CARD_NETWORKS, type CardNetwork } from "@/lib/wallet-cards";
 import { backgroundGlowColor, cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
@@ -525,26 +526,14 @@ export default function WalletModal({
 
           <div>
             <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.typeLabel")}</label>
-            <div className="flex gap-1 rounded-full bg-bg-soft p-1">
-              <button
-                type="button"
-                onClick={() => setKind("cash")}
-                className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-                  kind === "cash" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
-                }`}
-              >
-                {t("wallet.cash")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setKind("digital")}
-                className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-                  kind === "digital" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
-                }`}
-              >
-                {t("wallet.digital")}
-              </button>
-            </div>
+            <SegmentedControl
+              value={kind}
+              onChange={setKind}
+              options={[
+                { value: "cash", label: t("wallet.cash") },
+                { value: "digital", label: t("wallet.digital") },
+              ]}
+            />
           </div>
 
           {/* Same templateCategory state the Template tab's chip picker

@@ -12,6 +12,7 @@ import CardBackgroundPicker from "./CardBackgroundPicker";
 import CardTextColorPicker from "./CardTextColorPicker";
 import PremadePassPicker from "./PremadePassPicker";
 import ForceToggleField from "./ForceToggleField";
+import SegmentedControl from "./SegmentedControl";
 import LockToggleField from "./LockToggleField";
 import { backgroundGlowColor, cardForegroundFor } from "@/lib/card-backgrounds";
 import type { CardBackground } from "@/lib/card-backgrounds";
@@ -795,26 +796,15 @@ export default function MembershipCardModal({
             // nothing left to switch to.
             action={
               fieldsLocked ? undefined : (
-              <div className="flex gap-1 rounded-full bg-bg-soft p-1">
-                <button
-                  type="button"
-                  onClick={() => setEditorMode("guided")}
-                  className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${
-                    editorMode === "guided" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
-                  }`}
-                >
-                  {t("membership.editorGuided")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditorMode("custom")}
-                  className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${
-                    editorMode === "custom" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
-                  }`}
-                >
-                  {t("membership.editorCustom")}
-                </button>
-              </div>
+                <SegmentedControl
+                  size="compact"
+                  value={editorMode}
+                  onChange={setEditorMode}
+                  options={[
+                    { value: "guided", label: t("membership.editorGuided") },
+                    { value: "custom", label: t("membership.editorCustom") },
+                  ]}
+                />
               )
             }
           >

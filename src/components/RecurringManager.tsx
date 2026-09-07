@@ -13,6 +13,7 @@ import SelectDropdown from "./SelectDropdown";
 import CsvManagerButtons from "./CsvManagerButtons";
 import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
+import SegmentedControl from "./SegmentedControl";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
@@ -410,47 +411,29 @@ export default function RecurringManager() {
               {t("recurring.editingRulePrefix")} {type === "expense" ? t("common.expense") : type === "income" ? t("common.income") : t("common.transfer")} {t("recurring.editingRuleSuffix")}
             </p>
           ) : (
-            <div className="flex gap-1 rounded-full bg-bg-soft p-1">
-              {(["expense", "income", "transfer"] as TransactionType[]).map((tt) => (
-                <button
-                  key={tt}
-                  type="button"
-                  onClick={() => {
-                    setType(tt);
-                    const stillValid = allCategories.some((c) => c.type === tt && c.name === category);
-                    if (!stillValid) setCategory("Other");
-                  }}
-                  className={`flex-1 rounded-full py-2 text-sm font-semibold capitalize transition ${
-                    type === tt ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
-                  }`}
-                >
-                  {tt === "expense" ? t("common.expense") : tt === "income" ? t("common.income") : t("common.transfer")}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              value={type}
+              onChange={(tt) => {
+                setType(tt);
+                const stillValid = allCategories.some((c) => c.type === tt && c.name === category);
+                if (!stillValid) setCategory("Other");
+              }}
+              options={(["expense", "income", "transfer"] as TransactionType[]).map((tt) => ({
+                value: tt,
+                label: tt === "expense" ? t("common.expense") : tt === "income" ? t("common.income") : t("common.transfer"),
+              }))}
+            />
           )}
 
           {type === "transfer" && typeof formMode !== "number" && (
-            <div className="flex gap-1 rounded-full bg-bg-soft p-1">
-              <button
-                type="button"
-                onClick={() => setDirection("out")}
-                className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-                  direction === "out" ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
-                }`}
-              >
-                {t("form.moneyOut")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setDirection("in")}
-                className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-                  direction === "in" ? "bg-surface-soft text-surface-foreground shadow-sm" : "text-surface-foreground-soft"
-                }`}
-              >
-                {t("form.moneyIn")}
-              </button>
-            </div>
+            <SegmentedControl
+              value={direction}
+              onChange={setDirection}
+              options={[
+                { value: "out", label: t("form.moneyOut") },
+                { value: "in", label: t("form.moneyIn") },
+              ]}
+            />
           )}
 
           <div className="grid grid-cols-2 gap-3">

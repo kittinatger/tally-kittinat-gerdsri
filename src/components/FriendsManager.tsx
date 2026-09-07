@@ -9,6 +9,7 @@ import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency } from "@/lib/format";
 import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
+import SegmentedControl from "./SegmentedControl";
 
 type Friend = { id: number; username: string; is_family: boolean };
 type FriendRequest = { id: number; username: string; created_at: string };
@@ -339,29 +340,27 @@ export default function FriendsManager() {
         )}
       </div>
 
-      <div className="flex gap-1 rounded-full bg-bg-soft p-1">
-        {TABS.map((tabDef) => (
-          <button
-            key={tabDef.id}
-            type="button"
-            onClick={() => setTab(tabDef.id)}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-1.5 text-sm font-semibold transition ${
-              tab === tabDef.id ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
-            }`}
-          >
-            {tabDef.label}
-            {tabDef.count > 0 && (
-              <span
-                className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                  tab === tabDef.id ? "bg-navy/10 text-navy dark:text-blue-300" : "bg-[var(--nav-hover-bg)] text-ink-soft"
-                }`}
-              >
-                {tabDef.count}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        value={tab}
+        onChange={setTab}
+        options={TABS.map((tabDef) => ({
+          value: tabDef.id,
+          label: (
+            <>
+              {tabDef.label}
+              {tabDef.count > 0 && (
+                <span
+                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                    tab === tabDef.id ? "bg-navy/10 text-navy dark:text-blue-300" : "bg-[var(--nav-hover-bg)] text-ink-soft"
+                  }`}
+                >
+                  {tabDef.count}
+                </span>
+              )}
+            </>
+          ),
+        }))}
+      />
 
       {tab === "friends" &&
         (data.friends.length === 0 ? (
