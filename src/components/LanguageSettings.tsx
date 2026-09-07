@@ -75,7 +75,7 @@ export default function LanguageSettings() {
           >
             {saving ? "Saving…" : "Save language"}
           </button>
-          {error && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{error}</p>}
+          {error && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
         </div>
       </div>
     </div>

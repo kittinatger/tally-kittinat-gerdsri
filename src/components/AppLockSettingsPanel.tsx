@@ -353,12 +353,12 @@ export default function AppLockSettingsPanel() {
                     </button>
                   )}
                 </div>
-                {pinError && <p className="text-xs text-red-600 dark:text-red-400">{pinError}</p>}
+                {pinError && <p className="text-xs text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{pinError}</p>}
               </div>
             ) : null}
           </section>
 
-          {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+          {error && <p className="text-xs text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
         </>
       )}
     </div>

@@ -120,7 +120,7 @@ export default function ReceiptDropzone({ onFilesSelected }: { onFilesSelected: 
           onChange={(e) => handleFiles(e.target.files)}
         />
       </div>
-      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
     </div>
   );
 }

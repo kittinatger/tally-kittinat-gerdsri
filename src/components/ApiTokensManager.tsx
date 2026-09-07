@@ -160,7 +160,7 @@ export default function ApiTokensManager() {
               className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
             />
           </div>
-          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+          {error && <p className="text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
           <div className="flex justify-end">
             <button
               type="submit"
@@ -173,7 +173,7 @@ export default function ApiTokensManager() {
         </form>
       )}
 
-      {loadError && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{loadError}</p>}
+      {loadError && <p className="mt-4 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{loadError}</p>}
 
       {tokens === null ? (
         <p className="mt-4 text-sm text-ink-soft">{t("common.loading")}</p>

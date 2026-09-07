@@ -71,7 +71,7 @@ export default function CsvManagerButtons({
           }}
         />
       </div>
-      {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="text-xs text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
       {result && (
         <p className="text-xs text-ink-soft">
           Imported {result.imported}

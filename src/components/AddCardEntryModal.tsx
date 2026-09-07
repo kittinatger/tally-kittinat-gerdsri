@@ -81,7 +81,7 @@ export default function AddCardEntryModal({
     <Modal onClose={onClose} title={t("membership.entryTitle")}>
       <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoSelected} className="hidden" />
 
-      {error && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mb-3 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
       {decoding && <p className="mb-3 text-sm text-ink-soft">{t("membership.decodingPhoto")}</p>}
 
       <div className="grid grid-cols-2 gap-3">

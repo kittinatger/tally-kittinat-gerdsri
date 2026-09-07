@@ -202,7 +202,7 @@ export default function CategoryOverview({
       </div>
 
       {breakdown.rows.length === 0 ? (
-        <div className="mt-10 flex flex-col items-center gap-2 text-center">
+        <div className="mt-10 flex flex-col items-center gap-2 text-center animate-[fade-in-up_0.25s_ease-out] motion-reduce:animate-none">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" className="h-10 w-10 text-ink-soft">
             <path d="M3 17V8M10 17V3M17 17v-6" />
           </svg>

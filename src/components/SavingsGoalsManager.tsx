@@ -259,7 +259,7 @@ export default function SavingsGoalsManager() {
             <ColorPicker value={color} onChange={setColor} palette={WIDGET_ACCENTS} />
           </div>
 
-          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+          {error && <p className="text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
 
           <div className="flex justify-end">
             <button
@@ -273,7 +273,7 @@ export default function SavingsGoalsManager() {
         </form>
       )}
 
-      {loadError && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{loadError}</p>}
+      {loadError && <p className="mt-4 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{loadError}</p>}
 
       {goals === null ? (
         <p className="mt-4 text-sm text-ink-soft">{t("common.loading")}</p>

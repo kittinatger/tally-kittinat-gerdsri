@@ -430,7 +430,7 @@ export default function ExpenseList({
 
   if (expenses.length === 0) {
     return (
-      <div className="mt-10 flex flex-col items-center gap-2 text-center">
+      <div className="mt-10 flex flex-col items-center gap-2 text-center animate-[fade-in-up_0.25s_ease-out] motion-reduce:animate-none">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" className="h-10 w-10 text-ink-soft">
           <path d="M5 2.5h10v15l-2-1.3-1.5 1.3-1.5-1.3-1.5 1.3-1.5-1.3-2 1.3v-15Z" />
           <path d="M7.5 6.5h5M7.5 9.5h5M7.5 12.5h3" />
@@ -543,7 +543,7 @@ export default function ExpenseList({
               {t("common.dismiss")}
             </button>
           </div>
-          {renameError && <p className="text-[11px] text-red-600 dark:text-red-400">{renameError}</p>}
+          {renameError && <p className="text-[11px] text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{renameError}</p>}
         </div>
       )}
 
@@ -676,12 +676,12 @@ export default function ExpenseList({
               {bulkBusy ? t("common.saving") : confirmBulkDelete ? t("common.confirmDelete") : t("common.delete")}
             </button>
           </div>
-          {bulkError && <p className="w-full text-xs text-red-600 dark:text-red-400">{bulkError}</p>}
+          {bulkError && <p className="w-full text-xs text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{bulkError}</p>}
         </div>
       )}
 
       {filtered.length === 0 ? (
-        <div className="mt-10 flex flex-col items-center gap-2 text-center">
+        <div className="mt-10 flex flex-col items-center gap-2 text-center animate-[fade-in-up_0.25s_ease-out] motion-reduce:animate-none">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" className="h-10 w-10 text-ink-soft">
             <circle cx="8.7" cy="8.7" r="5.5" />
             <path d="M16.5 16.5l-3.6-3.6" />

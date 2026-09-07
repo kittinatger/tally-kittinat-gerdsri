@@ -170,7 +170,7 @@ export default function ReportExportButton() {
         <div className="min-w-0">
           <p className="text-sm font-medium text-foreground">{t("reports.title")}</p>
           <p className="text-[11px] leading-snug text-ink-soft">{t("reports.description")}</p>
-          {error && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>}
+          {error && <p className="mt-1 text-xs text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
         </div>
       </div>
       <button

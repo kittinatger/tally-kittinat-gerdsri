@@ -127,7 +127,7 @@ export default function TagManager() {
 
   return (
     <div>
-      {actionError && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{actionError}</p>}
+      {actionError && <p className="mb-3 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{actionError}</p>}
       <div className="overflow-hidden rounded-card border border-line bg-surface">
         {tags.map((tag, i) => (
           <div

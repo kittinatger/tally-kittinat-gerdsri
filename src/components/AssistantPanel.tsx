@@ -167,7 +167,7 @@ export default function AssistantPanel() {
           <div ref={bottomRef} />
         </div>
 
-        {error && <p className="border-t border-line px-4 py-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="border-t border-line px-4 py-2 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
 
         <form onSubmit={handleSubmit} className="flex items-center gap-2 border-t border-line p-3">
           <input

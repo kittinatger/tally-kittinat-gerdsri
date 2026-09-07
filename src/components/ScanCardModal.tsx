@@ -110,7 +110,7 @@ export default function ScanCardModal({
       </div>
 
       <div className="mx-4 mb-6 space-y-2">
-        {photoError && <p className="text-center text-sm text-red-400">{photoError}</p>}
+        {photoError && <p className="text-center text-sm text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{photoError}</p>}
         <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelected} className="hidden" />
         <button
           type="button"

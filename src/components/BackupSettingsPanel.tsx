@@ -137,7 +137,7 @@ export default function BackupSettingsPanel() {
           >
             {exporting ? t("backup.export.exporting") : t("backup.export.button")}
           </button>
-          {exportError && <p className="text-xs text-red-600 dark:text-red-400">{exportError}</p>}
+          {exportError && <p className="text-xs text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{exportError}</p>}
           {exportDone && <p className="text-xs text-emerald-600 dark:text-emerald-400">{t("backup.export.done")}</p>}
         </div>
       </section>
@@ -172,7 +172,7 @@ export default function BackupSettingsPanel() {
               </button>
             </>
           )}
-          {importError && <p className="text-xs text-red-600 dark:text-red-400">{importError}</p>}
+          {importError && <p className="text-xs text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{importError}</p>}
           {importResult && (
             <p className="text-xs text-ink-soft">
               {t("backup.import.resultPrefix")} {totalCount(importResult.imported)}

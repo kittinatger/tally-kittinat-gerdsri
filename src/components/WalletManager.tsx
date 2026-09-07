@@ -378,7 +378,7 @@ export default function WalletManager({
         </div>
       </div>
 
-      {actionError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{actionError}</p>}
+      {actionError && <p className="mt-3 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{actionError}</p>}
 
       {pendingInvites.length > 0 && (
         <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
@@ -424,7 +424,7 @@ export default function WalletManager({
             />
           </div>
           {savingActivitiesDefault && <p className="mt-1.5 text-xs text-ink-soft">{t("common.saving")}</p>}
-          {activitiesDefaultError && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{activitiesDefaultError}</p>}
+          {activitiesDefaultError && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{activitiesDefaultError}</p>}
         </div>
       )}
 

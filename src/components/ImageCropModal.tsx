@@ -383,7 +383,7 @@ export default function ImageCropModal({
         )}
       </div>
 
-      {error && <p className="px-4 pb-3 text-center text-sm text-red-400">{error}</p>}
+      {error && <p className="px-4 pb-3 text-center text-sm text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
       <p className="px-4 pb-4 text-center text-xs text-white/50">
         {aspect === null ? t("membership.cropHintFreeform") : t("membership.cropHintFixed")}
       </p>

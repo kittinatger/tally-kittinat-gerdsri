@@ -470,7 +470,7 @@ export default function AccountPanel({
             {hasPassword && (
               <p className="mt-1.5 text-xs text-ink-soft">{t("account.enterCurrentPasswordConfirm")}</p>
             )}
-            {usernameError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{usernameError}</p>}
+            {usernameError && <p className="mt-2 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{usernameError}</p>}
             <div className="mt-3 flex gap-2">
               <button
                 type="submit"
@@ -534,7 +534,7 @@ export default function AccountPanel({
                 />
               )}
             </div>
-            {emailError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{emailError}</p>}
+            {emailError && <p className="mt-2 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{emailError}</p>}
             <div className="mt-3 flex gap-2">
               <button
                 type="submit"
@@ -596,7 +596,7 @@ export default function AccountPanel({
         {githubId === true && !hasPassword && (
           <p className="mt-2 text-xs text-ink-soft">{t("account.setPasswordBeforeUnlink")}</p>
         )}
-        {githubActionError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{githubActionError}</p>}
+        {githubActionError && <p className="mt-2 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{githubActionError}</p>}
         {githubLinked && !githubActionError && (
           <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">{t("account.githubLinked")}</p>
         )}
@@ -660,7 +660,7 @@ export default function AccountPanel({
                 className="rounded-card border border-line bg-bg-soft px-3.5 py-2 text-sm text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
               />
             </div>
-            {passwordError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{passwordError}</p>}
+            {passwordError && <p className="mt-2 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{passwordError}</p>}
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <button
                 type="submit"
@@ -694,7 +694,7 @@ export default function AccountPanel({
                 </span>
               )}
             </div>
-            {resetError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{resetError}</p>}
+            {resetError && <p className="mt-2 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{resetError}</p>}
           </form>
         )}
         {passwordSuccess && !editingPassword && (
@@ -781,7 +781,7 @@ export default function AccountPanel({
           <p className="mb-5 text-sm text-surface-foreground-soft">
             {t("account.unlinkGithubDesc")}
           </p>
-          {githubActionError && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{githubActionError}</p>}
+          {githubActionError && <p className="mb-3 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{githubActionError}</p>}
           <div className="flex justify-end gap-2">
             <button
               onClick={() => setConfirmUnlinkOpen(false)}
@@ -851,7 +851,7 @@ export default function AccountPanel({
                 />
               </div>
             )}
-            {signOutEverywhereError && <p className="text-sm text-red-600 dark:text-red-400">{signOutEverywhereError}</p>}
+            {signOutEverywhereError && <p className="text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{signOutEverywhereError}</p>}
             <div className="flex justify-end gap-2">
               <button
                 type="button"
@@ -922,7 +922,7 @@ export default function AccountPanel({
               </div>
             )}
 
-            {deleteError && <p className="text-sm text-red-600 dark:text-red-400">{deleteError}</p>}
+            {deleteError && <p className="text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{deleteError}</p>}
 
             <div className="flex justify-end gap-2 pt-1">
               <button

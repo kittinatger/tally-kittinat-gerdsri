@@ -391,7 +391,7 @@ export default function ChallengesManager() {
 
   return (
     <div className="space-y-5">
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
 
       <div className="flex items-center justify-between gap-3">
         <div className="flex gap-1 rounded-full bg-bg-soft p-1">
@@ -439,7 +439,7 @@ export default function ChallengesManager() {
 
       {creating && (
         <form onSubmit={submitCreate} className="space-y-3 rounded-card border border-line bg-surface p-4">
-          {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
+          {formError && <p className="text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{formError}</p>}
           <input
             type="text"
             value={title}

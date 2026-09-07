@@ -115,7 +115,7 @@ export default function TemplateReviewPanel() {
     <div>
       <h2 className="mb-5 font-display text-2xl text-foreground">{t("wallet.templateReviewTitle")}</h2>
 
-      {error && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mb-3 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
 
       {templates === null ? (
         <p className="text-sm text-ink-soft">{t("common.loading")}</p>

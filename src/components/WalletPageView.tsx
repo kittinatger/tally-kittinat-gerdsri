@@ -305,7 +305,7 @@ export default function WalletPageView({
              * used to be duplicated here as their own buttons. */}
             <h2 className="font-display text-2xl text-foreground">{t("nav.wallet")}</h2>
 
-            {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+            {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
 
             {isEmpty ? (
               <div className="mt-6 flex flex-col items-center gap-2 rounded-card border border-dashed border-line px-6 py-12 text-center">

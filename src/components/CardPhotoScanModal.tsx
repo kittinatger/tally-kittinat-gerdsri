@@ -258,7 +258,7 @@ export default function CardPhotoScanModal({
       {step === "capture" && (
         <div className="space-y-3">
           <p className="text-sm text-ink-soft">{t("background.scanHint")}</p>
-          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+          {error && <p className="text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
           <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleInputChange} className="hidden" />
           {/* image/* alone doesn't reliably include SVGs in every browser's
            * file-picker filter, so .svg/image/svg+xml are listed explicitly
@@ -404,7 +404,7 @@ export default function CardPhotoScanModal({
           <div className="space-y-2 rounded-card border border-line bg-bg-soft p-3">
             <p className="text-xs font-semibold text-ink-soft">{t("background.aiGenerateTitle")}</p>
             <p className="text-xs text-ink-soft">{t("background.aiGenerateHint")}</p>
-            {aiError && <p className="text-xs text-red-600 dark:text-red-400">{aiError}</p>}
+            {aiError && <p className="text-xs text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{aiError}</p>}
             {aiImage ? (
               <>
                 <div className="overflow-hidden rounded-xl border border-line">

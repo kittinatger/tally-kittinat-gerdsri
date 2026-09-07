@@ -276,7 +276,7 @@ export default function PassTemplateEditModal({
          * sense once an image actually exists to lock, so the toggle and
          * the image slot live in the same section. */}
         <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("membership.lockLogoLabel")}>
-          {imageError && <p className="text-xs text-red-600 dark:text-red-400">{imageError}</p>}
+          {imageError && <p className="text-xs text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{imageError}</p>}
           <input
             ref={logoInputRef}
             type="file"
@@ -383,10 +383,10 @@ export default function PassTemplateEditModal({
           />
         </FormSection>
 
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
 
         {confirmDelete ? (
-          <div className="space-y-2 rounded-card border border-red-500/30 bg-red-500/5 p-3">
+          <div className="space-y-2 rounded-card border border-red-500/30 bg-red-500/5 p-3 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">
             <p className="text-xs text-foreground">{t("wallet.confirmDeleteTemplateDesc")}</p>
             <div className="flex items-center gap-2">
               <button

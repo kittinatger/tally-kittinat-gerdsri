@@ -78,7 +78,7 @@ function ToggleRow({
           />
         </button>
       </div>
-      {error && <p className="mt-1.5 pl-12 text-xs text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mt-1.5 pl-12 text-xs text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
     </div>
   );
 }
@@ -193,7 +193,7 @@ export default function CurrencySettings() {
         </p>
         <div className="rounded-card border border-line bg-surface p-4">
           <CurrencyDropdown value={currency} onChange={handleCurrencyChange} disabled={savingCurrency} />
-          {currencyError && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{currencyError}</p>}
+          {currencyError && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{currencyError}</p>}
         </div>
       </div>
 

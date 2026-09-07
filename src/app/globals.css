@@ -255,3 +255,20 @@ input:-webkit-autofill:focus {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* General-purpose entrance for content that mounts/unmounts with a
+   condition (a FormSection appearing because a toggle turned it on, an
+   error/confirm banner showing up, an empty state taking over, a newly
+   revealed block of fields) — used app-wide, not tied to any one
+   feature. fade-in-up adds a small upward drift for anything that reads
+   as "new content arriving" (banners, empty states); plain fade-in is
+   for things that shouldn't visibly move (form sections already laid
+   out in a fixed column). */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}

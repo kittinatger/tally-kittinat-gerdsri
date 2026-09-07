@@ -219,7 +219,7 @@ export default function AccountDetail({
         )}
       </div>
 
-      {archiveError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{archiveError}</p>}
+      {archiveError && <p className="mt-3 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{archiveError}</p>}
 
       {/* Only rendered once "..." → Archive has actually been tapped (see
        * WalletPageView) — no control is ever just sitting here by default.

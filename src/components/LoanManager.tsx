@@ -287,7 +287,7 @@ export default function LoanManager() {
             />
           </div>
 
-          {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
+          {formError && <p className="text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{formError}</p>}
 
           <div className="flex items-center justify-end gap-2 pt-1">
             <button
@@ -311,7 +311,7 @@ export default function LoanManager() {
         </form>
       )}
 
-      {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
 
       <div className="mt-4">
         {loading ? (

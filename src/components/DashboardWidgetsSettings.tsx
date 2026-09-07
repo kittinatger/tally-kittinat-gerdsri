@@ -325,7 +325,7 @@ export default function DashboardWidgetsSettings({
         {t("dashboardWidgets.intro")}
       </p>
 
-      {error && <p className="mb-3 text-xs text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mb-3 text-xs text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
 
       {widgets.length === 0 ? (
         <p className="rounded-card border border-dashed border-line px-4 py-10 text-center text-sm text-ink-soft">

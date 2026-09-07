@@ -174,11 +174,17 @@ export default function ActivitiesView({
                   on mobile/tablet rather than just being visually hidden. */}
               <div className="hidden lg:sticky lg:top-20 lg:block lg:flex-1">
                 {viewing ? (
-                  <div className="rounded-card border border-surface-line bg-surface p-5 sm:p-6">
+                  // key={viewing.id} forces a remount (and so replays the
+                  // fade-in) on every different row selected, not just the
+                  // first time this pane switches from empty to filled.
+                  <div
+                    key={viewing.id}
+                    className="rounded-card border border-surface-line bg-surface p-5 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none sm:p-6"
+                  >
                     <ExpenseDetailContent expense={viewing} onEdit={handleEditFromDetail} onMerchantClick={handleMerchantClick} />
                   </div>
                 ) : (
-                  <div className="flex h-64 flex-col items-center justify-center gap-1 rounded-card border border-dashed border-surface-line px-6 text-center">
+                  <div className="flex h-64 flex-col items-center justify-center gap-1 rounded-card border border-dashed border-surface-line px-6 text-center animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">
                     <p className="text-sm font-medium text-foreground">{t("activities.noTransactionSelected")}</p>
                     <p className="text-xs text-ink-soft">{t("activities.noTransactionSelectedDesc")}</p>
                   </div>

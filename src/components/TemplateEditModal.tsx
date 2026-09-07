@@ -588,10 +588,10 @@ export default function TemplateEditModal({
           )}
         </FormSection>
 
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
 
         {confirmDelete ? (
-          <div className="space-y-2 rounded-card border border-red-500/30 bg-red-500/5 p-3">
+          <div className="space-y-2 rounded-card border border-red-500/30 bg-red-500/5 p-3 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">
             <p className="text-xs text-foreground">{t("wallet.confirmDeleteTemplateDesc")}</p>
             <div className="flex items-center gap-2">
               <button

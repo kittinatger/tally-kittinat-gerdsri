@@ -361,7 +361,7 @@ export default function EditExpenseModal({
           if (file) handleAttachReceipt(file);
         }}
       />
-      {attachError && <p className="-mt-2 mb-3 text-xs text-red-600 dark:text-red-400">{attachError}</p>}
+      {attachError && <p className="-mt-2 mb-3 text-xs text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{attachError}</p>}
 
       {viewingSrc && <ReceiptLightbox src={viewingSrc} onClose={() => setViewingSrc(null)} />}
       <ExpenseForm

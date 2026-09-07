@@ -18,7 +18,7 @@ export default function FormSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-card border border-line bg-surface p-4">
+    <div className="rounded-card border border-line bg-surface p-4 animate-[fade-in_0.2s_ease-out] motion-reduce:animate-none">
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-navy/10 text-navy dark:text-blue-300">

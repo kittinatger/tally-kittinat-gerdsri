@@ -112,7 +112,7 @@ export default function VoiceRecorder({
             : `Say something like "spent 12 dollars on coffee at Starbucks today"`}
         </p>
       </div>
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
     </div>
   );
 }

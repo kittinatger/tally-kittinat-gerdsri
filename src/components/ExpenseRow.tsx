@@ -275,7 +275,7 @@ export default function ExpenseRow({
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
           style={{ touchAction: swipeEnabled ? "pan-y" : undefined }}
-          className={`relative flex w-full items-center justify-between gap-3 text-left hover:bg-[var(--surface-nav-hover)] ${
+          className={`relative flex w-full items-center justify-between gap-3 text-left transition-colors hover:bg-[var(--surface-nav-hover)] ${
             compact ? "px-3 py-2" : "px-4 py-3.5"
           } ${selected ? "bg-[var(--surface-nav-hover)]" : ""}`}
         >

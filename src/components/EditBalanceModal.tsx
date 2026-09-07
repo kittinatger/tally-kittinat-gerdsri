@@ -70,7 +70,7 @@ export default function EditBalanceModal({
           </p>
         </div>
 
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
 
         <div className="flex items-center justify-end gap-2 pt-1">
           <button

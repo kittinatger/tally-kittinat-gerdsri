@@ -107,7 +107,7 @@ export default function WalletShareModal({
         </button>
       </form>
 
-      {error && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mb-3 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
 
       {members.length > 0 && (
         <div className="overflow-hidden rounded-card border border-line">

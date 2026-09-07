@@ -598,7 +598,7 @@ export default function ExpenseForm({
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-600 dark:text-red-400 sm:order-10 sm:col-span-2">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400 sm:order-10 sm:col-span-2 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
 
       {/* Sticky rather than flowing at the end of the form: this form runs
           15+ fields long, and on mobile (where the modal is a bottom sheet

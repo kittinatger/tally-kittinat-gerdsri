@@ -100,7 +100,7 @@ export default function CategoryManager({ categories }: { categories: CategoryOp
         ))}
       </div>
 
-      {deleteError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{deleteError}</p>}
+      {deleteError && <p className="mt-3 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{deleteError}</p>}
 
       <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
         {categoriesForType.length === 0 ? (
