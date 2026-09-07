@@ -5,6 +5,7 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import AppLockGate from "@/components/AppLockGate";
 import OfflineProvider from "@/components/OfflineProvider";
 import { LanguageProvider } from "@/lib/language-context";
+import { NavStyleProvider } from "@/lib/nav-style-context";
 import "./globals.css";
 
 const radley = Radley({
@@ -119,9 +120,11 @@ export default function RootLayout({
         <ThemeSync />
         <ServiceWorkerRegister />
         <LanguageProvider>
-          <AppLockGate>
-            <OfflineProvider>{children}</OfflineProvider>
-          </AppLockGate>
+          <NavStyleProvider>
+            <AppLockGate>
+              <OfflineProvider>{children}</OfflineProvider>
+            </AppLockGate>
+          </NavStyleProvider>
         </LanguageProvider>
       </body>
     </html>

@@ -184,7 +184,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 71;
+const CURRENT_SCHEMA_VERSION = 72;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1540,6 +1540,13 @@ function ensureSchema(): Promise<void> {
       // field, since this is one cohesive preferences concept. See
       // activities-prefs.ts for the shape/defaults.
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS activities_prefs TEXT NOT NULL DEFAULT '{}';`;
+
+      // Which visual style the mobile bottom nav bar renders as (Settings >
+      // Nav bar style) — a plain string id validated against NAV_BAR_STYLE_IDS
+      // in nav-bar-styles.ts at read time (getNavStyle below), same
+      // defensive-fallback approach as an unrecognized language code.
+      // "floating" reproduces the app's original, pre-this-feature look.
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS nav_style TEXT NOT NULL DEFAULT 'floating';`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -3088,6 +3095,18 @@ export async function setLanguage(userId: number, code: string): Promise<string>
   await ensureSchema();
   await sql`UPDATE app_settings SET language = ${code} WHERE user_id = ${userId};`;
   return code;
+}
+
+export async function getNavStyle(userId: number): Promise<string> {
+  await ensureSchema();
+  const { rows } = await sql<{ nav_style: string }>`SELECT nav_style FROM app_settings WHERE user_id = ${userId};`;
+  return rows[0]?.nav_style ?? "floating";
+}
+
+export async function setNavStyle(userId: number, id: string): Promise<string> {
+  await ensureSchema();
+  await sql`UPDATE app_settings SET nav_style = ${id} WHERE user_id = ${userId};`;
+  return id;
 }
 
 export async function getAutoConvertCurrency(userId: number): Promise<boolean> {
