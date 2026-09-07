@@ -7,6 +7,7 @@ import { formatCurrency, todayInputValue } from "@/lib/format";
 import { PlusIcon, TrashIcon } from "@/lib/icons";
 import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
+import ManagedList from "./ManagedList";
 import { useT } from "@/lib/language-context";
 import type { LoanDirection } from "@/lib/loans";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
@@ -338,11 +339,11 @@ export default function LoanManager() {
         ) : loans.length === 0 ? (
           <EmptyState icon={<HandshakeIcon />} text={t("loans.empty")} />
         ) : (
-          <div className="space-y-2">
+          <ManagedList>
             {loans.map((loan) => {
               const remaining = Number(loan.principal) - Number(loan.paid_total);
               return (
-                <div key={loan.id} className="overflow-hidden rounded-card border border-line bg-surface">
+                <div key={loan.id}>
                   <button type="button" onClick={() => toggleExpand(loan)} className="flex w-full items-center gap-3 px-4 py-3 text-left">
                     <span
                       className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
@@ -418,7 +419,7 @@ export default function LoanManager() {
                 </div>
               );
             })}
-          </div>
+          </ManagedList>
         )}
       </div>
     </div>

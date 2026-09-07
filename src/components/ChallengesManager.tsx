@@ -13,6 +13,7 @@ import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import SelectorChip from "./SelectorChip";
 import CategoryIconBadge from "./CategoryIconBadge";
+import ManagedList from "./ManagedList";
 
 type Challenge = {
   id: number;
@@ -539,12 +540,12 @@ export default function ChallengesManager() {
         (active.length === 0 ? (
           <EmptyState icon={<TrophyIcon />} text={t("challenges.noChallengesYet")} />
         ) : (
-          <div className="space-y-2.5">
+          <ManagedList>
             {active.map((c) => {
               const expanded = expandedId === c.id;
               const isCreator = detail?.challenge.id === c.id && detail.challenge.creator_id === detail.participants.find((p) => p.is_me)?.user_id;
               return (
-                <div key={c.id} className="overflow-hidden rounded-card border border-line bg-surface">
+                <div key={c.id}>
                   <button
                     type="button"
                     onClick={() => toggleExpand(c.id)}
@@ -698,7 +699,7 @@ export default function ChallengesManager() {
                 </div>
               );
             })}
-          </div>
+          </ManagedList>
         ))}
 
       {tab === "requests" &&

@@ -11,6 +11,7 @@ import { CategoryIcon, EditIcon, TrashIcon, PlusIcon, PaletteIcon } from "@/lib/
 import CategoryModal from "./CategoryModal";
 import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
+import ManagedList from "./ManagedList";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 
@@ -112,52 +113,49 @@ export default function CategoryManager({ categories }: { categories: CategoryOp
           />
         </div>
       ) : (
-        <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
-          {categoriesForType.map((c, i) => (
-            <div
-              key={c.id}
-              className={`flex items-center gap-3 px-4 py-3 ${
-                i === categoriesForType.length - 1 ? "" : "border-b border-line"
-              }`}
-            >
-              <span
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses(c.color)}`}
-                style={colorDotStyle(c.color)}
-              >
-                {c.icon && isCategoryIconKey(c.icon) ? (
-                  <CategoryIcon iconKey={c.icon} className="h-4.5 w-4.5" />
-                ) : (
-                  <span className={`h-2.5 w-2.5 rounded-full ${dotClasses(c.color)}`} style={colorDotStyle(c.color)} />
-                )}
-              </span>
-              <span className="min-w-0 flex-1 truncate font-medium text-foreground">{c.name}</span>
-
-              {confirmDeleteId === c.id ? (
-                <div className="flex shrink-0 items-center gap-1.5">
-                  <ConfirmDeleteButtons busy={deleting} onCancel={cancelDelete} onConfirm={() => handleDelete(c.id)} />
-                </div>
-              ) : (
-                <div className="flex shrink-0 items-center gap-1">
-                  <button
-                    onClick={() => setModal({ mode: "edit", category: c })}
-                    aria-label={`Edit ${c.name}`}
-                    className="rounded-full p-2 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
-                  >
-                    <EditIcon className="h-4 w-4" />
-                  </button>
-                  {c.name !== "Other" && (
-                    <button
-                      onClick={() => handleDelete(c.id)}
-                      aria-label={`Delete ${c.name}`}
-                      className="rounded-full p-2 text-ink-soft transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
+        <div className="mt-4">
+          <ManagedList>
+            {categoriesForType.map((c) => (
+              <div key={c.id} className="flex items-center gap-3 px-4 py-3">
+                <span
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses(c.color)}`}
+                  style={colorDotStyle(c.color)}
+                >
+                  {c.icon && isCategoryIconKey(c.icon) ? (
+                    <CategoryIcon iconKey={c.icon} className="h-4.5 w-4.5" />
+                  ) : (
+                    <span className={`h-2.5 w-2.5 rounded-full ${dotClasses(c.color)}`} style={colorDotStyle(c.color)} />
                   )}
-                </div>
-              )}
-            </div>
-          ))}
+                </span>
+                <span className="min-w-0 flex-1 truncate font-medium text-foreground">{c.name}</span>
+
+                {confirmDeleteId === c.id ? (
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <ConfirmDeleteButtons busy={deleting} onCancel={cancelDelete} onConfirm={() => handleDelete(c.id)} />
+                  </div>
+                ) : (
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      onClick={() => setModal({ mode: "edit", category: c })}
+                      aria-label={`Edit ${c.name}`}
+                      className="rounded-full p-2 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
+                    >
+                      <EditIcon className="h-4 w-4" />
+                    </button>
+                    {c.name !== "Other" && (
+                      <button
+                        onClick={() => handleDelete(c.id)}
+                        aria-label={`Delete ${c.name}`}
+                        className="rounded-full p-2 text-ink-soft transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </ManagedList>
         </div>
       )}
 

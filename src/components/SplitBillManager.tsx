@@ -14,6 +14,7 @@ import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import SelectorChip from "./SelectorChip";
 import CategoryIconBadge from "./CategoryIconBadge";
+import ManagedList from "./ManagedList";
 
 type Split = {
   id: number;
@@ -576,14 +577,14 @@ export default function SplitBillManager() {
         (active.length === 0 ? (
           <EmptyState icon={<ReceiptIcon />} text={t("split.noSplitsYet")} />
         ) : (
-          <div className="space-y-2.5">
+          <ManagedList>
             {active.map((s) => {
               const expanded = expandedId === s.id;
               const net = Number(s.my_net);
               const label = netLabel(net, currency, t);
               const isCreator = detail?.split.id === s.id && detail.split.creator_id === myId;
               return (
-                <div key={s.id} className="overflow-hidden rounded-card border border-line bg-surface">
+                <div key={s.id}>
                   <button
                     type="button"
                     onClick={() => toggleExpand(s.id)}
@@ -696,7 +697,7 @@ export default function SplitBillManager() {
                 </div>
               );
             })}
-          </div>
+          </ManagedList>
         ))}
 
       {tab === "requests" &&
