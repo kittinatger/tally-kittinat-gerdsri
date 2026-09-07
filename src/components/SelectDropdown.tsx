@@ -97,7 +97,7 @@ export default function SelectDropdown({
             ref={panelRef}
             role="listbox"
             style={{ top: panelPos.top, left: panelPos.left, width: panelPos.width }}
-            className="fixed z-[60] max-h-64 overflow-y-auto rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-1.5 shadow-[var(--panel-shadow)] backdrop-blur-xl"
+            className="fixed z-[60] max-h-64 origin-top overflow-y-auto rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-1.5 shadow-[var(--panel-shadow)] backdrop-blur-xl animate-[popover-in_0.15s_ease-out] motion-reduce:animate-none"
           >
             {options.map((opt) => (
               <button

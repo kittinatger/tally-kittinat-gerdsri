@@ -1,9 +1,15 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { CloseIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
+
+// How long the exit animation runs — must match modal-backdrop-out/
+// modal-panel-out's own duration below, since this is what actually
+// delays the real unmount (calling the caller's onClose) until the
+// animation has had time to play out.
+const CLOSE_ANIMATION_MS = 180;
 
 export default function Modal({
   onClose,
@@ -27,10 +33,28 @@ export default function Modal({
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const t = useT();
+  // Closing plays an exit animation before actually unmounting (calling
+  // the caller's onClose) — without this the modal used to just vanish
+  // instantly on close, the opposite of how it now eases in on open.
+  // `closing` is deliberately not reset on unmount (there is no unmount
+  // once it's true — the caller removes this component only after
+  // onClose fires below).
+  const [closing, setClosing] = useState(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function requestClose() {
+    if (closing) return; // already animating out — ignore a second Escape/click/tap
+    setClosing(true);
+    closeTimer.current = setTimeout(onClose, CLOSE_ANIMATION_MS);
+  }
+
+  useEffect(() => () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+  }, []);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") requestClose();
     }
     document.addEventListener("keydown", onKey);
     // Locking body alone isn't enough: the page's scrolling element is
@@ -48,7 +72,8 @@ export default function Modal({
       document.body.style.overflow = prevBodyOverflow;
       document.documentElement.style.overflow = prevHtmlOverflow;
     };
-  }, [onClose]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- requestClose closes over `closing`/onClose but is stable enough for this listener's purposes; re-binding per keystroke isn't needed
+  }, []);
 
   useEffect(() => {
     const panel = panelRef.current;
@@ -94,13 +119,15 @@ export default function Modal({
   // mechanism.
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 backdrop-blur-md sm:items-center sm:p-4 animate-[modal-backdrop-in_0.2s_ease-out] motion-reduce:animate-none"
-      onClick={onClose}
+      className={`fixed inset-0 z-50 flex items-end justify-center bg-black/30 backdrop-blur-md sm:items-center sm:p-4 motion-reduce:animate-none ${
+        closing ? "animate-[modal-backdrop-out_0.18s_ease-in]" : "animate-[modal-backdrop-in_0.2s_ease-out]"
+      }`}
+      onClick={requestClose}
     >
       <div
-        className={`max-h-[92dvh] w-full overflow-hidden rounded-t-[28px] border border-[var(--modal-glass-border)] bg-[image:var(--modal-glass-bg)] shadow-[var(--modal-panel-shadow)] backdrop-blur-xl animate-[modal-panel-in_0.25s_ease-out] motion-reduce:animate-none sm:rounded-[28px] ${
-          wide ? "sm:max-w-2xl" : "sm:max-w-md"
-        }`}
+        className={`max-h-[92dvh] w-full overflow-hidden rounded-t-[28px] border border-[var(--modal-glass-border)] bg-[image:var(--modal-glass-bg)] shadow-[var(--modal-panel-shadow)] backdrop-blur-xl motion-reduce:animate-none sm:rounded-[28px] ${
+          closing ? "animate-[modal-panel-out_0.18s_ease-in]" : "animate-[modal-panel-in_0.25s_ease-out]"
+        } ${wide ? "sm:max-w-2xl" : "sm:max-w-md"}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* The scrollbar lives on this inner scrolling div, not the rounded
@@ -114,7 +141,7 @@ export default function Modal({
             <div className="flex shrink-0 items-center gap-1">
               {headerRight}
               <button
-                onClick={onClose}
+                onClick={requestClose}
                 aria-label={t("common.close")}
                 className="rounded-full p-1.5 text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
               >

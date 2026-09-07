@@ -65,7 +65,7 @@ export default function FilterDropdown({
       {open && (
         <div
           role="listbox"
-          className="absolute right-0 top-[calc(100%+8px)] z-30 max-h-64 w-56 overflow-y-auto rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-1.5 shadow-[var(--panel-shadow)] backdrop-blur-xl"
+          className="absolute right-0 top-[calc(100%+8px)] z-30 max-h-64 w-56 origin-top-right overflow-y-auto rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-1.5 shadow-[var(--panel-shadow)] backdrop-blur-xl animate-[popover-in_0.15s_ease-out] motion-reduce:animate-none"
         >
           <button
             type="button"

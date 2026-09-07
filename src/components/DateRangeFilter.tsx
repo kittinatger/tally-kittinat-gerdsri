@@ -250,7 +250,7 @@ export default function DateRangeFilter({
             role="dialog"
             aria-label={t("dateRange.filterByDateRange")}
             style={{ top: panelPos.top, left: panelPos.left, width: PANEL_WIDTH }}
-            className="fixed z-[60] rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-3.5 shadow-[var(--panel-shadow)] backdrop-blur-xl"
+            className="fixed z-[60] origin-top rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-3.5 shadow-[var(--panel-shadow)] backdrop-blur-xl animate-[popover-in_0.15s_ease-out] motion-reduce:animate-none"
           >
             <div className="mb-2 flex items-center justify-between gap-2 rounded-xl bg-bg-soft px-2.5 py-1.5 text-xs font-medium text-ink-soft">
               <span>{draftFrom ? formatDateShort(draftFrom) : t("dateRange.startDate")}</span>

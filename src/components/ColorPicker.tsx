@@ -185,7 +185,7 @@ export default function ColorPicker({
       </div>
 
       {panelOpen && (
-        <div className="mt-3 space-y-3 rounded-card border border-line bg-bg-soft p-3">
+        <div className="mt-3 space-y-3 rounded-card border border-line bg-bg-soft p-3 animate-[popover-in_0.15s_ease-out] motion-reduce:animate-none">
           <div
             ref={squareRef}
             onPointerDown={handleSquarePointer}
@@ -230,7 +230,7 @@ export default function ColorPicker({
 
           <div className="flex items-center gap-3">
             <span
-              className="h-10 w-10 shrink-0 rounded-full border border-line"
+              className="h-10 w-10 shrink-0 rounded-full border border-line transition-colors duration-200"
               style={colorDotStyle(isHexColor(hexText) ? hexText : undefined) ?? { backgroundColor: seedHex }}
             />
             <div className="flex-1">

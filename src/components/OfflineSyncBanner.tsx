@@ -51,7 +51,7 @@ export default function OfflineSyncBanner() {
   const dot = <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${!online ? "bg-amber-500" : queue.failed > 0 ? "bg-red-500" : "bg-emerald-500"}`} />;
 
   return (
-    <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+64px)] z-40 flex justify-center px-4 sm:bottom-4">
+    <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+64px)] z-40 flex justify-center px-4 animate-[toast-in_0.25s_ease-out] motion-reduce:animate-none sm:bottom-4">
       {/* Only a real link once there's something to review — a fleeting
        * "All changes synced" toast shouldn't be tappable to anywhere. */}
       {hasQueue ? (

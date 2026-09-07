@@ -41,7 +41,7 @@ export default function OverflowMenu({ items }: { items: OverflowMenuItem[] }) {
         <MoreIcon className="h-4 w-4" />
       </button>
       {open && (
-        <div className="absolute right-0 top-full z-10 mt-1 w-44 overflow-hidden rounded-2xl border border-line bg-surface py-1 shadow-soft">
+        <div className="absolute right-0 top-full z-10 mt-1 w-44 origin-top-right overflow-hidden rounded-2xl border border-line bg-surface py-1 shadow-soft animate-[popover-in_0.15s_ease-out] motion-reduce:animate-none">
           {items.map((item) => (
             <button
               key={item.label}

@@ -78,7 +78,7 @@ export default function ScanCardModal({
   // there (even with the same z-50) could put it visually *behind* the
   // body-level modal it was supposed to be covering.
   return createPortal(
-    <div className="fixed inset-0 z-50 flex flex-col bg-black">
+    <div className="fixed inset-0 z-50 flex flex-col bg-black animate-[modal-backdrop-in_0.2s_ease-out] motion-reduce:animate-none">
       <div className="flex items-center justify-between px-4 py-3">
         <p className="text-sm font-semibold text-white">{t("membership.scanTitle")}</p>
         <button

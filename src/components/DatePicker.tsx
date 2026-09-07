@@ -199,7 +199,7 @@ export default function DatePicker({
             role="dialog"
             aria-label={t("datePicker.selectDate")}
             style={{ top: panelPos.top, left: panelPos.left, width: panelPos.width }}
-            className="fixed z-[60] rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-3.5 shadow-[var(--panel-shadow)] backdrop-blur-xl"
+            className="fixed z-[60] origin-top rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-3.5 shadow-[var(--panel-shadow)] backdrop-blur-xl animate-[popover-in_0.15s_ease-out] motion-reduce:animate-none"
           >
           <div className="mb-2 flex items-center justify-between">
             <button

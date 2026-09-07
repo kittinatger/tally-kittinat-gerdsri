@@ -57,7 +57,7 @@ export default function CurrencyDropdown({
         <div
           role="listbox"
           aria-label="Currency"
-          className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 max-h-56 overflow-y-auto rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-1.5 shadow-[var(--panel-shadow)] backdrop-blur-xl"
+          className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 max-h-56 origin-top overflow-y-auto rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-1.5 shadow-[var(--panel-shadow)] backdrop-blur-xl animate-[popover-in_0.15s_ease-out] motion-reduce:animate-none"
         >
           {CURRENCIES.map((c) => (
             <button

@@ -119,13 +119,13 @@ export default function CardBackgroundPicker({
         aria-expanded={galleryOpen}
         className="flex w-full items-center gap-2.5 rounded-xl border border-line bg-bg-soft px-3 py-2.5 text-left transition hover:border-navy"
       >
-        <span className="h-8 w-8 shrink-0 rounded-lg border border-line" style={summaryStyle} />
+        <span className="h-8 w-8 shrink-0 rounded-lg border border-line transition-colors duration-300" style={summaryStyle} />
         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">{summaryLabel}</span>
         <ChevronIcon className={`h-4 w-4 shrink-0 text-ink-soft transition-transform ${galleryOpen ? "rotate-180" : ""}`} />
       </button>
 
       {galleryOpen && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 animate-[popover-in_0.15s_ease-out] motion-reduce:animate-none">
           <button
             type="button"
             onClick={() => onChange(null)}

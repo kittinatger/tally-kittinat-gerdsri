@@ -214,11 +214,11 @@ input:-webkit-autofill:focus {
   80% { transform: translateX(4px); }
 }
 
-/* Modal.tsx's entrance — the backdrop fades in while the panel eases up
-   and settles from a slight scale/offset, rather than both just popping
-   in instantly. No matching exit animation: the modal unmounts
-   immediately on close, which an animation here can't intercept without
-   extra close-in-progress state, so this only covers the open. */
+/* Modal.tsx's entrance/exit — the backdrop fades while the panel eases
+   up/settles (in) or drops/fades (out) from a slight scale/offset,
+   rather than all four just popping in and vanishing instantly. The
+   *-out pair's duration must match Modal.tsx's own CLOSE_ANIMATION_MS —
+   that's what actually delays the real unmount until this has played. */
 @keyframes modal-backdrop-in {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -226,4 +226,32 @@ input:-webkit-autofill:focus {
 @keyframes modal-panel-in {
   from { opacity: 0; transform: translateY(16px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes modal-backdrop-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes modal-panel-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(10px) scale(0.98); }
+}
+
+/* Shared entrance for every small floating "glass" panel that pops open
+   instantly today — SelectDropdown, DatePicker, DateRangeFilter,
+   FilterDropdown, OverflowMenu. All of these close instantly (a plain
+   `open && (...)` unmount, no exit-in-progress state), so — unlike
+   Modal.tsx — this only ever covers the open, matching how briefly these
+   are open for anyway. transform-origin: top since every one of these
+   opens downward from a trigger above it. */
+@keyframes popover-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* OfflineSyncBanner's fleeting bottom pill — eases up from below instead
+   of just appearing. No exit animation: it disappears via `return null`,
+   which this can't intercept without extra state. */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
