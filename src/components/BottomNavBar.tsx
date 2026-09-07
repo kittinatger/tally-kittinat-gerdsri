@@ -46,7 +46,12 @@ export default function BottomNavBar({
   const leftLinks = inlineCta ? links.slice(0, 2) : links;
   const rightLinks = inlineCta ? links.slice(2) : [];
 
-  const shapeClass = config.shape === "pill" ? "rounded-full" : config.shape === "dock" ? "rounded-[28px]" : "rounded-2xl";
+  // "rounded"'s corner radius is deliberately generous (not the smaller
+  // rounded-2xl/rounded-3xl scale) — against an actual rounded phone
+  // screen, a bar with a noticeably smaller radius than the screen's own
+  // curve reads as a hard-cornered rectangle "cut into" the curve instead
+  // of following it.
+  const shapeClass = config.shape === "pill" ? "rounded-full" : config.shape === "dock" ? "rounded-[28px]" : "rounded-[26px]";
   const backgroundClass =
     config.background === "glass"
       ? "border border-[var(--glass-border)] bg-[image:var(--glass-bg)] backdrop-blur-xl shadow-soft"
