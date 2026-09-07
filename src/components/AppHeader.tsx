@@ -4,20 +4,24 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ListIcon, AnalyticsIcon, GearIcon, PlusIcon, MembershipCardIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
+import { useNavStyle } from "@/lib/nav-style-context";
+import { NAV_BAR_STYLES } from "@/lib/nav-bar-styles";
+import BottomNavBar from "./BottomNavBar";
 
 function AddIcon() {
   return <PlusIcon className="h-4 w-4 shrink-0" />;
 }
 
-// Fixed capsule nav + separate round Add button, shown on mobile only —
-// the equivalent top nav pill / inline Add button (in the header below)
-// covers this role on larger screens instead. The logo lives here too on
-// mobile (the top header is hidden there), rather than at the top. Exported
-// so each route's (server-rendered) loading.tsx can render the identical
-// bar and avoid a flash while the top header/bottom nav would otherwise
-// disappear and reappear across the navigation — loading.tsx can't pass
-// onAddClick itself (functions can't cross the server->client boundary),
-// so it uses showAdd instead to render an inert placeholder button.
+// Shown on mobile only — the equivalent top nav pill / inline Add button
+// (in the header below) covers this role on larger screens instead.
+// Exported so each route's (server-rendered) loading.tsx can render the
+// identical bar and avoid a flash while the top header/bottom nav would
+// otherwise disappear and reappear across the navigation — loading.tsx
+// can't pass onAddClick itself (functions can't cross the server->client
+// boundary), so it uses showAdd instead to render an inert placeholder
+// button. The actual bar/shape/indicator/etc. is BottomNavBar.tsx, driven
+// by the user's chosen style (Settings > Nav bar style) — this just
+// supplies the real links/icons and looks the style up.
 export function BottomNav({
   pathname,
   showAdd = false,
@@ -28,6 +32,7 @@ export function BottomNav({
   onAddClick?: () => void;
 }) {
   const t = useT();
+  const navStyleId = useNavStyle();
   const bottomNavLinks = [
     { href: "/", label: t("nav.activities"), icon: <ListIcon className="h-5 w-5 shrink-0" /> },
     { href: "/analytics", label: t("nav.analytics"), icon: <AnalyticsIcon className="h-5 w-5 shrink-0" /> },
@@ -36,41 +41,13 @@ export function BottomNav({
   ];
 
   return (
-    <div className="fixed inset-x-3 bottom-3 z-20 flex items-center gap-2 sm:hidden">
-      <div
-        aria-hidden="true"
-        className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] shadow-soft backdrop-blur-xl"
-      >
-        <img src="/favicon-light.svg" alt="" className="h-6 w-6 shrink-0 dark:hidden" />
-        <img src="/favicon-dark.svg" alt="" className="hidden h-6 w-6 shrink-0 dark:block" />
-      </div>
-      <nav className="flex flex-1 items-center gap-1 rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-1.5 shadow-soft backdrop-blur-xl">
-        {bottomNavLinks.map((link) => {
-          const active = pathname === link.href;
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 text-xs font-semibold transition ${
-                active ? "bg-surface px-3.5 text-foreground shadow-sm" : "px-2 text-ink-soft hover:text-foreground"
-              }`}
-            >
-              {link.icon}
-              {active && <span>{link.label}</span>}
-            </Link>
-          );
-        })}
-      </nav>
-      {(showAdd || onAddClick) && (
-        <button
-          onClick={onAddClick}
-          aria-label="Add transaction"
-          className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full border border-[var(--fab-glass-border)] bg-[image:var(--fab-glass-bg)] text-white shadow-[var(--shadow-soft),var(--fab-glass-shadow)] backdrop-blur-xl transition hover:brightness-110"
-        >
-          <AddIcon />
-        </button>
-      )}
-    </div>
+    <BottomNavBar
+      config={NAV_BAR_STYLES[navStyleId]}
+      links={bottomNavLinks}
+      pathname={pathname}
+      showAdd={showAdd}
+      onAddClick={onAddClick}
+    />
   );
 }
 
