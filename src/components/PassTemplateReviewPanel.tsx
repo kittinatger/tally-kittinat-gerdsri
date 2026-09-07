@@ -64,6 +64,12 @@ export default function PassTemplateReviewPanel() {
     }
   }
 
+  // Deliberately no confirm-then-confirm step here, unlike every user-
+  // facing manager's own delete action — this is an admin-only review
+  // queue (the route itself 403s anyone else) acting on a pending/
+  // rejected template submission, not a user's own financial data, so
+  // the lower-friction immediate removal is intentional rather than an
+  // oversight.
   async function remove(id: number) {
     setActingId(id);
     setError(null);

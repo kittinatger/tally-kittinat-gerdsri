@@ -6,6 +6,7 @@ import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency, todayInputValue } from "@/lib/format";
 import { PlusIcon, TrashIcon } from "@/lib/icons";
 import EmptyState from "./EmptyState";
+import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import { useT } from "@/lib/language-context";
 import type { LoanDirection } from "@/lib/loans";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
@@ -51,6 +52,8 @@ export default function LoanManager() {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [installmentsByLoan, setInstallmentsByLoan] = useState<Record<number, Installment[]>>({});
 
   // Add-form state
@@ -116,9 +119,20 @@ export default function LoanManager() {
     loadLoans();
   }
 
+  // Previously deleted immediately on the first tap, with no confirmation
+  // step at all — every other manager in the app arms on the first tap
+  // and only actually deletes on a second, explicit confirm; this now
+  // matches that (see ConfirmDeleteButtons).
   async function handleDelete(loanId: number) {
+    if (confirmDeleteId !== loanId) {
+      setConfirmDeleteId(loanId);
+      return;
+    }
+    setDeletingId(loanId);
     setLoans((prev) => prev.filter((l) => l.id !== loanId));
     await mutateFetch(`/api/loans/${loanId}`, { method: "DELETE" });
+    setConfirmDeleteId(null);
+    setDeletingId(null);
   }
 
   function addInstallmentRow() {
@@ -344,20 +358,37 @@ export default function LoanManager() {
                         {loan.installment_count > 0 ? ` · ${loan.paid_count}/${loan.installment_count}` : ""}
                       </p>
                     </div>
-                    <p className={`shrink-0 text-sm font-semibold ${remaining > 0.004 ? "text-foreground" : "text-emerald-600 dark:text-emerald-400"}`}>
-                      {remaining > 0.004 ? formatCurrency(remaining, currency) : t("loans.paidOff")}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(loan.id);
-                      }}
-                      aria-label={t("loans.deleteLoan")}
-                      className="rounded-full p-1.5 text-ink-soft transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
+                    {confirmDeleteId !== loan.id && (
+                      <p className={`shrink-0 text-sm font-semibold ${remaining > 0.004 ? "text-foreground" : "text-emerald-600 dark:text-emerald-400"}`}>
+                        {remaining > 0.004 ? formatCurrency(remaining, currency) : t("loans.paidOff")}
+                      </p>
+                    )}
+                    {confirmDeleteId === loan.id ? (
+                      <span
+                        className="flex shrink-0 items-center gap-1.5"
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
+                        role="presentation"
+                      >
+                        <ConfirmDeleteButtons
+                          busy={deletingId === loan.id}
+                          onCancel={() => setConfirmDeleteId(null)}
+                          onConfirm={() => handleDelete(loan.id)}
+                        />
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(loan.id);
+                        }}
+                        aria-label={t("loans.deleteLoan")}
+                        className="rounded-full p-1.5 text-ink-soft transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    )}
                   </button>
                   {expandedId === loan.id && (
                     <div className="border-t border-line px-4 py-3">

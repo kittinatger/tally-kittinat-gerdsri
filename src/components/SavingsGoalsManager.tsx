@@ -10,6 +10,7 @@ import { PlusIcon } from "@/lib/icons";
 import CsvManagerButtons from "./CsvManagerButtons";
 import ColorPicker from "./ColorPicker";
 import EmptyState from "./EmptyState";
+import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import { useT } from "@/lib/language-context";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
 
@@ -328,20 +329,7 @@ export default function SavingsGoalsManager() {
 
                   {confirming ? (
                     <div className="flex shrink-0 items-center gap-1.5">
-                      <button
-                        onClick={() => setConfirmDeleteId(null)}
-                        disabled={busyId === g.id}
-                        className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
-                      >
-                        {t("common.cancel")}
-                      </button>
-                      <button
-                        onClick={() => handleDelete(g.id)}
-                        disabled={busyId === g.id}
-                        className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 active:scale-[0.97] disabled:opacity-60"
-                      >
-                        {busyId === g.id ? t("common.deleting") : t("common.confirmDelete")}
-                      </button>
+                      <ConfirmDeleteButtons busy={busyId === g.id} onCancel={() => setConfirmDeleteId(null)} onConfirm={() => handleDelete(g.id)} />
                     </div>
                   ) : (
                     <div className="flex shrink-0 items-center gap-1">

@@ -10,6 +10,7 @@ import type { WalletOption } from "@/types/wallet";
 import { EditIcon, TrashIcon, PlusIcon, ArchiveIcon } from "@/lib/icons";
 import WalletModal from "./WalletModal";
 import WalletTransferModal from "./WalletTransferModal";
+import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import WalletShareModal from "./WalletShareModal";
 import FilterDropdown from "./FilterDropdown";
 import { useT } from "@/lib/language-context";
@@ -272,20 +273,7 @@ export default function WalletManager({
 
         {confirming ? (
           <div className="flex shrink-0 items-center justify-end gap-1.5">
-            <button
-              onClick={() => setConfirmDeleteId(null)}
-              disabled={deleting}
-              className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
-            >
-              {t("common.cancel")}
-            </button>
-            <button
-              onClick={() => handleDelete(w.id)}
-              disabled={deleting}
-              className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 active:scale-[0.97] disabled:opacity-60"
-            >
-              {deleting ? t("common.deleting") : t("common.confirmDelete")}
-            </button>
+            <ConfirmDeleteButtons busy={deleting} onCancel={() => setConfirmDeleteId(null)} onConfirm={() => handleDelete(w.id)} />
           </div>
         ) : w.isOwner ? (
           <div className="flex shrink-0 items-center justify-end gap-1">

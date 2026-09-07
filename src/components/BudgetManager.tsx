@@ -11,6 +11,7 @@ import { CategoryIcon, TrashIcon } from "@/lib/icons";
 import SelectDropdown from "./SelectDropdown";
 import CsvManagerButtons from "./CsvManagerButtons";
 import EmptyState from "./EmptyState";
+import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
 import { useT } from "@/lib/language-context";
 
@@ -215,20 +216,7 @@ export default function BudgetManager() {
 
                 {confirming ? (
                   <div className="flex shrink-0 items-center gap-1.5">
-                    <button
-                      onClick={() => setConfirmDeleteId(null)}
-                      disabled={busyId === b.id}
-                      className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
-                    >
-                      {t("common.cancel")}
-                    </button>
-                    <button
-                      onClick={() => handleDelete(b.id)}
-                      disabled={busyId === b.id}
-                      className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 active:scale-[0.97] disabled:opacity-60"
-                    >
-                      {busyId === b.id ? t("common.deleting") : t("common.confirmDelete")}
-                    </button>
+                    <ConfirmDeleteButtons busy={busyId === b.id} onCancel={() => setConfirmDeleteId(null)} onConfirm={() => handleDelete(b.id)} />
                   </div>
                 ) : (
                   <button

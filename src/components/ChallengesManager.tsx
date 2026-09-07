@@ -10,6 +10,7 @@ import { CHALLENGE_TYPES, CHALLENGE_MODES, type ChallengeType, type ChallengeMod
 import { useT, useLanguage } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 import EmptyState from "./EmptyState";
+import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 
 type Challenge = {
   id: number;
@@ -676,22 +677,13 @@ export default function ChallengesManager() {
 
                           {confirmDeleteId === c.id ? (
                             <div className="flex items-center justify-end gap-1.5">
-                              <button
-                                type="button"
-                                onClick={() => setConfirmDeleteId(null)}
-                                disabled={busyId === `leave-${c.id}`}
-                                className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
-                              >
-                                {t("common.cancel")}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => leaveOrDelete(c.id)}
-                                disabled={busyId === `leave-${c.id}`}
-                                className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 active:scale-[0.97] disabled:opacity-60"
-                              >
-                                {busyId === `leave-${c.id}` ? t("challenges.removing") : isCreator ? t("challenges.confirmDelete") : t("challenges.confirmLeave")}
-                              </button>
+                              <ConfirmDeleteButtons
+                                busy={busyId === `leave-${c.id}`}
+                                onCancel={() => setConfirmDeleteId(null)}
+                                onConfirm={() => leaveOrDelete(c.id)}
+                                confirmLabel={isCreator ? t("challenges.confirmDelete") : t("challenges.confirmLeave")}
+                                busyLabel={t("challenges.removing")}
+                              />
                             </div>
                           ) : (
                             <div className="flex justify-end">

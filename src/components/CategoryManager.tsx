@@ -10,6 +10,7 @@ import { isCategoryIconKey } from "@/lib/category-icons";
 import { CategoryIcon, EditIcon, TrashIcon, PlusIcon, PaletteIcon } from "@/lib/icons";
 import CategoryModal from "./CategoryModal";
 import EmptyState from "./EmptyState";
+import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 
@@ -133,20 +134,7 @@ export default function CategoryManager({ categories }: { categories: CategoryOp
 
               {confirmDeleteId === c.id ? (
                 <div className="flex shrink-0 items-center gap-1.5">
-                  <button
-                    onClick={cancelDelete}
-                    disabled={deleting}
-                    className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
-                  >
-                    {t("common.cancel")}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(c.id)}
-                    disabled={deleting}
-                    className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 active:scale-[0.97] disabled:opacity-60"
-                  >
-                    {deleting ? t("common.deleting") : t("common.confirmDelete")}
-                  </button>
+                  <ConfirmDeleteButtons busy={deleting} onCancel={cancelDelete} onConfirm={() => handleDelete(c.id)} />
                 </div>
               ) : (
                 <div className="flex shrink-0 items-center gap-1">

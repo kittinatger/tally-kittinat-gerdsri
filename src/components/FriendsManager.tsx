@@ -8,6 +8,7 @@ import { useT } from "@/lib/language-context";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency } from "@/lib/format";
 import EmptyState from "./EmptyState";
+import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 
 type Friend = { id: number; username: string; is_family: boolean };
 type FriendRequest = { id: number; username: string; created_at: string };
@@ -111,6 +112,11 @@ export default function FriendsManager() {
   const [results, setResults] = useState<SearchResult[] | null>(null);
   const [searching, setSearching] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  // removeFriend used to fire immediately with no confirmation step at
+  // all — every other manager in the app arms on the first tap and only
+  // actually removes on a second, explicit confirm; this brings it in
+  // line with that (see ConfirmDeleteButtons).
+  const [confirmRemoveId, setConfirmRemoveId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -214,6 +220,10 @@ export default function FriendsManager() {
   }
 
   async function removeFriend(id: number) {
+    if (confirmRemoveId !== id) {
+      setConfirmRemoveId(id);
+      return;
+    }
     setBusyId(`remove-${id}`);
     setError(null);
     try {
@@ -227,6 +237,7 @@ export default function FriendsManager() {
       setError(describeFetchError(err));
     } finally {
       setBusyId(null);
+      setConfirmRemoveId(null);
     }
   }
 
@@ -364,31 +375,40 @@ export default function FriendsManager() {
                   <p className="truncate font-medium text-foreground">{f.username}</p>
                   <BalancePill amount={data.balances[f.id] ?? 0} />
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => toggleFamily(f.id, f.is_family)}
-                    disabled={busyId === `family-${f.id}`}
-                    aria-label={f.is_family ? `Remove ${f.username} from Family` : `Add ${f.username} to Family`}
-                    className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] font-semibold transition disabled:opacity-60 ${
-                      f.is_family
-                        ? "bg-navy/10 text-navy dark:text-blue-300"
-                        : "text-ink-soft hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
-                    }`}
-                  >
-                    <HomeHeartIcon />
-                    {f.is_family ? t("friends.familyTab") : t("friends.addToFamily")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => removeFriend(f.id)}
-                    disabled={busyId === `remove-${f.id}`}
-                    aria-label={`Remove ${f.username}`}
-                    className="rounded-full p-2 text-ink-soft transition hover:bg-red-50 hover:text-red-600 disabled:opacity-60 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                  >
-                    <TrashIcon />
-                  </button>
-                </div>
+                {confirmRemoveId === f.id ? (
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <ConfirmDeleteButtons
+                      busy={busyId === `remove-${f.id}`}
+                      onCancel={() => setConfirmRemoveId(null)}
+                      onConfirm={() => removeFriend(f.id)}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleFamily(f.id, f.is_family)}
+                      disabled={busyId === `family-${f.id}`}
+                      aria-label={f.is_family ? `Remove ${f.username} from Family` : `Add ${f.username} to Family`}
+                      className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] font-semibold transition disabled:opacity-60 ${
+                        f.is_family
+                          ? "bg-navy/10 text-navy dark:text-blue-300"
+                          : "text-ink-soft hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
+                      }`}
+                    >
+                      <HomeHeartIcon />
+                      {f.is_family ? t("friends.familyTab") : t("friends.addToFamily")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeFriend(f.id)}
+                      aria-label={`Remove ${f.username}`}
+                      className="rounded-full p-2 text-ink-soft transition hover:bg-red-50 hover:text-red-600 disabled:opacity-60 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                    >
+                      <TrashIcon />
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

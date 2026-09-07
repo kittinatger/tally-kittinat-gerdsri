@@ -2,8 +2,9 @@
 
 import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useState } from "react";
-import { EditIcon, TagIcon } from "@/lib/icons";
+import { EditIcon, TagIcon, TrashIcon } from "@/lib/icons";
 import EmptyState from "./EmptyState";
+import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import { useT, useLanguage } from "@/lib/language-context";
 
 type TagCount = { name: string; count: number };
@@ -171,24 +172,26 @@ export default function TagManager() {
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
-                  <button
-                    onClick={() => startEdit(tag)}
-                    aria-label={`Rename ${tag.name}`}
-                    className="rounded-full p-2 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
-                  >
-                    <EditIcon className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(tag.name)}
-                    disabled={busy}
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition disabled:opacity-60 ${
-                      confirmDelete === tag.name
-                        ? "bg-red-600 text-white hover:bg-red-700"
-                        : "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                    }`}
-                  >
-                    {confirmDelete === tag.name ? t("tag.confirm") : t("common.delete")}
-                  </button>
+                  {confirmDelete === tag.name ? (
+                    <ConfirmDeleteButtons busy={busy} onCancel={() => setConfirmDelete(null)} onConfirm={() => handleDelete(tag.name)} />
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => startEdit(tag)}
+                        aria-label={`Rename ${tag.name}`}
+                        className="rounded-full p-2 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
+                      >
+                        <EditIcon className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(tag.name)}
+                        aria-label={`Delete ${tag.name}`}
+                        className="rounded-full p-2 text-ink-soft transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </>
             )}
