@@ -12,19 +12,21 @@ const RESISTANCE = 0.5;
 // better than trying to track completion precisely.
 const SETTLE_MS = 700;
 // How long to keep holding past the pull threshold, without releasing,
-// before this upgrades from a normal (data-only) refresh into a full page
-// reload — for when a bigger UI change or update needs a fresh JS bundle,
-// not just re-fetched data.
+// before a release triggers a full page reload instead of a normal
+// (data-only) refresh — for when a bigger UI change or update needs a
+// fresh JS bundle, not just re-fetched data. Reaching this only *arms*
+// the bigger refresh; it still only actually fires on release, same as
+// the normal one.
 const HOLD_FOR_FULL_REFRESH_MS = 2000;
 
 export default function PullToRefresh({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [pull, setPull] = useState(0);
+  // Whether the current pull has been held past the threshold long enough
+  // to release into a full reload instead of a normal refresh.
+  const [armedForFull, setArmedForFull] = useState(false);
   // "small" = router.refresh() (re-fetched data, same JS/UI already
-  // loaded). "big" = a real window.location.reload() — a normal release
-  // only ever produces "small"; holding past the threshold for
-  // HOLD_FOR_FULL_REFRESH_MS upgrades to "big" on its own, without
-  // waiting for release.
+  // loaded). "big" = a real window.location.reload().
   const [refreshing, setRefreshing] = useState<"small" | "big" | null>(null);
   const startY = useRef<number | null>(null);
   const pulling = useRef(false);
@@ -72,6 +74,7 @@ export default function PullToRefresh({ children }: { children: React.ReactNode 
     }
     startY.current = e.touches[0].clientY;
     pulling.current = true;
+    setArmedForFull(false);
   }
 
   function onTouchMove(e: React.TouchEvent) {
@@ -80,6 +83,7 @@ export default function PullToRefresh({ children }: { children: React.ReactNode 
     if (delta <= 0 || window.scrollY > 0) {
       pulling.current = false;
       setPull(0);
+      setArmedForFull(false);
       clearHoldTimer();
       return;
     }
@@ -87,10 +91,14 @@ export default function PullToRefresh({ children }: { children: React.ReactNode 
     setPull(next);
     if (next >= PULL_THRESHOLD) {
       if (holdTimer.current === null) {
-        holdTimer.current = window.setTimeout(() => triggerRefresh("big"), HOLD_FOR_FULL_REFRESH_MS);
+        holdTimer.current = window.setTimeout(() => {
+          holdTimer.current = null;
+          setArmedForFull(true);
+        }, HOLD_FOR_FULL_REFRESH_MS);
       }
     } else {
       clearHoldTimer();
+      setArmedForFull(false);
     }
   }
 
@@ -99,21 +107,18 @@ export default function PullToRefresh({ children }: { children: React.ReactNode 
     pulling.current = false;
     startY.current = null;
     const wasReady = pull >= PULL_THRESHOLD;
-    const wasHoldingForBig = holdTimer.current !== null;
     clearHoldTimer();
-    if (wasReady && wasHoldingForBig) {
-      // Released before the hold timer fired — a normal (small) refresh.
-      triggerRefresh("small");
-    } else if (!wasReady) {
+    if (wasReady) {
+      triggerRefresh(armedForFull ? "big" : "small");
+    } else {
       setPull(0);
     }
-    // Otherwise the hold timer already fired mid-gesture and started a
-    // "big" refresh — nothing left to do here.
+    setArmedForFull(false);
   }
 
   const indicatorHeight = refreshing ? PULL_THRESHOLD : pull;
   const ready = pull >= PULL_THRESHOLD;
-  const label = ready ? "Release to refresh · keep holding for a full refresh" : "Pull to refresh";
+  const label = armedForFull ? "Release for a full refresh" : ready ? "Release to refresh · keep holding for a full refresh" : "Pull to refresh";
 
   return (
     <div onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
