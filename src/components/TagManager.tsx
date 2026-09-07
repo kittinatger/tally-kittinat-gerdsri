@@ -2,7 +2,8 @@
 
 import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useState } from "react";
-import { EditIcon } from "@/lib/icons";
+import { EditIcon, TagIcon } from "@/lib/icons";
+import EmptyState from "./EmptyState";
 import { useT, useLanguage } from "@/lib/language-context";
 
 type TagCount = { name: string; count: number };
@@ -118,11 +119,7 @@ export default function TagManager() {
   }
 
   if (tags.length === 0) {
-    return (
-      <p className="text-sm text-ink-soft">
-        {t("tag.noTagsYet")}
-      </p>
-    );
+    return <EmptyState icon={<TagIcon className="h-4.5 w-4.5" />} text={t("tag.noTagsYet")} />;
   }
 
   return (

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { describeFetchError } from "@/lib/fetch-error";
 import { badgeClasses } from "@/lib/category-styles";
 import { useT } from "@/lib/language-context";
+import EmptyState from "./EmptyState";
 
 type ApiToken = { id: number; name: string; created_at: string; last_used_at: string | null };
 
@@ -21,15 +22,6 @@ function TrashIcon() {
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
       <path d="M4 5.5h12M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5 6 16a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l.5-10.5" />
     </svg>
-  );
-}
-
-function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
-  return (
-    <div className="flex flex-col items-center gap-2 rounded-card border border-dashed border-line px-4 py-10 text-center">
-      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-bg-soft text-ink-soft">{icon}</span>
-      <p className="text-sm text-ink-soft">{text}</p>
-    </div>
   );
 }
 

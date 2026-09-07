@@ -10,6 +10,7 @@ import { isCategoryIconKey } from "@/lib/category-icons";
 import { CategoryIcon, TrashIcon } from "@/lib/icons";
 import SelectDropdown from "./SelectDropdown";
 import CsvManagerButtons from "./CsvManagerButtons";
+import EmptyState from "./EmptyState";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
 import { useT } from "@/lib/language-context";
 
@@ -22,15 +23,6 @@ function BudgetGlyphIcon() {
       <path d="M3 8.5h14" />
       <path d="M7 12h2" />
     </svg>
-  );
-}
-
-function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
-  return (
-    <div className="mt-4 flex flex-col items-center gap-2 rounded-card border border-dashed border-line px-4 py-10 text-center">
-      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-bg-soft text-ink-soft">{icon}</span>
-      <p className="text-sm text-ink-soft">{text}</p>
-    </div>
   );
 }
 
@@ -188,7 +180,9 @@ export default function BudgetManager() {
       {budgets === null ? (
         <p className="mt-4 text-sm text-ink-soft">{t("common.loading")}</p>
       ) : budgets.length === 0 ? (
-        <EmptyState icon={<BudgetGlyphIcon />} text={t("budget.noBudgetsYet")} />
+        <div className="mt-4">
+          <EmptyState icon={<BudgetGlyphIcon />} text={t("budget.noBudgetsYet")} />
+        </div>
       ) : (
         <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
           {budgets.map((b, i) => {

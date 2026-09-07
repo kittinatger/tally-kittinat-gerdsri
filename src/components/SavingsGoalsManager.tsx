@@ -9,6 +9,7 @@ import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
 import { PlusIcon } from "@/lib/icons";
 import CsvManagerButtons from "./CsvManagerButtons";
 import ColorPicker from "./ColorPicker";
+import EmptyState from "./EmptyState";
 import { useT } from "@/lib/language-context";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
 
@@ -39,15 +40,6 @@ function HistoryIcon() {
       <path d="M4 10a6 6 0 1 0 1.8-4.3M4 4v3h3" />
       <path d="M10 6.5V10l2.3 2.3" />
     </svg>
-  );
-}
-
-function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
-  return (
-    <div className="flex flex-col items-center gap-2 rounded-card border border-dashed border-line px-4 py-10 text-center">
-      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-bg-soft text-ink-soft">{icon}</span>
-      <p className="text-sm text-ink-soft">{text}</p>
-    </div>
   );
 }
 

@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { cardBackgroundStyle } from "@/lib/card-backgrounds";
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { describeFetchError } from "@/lib/fetch-error";
-import { CheckCircleIcon, XCircleIcon, TrashIcon, EditIcon } from "@/lib/icons";
+import { CheckCircleIcon, XCircleIcon, TrashIcon, EditIcon, MembershipCardIcon } from "@/lib/icons";
+import EmptyState from "./EmptyState";
 import { KIND_LABEL_KEYS } from "@/lib/membership-templates";
 import { PASS_TEMPLATE_CATEGORY_LABEL_KEYS } from "@/lib/pass-template-category";
 import { useT } from "@/lib/language-context";
@@ -102,7 +103,7 @@ export default function PassTemplateReviewPanel() {
       {templates === null ? (
         <p className="text-sm text-ink-soft">{t("common.loading")}</p>
       ) : templates.length === 0 ? (
-        <p className="text-sm text-ink-soft">{t("wallet.noTemplatesToReview")}</p>
+        <EmptyState icon={<MembershipCardIcon className="h-4.5 w-4.5" />} text={t("wallet.noTemplatesToReview")} />
       ) : (
         <div className="space-y-3">
           {templates.map((tpl) => (

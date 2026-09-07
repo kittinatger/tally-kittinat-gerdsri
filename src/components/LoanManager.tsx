@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency, todayInputValue } from "@/lib/format";
 import { PlusIcon, TrashIcon } from "@/lib/icons";
+import EmptyState from "./EmptyState";
 import { useT } from "@/lib/language-context";
 import type { LoanDirection } from "@/lib/loans";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
@@ -29,11 +30,15 @@ function counterpartyLabel(loan: Loan): string {
   return loan.counterparty_username ?? loan.counterparty_name ?? "—";
 }
 
-function EmptyState({ text }: { text: string }) {
+// A simple "handshake" glyph — this manager had no icon of its own for
+// its empty state (unlike every sibling manager), which is exactly the
+// drift EmptyState.tsx was extracted to stop from spreading further.
+function HandshakeIcon() {
   return (
-    <div className="flex flex-col items-center gap-2 rounded-card border border-dashed border-line px-4 py-10 text-center">
-      <p className="text-sm text-ink-soft">{text}</p>
-    </div>
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
+      <path d="M2.5 9.5 6 6l3 2 2-2 3 3-3.5 3.5-3-2-1.5 1.5" />
+      <path d="M6 6 3.5 8.5M14 9l3.5-3.5" />
+    </svg>
   );
 }
 
@@ -317,7 +322,7 @@ export default function LoanManager() {
         {loading ? (
           <p className="text-sm text-ink-soft">{t("common.loading")}</p>
         ) : loans.length === 0 ? (
-          <EmptyState text={t("loans.empty")} />
+          <EmptyState icon={<HandshakeIcon />} text={t("loans.empty")} />
         ) : (
           <div className="space-y-2">
             {loans.map((loan) => {

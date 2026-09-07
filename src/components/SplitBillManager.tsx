@@ -10,6 +10,7 @@ import { SPLIT_METHODS, SPLIT_PAYMENT_METHODS, type SplitMethod, type SplitPayme
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 import RecurringSplitsSection from "./RecurringSplitsSection";
+import EmptyState from "./EmptyState";
 
 type Split = {
   id: number;
@@ -86,15 +87,6 @@ function CheckIcon() {
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
       <path d="M4 10.5 8 14l8-8" />
     </svg>
-  );
-}
-
-function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
-  return (
-    <div className="flex flex-col items-center gap-2 rounded-card border border-dashed border-line px-4 py-10 text-center">
-      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-bg-soft text-ink-soft">{icon}</span>
-      <p className="text-sm text-ink-soft">{text}</p>
-    </div>
   );
 }
 

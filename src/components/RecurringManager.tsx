@@ -11,6 +11,7 @@ import type { TransactionType, TransferDirection } from "@/lib/categories";
 import { EditIcon, TrashIcon } from "@/lib/icons";
 import SelectDropdown from "./SelectDropdown";
 import CsvManagerButtons from "./CsvManagerButtons";
+import EmptyState from "./EmptyState";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
@@ -79,17 +80,6 @@ function PlayIcon() {
     <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
       <path d="M5.5 3.7c0-.9 1-1.4 1.7-.9l9.4 6.3a1 1 0 0 1 0 1.7l-9.4 6.3c-.7.5-1.7 0-1.7-.9Z" />
     </svg>
-  );
-}
-
-function EmptyState({ text }: { text: string }) {
-  return (
-    <div className="mt-4 flex flex-col items-center gap-2 rounded-card border border-dashed border-line px-4 py-10 text-center">
-      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-bg-soft text-ink-soft">
-        <RepeatIcon />
-      </span>
-      <p className="text-sm text-ink-soft">{text}</p>
-    </div>
   );
 }
 
@@ -556,7 +546,9 @@ export default function RecurringManager() {
       {rules === null ? (
         <p className="mt-4 text-sm text-ink-soft">{t("common.loading")}</p>
       ) : rules.length === 0 ? (
-        <EmptyState text={t("recurring.noRulesYet")} />
+        <div className="mt-4">
+          <EmptyState icon={<RepeatIcon />} text={t("recurring.noRulesYet")} />
+        </div>
       ) : (
         <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
           {rules.map((r, i) => {

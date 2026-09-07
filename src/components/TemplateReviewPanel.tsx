@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { cardBackgroundStyle } from "@/lib/card-backgrounds";
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { describeFetchError } from "@/lib/fetch-error";
-import { CheckCircleIcon, XCircleIcon, EditIcon } from "@/lib/icons";
+import { CheckCircleIcon, XCircleIcon, EditIcon, MembershipCardIcon } from "@/lib/icons";
+import EmptyState from "./EmptyState";
 import { NAME_POSITION_LABEL_KEYS } from "@/lib/name-position";
 import { BADGE_POSITION_LABEL_KEYS } from "@/lib/badge-position";
 import { NFC_SIZE_LABEL_KEYS } from "@/lib/nfc-size";
@@ -120,7 +121,7 @@ export default function TemplateReviewPanel() {
       {templates === null ? (
         <p className="text-sm text-ink-soft">{t("common.loading")}</p>
       ) : templates.length === 0 ? (
-        <p className="text-sm text-ink-soft">{t("wallet.noTemplatesToReview")}</p>
+        <EmptyState icon={<MembershipCardIcon className="h-4.5 w-4.5" />} text={t("wallet.noTemplatesToReview")} />
       ) : (
         <div className="space-y-3">
           {templates.map((tpl) => (

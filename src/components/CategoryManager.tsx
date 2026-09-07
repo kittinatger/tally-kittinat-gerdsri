@@ -7,8 +7,9 @@ import { badgeClasses, dotClasses, colorDotStyle } from "@/lib/category-styles";
 import type { TransactionType } from "@/lib/categories";
 import type { CategoryOption } from "@/types/category";
 import { isCategoryIconKey } from "@/lib/category-icons";
-import { CategoryIcon, EditIcon, TrashIcon, PlusIcon } from "@/lib/icons";
+import { CategoryIcon, EditIcon, TrashIcon, PlusIcon, PaletteIcon } from "@/lib/icons";
 import CategoryModal from "./CategoryModal";
+import EmptyState from "./EmptyState";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 
@@ -102,13 +103,16 @@ export default function CategoryManager({ categories }: { categories: CategoryOp
 
       {deleteError && <p className="mt-3 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{deleteError}</p>}
 
-      <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
-        {categoriesForType.length === 0 ? (
-          <p className="px-4 py-6 text-center text-sm text-ink-soft">
-            {t("category.noCategoriesPrefix")} {t(TYPE_TABS.find((tab) => tab.value === type)!.key)} {t("category.noCategoriesSuffix")}
-          </p>
-        ) : (
-          categoriesForType.map((c, i) => (
+      {categoriesForType.length === 0 ? (
+        <div className="mt-4">
+          <EmptyState
+            icon={<PaletteIcon className="h-4.5 w-4.5" />}
+            text={`${t("category.noCategoriesPrefix")} ${t(TYPE_TABS.find((tab) => tab.value === type)!.key)} ${t("category.noCategoriesSuffix")}`}
+          />
+        </div>
+      ) : (
+        <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
+          {categoriesForType.map((c, i) => (
             <div
               key={c.id}
               className={`flex items-center gap-3 px-4 py-3 ${
@@ -165,9 +169,9 @@ export default function CategoryManager({ categories }: { categories: CategoryOp
                 </div>
               )}
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
 
       {modal && (
         <CategoryModal

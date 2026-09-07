@@ -9,6 +9,7 @@ import { formatCurrency, todayInputValue } from "@/lib/format";
 import { CHALLENGE_TYPES, CHALLENGE_MODES, type ChallengeType, type ChallengeMode } from "@/lib/challenges";
 import { useT, useLanguage } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
+import EmptyState from "./EmptyState";
 
 type Challenge = {
   id: number;
@@ -89,15 +90,6 @@ function EyeIcon() {
       <path d="M1.5 10S4.5 4.5 10 4.5 18.5 10 18.5 10 15.5 15.5 10 15.5 1.5 10 1.5 10Z" />
       <circle cx="10" cy="10" r="2.25" />
     </svg>
-  );
-}
-
-function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
-  return (
-    <div className="flex flex-col items-center gap-2 rounded-card border border-dashed border-line px-4 py-10 text-center">
-      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-bg-soft text-ink-soft">{icon}</span>
-      <p className="text-sm text-ink-soft">{text}</p>
-    </div>
   );
 }
 
