@@ -11,6 +11,7 @@ import { useT, useLanguage } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
+import SelectorChip from "./SelectorChip";
 
 type Challenge = {
   id: number;
@@ -511,18 +512,14 @@ export default function ChallengesManager() {
                 {friends.map((f) => {
                   const selected = inviteeIds.includes(f.id);
                   return (
-                    <button
+                    <SelectorChip
                       key={f.id}
-                      type="button"
-                      onClick={() =>
-                        setInviteeIds((prev) => (selected ? prev.filter((id) => id !== f.id) : [...prev, f.id]))
-                      }
-                      className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
-                        selected ? "bg-navy text-white" : "bg-bg-soft text-ink-soft hover:text-foreground"
-                      }`}
+                      variant="filled"
+                      active={selected}
+                      onClick={() => setInviteeIds((prev) => (selected ? prev.filter((id) => id !== f.id) : [...prev, f.id]))}
                     >
                       {f.username}
-                    </button>
+                    </SelectorChip>
                   );
                 })}
               </div>

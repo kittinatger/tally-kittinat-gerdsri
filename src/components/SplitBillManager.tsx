@@ -12,6 +12,7 @@ import type { MessageKey } from "@/lib/i18n/messages";
 import RecurringSplitsSection from "./RecurringSplitsSection";
 import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
+import SelectorChip from "./SelectorChip";
 
 type Split = {
   id: number;
@@ -482,16 +483,9 @@ export default function SplitBillManager() {
                 {friends.map((f) => {
                   const selected = participantIds.includes(f.id);
                   return (
-                    <button
-                      key={f.id}
-                      type="button"
-                      onClick={() => toggleParticipant(f.id)}
-                      className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
-                        selected ? "bg-navy text-white" : "bg-bg-soft text-ink-soft hover:text-foreground"
-                      }`}
-                    >
+                    <SelectorChip key={f.id} variant="filled" active={selected} onClick={() => toggleParticipant(f.id)}>
                       {f.username}
-                    </button>
+                    </SelectorChip>
                   );
                 })}
               </div>
