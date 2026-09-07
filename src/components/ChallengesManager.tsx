@@ -608,7 +608,7 @@ export default function ChallengesManager() {
                                     </span>
                                   </div>
                                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface">
-                                    <div className={`h-full rounded-full ${dotClasses("violet")}`} style={{ width: `${Math.max(2, pct)}%` }} />
+                                    <div className={`h-full rounded-full transition-all duration-500 ease-out ${dotClasses("violet")}`} style={{ width: `${Math.max(2, pct)}%` }} />
                                   </div>
                                 </div>
                               );
@@ -640,7 +640,7 @@ export default function ChallengesManager() {
                                       </span>
                                     </div>
                                     <div className={`h-1.5 w-full overflow-hidden rounded-full bg-bg-soft`}>
-                                      <div className={`h-full rounded-full ${dotClasses("violet")}`} style={{ width: `${Math.max(2, pct)}%` }} />
+                                      <div className={`h-full rounded-full transition-all duration-500 ease-out ${dotClasses("violet")}`} style={{ width: `${Math.max(2, pct)}%` }} />
                                     </div>
                                   </div>
                                   {canAskReveal && (

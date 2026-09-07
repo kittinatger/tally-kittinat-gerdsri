@@ -16,7 +16,7 @@ export default function StackedBarWidget({ title, segments }: { title: string; s
             {segments.map((s) => (
               <div
                 key={s.label}
-                className={`rounded-full ${s.colorClassName}`}
+                className={`rounded-full transition-all duration-500 ease-out ${s.colorClassName}`}
                 style={{ width: `${Math.max(0, (s.value / total) * 100)}%` }}
                 title={`${s.label}: ${s.displayValue}`}
               />

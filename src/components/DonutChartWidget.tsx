@@ -40,7 +40,7 @@ export default function DonutChartWidget({ title, segments }: { title: string; s
                   strokeWidth="8"
                   strokeLinecap="round"
                   stroke="currentColor"
-                  className={s.colorClassName}
+                  className={`transition-all duration-500 ease-out ${s.colorClassName}`}
                   strokeDasharray={`${dash} ${circumference - dash}`}
                   strokeDashoffset={-offset}
                 />

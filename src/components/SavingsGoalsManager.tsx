@@ -328,7 +328,7 @@ export default function SavingsGoalsManager() {
                     </p>
                     <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-bg-soft">
                       <div
-                        className={`h-full rounded-full ${dotClasses(g.color)}`}
+                        className={`h-full rounded-full transition-all duration-500 ease-out ${dotClasses(g.color)}`}
                         style={{ width: `${Math.max(4, percent)}%`, ...colorDotStyle(g.color) }}
                       />
                     </div>

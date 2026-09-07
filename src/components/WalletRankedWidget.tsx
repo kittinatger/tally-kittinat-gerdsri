@@ -34,7 +34,7 @@ export default function WalletRankedWidget({ title, items }: { title: string; it
                 </div>
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-sky-900/10 dark:bg-sky-100/10">
                   <div
-                    className={`h-full rounded-full ${item.colorClassName}`}
+                    className={`h-full rounded-full transition-all duration-500 ease-out ${item.colorClassName}`}
                     style={{ width: `${Math.max(4, (item.value / max) * 100)}%` }}
                   />
                 </div>
