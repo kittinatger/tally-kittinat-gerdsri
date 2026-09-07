@@ -150,6 +150,17 @@ function CoinIcon() {
   );
 }
 
+function NavBarIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <rect x="2.5" y="12.5" width="15" height="5" rx="2.5" />
+      <circle cx="7" cy="15" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="10" cy="15" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="13" cy="15" r="0.9" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 function GlobeIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
@@ -564,6 +575,7 @@ export default function SettingsNavList({
       <SettingsSection title={t("settings.section.display")}>
         <SettingsListItem icon={<DashboardWidgetsIcon />} label={t("settings.dashboardWidgets")} accent="fuchsia" {...panelItemProps("dashboardWidgets")} />
         <SettingsListItem icon={<CalendarIcon />} label={t("settings.calendar")} accent="blue" {...panelItemProps("calendar")} />
+        <SettingsListItem icon={<NavBarIcon />} label={t("settings.navStyle")} accent="violet" {...panelItemProps("navStyle")} />
         <SettingsListItem icon={<CoinIcon />} label={t("settings.currency")} accent="green" {...panelItemProps("currency")} />
         <SettingsListItem icon={<GlobeIcon />} label={t("settings.language")} accent="sky" {...panelItemProps("language")} />
       </SettingsSection>

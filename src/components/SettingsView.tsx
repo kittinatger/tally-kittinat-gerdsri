@@ -22,6 +22,7 @@ const AccountPanel = dynamic(() => import("./AccountPanel"), { ssr: false });
 const CurrencySettings = dynamic(() => import("./CurrencySettings"), { ssr: false });
 const LanguageSettings = dynamic(() => import("./LanguageSettings"), { ssr: false });
 const CalendarSettings = dynamic(() => import("./CalendarSettings"), { ssr: false });
+const NavStyleSettings = dynamic(() => import("./NavStyleSettings"), { ssr: false });
 const DashboardWidgetsSettings = dynamic(() => import("./DashboardWidgetsSettings"), { ssr: false });
 const PermissionsSettings = dynamic(() => import("./PermissionsSettings"), { ssr: false });
 const CategoryManager = dynamic(() => import("./CategoryManager"), { ssr: false });
@@ -68,6 +69,7 @@ const PANEL_TITLES: Record<Panel, string> = {
   currency: "Currency",
   language: "Language",
   calendar: "Calendar settings",
+  navStyle: "Nav bar style",
   dashboardWidgets: "Customize dashboard",
   recurring: "Recurring transactions",
   budgets: "Budgets",
@@ -201,6 +203,7 @@ export default function SettingsView({
       {panel === "currency" && <CurrencySettings />}
       {panel === "language" && <LanguageSettings />}
       {panel === "calendar" && <CalendarSettings />}
+      {panel === "navStyle" && <NavStyleSettings />}
       {panel === "recurring" && <RecurringManager />}
       {panel === "budgets" && <BudgetManager />}
       {panel === "savingsGoals" && <SavingsGoalsManager />}
