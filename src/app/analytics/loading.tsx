@@ -1,51 +1,8 @@
-import { BottomNav } from "@/components/AppHeader";
+import LoadingScreen from "@/components/LoadingScreen";
 
-// Shown instantly on navigation while the dynamic page (fresh DB data) streams
-// in behind it — see the "force-dynamic" comment on page.tsx for why this
-// route can't be statically cached. Mirrors AppHeader's markup (including
-// which parts are hidden on mobile) so the nav doesn't flicker/disappear
-// during the transition.
+// See LoadingScreen.tsx for what this shows and why — previously a
+// skeleton mimicking this page's header/nav/cards, now the same
+// full-screen splash every route uses.
 export default function AnalyticsLoading() {
-  return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10 lg:max-w-6xl">
-      <header className="sticky top-3 z-10 hidden items-center justify-between gap-2 rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] px-3 py-2 shadow-soft backdrop-blur-xl sm:flex sm:gap-3 sm:px-5 sm:py-2.5">
-        <div className="flex shrink-0 items-center gap-2">
-          <img src="/favicon-light.svg" alt="Tally" className="h-8 w-8 shrink-0 dark:hidden" />
-          <img src="/favicon-dark.svg" alt="Tally" className="hidden h-8 w-8 shrink-0 dark:block" />
-          <h1 className="hidden font-display text-lg text-foreground min-[420px]:block">Tally</h1>
-        </div>
-        <nav className="flex items-center gap-1 rounded-full bg-bg-soft p-1">
-          <span className="rounded-full px-2.5 py-1 text-xs font-semibold text-ink-soft sm:px-3.5 sm:py-1.5 sm:text-sm">
-            Activities
-          </span>
-          <span className="rounded-full bg-surface px-2.5 py-1 text-xs font-semibold text-foreground shadow-sm sm:px-3.5 sm:py-1.5 sm:text-sm">
-            Analytics
-          </span>
-          <span className="rounded-full px-2.5 py-1 text-xs font-semibold text-ink-soft sm:px-3.5 sm:py-1.5 sm:text-sm">
-            Wallet
-          </span>
-          <span className="rounded-full px-2.5 py-1 text-xs font-semibold text-ink-soft sm:px-3.5 sm:py-1.5 sm:text-sm">
-            Settings
-          </span>
-        </nav>
-        <div className="flex shrink-0 items-center gap-1.5">
-          <span className="hidden items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white opacity-60 sm:flex">
-            + Add
-          </span>
-        </div>
-      </header>
-
-      <BottomNav pathname="/analytics" showAdd />
-
-      <main className="flex-1 px-1 py-6 sm:px-2">
-        <div className="h-40 animate-pulse rounded-card border border-line bg-surface" />
-        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div className="h-[110px] animate-pulse rounded-card border border-surface-line bg-surface" />
-          <div className="h-[110px] animate-pulse rounded-card border border-surface-line bg-surface" />
-          <div className="h-[110px] animate-pulse rounded-card border border-surface-line bg-surface" />
-          <div className="h-[110px] animate-pulse rounded-card border border-surface-line bg-surface" />
-        </div>
-      </main>
-    </div>
-  );
+  return <LoadingScreen />;
 }
