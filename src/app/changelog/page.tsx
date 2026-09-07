@@ -6,6 +6,51 @@ export const dynamic = "force-dynamic";
 
 const RELEASES: { version: string; date: string; sections: { heading: string; items: string[] }[] }[] = [
   {
+    version: "0.21.0",
+    date: "2026-09-07",
+    sections: [
+      {
+        heading: "Added",
+        items: [
+          "Vendors — a new Settings panel listing every merchant you've paid, sortable by most used/recent/highest spend/alphabetical, with multi-select and one-tap merge for inconsistently-spelled entries, plus a proper vendor filter in Activities",
+          "A prompt to merge merchant names already in your data that look like the same vendor spelled differently, and receipt/voice extraction now reuses an existing merchant's exact spelling instead of introducing a near-duplicate",
+          "Tapping a merchant name in a transaction's detail view now jumps to every other transaction with that same merchant",
+          "Card templates can now lock SVG-illustration background colors, force the NFC badge off, and force chip position/card-number position",
+          "A contactless/NFC symbol toggle for card-look wallets (off by default), with its own corner selector, a big/small size option, and chip position expanded to a full 3x3 grid",
+          "A full edit surface for Manage Passes, matching Manage Cards; pass templates can now lock their logo, banner, and field layout the same way card templates already could",
+          "Card design guidelines and pass design guidelines pages",
+          "An Activities settings panel with 8 display/behavior preferences",
+          "The open Settings panel now stays in the URL, so refreshing the page doesn't drop you back to the Settings list",
+        ],
+      },
+      {
+        heading: "Changed",
+        items: [
+          "Categories, Tags, Vendors, and Activities split out of the \"Money\" settings section into their own top-level rows",
+          "Admin nav labels renamed to \"Manage Cards\"/\"Manage Passes\"; the premade-pass gallery now groups by category (airline, hotel, retail, ...) instead of by country",
+          "Usage guide screenshots are now responsive (separate desktop/mobile versions), with a new Wallet passes section",
+          "A broad animation/transition pass across the app: a real modal close animation and popover entrances, fade-in on error/empty/confirmation states, animated progress bars and charts, tactile press feedback on every primary/destructive button, and wallet/card/pass-specific transitions",
+          "Every route's loading state (home, analytics, settings, wallet) now shows the same full-screen branded splash instead of a page-specific skeleton",
+          "A UI-consistency pass unified repeated patterns across every settings manager: empty states, delete confirmation, toggle pills, selector chips, icon badges, list containers, panel headings, add-item buttons, and reorder controls each now share one implementation instead of several near-identical copies",
+        ],
+      },
+      {
+        heading: "Fixed",
+        items: [
+          "A locked-by-template card background's message telling you to tap an \"Edit colors\" button that wasn't actually there",
+          "Custom-SVG background color extraction missing colors (or not recognizing named CSS colors like fill=\"white\") on real-world uploaded files",
+          "Card-number, name, and NFC-size display settings reverting to their defaults instead of the saved choice",
+          "Premade-pass swatches in the template gallery rendering as a credit-card shape instead of an actual pass shape",
+          "The scan camera rendering behind the pass editor instead of over it",
+          "Dead space to the left of a row's edit/share/delete hover icons",
+          "Three corner/position overlap bugs on the payment-card visual (chip/name/card-number stacking in the same corner)",
+          "Loans and Friends & Family could delete an item with zero confirmation step, unlike every other settings manager",
+          "Friends/Split-bill/Challenges avatars and Vendors avatars could hash the same name to two different colors depending on which panel showed it",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.20.0",
     date: "2026-09-05",
     sections: [
