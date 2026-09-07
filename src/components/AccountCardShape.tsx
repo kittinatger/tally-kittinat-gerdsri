@@ -21,7 +21,7 @@ export default function AccountCardShape({ wallet, currency }: { wallet: WalletO
   const fg = cardForegroundFor(wallet.textColor, wallet.background, wallet.color);
   return (
     <div
-      className={`flex aspect-[1.586/1] min-h-[190px] w-full flex-col justify-between rounded-2xl p-4 shadow-soft ${wallet.background ? "" : heroGradientClasses(wallet.color)}`}
+      className={`flex aspect-[1.586/1] min-h-[190px] w-full flex-col justify-between rounded-2xl p-4 shadow-soft transition-colors duration-300 ${wallet.background ? "" : heroGradientClasses(wallet.color)}`}
       style={{ color: fg.full, ...(wallet.background ? cardBackgroundStyle(wallet.background) : colorHeroStyle(wallet.color)) }}
     >
       <div className="flex items-start justify-between gap-2">

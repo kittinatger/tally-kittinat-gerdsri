@@ -37,7 +37,7 @@ export default function CardGrid({
             style={{
               zIndex: isDragging ? 50 : undefined,
               transform: isDragging ? `translate(${dragOffset.x}px, ${dragOffset.y}px) scale(1.04)` : undefined,
-              transition: isDragging ? "none" : "transform 0.15s ease",
+              transition: isDragging ? "none" : "transform 0.15s ease, filter 0.2s ease, box-shadow 0.2s ease",
             }}
             className={`relative block w-full select-none rounded-2xl text-left active:scale-[0.985] ${
               isDragging ? "cursor-grabbing shadow-[0_24px_40px_-16px_rgba(0,0,0,0.45)]" : "cursor-pointer shadow-soft hover:brightness-105"

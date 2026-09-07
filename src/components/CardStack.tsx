@@ -55,7 +55,7 @@ export default function CardStack({
               // it isn't what actually stops the scroll in time.
               touchAction: isDragging ? "none" : reorderable ? "pan-y" : undefined,
               transform: isDragging ? `translate(${dragOffset.x}px, ${dragOffset.y}px) scale(1.03)` : undefined,
-              transition: isDragging ? "none" : "transform 0.15s ease, margin-top 0.15s ease",
+              transition: isDragging ? "none" : "transform 0.15s ease, margin-top 0.15s ease, filter 0.2s ease, box-shadow 0.2s ease",
             }}
             className={`relative block w-full origin-top select-none text-left active:scale-[0.985] ${
               isDragging ? "cursor-grabbing shadow-[0_24px_40px_-16px_rgba(0,0,0,0.45)]" : "cursor-pointer"

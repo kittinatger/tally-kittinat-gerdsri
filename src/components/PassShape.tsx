@@ -115,7 +115,7 @@ export default function PassShape({
     // around a small code. Now the code area is nested inside the same
     // card, right after whatever fields/notes the template has.
     <div
-      className={`w-full overflow-hidden rounded-2xl p-4 ${background ? "" : heroGradientClasses(color)}`}
+      className={`w-full overflow-hidden rounded-2xl p-4 transition-colors duration-300 ${background ? "" : heroGradientClasses(color)}`}
       style={{ color: fg.full, ...(background ? cardBackgroundStyle(background) : colorHeroStyle(color)) }}
     >
       <div className="flex items-center gap-2.5">

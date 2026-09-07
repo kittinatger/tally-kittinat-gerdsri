@@ -213,3 +213,17 @@ input:-webkit-autofill:focus {
   60% { transform: translateX(-4px); }
   80% { transform: translateX(4px); }
 }
+
+/* Modal.tsx's entrance — the backdrop fades in while the panel eases up
+   and settles from a slight scale/offset, rather than both just popping
+   in instantly. No matching exit animation: the modal unmounts
+   immediately on close, which an animation here can't intercept without
+   extra close-in-progress state, so this only covers the open. */
+@keyframes modal-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes modal-panel-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}

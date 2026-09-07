@@ -411,7 +411,7 @@ export default function WalletCardShape({
 
   return (
     <div
-      className={`relative flex aspect-[1.586/1] min-h-[190px] w-full flex-col rounded-2xl p-4 shadow-soft ${background ? "" : heroGradientClasses(color)}`}
+      className={`relative flex aspect-[1.586/1] min-h-[190px] w-full flex-col rounded-2xl p-4 shadow-soft transition-colors duration-300 ${background ? "" : heroGradientClasses(color)}`}
       style={{ color: fg.full, ...(background ? cardBackgroundStyle(background) : colorHeroStyle(color)) }}
     >
       {showNetworkBadge &&
@@ -447,34 +447,40 @@ export default function WalletCardShape({
           // each gets its own independent absolutely-positioned spot.
           if (showNfc && nfcPosition === badgePosition) {
             return (
-              <div className={`absolute flex items-center gap-1.5 ${BADGE_POSITION_CLASSES[badgePosition]}`} style={{ color: iconFg.a85 }}>
+              <div
+                className={`absolute flex items-center gap-1.5 transition-all duration-300 ease-out ${BADGE_POSITION_CLASSES[badgePosition]}`}
+                style={{ color: iconFg.a85 }}
+              >
                 <NfcIcon size={nfcSize} />
                 {networkBadgeContent}
               </div>
             );
           }
           return (
-            <div className={`absolute flex items-center gap-1.5 ${BADGE_POSITION_CLASSES[badgePosition]}`} style={{ color: iconFg.a85 }}>
+            <div
+              className={`absolute flex items-center gap-1.5 transition-all duration-300 ease-out ${BADGE_POSITION_CLASSES[badgePosition]}`}
+              style={{ color: iconFg.a85 }}
+            >
               {networkBadgeContent}
             </div>
           );
         })()}
 
       {showNfc && !(showNetworkBadge && nfcPosition === badgePosition) && (
-        <div className={`absolute ${BADGE_POSITION_CLASSES[nfcPosition]}`} style={{ color: iconFg.a85 }}>
+        <div className={`absolute transition-all duration-300 ease-out ${BADGE_POSITION_CLASSES[nfcPosition]}`} style={{ color: iconFg.a85 }}>
           <NfcIcon size={nfcSize} />
         </div>
       )}
 
       {chipInCorner && (
-        <div className={`absolute ${chipCornerClass}`}>
+        <div className={`absolute transition-all duration-300 ease-out ${chipCornerClass}`}>
           <EMVChip color={chipColor} />
         </div>
       )}
 
       {showHolderName && nameInCorner && (
         <p
-          className={`absolute max-w-[65%] truncate text-xs uppercase tracking-wide ${nameCornerClass}`}
+          className={`absolute max-w-[65%] truncate text-xs uppercase tracking-wide transition-all duration-300 ease-out ${nameCornerClass}`}
           style={{ color: fg.a85 }}
         >
           {holderName || " "}
@@ -483,7 +489,7 @@ export default function WalletCardShape({
 
       {showCardNumber && cardNumberPosition !== "top" && (
         <p
-          className={`absolute truncate text-base font-semibold tracking-[0.15em] ${CARD_NUMBER_POSITION_CLASSES[cardNumberPosition]}`}
+          className={`absolute truncate text-base font-semibold tracking-[0.15em] transition-all duration-300 ease-out ${CARD_NUMBER_POSITION_CLASSES[cardNumberPosition]}`}
           style={
             cardNumberReservesForChip
               ? chipColumnValue === "right"

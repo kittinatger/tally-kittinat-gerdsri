@@ -94,11 +94,11 @@ export default function Modal({
   // mechanism.
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 backdrop-blur-md sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 backdrop-blur-md sm:items-center sm:p-4 animate-[modal-backdrop-in_0.2s_ease-out] motion-reduce:animate-none"
       onClick={onClose}
     >
       <div
-        className={`max-h-[92dvh] w-full overflow-hidden rounded-t-[28px] border border-[var(--modal-glass-border)] bg-[image:var(--modal-glass-bg)] shadow-[var(--modal-panel-shadow)] backdrop-blur-xl sm:rounded-[28px] ${
+        className={`max-h-[92dvh] w-full overflow-hidden rounded-t-[28px] border border-[var(--modal-glass-border)] bg-[image:var(--modal-glass-bg)] shadow-[var(--modal-panel-shadow)] backdrop-blur-xl animate-[modal-panel-in_0.25s_ease-out] motion-reduce:animate-none sm:rounded-[28px] ${
           wide ? "sm:max-w-2xl" : "sm:max-w-md"
         }`}
         onClick={(e) => e.stopPropagation()}
