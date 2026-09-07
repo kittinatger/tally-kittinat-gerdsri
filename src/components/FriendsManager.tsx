@@ -2,7 +2,7 @@
 
 import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useRef, useState } from "react";
-import { badgeClasses } from "@/lib/category-styles";
+import { badgeClasses, hashNameToColor } from "@/lib/category-styles";
 import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
 import { useT } from "@/lib/language-context";
 import { useCurrency } from "@/lib/currency-context";
@@ -52,12 +52,8 @@ function BalancePill({ amount }: { amount: number }) {
 
 type Tab = "friends" | "family" | "requests";
 
-// Deterministic per-username color so the same person always gets the same
-// avatar color across sessions, without storing anything extra.
 function colorForUsername(username: string): string {
-  let hash = 0;
-  for (let i = 0; i < username.length; i++) hash = (hash * 31 + username.charCodeAt(i)) >>> 0;
-  return WIDGET_ACCENTS[hash % WIDGET_ACCENTS.length];
+  return hashNameToColor(username, WIDGET_ACCENTS);
 }
 
 function Avatar({ username }: { username: string }) {

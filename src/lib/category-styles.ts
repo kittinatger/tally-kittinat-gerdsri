@@ -127,3 +127,16 @@ export function heroGradientClasses(color: string | undefined): string {
   if (isHexColor(color)) return "";
   return CATEGORY_HERO_GRADIENT_CLASSES[color as CategoryColor] ?? "bg-gradient-to-br from-rose-400 to-rose-600";
 }
+
+// Deterministic "pick a color from this palette based on the text" hash —
+// used so the same name always gets the same avatar color across sessions,
+// without storing anything extra per person/vendor. FriendsManager,
+// SplitBillManager, ChallengesManager and VendorManager each used to
+// reimplement this hash locally (VendorManager's against a differently-
+// sourced palette that only happened to have the same values) — centralized
+// here so they can only ever agree, even if a source palette changes later.
+export function hashNameToColor<T extends string>(name: string, palette: readonly T[]): T {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  return palette[hash % palette.length];
+}

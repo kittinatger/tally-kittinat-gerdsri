@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { describeFetchError } from "@/lib/fetch-error";
 import { formatCurrency, formatDateLong } from "@/lib/format";
 import { useCurrency } from "@/lib/currency-context";
-import { CATEGORY_BADGE_CLASSES } from "@/lib/category-styles";
-import type { CategoryColor } from "@/lib/categories";
+import { badgeClasses, hashNameToColor } from "@/lib/category-styles";
+import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
 import { EditIcon } from "@/lib/icons";
 import EmptyState from "./EmptyState";
 import { useT, useLanguage } from "@/lib/language-context";
@@ -43,15 +43,13 @@ function sortVendors(vendors: VendorStat[], mode: SortMode): VendorStat[] {
   }
 }
 
-// Deterministic per-vendor accent color (same palette as category badges,
-// picked by a simple hash of the name) — purely cosmetic, so two vendors
-// with similar names still land on different colors most of the time
+// Deterministic per-vendor accent color (same palette and hash FriendsManager/
+// SplitBillManager/ChallengesManager use for avatars, so the same name lands
+// on the same color family everywhere it's shown) — purely cosmetic, so two
+// vendors with similar names still land on different colors most of the time
 // without needing any real per-vendor color to be stored anywhere.
-const AVATAR_COLORS = Object.keys(CATEGORY_BADGE_CLASSES) as CategoryColor[];
-function avatarColor(name: string): CategoryColor {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
-  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+function avatarColor(name: string) {
+  return hashNameToColor(name, WIDGET_ACCENTS);
 }
 
 function mergeVendorRows(rows: VendorStat[], oldName: string, newName: string): VendorStat[] {
@@ -352,7 +350,7 @@ export default function VendorManager() {
                     className="flex min-w-0 flex-1 items-center gap-3 text-left"
                   >
                     <span
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${CATEGORY_BADGE_CLASSES[avatarColor(vendor.name)]}`}
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${badgeClasses(avatarColor(vendor.name))}`}
                     >
                       {vendor.name.charAt(0).toUpperCase()}
                     </span>

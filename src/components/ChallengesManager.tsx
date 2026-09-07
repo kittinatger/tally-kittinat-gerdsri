@@ -2,7 +2,7 @@
 
 import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useRef, useState } from "react";
-import { badgeClasses, dotClasses } from "@/lib/category-styles";
+import { badgeClasses, dotClasses, hashNameToColor } from "@/lib/category-styles";
 import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency, todayInputValue } from "@/lib/format";
@@ -12,6 +12,7 @@ import type { MessageKey } from "@/lib/i18n/messages";
 import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import SelectorChip from "./SelectorChip";
+import CategoryIconBadge from "./CategoryIconBadge";
 
 type Challenge = {
   id: number;
@@ -53,9 +54,7 @@ const MODE_KEYS: Record<ChallengeMode, MessageKey> = {
 };
 
 function colorForUsername(username: string): string {
-  let hash = 0;
-  for (let i = 0; i < username.length; i++) hash = (hash * 31 + username.charCodeAt(i)) >>> 0;
-  return WIDGET_ACCENTS[hash % WIDGET_ACCENTS.length];
+  return hashNameToColor(username, WIDGET_ACCENTS);
 }
 
 function Avatar({ username }: { username: string }) {
@@ -551,9 +550,7 @@ export default function ChallengesManager() {
                     onClick={() => toggleExpand(c.id)}
                     className="flex w-full items-center gap-3 px-4 py-3 text-left"
                   >
-                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses("violet")}`}>
-                      <TrophyIcon />
-                    </span>
+                    <CategoryIconBadge icon={<TrophyIcon />} color="violet" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium text-foreground">{c.title}</p>
                       <p className="text-xs text-ink-soft">
@@ -715,9 +712,7 @@ export default function ChallengesManager() {
                 <div className="overflow-hidden rounded-card border border-line bg-surface">
                   {invites.map((c, i) => (
                     <div key={c.id} className={`flex items-center gap-3 px-4 py-3 ${i === 0 ? "" : "border-t border-line"}`}>
-                      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses("violet")}`}>
-                        <TrophyIcon />
-                      </span>
+                      <CategoryIconBadge icon={<TrophyIcon />} color="violet" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-medium text-foreground">{c.title}</p>
                         <p className="text-xs text-ink-soft">

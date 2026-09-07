@@ -2,7 +2,7 @@
 
 import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useRef, useState } from "react";
-import { badgeClasses } from "@/lib/category-styles";
+import { badgeClasses, hashNameToColor } from "@/lib/category-styles";
 import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency, todayInputValue } from "@/lib/format";
@@ -13,6 +13,7 @@ import RecurringSplitsSection from "./RecurringSplitsSection";
 import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import SelectorChip from "./SelectorChip";
+import CategoryIconBadge from "./CategoryIconBadge";
 
 type Split = {
   id: number;
@@ -52,9 +53,7 @@ const PAYMENT_KEYS: Record<SplitPaymentMethod, MessageKey> = {
 };
 
 function colorForUsername(username: string): string {
-  let hash = 0;
-  for (let i = 0; i < username.length; i++) hash = (hash * 31 + username.charCodeAt(i)) >>> 0;
-  return WIDGET_ACCENTS[hash % WIDGET_ACCENTS.length];
+  return hashNameToColor(username, WIDGET_ACCENTS);
 }
 
 function Avatar({ username }: { username: string }) {
@@ -590,9 +589,7 @@ export default function SplitBillManager() {
                     onClick={() => toggleExpand(s.id)}
                     className="flex w-full items-center gap-3 px-4 py-3 text-left"
                   >
-                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses("amber")}`}>
-                      <ReceiptIcon />
-                    </span>
+                    <CategoryIconBadge icon={<ReceiptIcon />} color="amber" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium text-foreground">{s.title}</p>
                       <p className={`text-xs ${label.className}`}>{label.text}</p>
@@ -709,9 +706,7 @@ export default function SplitBillManager() {
           <div className="overflow-hidden rounded-card border border-line bg-surface">
             {requests.map((s, i) => (
               <div key={s.id} className={`flex items-center gap-3 px-4 py-3 ${i === 0 ? "" : "border-t border-line"}`}>
-                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses("amber")}`}>
-                  <ReceiptIcon />
-                </span>
+                <CategoryIconBadge icon={<ReceiptIcon />} color="amber" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium text-foreground">{s.title}</p>
                   <p className="text-xs text-ink-soft">
