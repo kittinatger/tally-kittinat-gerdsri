@@ -368,8 +368,17 @@ export default function WalletCardShape({
   // bottom-anchored chip is plausibly close enough on a short card) since
   // that's empirically what the original overlap report needed —
   // "middle"/"bottom" use exact row matching.
+  // "Center" chip columns never correspond to a real corner (see the
+  // rowReserveStyle comment above) — excluded here too, since without it
+  // a centered chip fell into the `chipColumnValue === "right" ? ... :
+  // left-padding` branch below as if it were left-anchored, shifting the
+  // number's padding the wrong way while leaving the actual (centered)
+  // collision unprotected.
   const cardNumberReservesForChip =
-    showCardNumber && chipInCorner && (cardNumberPosition === "top" ? chipRowValue !== "bottom" : chipRowValue === cardNumberPosition);
+    showCardNumber &&
+    chipInCorner &&
+    chipColumnValue !== "center" &&
+    (cardNumberPosition === "top" ? chipRowValue !== "bottom" : chipRowValue === cardNumberPosition);
   const chipCornerClass = !chipInCorner
     ? ""
     : !chipCorner
@@ -377,6 +386,28 @@ export default function WalletCardShape({
       : chipSharesCorner
         ? `${chipRowValue === "top" ? "top-14" : "bottom-14"} ${chipColumnValue === "left" ? "left-4" : "right-4"}`
         : CHIP_POSITION_CLASSES[chipPosition];
+  // The holder name can also be pulled into one of the same four corners
+  // (see nameInCorner) — previously it just used NAME_POSITION_CLASSES
+  // directly, with no awareness that the badge/NFC row and/or the chip
+  // might already be sitting in that exact spot (e.g. namePosition and
+  // the default badgePosition are both "topRight"), drawing straight on
+  // top of them. Name is last in stacking priority (it adapts to
+  // whatever's already there, nothing adapts to it) — one slot per
+  // occupant already in its corner, same idea as the chip's own
+  // top-14/bottom-14 stacking above.
+  const nameCorner: BadgePosition | null = nameInCorner ? namePosition : null;
+  // cornerOccupants can return 2 for a merged badge+nfc row (see above) —
+  // that's still only one visual row to stack past, so it's clamped to a
+  // boolean "is anything from badge/nfc there at all" before adding the
+  // chip's own (also boolean) presence.
+  const nameCornerSlot = nameCorner ? (cornerOccupants(nameCorner) > 0 ? 1 : 0) + (chipCorner === nameCorner ? 1 : 0) : 0;
+  const nameCornerClass = !nameCorner
+    ? ""
+    : nameCornerSlot <= 0
+      ? NAME_POSITION_CLASSES[namePosition]
+      : `${nameCorner.startsWith("top") ? (nameCornerSlot === 1 ? "top-14" : "top-24") : nameCornerSlot === 1 ? "bottom-14" : "bottom-24"} ${
+          nameCorner.endsWith("Left") ? "left-4" : "right-4"
+        }`;
 
   return (
     <div
@@ -443,7 +474,7 @@ export default function WalletCardShape({
 
       {showHolderName && nameInCorner && (
         <p
-          className={`absolute max-w-[65%] truncate text-xs uppercase tracking-wide ${NAME_POSITION_CLASSES[namePosition]}`}
+          className={`absolute max-w-[65%] truncate text-xs uppercase tracking-wide ${nameCornerClass}`}
           style={{ color: fg.a85 }}
         >
           {holderName || " "}
@@ -499,7 +530,13 @@ export default function WalletCardShape({
        * the holder/expiry row below the balance, which meant the balance
        * text itself never reached the bottom edge and sat visibly higher
        * than AccountCardShape's. */}
-      <div className="mt-auto">
+      {/* Reserves room above the holder/expiry+balance block for a
+       * bottom-anchored card number — that row is a free-floating
+       * absolutely-positioned element at the same bottom-4 inset this
+       * block's own bottom edge naturally lands on (mt-auto pushes it
+       * flush to the card's bottom edge), so without this margin the two
+       * drew directly on top of each other. */}
+      <div className={`mt-auto ${showCardNumber && cardNumberPosition === "bottom" ? "mb-7" : ""}`}>
         <div className="flex items-end justify-between gap-2" style={rowReserveStyle(false)}>
           <p className="min-w-0 truncate text-xs uppercase tracking-wide" style={{ color: fg.a85 }}>
             {showHolderName && !nameInCorner ? holderName || " " : " "}
