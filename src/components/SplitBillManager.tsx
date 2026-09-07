@@ -15,6 +15,7 @@ import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import SelectorChip from "./SelectorChip";
 import CategoryIconBadge from "./CategoryIconBadge";
 import ManagedList from "./ManagedList";
+import ManagerHeader from "./ManagerHeader";
 
 type Split = {
   id: number;
@@ -367,18 +368,30 @@ export default function SplitBillManager() {
   }
 
   if (loadError) {
-    return <p className="text-sm text-red-600 dark:text-red-400">{loadError}</p>;
+    return (
+      <div>
+        <ManagerHeader title={t("settings.splitBills")} />
+        <p className="mt-4 text-sm text-red-600 dark:text-red-400">{loadError}</p>
+      </div>
+    );
   }
 
   if (!splits || !friends || requireConfirmation === null) {
-    return <p className="text-sm text-ink-soft">{t("common.loading")}</p>;
+    return (
+      <div>
+        <ManagerHeader title={t("settings.splitBills")} />
+        <p className="mt-4 text-sm text-ink-soft">{t("common.loading")}</p>
+      </div>
+    );
   }
 
   const active = splits.filter((s) => s.my_confirm_status !== "pending");
   const requests = splits.filter((s) => s.my_confirm_status === "pending");
 
   return (
-    <div className="space-y-5">
+    <div>
+      <ManagerHeader title={t("settings.splitBills")} />
+      <div className="mt-4 space-y-5">
       {error && <p className="text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
 
       <label className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface px-4 py-3">
@@ -736,6 +749,7 @@ export default function SplitBillManager() {
             ))}
           </div>
         ))}
+      </div>
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { PlusIcon, TrashIcon } from "@/lib/icons";
 import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import ManagedList from "./ManagedList";
+import ManagerHeader from "./ManagerHeader";
 import { useT } from "@/lib/language-context";
 import type { LoanDirection } from "@/lib/loans";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
@@ -188,19 +189,19 @@ export default function LoanManager() {
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="font-display text-xl text-foreground">{t("loans.title")}</h3>
-          <p className="mt-0.5 text-sm text-ink-soft">{t("loans.description")}</p>
-        </div>
-        <button
-          onClick={() => setShowAddForm((v) => !v)}
-          aria-label={t("loans.addLoan")}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
-        >
-          <PlusIcon className="h-3.5 w-3.5 shrink-0" />
-        </button>
-      </div>
+      <ManagerHeader
+        title={t("loans.title")}
+        description={t("loans.description")}
+        action={
+          <button
+            onClick={() => setShowAddForm((v) => !v)}
+            aria-label={t("loans.addLoan")}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
+          >
+            <PlusIcon className="h-3.5 w-3.5 shrink-0" />
+          </button>
+        }
+      />
 
       {showAddForm && (
         <form onSubmit={handleSubmit} className="mt-4 space-y-3 rounded-card border border-line bg-surface p-4">

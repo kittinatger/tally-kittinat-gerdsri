@@ -14,6 +14,7 @@ import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import SelectorChip from "./SelectorChip";
 import CategoryIconBadge from "./CategoryIconBadge";
 import ManagedList from "./ManagedList";
+import ManagerHeader from "./ManagerHeader";
 
 type Challenge = {
   id: number;
@@ -372,11 +373,21 @@ export default function ChallengesManager() {
   }
 
   if (loadError) {
-    return <p className="text-sm text-red-600 dark:text-red-400">{loadError}</p>;
+    return (
+      <div>
+        <ManagerHeader title={t("settings.challenges")} />
+        <p className="mt-4 text-sm text-red-600 dark:text-red-400">{loadError}</p>
+      </div>
+    );
   }
 
   if (!challenges || !reveals || !friends) {
-    return <p className="text-sm text-ink-soft">{t("common.loading")}</p>;
+    return (
+      <div>
+        <ManagerHeader title={t("settings.challenges")} />
+        <p className="mt-4 text-sm text-ink-soft">{t("common.loading")}</p>
+      </div>
+    );
   }
 
   const active = challenges.filter((c) => c.my_status === "accepted");
@@ -384,7 +395,9 @@ export default function ChallengesManager() {
   const requestCount = invites.length + reveals.length;
 
   return (
-    <div className="space-y-5">
+    <div>
+      <ManagerHeader title={t("settings.challenges")} />
+      <div className="mt-4 space-y-5">
       {error && <p className="text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
 
       <div className="flex items-center justify-between gap-3">
@@ -780,6 +793,7 @@ export default function ChallengesManager() {
             )}
           </div>
         ))}
+      </div>
     </div>
   );
 }

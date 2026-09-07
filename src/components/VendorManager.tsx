@@ -9,6 +9,7 @@ import { badgeClasses, hashNameToColor } from "@/lib/category-styles";
 import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
 import { EditIcon } from "@/lib/icons";
 import EmptyState from "./EmptyState";
+import ManagerHeader from "./ManagerHeader";
 import { useT, useLanguage } from "@/lib/language-context";
 import type { VendorStat } from "@/lib/db";
 
@@ -209,15 +210,32 @@ export default function VendorManager() {
   }
 
   if (loadError) {
-    return <p className="text-sm text-red-600 dark:text-red-400">{loadError}</p>;
+    return (
+      <div>
+        <ManagerHeader title={t("settings.vendors")} />
+        <p className="mt-4 text-sm text-red-600 dark:text-red-400">{loadError}</p>
+      </div>
+    );
   }
 
   if (!vendors) {
-    return <p className="text-sm text-ink-soft">{t("common.loading")}</p>;
+    return (
+      <div>
+        <ManagerHeader title={t("settings.vendors")} />
+        <p className="mt-4 text-sm text-ink-soft">{t("common.loading")}</p>
+      </div>
+    );
   }
 
   if (vendors.length === 0) {
-    return <EmptyState icon={<StoreIcon />} text={t("vendors.noVendorsYet")} />;
+    return (
+      <div>
+        <ManagerHeader title={t("settings.vendors")} />
+        <div className="mt-4">
+          <EmptyState icon={<StoreIcon />} text={t("vendors.noVendorsYet")} />
+        </div>
+      </div>
+    );
   }
 
   const sortOptions: { value: SortMode; label: string }[] = [
@@ -229,9 +247,10 @@ export default function VendorManager() {
 
   return (
     <div>
-      {actionError && <p className="mb-3 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{actionError}</p>}
+      <ManagerHeader title={t("settings.vendors")} />
+      {actionError && <p className="mt-3 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{actionError}</p>}
 
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+      <div className="mt-4 mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <label className="text-xs font-semibold text-ink-soft">{t("vendors.sortLabel")}</label>
           <select

@@ -12,6 +12,7 @@ import CategoryModal from "./CategoryModal";
 import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import ManagedList from "./ManagedList";
+import ManagerHeader from "./ManagerHeader";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 
@@ -72,19 +73,19 @@ export default function CategoryManager({ categories }: { categories: CategoryOp
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="font-display text-xl text-foreground">{t("settings.manageCategories")}</h3>
-          <p className="mt-0.5 text-sm text-ink-soft">{t("category.colorsIconsDesc")}</p>
-        </div>
-        <button
-          onClick={() => setModal({ mode: "add" })}
-          aria-label={t("category.addCategory")}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
-        >
-          <PlusIcon className="h-3.5 w-3.5 shrink-0" />
-        </button>
-      </div>
+      <ManagerHeader
+        title={t("settings.manageCategories")}
+        description={t("category.colorsIconsDesc")}
+        action={
+          <button
+            onClick={() => setModal({ mode: "add" })}
+            aria-label={t("category.addCategory")}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
+          >
+            <PlusIcon className="h-3.5 w-3.5 shrink-0" />
+          </button>
+        }
+      />
 
       <div className="mt-4 flex gap-1 rounded-full bg-bg-soft p-1">
         {TYPE_TABS.map((tab) => (

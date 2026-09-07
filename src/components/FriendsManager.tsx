@@ -10,6 +10,7 @@ import { formatCurrency } from "@/lib/format";
 import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import SegmentedControl from "./SegmentedControl";
+import ManagerHeader from "./ManagerHeader";
 
 type Friend = { id: number; username: string; is_family: boolean };
 type FriendRequest = { id: number; username: string; created_at: string };
@@ -257,11 +258,21 @@ export default function FriendsManager() {
   }
 
   if (loadError) {
-    return <p className="text-sm text-red-600 dark:text-red-400">{loadError}</p>;
+    return (
+      <div>
+        <ManagerHeader title={t("settings.friends")} />
+        <p className="mt-4 text-sm text-red-600 dark:text-red-400">{loadError}</p>
+      </div>
+    );
   }
 
   if (!data) {
-    return <p className="text-sm text-ink-soft">{t("common.loading")}</p>;
+    return (
+      <div>
+        <ManagerHeader title={t("settings.friends")} />
+        <p className="mt-4 text-sm text-ink-soft">{t("common.loading")}</p>
+      </div>
+    );
   }
 
   const friendIds = new Set(data.friends.map((f) => f.id));
@@ -274,7 +285,9 @@ export default function FriendsManager() {
   ];
 
   return (
-    <div className="space-y-5">
+    <div>
+      <ManagerHeader title={t("settings.friends")} />
+      <div className="mt-4 space-y-5">
       {error && <p className="text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
 
       <div className="relative">
@@ -492,6 +505,7 @@ export default function FriendsManager() {
             )}
           </div>
         ))}
+      </div>
     </div>
   );
 }

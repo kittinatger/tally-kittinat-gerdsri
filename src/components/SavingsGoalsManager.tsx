@@ -11,6 +11,7 @@ import CsvManagerButtons from "./CsvManagerButtons";
 import ColorPicker from "./ColorPicker";
 import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
+import ManagerHeader from "./ManagerHeader";
 import { useT } from "@/lib/language-context";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
 
@@ -196,25 +197,25 @@ export default function SavingsGoalsManager() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-display text-xl text-foreground">{t("savings.title")}</h3>
-        <button
-          onClick={() => setAdding((v) => !v)}
-          aria-label={adding ? t("common.cancel") : t("common.add")}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
-        >
-          {adding ? (
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-3.5 w-3.5">
-              <path d="M5 5l10 10M15 5L5 15" />
-            </svg>
-          ) : (
-            <PlusIcon className="h-3.5 w-3.5 shrink-0" />
-          )}
-        </button>
-      </div>
-      <p className="mt-2 text-[11px] leading-snug text-ink-soft">
-        {t("savings.desc")}
-      </p>
+      <ManagerHeader
+        title={t("savings.title")}
+        description={t("savings.desc")}
+        action={
+          <button
+            onClick={() => setAdding((v) => !v)}
+            aria-label={adding ? t("common.cancel") : t("common.add")}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
+          >
+            {adding ? (
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-3.5 w-3.5">
+                <path d="M5 5l10 10M15 5L5 15" />
+              </svg>
+            ) : (
+              <PlusIcon className="h-3.5 w-3.5 shrink-0" />
+            )}
+          </button>
+        }
+      />
 
       <div className="mt-3">
         <CsvManagerButtons exportHref="/api/savings-goals/export" importUrl="/api/savings-goals/import" onImported={refetch} />

@@ -11,6 +11,7 @@ import { EditIcon, TrashIcon, PlusIcon, ArchiveIcon } from "@/lib/icons";
 import WalletModal from "./WalletModal";
 import WalletTransferModal from "./WalletTransferModal";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
+import ManagerHeader from "./ManagerHeader";
 import WalletShareModal from "./WalletShareModal";
 import FilterDropdown from "./FilterDropdown";
 import { useT } from "@/lib/language-context";
@@ -337,34 +338,32 @@ export default function WalletManager({
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="font-display text-xl text-foreground">{t("wallet.wallets")}</h3>
-          <p className="mt-0.5 text-sm text-ink-soft">
-            {t("wallet.walletsDesc")}
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {activeWallets.length > 1 && (
+      <ManagerHeader
+        title={t("wallet.wallets")}
+        description={t("wallet.walletsDesc")}
+        action={
+          <div className="flex shrink-0 items-center gap-2">
+            {activeWallets.length > 1 && (
+              <button
+                onClick={() => setTransferOpen(true)}
+                className="flex items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 py-2 text-sm font-semibold text-foreground transition hover:border-navy"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 shrink-0">
+                  <path d="M7 7h13l-3.5-3.5M17 17H4l3.5 3.5" />
+                </svg>
+                {t("common.transfer")}
+              </button>
+            )}
             <button
-              onClick={() => setTransferOpen(true)}
-              className="flex items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 py-2 text-sm font-semibold text-foreground transition hover:border-navy"
+              onClick={() => setModal({ mode: "add" })}
+              aria-label={t("wallet.addWallet")}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 shrink-0">
-                <path d="M7 7h13l-3.5-3.5M17 17H4l3.5 3.5" />
-              </svg>
-              {t("common.transfer")}
+              <PlusIcon className="h-3.5 w-3.5 shrink-0" />
             </button>
-          )}
-          <button
-            onClick={() => setModal({ mode: "add" })}
-            aria-label={t("wallet.addWallet")}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
-          >
-            <PlusIcon className="h-3.5 w-3.5 shrink-0" />
-          </button>
-        </div>
-      </div>
+          </div>
+        }
+      />
 
       {actionError && <p className="mt-3 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{actionError}</p>}
 
@@ -422,7 +421,7 @@ export default function WalletManager({
 
       {archivedWallets.length > 0 && (
         <div className="mt-4">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">{t("wallet.archived")}</p>
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">{t("wallet.archived")}</h3>
           <div className="overflow-hidden rounded-card border border-line bg-surface">
             {archivedWallets.map((w, i) => renderWallet(w, i, archivedWallets.length))}
           </div>

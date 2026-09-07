@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { EditIcon, TagIcon, TrashIcon } from "@/lib/icons";
 import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
+import ManagerHeader from "./ManagerHeader";
 import { useT, useLanguage } from "@/lib/language-context";
 
 type TagCount = { name: string; count: number };
@@ -112,21 +113,39 @@ export default function TagManager() {
   }
 
   if (loadError) {
-    return <p className="text-sm text-red-600 dark:text-red-400">{loadError}</p>;
+    return (
+      <div>
+        <ManagerHeader title={t("settings.manageTags")} />
+        <p className="mt-4 text-sm text-red-600 dark:text-red-400">{loadError}</p>
+      </div>
+    );
   }
 
   if (!tags) {
-    return <p className="text-sm text-ink-soft">{t("tag.loading")}</p>;
+    return (
+      <div>
+        <ManagerHeader title={t("settings.manageTags")} />
+        <p className="mt-4 text-sm text-ink-soft">{t("tag.loading")}</p>
+      </div>
+    );
   }
 
   if (tags.length === 0) {
-    return <EmptyState icon={<TagIcon className="h-4.5 w-4.5" />} text={t("tag.noTagsYet")} />;
+    return (
+      <div>
+        <ManagerHeader title={t("settings.manageTags")} />
+        <div className="mt-4">
+          <EmptyState icon={<TagIcon className="h-4.5 w-4.5" />} text={t("tag.noTagsYet")} />
+        </div>
+      </div>
+    );
   }
 
   return (
     <div>
-      {actionError && <p className="mb-3 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{actionError}</p>}
-      <div className="overflow-hidden rounded-card border border-line bg-surface">
+      <ManagerHeader title={t("settings.manageTags")} />
+      {actionError && <p className="mt-3 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{actionError}</p>}
+      <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
         {tags.map((tag, i) => (
           <div
             key={tag.name}

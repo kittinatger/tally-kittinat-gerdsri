@@ -14,6 +14,7 @@ import CsvManagerButtons from "./CsvManagerButtons";
 import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import SegmentedControl from "./SegmentedControl";
+import ManagerHeader from "./ManagerHeader";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
@@ -350,18 +351,18 @@ export default function RecurringManager() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-display text-xl text-foreground">{t("recurring.title")}</h3>
-        <button
-          onClick={() => (adding ? resetForm() : startAdd())}
-          className="flex items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
-        >
-          {adding ? t("common.cancel") : t("recurring.addRule")}
-        </button>
-      </div>
-      <p className="mt-2 text-[11px] leading-snug text-ink-soft">
-        {t("recurring.desc")}
-      </p>
+      <ManagerHeader
+        title={t("recurring.title")}
+        description={t("recurring.desc")}
+        action={
+          <button
+            onClick={() => (adding ? resetForm() : startAdd())}
+            className="flex items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
+          >
+            {adding ? t("common.cancel") : t("recurring.addRule")}
+          </button>
+        }
+      />
 
       <div className="mt-3">
         <CsvManagerButtons exportHref="/api/recurring/export" importUrl="/api/recurring/import" onImported={refetch} />

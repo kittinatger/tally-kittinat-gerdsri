@@ -6,6 +6,7 @@ import { badgeClasses } from "@/lib/category-styles";
 import { useT } from "@/lib/language-context";
 import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
+import ManagerHeader from "./ManagerHeader";
 
 type ApiToken = { id: number; name: string; created_at: string; last_used_at: string | null };
 
@@ -93,18 +94,18 @@ export default function ApiTokensManager() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-display text-xl text-foreground">{t("tokens.title")}</h3>
-        <button
-          onClick={() => setAdding((v) => !v)}
-          className="flex items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
-        >
-          {adding ? t("common.cancel") : t("tokens.newToken")}
-        </button>
-      </div>
-      <p className="mt-2 text-[11px] leading-snug text-ink-soft">
-        {t("tokens.desc")}
-      </p>
+      <ManagerHeader
+        title={t("tokens.title")}
+        description={t("tokens.desc")}
+        action={
+          <button
+            onClick={() => setAdding((v) => !v)}
+            className="flex items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
+          >
+            {adding ? t("common.cancel") : t("tokens.newToken")}
+          </button>
+        }
+      />
 
       {newToken && (
         <div className="mt-4 rounded-card border border-amber-200/70 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-950/30">

@@ -12,6 +12,7 @@ import SelectDropdown from "./SelectDropdown";
 import CsvManagerButtons from "./CsvManagerButtons";
 import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
+import ManagerHeader from "./ManagerHeader";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
 import { useT } from "@/lib/language-context";
 
@@ -105,18 +106,18 @@ export default function BudgetManager() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-display text-xl text-foreground">{t("budget.title")}</h3>
-        <button
-          onClick={() => setAdding((v) => !v)}
-          className="flex items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
-        >
-          {adding ? t("common.cancel") : t("budget.setABudget")}
-        </button>
-      </div>
-      <p className="mt-2 text-[11px] leading-snug text-ink-soft">
-        {t("budget.desc")}
-      </p>
+      <ManagerHeader
+        title={t("budget.title")}
+        description={t("budget.desc")}
+        action={
+          <button
+            onClick={() => setAdding((v) => !v)}
+            className="flex items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
+          >
+            {adding ? t("common.cancel") : t("budget.setABudget")}
+          </button>
+        }
+      />
 
       <div className="mt-3">
         <CsvManagerButtons exportHref="/api/budgets/export" importUrl="/api/budgets/import" onImported={refetch} />

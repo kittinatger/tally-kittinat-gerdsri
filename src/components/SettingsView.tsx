@@ -168,11 +168,12 @@ export default function SettingsView({
           Settings
         </button>
       )}
-      {/* "loans" and "assistant" are deliberately NOT in this list — like
-       * "wallets", LoanManager/AssistantPanel render their own <h3> heading
-       * (unlike e.g. SplitBillManager, which has none), so adding them here
-       * would double up. */}
-      {(panel === "currency" || panel === "language" || panel === "tags" || panel === "vendors" || panel === "activities" || panel === "calendar" || panel === "friends" || panel === "challenges" || panel === "splitBills") && (
+      {/* "loans", "assistant", "wallets", "categories", "tags", "vendors",
+       * "friends", "challenges" and "splitBills" are deliberately NOT in
+       * this list — every manager now renders its own ManagerHeader
+       * (or, for loans/assistant, its own bespoke <h3>), so adding them
+       * here would double up the title. */}
+      {(panel === "currency" || panel === "language" || panel === "activities" || panel === "calendar") && (
         <h2 className="mb-5 font-display text-2xl text-foreground">{PANEL_TITLES[panel]}</h2>
       )}
 
