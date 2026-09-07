@@ -13,6 +13,7 @@ import CsvManagerButtons from "./CsvManagerButtons";
 import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import ManagerHeader from "./ManagerHeader";
+import AddItemButton from "./AddItemButton";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
 import { useT } from "@/lib/language-context";
 
@@ -110,12 +111,7 @@ export default function BudgetManager() {
         title={t("budget.title")}
         description={t("budget.desc")}
         action={
-          <button
-            onClick={() => setAdding((v) => !v)}
-            className="flex items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
-          >
-            {adding ? t("common.cancel") : t("budget.setABudget")}
-          </button>
+          <AddItemButton open={adding} onToggle={() => setAdding((v) => !v)} label={adding ? t("common.cancel") : t("budget.setABudget")} />
         }
       />
 

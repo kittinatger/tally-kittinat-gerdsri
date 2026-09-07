@@ -6,7 +6,7 @@ import { badgeClasses, dotClasses, colorDotStyle } from "@/lib/category-styles";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency } from "@/lib/format";
 import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
-import { PlusIcon } from "@/lib/icons";
+import AddItemButton from "./AddItemButton";
 import CsvManagerButtons from "./CsvManagerButtons";
 import ColorPicker from "./ColorPicker";
 import EmptyState from "./EmptyState";
@@ -201,19 +201,7 @@ export default function SavingsGoalsManager() {
         title={t("savings.title")}
         description={t("savings.desc")}
         action={
-          <button
-            onClick={() => setAdding((v) => !v)}
-            aria-label={adding ? t("common.cancel") : t("common.add")}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
-          >
-            {adding ? (
-              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-3.5 w-3.5">
-                <path d="M5 5l10 10M15 5L5 15" />
-              </svg>
-            ) : (
-              <PlusIcon className="h-3.5 w-3.5 shrink-0" />
-            )}
-          </button>
+          <AddItemButton open={adding} onToggle={() => setAdding((v) => !v)} label={adding ? t("common.cancel") : t("common.add")} />
         }
       />
 

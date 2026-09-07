@@ -16,6 +16,7 @@ import SelectorChip from "./SelectorChip";
 import CategoryIconBadge from "./CategoryIconBadge";
 import ManagedList from "./ManagedList";
 import ManagerHeader from "./ManagerHeader";
+import AddItemButton from "./AddItemButton";
 
 type Split = {
   id: number;
@@ -445,19 +446,14 @@ export default function SplitBillManager() {
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={() => {
+        <AddItemButton
+          open={creating}
+          onToggle={() => {
             setCreating((v) => !v);
             if (creating) resetForm();
           }}
-          aria-label={t("split.newSplit")}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
-        >
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-4 w-4">
-            {creating ? <path d="M5 5l10 10M15 5 5 15" /> : <path d="M10 4v12M4 10h12" />}
-          </svg>
-        </button>
+          label={t("split.newSplit")}
+        />
       </div>
 
       {creating && (

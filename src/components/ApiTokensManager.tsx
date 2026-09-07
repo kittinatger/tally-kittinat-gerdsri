@@ -7,6 +7,7 @@ import { useT } from "@/lib/language-context";
 import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import ManagerHeader from "./ManagerHeader";
+import AddItemButton from "./AddItemButton";
 
 type ApiToken = { id: number; name: string; created_at: string; last_used_at: string | null };
 
@@ -98,12 +99,7 @@ export default function ApiTokensManager() {
         title={t("tokens.title")}
         description={t("tokens.desc")}
         action={
-          <button
-            onClick={() => setAdding((v) => !v)}
-            className="flex items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
-          >
-            {adding ? t("common.cancel") : t("tokens.newToken")}
-          </button>
+          <AddItemButton open={adding} onToggle={() => setAdding((v) => !v)} label={adding ? t("common.cancel") : t("tokens.newToken")} />
         }
       />
 

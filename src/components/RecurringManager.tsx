@@ -15,6 +15,7 @@ import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import SegmentedControl from "./SegmentedControl";
 import ManagerHeader from "./ManagerHeader";
+import AddItemButton from "./AddItemButton";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
@@ -355,12 +356,11 @@ export default function RecurringManager() {
         title={t("recurring.title")}
         description={t("recurring.desc")}
         action={
-          <button
-            onClick={() => (adding ? resetForm() : startAdd())}
-            className="flex items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
-          >
-            {adding ? t("common.cancel") : t("recurring.addRule")}
-          </button>
+          <AddItemButton
+            open={adding}
+            onToggle={() => (adding ? resetForm() : startAdd())}
+            label={adding ? t("common.cancel") : t("recurring.addRule")}
+          />
         }
       />
 
