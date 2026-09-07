@@ -605,7 +605,7 @@ export default function TemplateEditModal({
                 type="button"
                 onClick={handleDelete}
                 disabled={deleting}
-                className="flex-1 rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-red-700 disabled:opacity-60"
+                className="flex-1 rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-red-700 active:scale-[0.97] disabled:opacity-60"
               >
                 {deleting ? t("common.deleting") : t("common.confirmDelete")}
               </button>
@@ -632,7 +632,7 @@ export default function TemplateEditModal({
               <button
                 type="submit"
                 disabled={submitting}
-                className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+                className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
               >
                 {submitting ? t("common.saving") : t("form.saveChanges")}
               </button>

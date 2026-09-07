@@ -159,7 +159,7 @@ export default function TagManager() {
                   <button
                     onClick={() => saveRename(tag.name)}
                     disabled={busy}
-                    className="rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-60"
+                    className="rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
                   >
                     {t("common.save")}
                   </button>

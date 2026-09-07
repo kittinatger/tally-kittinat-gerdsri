@@ -114,7 +114,7 @@ export default function AppHeader({ onAddClick }: { onAddClick?: () => void }) {
           {onAddClick && (
             <button
               onClick={onAddClick}
-              className="hidden items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark hover:-translate-y-0.5 sm:flex"
+              className="hidden items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97] hover:-translate-y-0.5 sm:flex"
             >
               <AddIcon />
               {t("nav.add")}

@@ -77,7 +77,7 @@ export default function CategoryManager({ categories }: { categories: CategoryOp
         <button
           onClick={() => setModal({ mode: "add" })}
           aria-label={t("category.addCategory")}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
         >
           <PlusIcon className="h-3.5 w-3.5 shrink-0" />
         </button>
@@ -139,7 +139,7 @@ export default function CategoryManager({ categories }: { categories: CategoryOp
                   <button
                     onClick={() => handleDelete(c.id)}
                     disabled={deleting}
-                    className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                    className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 active:scale-[0.97] disabled:opacity-60"
                   >
                     {deleting ? t("common.deleting") : t("common.confirmDelete")}
                   </button>

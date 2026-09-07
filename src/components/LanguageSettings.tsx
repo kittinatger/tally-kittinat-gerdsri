@@ -71,7 +71,7 @@ export default function LanguageSettings() {
             type="button"
             onClick={handleSave}
             disabled={!dirty || saving}
-            className="mt-3 w-full rounded-xl bg-navy px-4 py-2 text-sm font-semibold text-white transition hover:bg-navy-dark disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
+            className="mt-3 w-full rounded-xl bg-navy px-4 py-2 text-sm font-semibold text-white transition hover:bg-navy-dark active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
           >
             {saving ? "Saving…" : "Save language"}
           </button>

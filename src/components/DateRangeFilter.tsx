@@ -334,7 +334,7 @@ export default function DateRangeFilter({
                 type="button"
                 onClick={apply}
                 disabled={!draftFrom}
-                className="rounded-full bg-navy px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-40"
+                className="rounded-full bg-navy px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-40"
               >
                 {t("common.apply")}
               </button>

@@ -429,7 +429,7 @@ export default function ChallengesManager() {
             if (creating) resetForm();
           }}
           aria-label={t("challenges.newChallenge")}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
         >
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-4 w-4">
             {creating ? <path d="M5 5l10 10M15 5 5 15" /> : <path d="M10 4v12M4 10h12" />}
@@ -539,7 +539,7 @@ export default function ChallengesManager() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+            className="w-full rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
           >
             {submitting ? t("challenges.creating") : t("challenges.createChallenge")}
           </button>
@@ -675,7 +675,7 @@ export default function ChallengesManager() {
                                   type="button"
                                   onClick={() => submitContribution(c.id)}
                                   disabled={busyId === `contribute-${c.id}`}
-                                  className="rounded-full bg-navy px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-60"
+                                  className="rounded-full bg-navy px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
                                 >
                                   {t("common.add")}
                                 </button>
@@ -696,7 +696,7 @@ export default function ChallengesManager() {
                                 type="button"
                                 onClick={() => leaveOrDelete(c.id)}
                                 disabled={busyId === `leave-${c.id}`}
-                                className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                                className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 active:scale-[0.97] disabled:opacity-60"
                               >
                                 {busyId === `leave-${c.id}` ? t("challenges.removing") : isCreator ? t("challenges.confirmDelete") : t("challenges.confirmLeave")}
                               </button>
@@ -748,7 +748,7 @@ export default function ChallengesManager() {
                           type="button"
                           onClick={() => respondToInvite(c.id, true)}
                           disabled={busyId === `invite-${c.id}`}
-                          className="rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-60"
+                          className="rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
                         >
                           {t("friends.accept")}
                         </button>
@@ -783,7 +783,7 @@ export default function ChallengesManager() {
                           type="button"
                           onClick={() => respondToReveal(r.id, true)}
                           disabled={busyId === `reveal-resp-${r.id}`}
-                          className="rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-60"
+                          className="rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
                         >
                           {t("friends.accept")}
                         </button>

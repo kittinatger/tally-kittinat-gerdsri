@@ -282,7 +282,7 @@ export default function WalletManager({
             <button
               onClick={() => handleDelete(w.id)}
               disabled={deleting}
-              className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+              className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 active:scale-[0.97] disabled:opacity-60"
             >
               {deleting ? t("common.deleting") : t("common.confirmDelete")}
             </button>
@@ -371,7 +371,7 @@ export default function WalletManager({
           <button
             onClick={() => setModal({ mode: "add" })}
             aria-label={t("wallet.addWallet")}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
           >
             <PlusIcon className="h-3.5 w-3.5 shrink-0" />
           </button>
@@ -400,7 +400,7 @@ export default function WalletManager({
               <button
                 onClick={() => respondToInvite(inv.id, true)}
                 disabled={invitesBusyId === inv.id}
-                className="shrink-0 rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-60"
+                className="shrink-0 rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
               >
                 {t("wallet.accept")}
               </button>

@@ -322,7 +322,7 @@ export default function FriendsManager() {
                         type="button"
                         onClick={() => sendRequest(r.id)}
                         disabled={busyId === `search-${r.id}`}
-                        className="flex shrink-0 items-center gap-1.5 rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-60"
+                        className="flex shrink-0 items-center gap-1.5 rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
                       >
                         <PersonPlusIcon />
                         {t("common.add")}
@@ -443,7 +443,7 @@ export default function FriendsManager() {
                           type="button"
                           onClick={() => acceptRequest(req.id)}
                           disabled={busyId === `accept-${req.id}`}
-                          className="rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-60"
+                          className="rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
                         >
                           {t("friends.accept")}
                         </button>

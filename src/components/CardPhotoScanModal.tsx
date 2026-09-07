@@ -275,7 +275,7 @@ export default function CardPhotoScanModal({
             type="button"
             onClick={() => cameraInputRef.current?.click()}
             disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-navy px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-navy px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
           >
             <CameraIcon className="h-4 w-4" />
             {t("background.takePhoto")}
@@ -340,7 +340,7 @@ export default function CardPhotoScanModal({
             <button
               type="button"
               onClick={confirmCrop}
-              className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark"
+              className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
             >
               {t("background.useThisArea")}
             </button>
@@ -361,7 +361,7 @@ export default function CardPhotoScanModal({
             <button
               type="button"
               onClick={useDirectPhoto}
-              className="w-full rounded-full bg-navy px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark"
+              className="w-full rounded-full bg-navy px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
             >
               {t("background.useThisPhoto")}
             </button>
@@ -423,7 +423,7 @@ export default function CardPhotoScanModal({
                   <button
                     type="button"
                     onClick={useGeneratedImage}
-                    className="flex-1 rounded-full bg-navy px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark"
+                    className="flex-1 rounded-full bg-navy px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
                   >
                     {t("background.useThisPattern")}
                   </button>

@@ -182,7 +182,7 @@ export default function AssistantPanel() {
             type="submit"
             aria-label={t("assistant.ask")}
             disabled={asking || !question.trim()}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
           >
             <SendIcon />
           </button>

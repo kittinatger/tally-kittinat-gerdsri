@@ -362,7 +362,7 @@ export default function RecurringManager() {
         <h3 className="font-display text-xl text-foreground">{t("recurring.title")}</h3>
         <button
           onClick={() => (adding ? resetForm() : startAdd())}
-          className="flex items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark"
+          className="flex items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
         >
           {adding ? t("common.cancel") : t("recurring.addRule")}
         </button>
@@ -402,7 +402,7 @@ export default function RecurringManager() {
                     type="button"
                     onClick={() => handleAcceptSuggestion(c)}
                     disabled={acceptingKey === c.key}
-                    className="shrink-0 rounded-full bg-navy px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-60"
+                    className="shrink-0 rounded-full bg-navy px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
                   >
                     {acceptingKey === c.key ? t("common.saving") : t("recurring.suggestions.add")}
                   </button>
@@ -543,7 +543,7 @@ export default function RecurringManager() {
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+              className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
             >
               {submitting ? t("common.saving") : typeof formMode === "number" ? t("form.saveChanges") : t("recurring.saveRule")}
             </button>
@@ -615,7 +615,7 @@ export default function RecurringManager() {
                     <button
                       onClick={() => handleDelete(r.id)}
                       disabled={deleting}
-                      className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                      className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 active:scale-[0.97] disabled:opacity-60"
                     >
                       {deleting ? t("common.deleting") : t("common.confirmDelete")}
                     </button>

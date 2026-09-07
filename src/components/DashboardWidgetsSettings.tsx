@@ -315,7 +315,7 @@ export default function DashboardWidgetsSettings({
           type="button"
           onClick={onDone}
           aria-label={t("dashboardWidgets.doneAria")}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
         >
           <CheckIcon />
         </button>

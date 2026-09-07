@@ -116,7 +116,7 @@ export default function BudgetManager() {
         <h3 className="font-display text-xl text-foreground">{t("budget.title")}</h3>
         <button
           onClick={() => setAdding((v) => !v)}
-          className="flex items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark"
+          className="flex items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
         >
           {adding ? t("common.cancel") : t("budget.setABudget")}
         </button>
@@ -175,7 +175,7 @@ export default function BudgetManager() {
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+              className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
             >
               {submitting ? t("common.saving") : t("budget.saveBudget")}
             </button>
@@ -231,7 +231,7 @@ export default function BudgetManager() {
                     <button
                       onClick={() => handleDelete(b.id)}
                       disabled={busyId === b.id}
-                      className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                      className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 active:scale-[0.97] disabled:opacity-60"
                     >
                       {busyId === b.id ? t("common.deleting") : t("common.confirmDelete")}
                     </button>

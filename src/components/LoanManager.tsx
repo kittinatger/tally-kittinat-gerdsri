@@ -176,7 +176,7 @@ export default function LoanManager() {
         <button
           onClick={() => setShowAddForm((v) => !v)}
           aria-label={t("loans.addLoan")}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
         >
           <PlusIcon className="h-3.5 w-3.5 shrink-0" />
         </button>
@@ -303,7 +303,7 @@ export default function LoanManager() {
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+              className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
             >
               {submitting ? t("common.saving") : t("loans.addLoan")}
             </button>

@@ -83,7 +83,7 @@ export default function EditBalanceModal({
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+            className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
           >
             {submitting ? t("common.saving") : t("common.save")}
           </button>

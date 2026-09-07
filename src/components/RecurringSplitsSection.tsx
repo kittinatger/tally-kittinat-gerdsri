@@ -210,7 +210,7 @@ export default function RecurringSplitsSection({ myId, friends }: { myId: number
           <button
             type="submit"
             disabled={submitting}
-            className="self-end rounded-full bg-navy px-4 py-2 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-60"
+            className="self-end rounded-full bg-navy px-4 py-2 text-xs font-semibold text-white transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
           >
             {submitting ? t("common.saving") : t("split.recurring.save")}
           </button>

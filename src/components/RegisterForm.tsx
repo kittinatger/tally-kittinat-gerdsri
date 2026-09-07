@@ -162,7 +162,7 @@ export default function RegisterForm() {
         <button
           type="submit"
           disabled={loading || !agreed}
-          className="w-full rounded-full bg-navy px-4 py-2.5 font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+          className="w-full rounded-full bg-navy px-4 py-2.5 font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
         >
           {loading ? t("auth.creatingAccount") : t("auth.createAccount")}
         </button>

@@ -445,7 +445,7 @@ export default function SplitBillManager() {
             if (creating) resetForm();
           }}
           aria-label={t("split.newSplit")}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
         >
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-4 w-4">
             {creating ? <path d="M5 5l10 10M15 5 5 15" /> : <path d="M10 4v12M4 10h12" />}
@@ -579,7 +579,7 @@ export default function SplitBillManager() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+            className="w-full rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
           >
             {submitting ? t("challenges.creating") : t("split.createSplit")}
           </button>
@@ -689,7 +689,7 @@ export default function SplitBillManager() {
                                 type="button"
                                 onClick={() => leaveOrDelete(s.id)}
                                 disabled={busyId === `leave-${s.id}`}
-                                className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                                className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 active:scale-[0.97] disabled:opacity-60"
                               >
                                 {busyId === `leave-${s.id}` ? t("challenges.removing") : isCreator ? t("challenges.confirmDelete") : t("challenges.confirmLeave")}
                               </button>
@@ -745,7 +745,7 @@ export default function SplitBillManager() {
                     type="button"
                     onClick={() => respond(s.id, true)}
                     disabled={busyId === `respond-${s.id}`}
-                    className="rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark disabled:opacity-60"
+                    className="rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
                   >
                     {t("friends.accept")}
                   </button>

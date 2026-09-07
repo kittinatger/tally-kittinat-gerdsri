@@ -475,7 +475,7 @@ export default function AccountPanel({
               <button
                 type="submit"
                 disabled={savingUsername}
-                className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+                className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
               >
                 {savingUsername ? t("common.saving") : t("account.saveUsername")}
               </button>
@@ -539,7 +539,7 @@ export default function AccountPanel({
               <button
                 type="submit"
                 disabled={savingEmail}
-                className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+                className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
               >
                 {savingEmail ? t("common.saving") : t("account.saveEmail")}
               </button>
@@ -665,7 +665,7 @@ export default function AccountPanel({
               <button
                 type="submit"
                 disabled={savingPassword}
-                className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+                className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
               >
                 {savingPassword ? t("common.saving") : hasPassword ? t("account.savePassword") : t("account.setPassword")}
               </button>
@@ -792,7 +792,7 @@ export default function AccountPanel({
             <button
               onClick={handleUnlinkGithub}
               disabled={unlinkingGithub}
-              className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-red-700 disabled:opacity-60"
+              className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-red-700 active:scale-[0.97] disabled:opacity-60"
             >
               {unlinkingGithub ? t("account.unlinking") : t("account.unlink")}
             </button>
@@ -815,7 +815,7 @@ export default function AccountPanel({
             <button
               onClick={confirmLogout}
               disabled={loggingOut}
-              className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-red-700 disabled:opacity-60"
+              className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-red-700 active:scale-[0.97] disabled:opacity-60"
             >
               {loggingOut ? t("account.signingOut") : t("account.signOut")}
             </button>
@@ -867,7 +867,7 @@ export default function AccountPanel({
               <button
                 type="submit"
                 disabled={signingOutEverywhere || (hasPassword && !signOutEverywherePassword)}
-                className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-red-700 disabled:opacity-60"
+                className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-red-700 active:scale-[0.97] disabled:opacity-60"
               >
                 {signingOutEverywhere ? t("account.signingOut") : t("account.signOutEverywhereButton")}
               </button>
@@ -935,7 +935,7 @@ export default function AccountPanel({
               <button
                 type="submit"
                 disabled={!deleteReady || deleting}
-                className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-red-700 disabled:opacity-40"
+                className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-red-700 active:scale-[0.97] disabled:opacity-40"
               >
                 {deleting ? t("common.deleting") : t("account.deleteMyAccount")}
               </button>

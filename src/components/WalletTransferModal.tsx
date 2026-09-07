@@ -260,7 +260,7 @@ export default function WalletTransferModal({
           <button
             type="submit"
             disabled={submitting || fromWalletId === toWalletId}
-            className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+            className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
           >
             {submitting ? t("walletTransfer.transferring") : t("common.transfer")}
           </button>

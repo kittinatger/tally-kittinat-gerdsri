@@ -240,7 +240,7 @@ export default function AccountDetail({
             >
               {t("common.cancel")}
             </button>
-            <button type="button" onClick={onArchive} className="flex-1 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white transition hover:bg-navy-dark">
+            <button type="button" onClick={onArchive} className="flex-1 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white transition hover:bg-navy-dark active:scale-[0.97]">
               {t("wallet.archive")}
             </button>
           </div>

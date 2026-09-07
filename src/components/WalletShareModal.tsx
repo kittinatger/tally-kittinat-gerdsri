@@ -101,7 +101,7 @@ export default function WalletShareModal({
         <button
           type="submit"
           disabled={inviting || selectedFriendId === ""}
-          className="shrink-0 rounded-full bg-navy px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark disabled:opacity-60"
+          className="shrink-0 rounded-full bg-navy px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
         >
           {inviting ? t("common.saving") : t("wallet.invite")}
         </button>
