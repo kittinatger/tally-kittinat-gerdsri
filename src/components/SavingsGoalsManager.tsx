@@ -12,6 +12,7 @@ import ColorPicker from "./ColorPicker";
 import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import ManagerHeader from "./ManagerHeader";
+import ReorderButtons from "./ReorderButtons";
 import { useT } from "@/lib/language-context";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
 
@@ -273,28 +274,14 @@ export default function SavingsGoalsManager() {
             return (
               <div key={g.id} className={`px-4 py-3 ${i === 0 ? "" : "border-t border-line"}`}>
                 <div className="flex items-center gap-3">
-                  <div className="flex shrink-0 flex-col">
-                    <button
-                      onClick={() => handleMove(g.id, "up")}
-                      disabled={busyId === g.id || i === 0}
-                      aria-label={`Move ${g.name} up`}
-                      className="rounded p-0.5 text-ink-soft transition hover:text-foreground disabled:opacity-30"
-                    >
-                      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-                        <path d="M5 12l5-5 5 5" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleMove(g.id, "down")}
-                      disabled={busyId === g.id || i === goals.length - 1}
-                      aria-label={`Move ${g.name} down`}
-                      className="rounded p-0.5 text-ink-soft transition hover:text-foreground disabled:opacity-30"
-                    >
-                      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-                        <path d="M5 8l5 5 5-5" />
-                      </svg>
-                    </button>
-                  </div>
+                  <ReorderButtons
+                    onMoveUp={() => handleMove(g.id, "up")}
+                    onMoveDown={() => handleMove(g.id, "down")}
+                    disableUp={busyId === g.id || i === 0}
+                    disableDown={busyId === g.id || i === goals.length - 1}
+                    upLabel={`Move ${g.name} up`}
+                    downLabel={`Move ${g.name} down`}
+                  />
 
                   <span
                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses(g.color)}`}

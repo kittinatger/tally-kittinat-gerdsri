@@ -16,6 +16,7 @@ import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import SegmentedControl from "./SegmentedControl";
 import ManagerHeader from "./ManagerHeader";
 import AddItemButton from "./AddItemButton";
+import ReorderButtons from "./ReorderButtons";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
@@ -545,28 +546,14 @@ export default function RecurringManager() {
                 key={r.id}
                 className={`flex items-center gap-3 px-4 py-3 ${i === 0 ? "" : "border-t border-line"} ${r.active ? "" : "opacity-60"}`}
               >
-                <div className="flex shrink-0 flex-col">
-                  <button
-                    onClick={() => handleMove(r.id, "up")}
-                    disabled={busyId === r.id || i === 0}
-                    aria-label="Move up"
-                    className="rounded p-0.5 text-ink-soft transition hover:text-foreground disabled:opacity-30"
-                  >
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-                      <path d="M5 12l5-5 5 5" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => handleMove(r.id, "down")}
-                    disabled={busyId === r.id || i === rules.length - 1}
-                    aria-label="Move down"
-                    className="rounded p-0.5 text-ink-soft transition hover:text-foreground disabled:opacity-30"
-                  >
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-                      <path d="M5 8l5 5 5-5" />
-                    </svg>
-                  </button>
-                </div>
+                <ReorderButtons
+                  onMoveUp={() => handleMove(r.id, "up")}
+                  onMoveDown={() => handleMove(r.id, "down")}
+                  disableUp={busyId === r.id || i === 0}
+                  disableDown={busyId === r.id || i === rules.length - 1}
+                  upLabel="Move up"
+                  downLabel="Move down"
+                />
 
                 <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses(categoryColor)}`}>
                   <RepeatIcon />
