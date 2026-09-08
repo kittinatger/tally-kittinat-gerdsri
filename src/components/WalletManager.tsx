@@ -15,6 +15,7 @@ import ManagerHeader from "./ManagerHeader";
 import ReorderButtons from "./ReorderButtons";
 import WalletShareModal from "./WalletShareModal";
 import FilterDropdown from "./FilterDropdown";
+import OverflowMenu, { type OverflowMenuItem } from "./OverflowMenu";
 import { useT } from "@/lib/language-context";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
 
@@ -205,25 +206,114 @@ export default function WalletManager({
     }
   }
 
-  function renderWallet(w: WalletOption, indexInGroup: number, groupLength: number) {
+  // Shared by both layouts — the secondary actions an owner can take on a
+  // wallet, consumed as always-visible icon buttons on desktop and
+  // consolidated into one OverflowMenu on mobile (where a row of up to 5
+  // icon buttons made names truncate and balances wrap awkwardly).
+  function walletMenuItems(w: WalletOption): OverflowMenuItem[] {
+    const items: OverflowMenuItem[] = [];
+    if (!w.archived && !w.isDefault) {
+      items.push({ label: t("wallet.makeDefault"), onClick: () => patchWallet(w.id, { isDefault: true }) });
+    }
+    if (!w.archived) {
+      items.push({ label: t("wallet.shareWallet"), icon: <ShareIcon />, onClick: () => setSharingWallet(w) });
+    }
+    items.push({ label: t("common.edit"), icon: <EditIcon className="h-4 w-4" />, onClick: () => setModal({ mode: "edit", wallet: w }) });
+    items.push({
+      label: w.archived ? "Unarchive" : t("wallet.archive"),
+      icon: <ArchiveIcon className="h-4 w-4" />,
+      onClick: () => patchWallet(w.id, { archived: !w.archived }),
+    });
+    if (wallets.length > 1) {
+      items.push({ label: t("common.delete"), icon: <TrashIcon className="h-4 w-4" />, onClick: () => handleDelete(w.id), destructive: true });
+    }
+    return items;
+  }
+
+  function walletBadges(w: WalletOption) {
+    return (
+      <>
+        {w.isDefault && (
+          <span className="shrink-0 rounded-full bg-navy/10 px-1.5 py-0.5 text-[10px] font-semibold text-navy dark:text-blue-300">
+            {t("wallet.default")}
+          </span>
+        )}
+        {!w.isOwner && (
+          <span className="shrink-0 rounded-full bg-bg-soft px-1.5 py-0.5 text-[10px] font-semibold text-ink-soft">
+            {t("wallet.sharedWithYou")}
+          </span>
+        )}
+      </>
+    );
+  }
+
+  // Mobile (below sm) — a decluttered single-column list: reorder arrows
+  // + icon badge + name/badges + balance caption, with every secondary
+  // action consolidated into one OverflowMenu trigger instead of a row of
+  // separate icon buttons.
+  function renderWalletRow(w: WalletOption, indexInGroup: number, groupLength: number) {
     const isLast = indexInGroup === groupLength - 1;
     const confirming = confirmDeleteId === w.id;
     return (
       <div
         key={w.id}
-        className={`flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-3 ${isLast ? "" : "border-b border-line"} ${
-          w.archived ? "opacity-60" : ""
-        }`}
+        className={`flex items-center gap-3 px-4 py-3 ${isLast ? "" : "border-b border-line"} ${w.archived ? "opacity-60" : ""}`}
       >
-        {/* Below sm: the reorder/icon/name/balance block gets its own full-width
-         * row, with actions (Make default, edit, archive, delete) on a second
-         * row below instead of squeezed into the same row — at phone widths
-         * that squeeze left the name truncated to 1-2 characters and forced
-         * the balance line to wrap awkwardly. At sm+ both blocks sit in one
-         * row as before (this div only gets sm:flex-1 there). */}
-        <div className="flex min-w-0 items-center gap-3 sm:flex-1">
+        <ReorderButtons
+          className={w.isOwner ? "" : "invisible"}
+          onMoveUp={() => handleMove(w.id, "up")}
+          onMoveDown={() => handleMove(w.id, "down")}
+          disableUp={busyId === w.id || indexInGroup === 0}
+          disableDown={busyId === w.id || indexInGroup === groupLength - 1}
+          upLabel={`Move ${w.name} up`}
+          downLabel={`Move ${w.name} down`}
+        />
+
+        <span
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses(w.color)}`}
+          style={colorDotStyle(w.color)}
+        >
+          <WalletGlyphIcon />
+        </span>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <p className="truncate font-medium text-foreground">{w.name}</p>
+            {walletBadges(w)}
+          </div>
+          <p className="text-xs text-ink-soft">
+            {w.kind === "digital" ? t("wallet.digital") : t("wallet.cash")} · {formatCurrency(w.balance, w.currency ?? currency)}
+            {w.currency ? ` (${w.currency})` : ""}
+          </p>
+        </div>
+
+        {confirming ? (
+          <ConfirmDeleteButtons busy={deleting} onCancel={() => setConfirmDeleteId(null)} onConfirm={() => handleDelete(w.id)} />
+        ) : w.isOwner ? (
+          <OverflowMenu items={walletMenuItems(w)} />
+        ) : (
+          <button
+            onClick={() => handleLeaveShared(w.id)}
+            disabled={busyId === w.id}
+            className="shrink-0 rounded-full px-2.5 py-1.5 text-[11px] font-semibold text-ink-soft transition hover:bg-red-50 hover:text-red-600 disabled:opacity-60 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+          >
+            {t("wallet.leaveShared")}
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // Desktop (sm+) — a card grid instead of a flat list, using the extra
+  // width for a bigger balance figure and every action visible at once
+  // (no overflow menu needed — there's room for it).
+  function renderWalletCard(w: WalletOption, indexInGroup: number, groupLength: number) {
+    const confirming = confirmDeleteId === w.id;
+    return (
+      <div key={w.id} className={`flex flex-col gap-3 rounded-card border border-line bg-surface p-4 ${w.archived ? "opacity-60" : ""}`}>
+        <div className="flex items-start gap-3">
           <ReorderButtons
-            className={w.isOwner ? "" : "invisible"}
+            className={w.isOwner ? "mt-1" : "invisible"}
             onMoveUp={() => handleMove(w.id, "up")}
             onMoveDown={() => handleMove(w.id, "down")}
             disableUp={busyId === w.id || indexInGroup === 0}
@@ -231,86 +321,79 @@ export default function WalletManager({
             upLabel={`Move ${w.name} up`}
             downLabel={`Move ${w.name} down`}
           />
-
           <span
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses(w.color)}`}
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${badgeClasses(w.color)}`}
             style={colorDotStyle(w.color)}
           >
             <WalletGlyphIcon />
           </span>
-
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
               <p className="truncate font-medium text-foreground">{w.name}</p>
-              {w.isDefault && (
-                <span className="shrink-0 rounded-full bg-navy/10 px-1.5 py-0.5 text-[10px] font-semibold text-navy dark:text-blue-300">
-                  {t("wallet.default")}
-                </span>
-              )}
-              {!w.isOwner && (
-                <span className="shrink-0 rounded-full bg-bg-soft px-1.5 py-0.5 text-[10px] font-semibold text-ink-soft">
-                  {t("wallet.sharedWithYou")}
-                </span>
-              )}
+              {walletBadges(w)}
             </div>
-            <p className="text-xs text-ink-soft">
-              {w.kind === "digital" ? t("wallet.digital") : t("wallet.cash")} · {formatCurrency(w.balance, w.currency ?? currency)}
-              {w.currency ? ` (${w.currency})` : ""}
-            </p>
+            <p className="text-xs text-ink-soft">{w.kind === "digital" ? t("wallet.digital") : t("wallet.cash")}</p>
           </div>
         </div>
 
-        {confirming ? (
-          <div className="flex shrink-0 items-center justify-end gap-1.5">
+        <div>
+          <p className="font-display text-2xl text-foreground">{formatCurrency(w.balance, w.currency ?? currency)}</p>
+          {w.currency && <p className="text-xs text-ink-soft">{w.currency}</p>}
+        </div>
+
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-line pt-3">
+          {confirming ? (
             <ConfirmDeleteButtons busy={deleting} onCancel={() => setConfirmDeleteId(null)} onConfirm={() => handleDelete(w.id)} />
-          </div>
-        ) : w.isOwner ? (
-          <div className="flex shrink-0 items-center justify-end gap-1">
-            {!w.archived && !w.isDefault && (
-              <button
-                onClick={() => patchWallet(w.id, { isDefault: true })}
-                disabled={busyId === w.id}
-                className="rounded-full px-2.5 py-1.5 text-[11px] font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
-              >
-                {t("wallet.makeDefault")}
-              </button>
-            )}
-            {!w.archived && (
-              <button
-                onClick={() => setSharingWallet(w)}
-                aria-label={t("wallet.shareWallet")}
-                className="rounded-full p-2 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
-              >
-                <ShareIcon />
-              </button>
-            )}
-            <button
-              onClick={() => setModal({ mode: "edit", wallet: w })}
-              aria-label={`Edit ${w.name}`}
-              className="rounded-full p-2 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
-            >
-              <EditIcon />
-            </button>
-            <button
-              onClick={() => patchWallet(w.id, { archived: !w.archived })}
-              disabled={busyId === w.id}
-              aria-label={w.archived ? `Unarchive ${w.name}` : `Archive ${w.name}`}
-              className="rounded-full p-2 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
-            >
-              <ArchiveIcon />
-            </button>
-            {wallets.length > 1 && (
-              <button
-                onClick={() => handleDelete(w.id)}
-                aria-label={`Delete ${w.name}`}
-                className="rounded-full p-2 text-ink-soft transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-              >
-                <TrashIcon />
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="flex shrink-0 items-center justify-end gap-1">
+          ) : w.isOwner ? (
+            <>
+              {!w.archived && !w.isDefault ? (
+                <button
+                  onClick={() => patchWallet(w.id, { isDefault: true })}
+                  disabled={busyId === w.id}
+                  className="rounded-full px-2.5 py-1.5 text-[11px] font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
+                >
+                  {t("wallet.makeDefault")}
+                </button>
+              ) : (
+                <span />
+              )}
+              <div className="flex shrink-0 items-center gap-1">
+                {!w.archived && (
+                  <button
+                    onClick={() => setSharingWallet(w)}
+                    aria-label={t("wallet.shareWallet")}
+                    className="rounded-full p-2 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
+                  >
+                    <ShareIcon />
+                  </button>
+                )}
+                <button
+                  onClick={() => setModal({ mode: "edit", wallet: w })}
+                  aria-label={`Edit ${w.name}`}
+                  className="rounded-full p-2 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
+                >
+                  <EditIcon />
+                </button>
+                <button
+                  onClick={() => patchWallet(w.id, { archived: !w.archived })}
+                  disabled={busyId === w.id}
+                  aria-label={w.archived ? `Unarchive ${w.name}` : `Archive ${w.name}`}
+                  className="rounded-full p-2 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
+                >
+                  <ArchiveIcon />
+                </button>
+                {wallets.length > 1 && (
+                  <button
+                    onClick={() => handleDelete(w.id)}
+                    aria-label={`Delete ${w.name}`}
+                    className="rounded-full p-2 text-ink-soft transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                  >
+                    <TrashIcon />
+                  </button>
+                )}
+              </div>
+            </>
+          ) : (
             <button
               onClick={() => handleLeaveShared(w.id)}
               disabled={busyId === w.id}
@@ -318,8 +401,8 @@ export default function WalletManager({
             >
               {t("wallet.leaveShared")}
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     );
   }
@@ -403,15 +486,24 @@ export default function WalletManager({
         </div>
       )}
 
-      <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
-        {activeWallets.map((w, i) => renderWallet(w, i, activeWallets.length))}
+      {/* Mobile: a single decluttered list (OverflowMenu for actions).
+       * Desktop (sm+): a card grid instead — more room, so the balance
+       * reads bigger and every action stays visible without a menu. */}
+      <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface sm:hidden">
+        {activeWallets.map((w, i) => renderWalletRow(w, i, activeWallets.length))}
+      </div>
+      <div className="mt-4 hidden gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-3">
+        {activeWallets.map((w, i) => renderWalletCard(w, i, activeWallets.length))}
       </div>
 
       {archivedWallets.length > 0 && (
         <div className="mt-4">
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">{t("wallet.archived")}</h3>
-          <div className="overflow-hidden rounded-card border border-line bg-surface">
-            {archivedWallets.map((w, i) => renderWallet(w, i, archivedWallets.length))}
+          <div className="overflow-hidden rounded-card border border-line bg-surface sm:hidden">
+            {archivedWallets.map((w, i) => renderWalletRow(w, i, archivedWallets.length))}
+          </div>
+          <div className="hidden gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-3">
+            {archivedWallets.map((w, i) => renderWalletCard(w, i, archivedWallets.length))}
           </div>
         </div>
       )}
