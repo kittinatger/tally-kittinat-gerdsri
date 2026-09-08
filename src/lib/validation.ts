@@ -27,7 +27,7 @@ import { PASS_TEMPLATE_CATEGORIES } from "@/lib/pass-template-category";
 import { CHIP_POSITIONS } from "@/lib/chip-position";
 import { NFC_SIZES } from "@/lib/nfc-size";
 import { isLanguageCode } from "@/lib/languages";
-import { ACTIVITIES_TYPE_FILTERS, ACTIVITIES_SORTS, ACTIVITIES_DATE_RANGES } from "@/lib/activities-prefs";
+import { ACTIVITIES_TYPE_FILTERS, ACTIVITIES_SORTS, ACTIVITIES_DATE_RANGES, ACTIVITIES_GROUP_BYS } from "@/lib/activities-prefs";
 
 // Shared by wallets and membership_cards' optional background
 // pattern/gradient — see card-backgrounds.ts. Colors are always plain hex
@@ -153,7 +153,7 @@ export const activitiesPrefsInputSchema = z
     hideMerchantIcons: z.boolean().optional(),
     defaultTypeFilter: z.enum(ACTIVITIES_TYPE_FILTERS).optional(),
     defaultSort: z.enum(ACTIVITIES_SORTS).optional(),
-    groupByMonth: z.boolean().optional(),
+    groupBy: z.enum(ACTIVITIES_GROUP_BYS).optional(),
     collapseSplitGroups: z.boolean().optional(),
     compactRows: z.boolean().optional(),
     hideTagsInRow: z.boolean().optional(),

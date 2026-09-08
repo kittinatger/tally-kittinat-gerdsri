@@ -43,6 +43,45 @@ export function monthShortLabel(key: string): string {
   return d.toLocaleDateString(undefined, { month: "short" });
 }
 
+// Activities' "Group by" preference (see activities-prefs.ts) adds day-
+// and week-level grouping alongside the existing month grouping above —
+// same key/label pairing convention (a stable sortable string key, plus
+// a separate locale-formatted display label for it).
+
+export function dayKey(dateStr: string): string {
+  return dateStr.slice(0, 10);
+}
+
+export function dayLabel(key: string): string {
+  const [y, m, d] = key.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  return date.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+}
+
+// Weeks always start on Sunday (day 0) — matches the app's own default
+// week-start-day (see calendar settings); this doesn't read that
+// per-user preference, so a user who's changed it to Monday elsewhere
+// still sees Sunday-started week groups here.
+export function weekKey(dateStr: string): string {
+  const [y, m, d] = dateStr.slice(0, 10).split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() - date.getDay());
+  const yy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
+}
+
+export function weekLabel(key: string): string {
+  const [y, m, d] = key.split("-").map(Number);
+  const start = new Date(y, m - 1, d);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+  const startStr = start.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const endStr = end.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return `${startStr} – ${endStr}`;
+}
+
 export function formatDateShort(dateStr: string): string {
   const d = new Date(`${dateStr}T00:00:00`);
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });

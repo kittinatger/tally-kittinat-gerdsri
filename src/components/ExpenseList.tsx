@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { signedAmount, type Expense } from "@/types/expense";
 import type { TransactionType } from "@/lib/categories";
-import { monthKey, monthLabel, formatCurrency, formatAmountRaw, todayInputValue } from "@/lib/format";
+import { monthKey, monthLabel, dayKey, dayLabel, weekKey, weekLabel, formatCurrency, formatAmountRaw, todayInputValue } from "@/lib/format";
 import { useAllCategories } from "@/lib/categories-context";
 import { useWallets } from "@/lib/wallets-context";
 import { useCurrency } from "@/lib/currency-context";
@@ -404,29 +404,30 @@ export default function ExpenseList({
   }
 
   // Sorted once here (rather than per group) so both the grouped and flat
-  // (groupByMonth off) render paths share the same order.
+  // (groupBy "none") render paths share the same order.
   const sortedFiltered = useMemo(
     () => [...filtered].sort((a, b) => compareActivitiesSort(a, b, prefs.defaultSort)),
     [filtered, prefs.defaultSort],
   );
 
-  // groupByMonth off collapses everything into one bucket under a single
-  // empty key — the render below only shows the month-header/net-badge
-  // row when groupByMonth is on, so that empty key is never displayed.
+  // groupBy "none" collapses everything into one bucket under a single
+  // empty key — the render below only shows the group-header/net-badge
+  // row when groupBy isn't "none", so that empty key is never displayed.
+  const groupKeyFn = prefs.groupBy === "day" ? dayKey : prefs.groupBy === "week" ? weekKey : monthKey;
   const groups = useMemo(() => {
-    if (!prefs.groupByMonth) return [["flat", sortedFiltered]] as [string, Expense[]][];
+    if (prefs.groupBy === "none") return [["flat", sortedFiltered]] as [string, Expense[]][];
     const map = new Map<string, Expense[]>();
     for (const e of sortedFiltered) {
-      const key = monthKey(e.date);
+      const key = groupKeyFn(e.date);
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(e);
     }
-    // Newest-month-first, except when the chosen sort is itself
-    // oldest-first — an oldest-first sort inside months that still ran
+    // Newest-group-first, except when the chosen sort is itself
+    // oldest-first — an oldest-first sort inside groups that still ran
     // newest-to-oldest would read as contradictory.
     const ascending = prefs.defaultSort === "oldest";
     return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? (ascending ? -1 : 1) : ascending ? 1 : -1));
-  }, [sortedFiltered, prefs.groupByMonth, prefs.defaultSort]);
+  }, [sortedFiltered, prefs.groupBy, groupKeyFn, prefs.defaultSort]);
 
   if (expenses.length === 0) {
     return (
@@ -695,9 +696,11 @@ export default function ExpenseList({
             const net = items.reduce((sum, e) => sum + signedAmount(e), 0);
             return (
               <section key={key}>
-                {prefs.groupByMonth && (
+                {prefs.groupBy !== "none" && (
                   <div className="mb-2 flex items-center justify-between px-1">
-                    <h2 className="font-display text-base text-foreground">{monthLabel(key)}</h2>
+                    <h2 className="font-display text-base text-foreground">
+                      {prefs.groupBy === "day" ? dayLabel(key) : prefs.groupBy === "week" ? weekLabel(key) : monthLabel(key)}
+                    </h2>
                     <span
                       className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
                         net >= 0

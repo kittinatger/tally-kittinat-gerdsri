@@ -19,6 +19,9 @@ export type ActivitiesSort = (typeof ACTIVITIES_SORTS)[number];
 export const ACTIVITIES_DATE_RANGES = ["none", "7", "30", "90", "thisMonth"] as const;
 export type ActivitiesDateRange = (typeof ACTIVITIES_DATE_RANGES)[number];
 
+export const ACTIVITIES_GROUP_BYS = ["none", "day", "week", "month"] as const;
+export type ActivitiesGroupBy = (typeof ACTIVITIES_GROUP_BYS)[number];
+
 export type ActivitiesPrefs = {
   /** Hides the circular category-icon badge at the left of every row. */
   hideMerchantIcons: boolean;
@@ -28,9 +31,9 @@ export type ActivitiesPrefs = {
   /** Initial sort order — "newest" (default) matches today's hardcoded
    * behavior. */
   defaultSort: ActivitiesSort;
-  /** Whether rows start grouped under month headers (default true, same
-   * as today) or as one flat sorted list. */
-  groupByMonth: boolean;
+  /** How rows start grouped — "month" (default, same as before this
+   * field existed), "week", "day", or "none" for one flat sorted list. */
+  groupBy: ActivitiesGroupBy;
   /** Whether a split-expense group starts collapsed rather than
    * expanded. */
   collapseSplitGroups: boolean;
@@ -48,7 +51,7 @@ export const DEFAULT_ACTIVITIES_PREFS: ActivitiesPrefs = {
   hideMerchantIcons: false,
   defaultTypeFilter: "all",
   defaultSort: "newest",
-  groupByMonth: true,
+  groupBy: "month",
   collapseSplitGroups: false,
   compactRows: false,
   hideTagsInRow: false,
@@ -65,6 +68,10 @@ function isActivitiesSort(value: unknown): value is ActivitiesSort {
 
 function isActivitiesDateRange(value: unknown): value is ActivitiesDateRange {
   return typeof value === "string" && (ACTIVITIES_DATE_RANGES as readonly string[]).includes(value);
+}
+
+function isActivitiesGroupBy(value: unknown): value is ActivitiesGroupBy {
+  return typeof value === "string" && (ACTIVITIES_GROUP_BYS as readonly string[]).includes(value);
 }
 
 // Compares two expense-shaped records for ExpenseList's sort — kept
@@ -116,7 +123,17 @@ export function normalizeActivitiesPrefs(raw: unknown): ActivitiesPrefs {
     hideMerchantIcons: obj.hideMerchantIcons === true,
     defaultTypeFilter: isActivitiesTypeFilter(obj.defaultTypeFilter) ? obj.defaultTypeFilter : DEFAULT_ACTIVITIES_PREFS.defaultTypeFilter,
     defaultSort: isActivitiesSort(obj.defaultSort) ? obj.defaultSort : DEFAULT_ACTIVITIES_PREFS.defaultSort,
-    groupByMonth: typeof obj.groupByMonth === "boolean" ? obj.groupByMonth : DEFAULT_ACTIVITIES_PREFS.groupByMonth,
+    // Falls back to the old boolean field (pre-dates "day"/"week"
+    // grouping) for anyone whose stored prefs still only have that, so an
+    // existing "off" stays "none" and "on" stays "month" instead of
+    // silently reverting to the new default.
+    groupBy: isActivitiesGroupBy(obj.groupBy)
+      ? obj.groupBy
+      : typeof obj.groupByMonth === "boolean"
+        ? obj.groupByMonth
+          ? "month"
+          : "none"
+        : DEFAULT_ACTIVITIES_PREFS.groupBy,
     collapseSplitGroups: obj.collapseSplitGroups === true,
     compactRows: obj.compactRows === true,
     hideTagsInRow: obj.hideTagsInRow === true,

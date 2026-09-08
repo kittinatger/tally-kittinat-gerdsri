@@ -7,6 +7,7 @@ import {
   ACTIVITIES_TYPE_FILTERS,
   ACTIVITIES_SORTS,
   ACTIVITIES_DATE_RANGES,
+  ACTIVITIES_GROUP_BYS,
   type ActivitiesPrefs,
 } from "@/lib/activities-prefs";
 import SelectDropdown from "./SelectDropdown";
@@ -35,6 +36,13 @@ const DATE_RANGE_KEYS: Record<(typeof ACTIVITIES_DATE_RANGES)[number], MessageKe
   thisMonth: "activities.dateRangeThisMonth",
 };
 
+const GROUP_BY_KEYS: Record<(typeof ACTIVITIES_GROUP_BYS)[number], MessageKey> = {
+  none: "activities.groupByOptionNone",
+  day: "activities.groupByOptionDay",
+  week: "activities.groupByOptionWeek",
+  month: "activities.groupByOptionMonth",
+};
+
 function Toggle({ checked, onChange, disabled, label }: { checked: boolean; onChange: () => void; disabled?: boolean; label: string }) {
   return (
     <button
@@ -60,6 +68,7 @@ export default function ActivitiesSettings() {
   const TYPE_FILTER_OPTIONS = ACTIVITIES_TYPE_FILTERS.map((v) => ({ value: v, label: t(TYPE_FILTER_KEYS[v]) }));
   const SORT_OPTIONS = ACTIVITIES_SORTS.map((v) => ({ value: v, label: t(SORT_KEYS[v]) }));
   const DATE_RANGE_OPTIONS = ACTIVITIES_DATE_RANGES.map((v) => ({ value: v, label: t(DATE_RANGE_KEYS[v]) }));
+  const GROUP_BY_OPTIONS = ACTIVITIES_GROUP_BYS.map((v) => ({ value: v, label: t(GROUP_BY_KEYS[v]) }));
 
   const [prefs, setPrefs] = useState<ActivitiesPrefs>(DEFAULT_ACTIVITIES_PREFS);
   const [saving, setSaving] = useState(false);
@@ -165,18 +174,16 @@ export default function ActivitiesSettings() {
         </div>
 
         <div className="p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-foreground">{t("activities.groupByMonth")}</p>
-              <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">{t("activities.groupByMonthDesc")}</p>
-            </div>
-            <Toggle
-              checked={prefs.groupByMonth}
-              onChange={() => save({ groupByMonth: !prefs.groupByMonth })}
-              disabled={saving}
-              label={t("activities.groupByMonth")}
-            />
-          </div>
+          <p className="mb-1.5 text-sm font-medium text-foreground">{t("activities.groupBy")}</p>
+          <p className="mb-2 text-[11px] leading-snug text-ink-soft">{t("activities.groupByDesc")}</p>
+          <SelectDropdown
+            value={GROUP_BY_OPTIONS.find((o) => o.value === prefs.groupBy)?.label ?? GROUP_BY_OPTIONS[0].label}
+            options={GROUP_BY_OPTIONS.map((o) => o.label)}
+            onChange={(label) => {
+              const opt = GROUP_BY_OPTIONS.find((o) => o.label === label);
+              if (opt) save({ groupBy: opt.value });
+            }}
+          />
         </div>
 
         <div className="p-4">
