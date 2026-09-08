@@ -23,6 +23,7 @@ const CurrencySettings = dynamic(() => import("./CurrencySettings"), { ssr: fals
 const LanguageSettings = dynamic(() => import("./LanguageSettings"), { ssr: false });
 const CalendarSettings = dynamic(() => import("./CalendarSettings"), { ssr: false });
 const NavStyleSettings = dynamic(() => import("./NavStyleSettings"), { ssr: false });
+const SettingsHomeStyleSettings = dynamic(() => import("./SettingsHomeStyleSettings"), { ssr: false });
 const DashboardWidgetsSettings = dynamic(() => import("./DashboardWidgetsSettings"), { ssr: false });
 const PermissionsSettings = dynamic(() => import("./PermissionsSettings"), { ssr: false });
 const CategoryManager = dynamic(() => import("./CategoryManager"), { ssr: false });
@@ -205,6 +206,7 @@ export default function SettingsView({
       {panel === "language" && <LanguageSettings />}
       {panel === "calendar" && <CalendarSettings />}
       {panel === "navStyle" && <NavStyleSettings />}
+      {panel === "settingsHomeStyle" && <SettingsHomeStyleSettings />}
       {panel === "recurring" && <RecurringManager />}
       {panel === "budgets" && <BudgetManager />}
       {panel === "savingsGoals" && <SavingsGoalsManager />}
