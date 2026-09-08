@@ -37,7 +37,7 @@ export default function SegmentedControl<T extends string>({
           type="button"
           onClick={() => onChange(opt.value)}
           className={`flex items-center justify-center gap-1.5 rounded-full font-semibold transition ${
-            size === "compact" ? "px-2.5 py-1 text-xs" : "flex-1 py-2 text-sm"
+            size === "compact" ? "px-2.5 py-1 text-xs" : "flex-1 px-3.5 py-2 text-sm"
           } ${value === opt.value ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"}`}
         >
           {opt.label}
