@@ -6,6 +6,38 @@ export const dynamic = "force-dynamic";
 
 const RELEASES: { version: string; date: string; sections: { heading: string; items: string[] }[] }[] = [
   {
+    version: "0.22.0",
+    date: "2026-09-08",
+    sections: [
+      {
+        heading: "Added",
+        items: [
+          "Analytics has been rebuilt from scratch: a fixed layout covering spending trends, category breakdowns, net worth & wallet trends, budgets & goals health, and forward-looking projections, all driven by one shared period selector with a lightweight \"Customize\" popover to show/hide individual sections",
+          "A new forward-looking section projecting this month's end-of-month spend from your pace so far, plus an upcoming-recurring-charges list",
+          "Settings > Nav bar style — 24 selectable bottom-navigation-bar designs, each with a live preview",
+          "Settings > Settings page design — 6 selectable layouts for the Settings home screen itself",
+          "A hold-to-refresh tier on pull-to-refresh: a quick pull-and-release does a small refresh, holding for 2 seconds arms a full-page refresh (triggered on release, not mid-hold), both showing the loading screen",
+          "Activities can now group transactions by day or week, not just month",
+          "Settings > Wallets redesigned with separate layouts for mobile (list with an overflow menu) and desktop (card grid)",
+        ],
+      },
+      {
+        heading: "Changed",
+        items: [
+          "Settings sections reordered and regrouped so everyday sections (Account, Money, Organize, Social, Display) come before peripheral ones (AI & Tools, Data & Backup, Admin, Support); \"Tools\" merged into \"AI & Tools\"",
+          "The old customizable widget-grid Analytics dashboard (the drag-and-drop picker with 69 widget types) has been removed entirely in favor of the new fixed page above",
+        ],
+      },
+      {
+        heading: "Fixed",
+        items: [
+          "A dropdown menu (e.g. a wallet's overflow menu) could get visually clipped by its container or render underneath the bottom navigation bar instead of above it",
+          "Nav bar styles with squared-off corners looked visibly out of place against a phone's rounded screen edge",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.21.0",
     date: "2026-09-07",
     sections: [

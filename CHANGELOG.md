@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.22.0] - 2026-09-08
+
+### Added
+- Analytics has been rebuilt from scratch: a fixed layout covering spending trends, category breakdowns, net worth & wallet trends, budgets & goals health, and forward-looking projections, all driven by one shared period selector (This month / Last month / Last 3 months / Last 6 months / Year to date) with a lightweight "Customize" popover to show/hide individual sections
+- A new forward-looking section projecting this month's end-of-month spend from your pace so far, plus an upcoming-recurring-charges list
+- Settings > Nav bar style — 24 selectable bottom-navigation-bar designs, each with a live preview
+- Settings > Settings page design — 6 selectable layouts for the Settings home screen itself
+- A hold-to-refresh tier on pull-to-refresh: a quick pull-and-release does a small refresh, holding for 2 seconds arms a full-page refresh (triggered on release, not mid-hold), both showing the loading screen
+- Activities can now group transactions by day or week, not just month
+- Settings > Wallets redesigned with separate layouts for mobile (list with an overflow menu) and desktop (card grid)
+
+### Changed
+- Settings sections reordered and regrouped so everyday sections (Account, Money, Organize, Social, Display) come before peripheral ones (AI & Tools, Data & Backup, Admin, Support); "Tools" merged into "AI & Tools"
+- The old customizable widget-grid Analytics dashboard (the drag-and-drop picker with 69 widget types) has been removed entirely in favor of the new fixed page above
+
+### Fixed
+- A dropdown menu (e.g. a wallet's overflow menu) could get visually clipped by its container or render underneath the bottom navigation bar instead of above it
+- Nav bar styles with squared-off corners looked visibly out of place against a phone's rounded screen edge
+
 ## [0.21.0] - 2026-09-07
 
 ### Added
