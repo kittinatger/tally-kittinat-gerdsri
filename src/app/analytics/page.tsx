@@ -5,18 +5,18 @@ import {
   listCategories,
   getCurrency,
   listWallets,
-  getDashboardWidgets,
+  listRecurringRules,
+  getAnalyticsPrefs,
   processDueRecurringRules,
   processDueRecurringSplits,
   listBudgets,
   listSavingsGoals,
-  getUserById,
 } from "@/lib/db";
 import { after } from "next/server";
 import { getUserId } from "@/lib/auth";
 import { sendPendingNotifications } from "@/lib/notifications";
 import { computeConvertedTotal } from "@/lib/wallet-conversion";
-import Dashboard from "@/components/Dashboard";
+import AnalyticsPageView from "@/components/AnalyticsPage";
 import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
 import { isTransactionType } from "@/lib/categories";
 import { toWalletOption } from "@/lib/wallet-mapper";
@@ -27,9 +27,11 @@ import type { WalletOption } from "@/types/wallet";
 // also avoids the build needing a reachable database at build time.
 export const dynamic = "force-dynamic";
 
-// The widgets/net-worth/budgets/spending-insights view — formerly the root
-// "/" page, moved here once Activities (the day-to-day transaction list)
-// became the app's default landing page.
+// The fixed analytics view (period-driven spending trends, net worth,
+// budgets/goals, forward-looking) — replaced the old customizable
+// widget-grid dashboard. Formerly the root "/" page, moved here once
+// Activities (the day-to-day transaction list) became the app's
+// default landing page.
 export default async function AnalyticsPage({
   searchParams,
 }: {
@@ -39,18 +41,18 @@ export default async function AnalyticsPage({
   const userId = await getUserId();
   const loggedRecurring = await processDueRecurringRules(userId);
   await processDueRecurringSplits(userId);
-  const [rows, remaining, categoryRows, currency, walletRows, widgets, budgetRows, savingsGoalRows, convertEnabled, user] =
+  const [rows, remaining, categoryRows, currency, walletRows, recurringRules, analyticsPrefs, budgetRows, savingsGoalRows, convertEnabled] =
     await Promise.all([
       listExpenses(userId),
       getRemaining(userId),
       listCategories(userId),
       getCurrency(userId),
       listWallets(userId),
-      getDashboardWidgets(userId),
+      listRecurringRules(userId),
+      getAnalyticsPrefs(userId),
       listBudgets(userId),
       listSavingsGoals(userId),
       getConvertWalletBalances(userId),
-      getUserById(userId),
     ]);
   // Reuses the wallets/currency already fetched above instead of re-querying
   // them, and only touches the network (Frankfurter, with its own cache and
@@ -100,17 +102,17 @@ export default async function AnalyticsPage({
   after(() => sendPendingNotifications(userId, loggedRecurring, budgetRows, expenses, currency));
 
   return (
-    <Dashboard
+    <AnalyticsPageView
       initialExpenses={expenses}
       initialRemaining={remaining}
       convertedNetWorth={convertedNetWorth}
       categories={categories}
       currency={currency}
       wallets={wallets}
-      widgets={widgets}
       budgets={budgets}
       savingsGoals={savingsGoals}
-      username={user?.username ?? "there"}
+      recurringRules={recurringRules}
+      initialPrefs={analyticsPrefs}
       initialAddType={add && isTransactionType(add) ? add : null}
     />
   );

@@ -28,6 +28,8 @@ import { CHIP_POSITIONS } from "@/lib/chip-position";
 import { NFC_SIZES } from "@/lib/nfc-size";
 import { isLanguageCode } from "@/lib/languages";
 import { ACTIVITIES_TYPE_FILTERS, ACTIVITIES_SORTS, ACTIVITIES_DATE_RANGES, ACTIVITIES_GROUP_BYS } from "@/lib/activities-prefs";
+import { ANALYTICS_PERIODS } from "@/lib/analytics";
+import { ANALYTICS_SECTION_IDS } from "@/lib/analytics-prefs";
 
 // Shared by wallets and membership_cards' optional background
 // pattern/gradient — see card-backgrounds.ts. Colors are always plain hex
@@ -161,6 +163,15 @@ export const activitiesPrefsInputSchema = z
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
     message: "Provide at least one Activities setting to update",
+  });
+
+export const analyticsPrefsInputSchema = z
+  .object({
+    defaultPeriod: z.enum(ANALYTICS_PERIODS).optional(),
+    hiddenSections: z.array(z.enum(ANALYTICS_SECTION_IDS)).optional(),
+  })
+  .refine((data) => Object.values(data).some((v) => v !== undefined), {
+    message: "Provide at least one Analytics setting to update",
   });
 
 export const DEFAULT_VIEWS = ["today", "week", "month", "all"] as const;

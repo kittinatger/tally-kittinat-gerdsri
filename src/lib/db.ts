@@ -4,6 +4,7 @@ import type { ExpenseInput } from "@/lib/validation";
 import { hashPassword } from "@/lib/password";
 import { normalizeDashboardWidgets, type DashboardWidgetInstance } from "@/lib/dashboard-widgets";
 import { normalizeActivitiesPrefs, type ActivitiesPrefs } from "@/lib/activities-prefs";
+import { normalizeAnalyticsPrefs, type AnalyticsPrefs } from "@/lib/analytics-prefs";
 import type { ChallengeType, ChallengeMode } from "@/lib/challenges";
 import type { SplitMethod, SplitPaymentMethod } from "@/lib/splits";
 
@@ -184,7 +185,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 73;
+const CURRENT_SCHEMA_VERSION = 74;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1553,6 +1554,11 @@ function ensureSchema(): Promise<void> {
       // convention as nav_style above. "groupedCards" reproduces the
       // app's original, pre-this-feature layout.
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS settings_home_style TEXT NOT NULL DEFAULT 'groupedCards';`;
+
+      // Preferences for the rebuilt /analytics page (default period +
+      // which of its 6 fixed sections are hidden) — one JSON-blob column,
+      // same convention as activities_prefs above.
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS analytics_prefs TEXT NOT NULL DEFAULT '{}';`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -3239,6 +3245,30 @@ export async function setActivitiesPrefs(userId: number, patch: Partial<Activiti
   const normalized = normalizeActivitiesPrefs({ ...existing, ...patch });
   await sql`
     UPDATE app_settings SET activities_prefs = ${JSON.stringify(normalized)} WHERE user_id = ${userId};
+  `;
+  return normalized;
+}
+
+export async function getAnalyticsPrefs(userId: number): Promise<AnalyticsPrefs> {
+  await ensureSchema();
+  const { rows } = await sql<{ analytics_prefs: string }>`
+    SELECT analytics_prefs FROM app_settings WHERE user_id = ${userId};
+  `;
+  let parsed: unknown = null;
+  try {
+    parsed = rows[0] ? JSON.parse(rows[0].analytics_prefs) : null;
+  } catch {
+    parsed = null;
+  }
+  return normalizeAnalyticsPrefs(parsed);
+}
+
+export async function setAnalyticsPrefs(userId: number, patch: Partial<AnalyticsPrefs>): Promise<AnalyticsPrefs> {
+  await ensureSchema();
+  const existing = await getAnalyticsPrefs(userId);
+  const normalized = normalizeAnalyticsPrefs({ ...existing, ...patch });
+  await sql`
+    UPDATE app_settings SET analytics_prefs = ${JSON.stringify(normalized)} WHERE user_id = ${userId};
   `;
   return normalized;
 }
