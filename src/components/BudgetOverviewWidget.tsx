@@ -9,9 +9,9 @@ export type BudgetItem = {
   colorClassName: string;
 };
 
-export default function BudgetOverviewWidget({ items }: { items: BudgetItem[] }) {
+export default function BudgetOverviewWidget({ items, delayMs }: { items: BudgetItem[]; delayMs?: number }) {
   return (
-    <WidgetCard color="orange" blob="bottom-left">
+    <WidgetCard color="orange" blob="bottom-left" delayMs={delayMs}>
       <p className="text-xs font-semibold uppercase tracking-wide text-orange-700/80 dark:text-orange-300/80">Budgets</p>
       {items.length === 0 ? (
         <p className="mt-2 text-sm text-surface-foreground-soft">No budgets set yet — add one in Settings.</p>

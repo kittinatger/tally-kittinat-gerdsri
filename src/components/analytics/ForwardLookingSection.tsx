@@ -6,12 +6,21 @@ import { useCurrency } from "@/lib/currency-context";
 import { useT } from "@/lib/language-context";
 import type { ProjectedSpend, UpcomingRecurringItem } from "@/lib/analytics";
 import WidgetCard from "../WidgetCard";
+import SectionHeader from "./SectionHeader";
 
-function ClockIcon() {
+function ClockIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <circle cx="10" cy="10" r="7.25" />
       <path d="M10 5.5V10l3 2" />
+    </svg>
+  );
+}
+function CompassIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <circle cx="10" cy="10" r="7.25" />
+      <path d="m12.3 7.7-1.4 3.6-3.6 1.4 1.4-3.6z" />
     </svg>
   );
 }
@@ -31,23 +40,31 @@ export default function ForwardLookingSection({
     .replace("{elapsed}", String(projected.daysElapsed))
     .replace("{total}", String(projected.daysInMonth));
   const paceText = t("analytics.pace").replace("{pct}", `${pace > 0 ? "+" : ""}${pace}`);
+  const progressPct = projected.projected > 0 ? Math.min(100, (projected.spent / projected.projected) * 100) : 0;
 
   return (
-    <div>
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div>
-          <h2 className="font-display text-lg text-foreground">{t("analytics.sectionForward")}</h2>
-          <p className="text-xs text-ink-soft">{t("analytics.forwardDesc")}</p>
-        </div>
-        <Link href="/settings?panel=recurring" className="shrink-0 text-xs font-semibold text-navy hover:underline dark:text-blue-300">
-          {t("analytics.manageRecurring")}
-        </Link>
-      </div>
+    <div className="animate-[fade-in-up_0.4s_ease-out] motion-reduce:animate-none">
+      <SectionHeader
+        icon={<CompassIcon className="h-4 w-4" />}
+        title={t("analytics.sectionForward")}
+        description={t("analytics.forwardDesc")}
+        action={
+          <Link href="/settings?panel=recurring" className="shrink-0 text-xs font-semibold text-navy hover:underline dark:text-blue-300">
+            {t("analytics.manageRecurring")}
+          </Link>
+        }
+      />
       <div className="grid gap-3 sm:grid-cols-2">
-        <WidgetCard color="amber" blob="top-right">
+        <WidgetCard color="amber" blob="top-right" delayMs={0}>
           <p className="text-xs font-semibold uppercase tracking-wide text-amber-700/80 dark:text-amber-300/80">{t("analytics.projectedSpend")}</p>
           <p className="mt-2 font-display text-2xl text-surface-foreground">{formatCurrency(projected.projected, currency)}</p>
-          <p className="mt-1 text-xs text-surface-foreground-soft">
+          <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-amber-900/10 dark:bg-amber-100/10">
+            <div
+              className="h-full rounded-full bg-amber-500 transition-all duration-700 ease-out"
+              style={{ width: `${Math.max(4, progressPct)}%` }}
+            />
+          </div>
+          <p className="mt-1.5 text-xs text-surface-foreground-soft">
             {spentSoFar}
             {pace !== 0 && (
               <span className={pace > 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}>
@@ -58,16 +75,20 @@ export default function ForwardLookingSection({
           </p>
         </WidgetCard>
 
-        <WidgetCard color="teal" blob="bottom-left">
+        <WidgetCard color="teal" blob="bottom-left" delayMs={80}>
           <p className="text-xs font-semibold uppercase tracking-wide text-teal-700/80 dark:text-teal-300/80">{t("analytics.upcomingRecurring")}</p>
           {upcoming.length === 0 ? (
             <p className="mt-2 text-sm text-surface-foreground-soft">{t("analytics.noRecurringScheduled")}</p>
           ) : (
             <div className="mt-3 space-y-2.5">
-              {upcoming.map((item) => (
-                <div key={item.id} className="flex items-center gap-2.5">
+              {upcoming.map((item, i) => (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-2.5 animate-[fade-in-up_0.35s_ease-out_backwards] motion-reduce:animate-none"
+                  style={{ animationDelay: `${120 + i * 60}ms` }}
+                >
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-500/10 text-teal-700 dark:text-teal-300">
-                    <ClockIcon />
+                    <ClockIcon className="h-4 w-4" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-surface-foreground">{item.merchant}</p>

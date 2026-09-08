@@ -4,11 +4,23 @@ import { useMemo, useState } from "react";
 import type { Expense } from "@/types/expense";
 import { formatCurrency, monthKey, monthShortLabel, todayInputValue } from "@/lib/format";
 import { badgeClasses } from "@/lib/category-styles";
-import type { TransactionType } from "@/lib/categories";
+import { CATEGORY_PALETTE, type TransactionType, type CategoryColor } from "@/lib/categories";
 import type { CategoryOption } from "@/types/category";
 import { useCurrency } from "@/lib/currency-context";
 import FilterDropdown from "./FilterDropdown";
 import SpendingTrendChart, { ChartTypeDropdown, type ChartType } from "./SpendingTrendChart";
+import WidgetCard from "./WidgetCard";
+
+const TYPE_COLOR: Record<TransactionType, CategoryColor> = { expense: "rose", income: "emerald", transfer: "sky" };
+const CATEGORY_PALETTE_SET: ReadonlySet<string> = new Set(CATEGORY_PALETTE);
+
+// WidgetCard's color prop only understands the named palette (it needs one
+// of these to look up a gradient/border/blob class set) — a category can
+// also carry a custom hex color (from ColorPicker's Hex/RGB/CMYK panel),
+// which falls back to a neutral card here rather than breaking the lookup.
+function widgetColorFor(color: string | undefined): CategoryColor {
+  return color && CATEGORY_PALETTE_SET.has(color) ? (color as CategoryColor) : "slate";
+}
 
 type Range = "today" | "month" | "2months" | "3months" | "6months" | "year" | "all";
 
@@ -128,77 +140,72 @@ export default function CategoryOverview({
     });
   }, [expenses, type, trendMonths, categoriesForType]);
 
+  const heroColor = TYPE_COLOR[type];
+
   return (
     <div>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-2xl text-foreground">Categories</h2>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex gap-1 rounded-full bg-bg-soft p-1">
-            <button
-              onClick={() => setType("expense")}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-                type === "expense" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
-              }`}
-            >
-              Expense
-            </button>
-            <button
-              onClick={() => setType("income")}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-                type === "income" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
-              }`}
-            >
-              Income
-            </button>
-            <button
-              onClick={() => setType("transfer")}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-                type === "transfer" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
-              }`}
-            >
-              Transfer
-            </button>
+        <div className="flex gap-1 rounded-full bg-bg-soft p-1">
+          <button
+            onClick={() => setType("expense")}
+            className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+              type === "expense" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+            }`}
+          >
+            Expense
+          </button>
+          <button
+            onClick={() => setType("income")}
+            className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+              type === "income" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+            }`}
+          >
+            Income
+          </button>
+          <button
+            onClick={() => setType("transfer")}
+            className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+              type === "transfer" ? "bg-surface text-foreground shadow-sm" : "text-ink-soft"
+            }`}
+          >
+            Transfer
+          </button>
+        </div>
+        <FilterDropdown
+          value={range === "all" ? "all" : RANGE_LABELS[range]}
+          allLabel={RANGE_LABELS.all}
+          options={RANGE_ORDER.map((r) => RANGE_LABELS[r])}
+          onChange={(next) => setRange(next === "all" ? "all" : LABEL_TO_RANGE[next])}
+        />
+      </div>
+
+      <div className="mb-4 grid gap-3 sm:grid-cols-2">
+        <WidgetCard color={heroColor} blob="top-right" delayMs={0}>
+          <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">
+            Total {type === "income" ? "income" : type === "transfer" ? "transferred" : "spent"}
+          </p>
+          <p className="mt-1.5 font-display text-3xl text-surface-foreground">{formatCurrency(breakdown.total, currency)}</p>
+          <p className="mt-1 text-xs text-surface-foreground-soft">
+            {breakdown.count} transaction{breakdown.count === 1 ? "" : "s"}
+          </p>
+        </WidgetCard>
+
+        <div className="rounded-card border border-line bg-gradient-to-br from-bg-soft to-surface p-5">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              {type === "income" ? "Income" : type === "transfer" ? "Transfer" : "Spending"} trend
+            </p>
+            <ChartTypeDropdown value={chartType} onChange={setChartType} />
           </div>
-          <FilterDropdown
-            value={range === "all" ? "all" : RANGE_LABELS[range]}
-            allLabel={RANGE_LABELS.all}
-            options={RANGE_ORDER.map((r) => RANGE_LABELS[r])}
-            onChange={(next) => setRange(next === "all" ? "all" : LABEL_TO_RANGE[next])}
+          <SpendingTrendChart
+            chartType={chartType}
+            points={trend}
+            stackedPoints={stackedTrend}
+            currency={currency}
+            seriesTextClass={type === "income" ? "text-emerald-500 dark:text-emerald-400" : "text-navy"}
+            seriesBgClass={type === "income" ? "bg-emerald-500 dark:bg-emerald-400" : "bg-navy"}
           />
         </div>
-      </div>
-
-      <div className="mb-6 rounded-card border border-line bg-surface p-5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
-          Total {type === "income" ? "income" : type === "transfer" ? "transferred" : "spent"}
-        </p>
-        <p
-          className={`mt-1.5 font-display text-3xl ${
-            type === "income" ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
-          }`}
-        >
-          {formatCurrency(breakdown.total, currency)}
-        </p>
-        <p className="mt-1 text-xs text-ink-soft">
-          {breakdown.count} transaction{breakdown.count === 1 ? "" : "s"}
-        </p>
-      </div>
-
-      <div className="mb-6 rounded-card border border-line bg-surface p-5">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
-            {type === "income" ? "Income" : type === "transfer" ? "Transfer" : "Spending"} trend
-          </p>
-          <ChartTypeDropdown value={chartType} onChange={setChartType} />
-        </div>
-        <SpendingTrendChart
-          chartType={chartType}
-          points={trend}
-          stackedPoints={stackedTrend}
-          currency={currency}
-          seriesTextClass={type === "income" ? "text-emerald-500 dark:text-emerald-400" : "text-navy"}
-          seriesBgClass={type === "income" ? "bg-emerald-500 dark:bg-emerald-400" : "bg-navy"}
-        />
       </div>
 
       {breakdown.rows.length === 0 ? (
@@ -213,23 +220,23 @@ export default function CategoryOverview({
           </p>
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {breakdown.rows.map((row) => (
-            <div key={row.category} className="rounded-card border border-line bg-surface p-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {breakdown.rows.map((row, i) => (
+            <WidgetCard key={row.category} color={widgetColorFor(colorFor(row.category))} blob="none" delayMs={i * 40}>
               <div className="mb-2 flex items-center justify-between gap-2">
                 <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${badgeClasses(colorFor(row.category))}`}>
                   {row.category}
                 </span>
-                <span className="text-sm font-semibold text-foreground">{formatCurrency(row.amount, currency)}</span>
+                <span className="text-sm font-semibold text-surface-foreground">{formatCurrency(row.amount, currency)}</span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-bg-soft">
                 <div
-                  className="h-full rounded-full bg-navy transition-all"
+                  className="h-full rounded-full bg-navy transition-all duration-500 ease-out"
                   style={{ width: `${Math.max(row.pct, 2)}%` }}
                 />
               </div>
-              <p className="mt-1.5 text-xs text-ink-soft">{row.pct.toFixed(1)}% of total</p>
-            </div>
+              <p className="mt-1.5 text-xs text-surface-foreground-soft">{row.pct.toFixed(1)}% of total</p>
+            </WidgetCard>
           ))}
         </div>
       )}

@@ -26,17 +26,30 @@ import { CategoriesProvider } from "@/lib/categories-context";
 import { CurrencyProvider } from "@/lib/currency-context";
 import { WalletsProvider } from "@/lib/wallets-context";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
+import { AnalyticsIcon } from "@/lib/icons";
 import PullToRefresh from "./PullToRefresh";
 import BudgetAlerts from "./BudgetAlerts";
 import AppHeader from "./AppHeader";
 import PeriodSelector from "./analytics/PeriodSelector";
 import CustomizeSectionsMenu from "./analytics/CustomizeSectionsMenu";
-import OverviewStrip from "./analytics/OverviewStrip";
+import OverviewSection from "./analytics/OverviewSection";
 import TrendSection from "./analytics/TrendSection";
 import CategoryOverview from "./CategoryOverview";
 import NetWorthWalletsSection from "./analytics/NetWorthWalletsSection";
 import BudgetsGoalsSection from "./analytics/BudgetsGoalsSection";
 import ForwardLookingSection from "./analytics/ForwardLookingSection";
+import SectionHeader from "./analytics/SectionHeader";
+
+function CategoriesIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect x="3" y="3" width="6" height="6" rx="1.5" />
+      <rect x="11" y="3" width="6" height="6" rx="1.5" />
+      <rect x="3" y="11" width="6" height="6" rx="1.5" />
+      <rect x="11" y="11" width="6" height="6" rx="1.5" />
+    </svg>
+  );
+}
 
 const EditBalanceModal = dynamic(() => import("./EditBalanceModal"), { ssr: false });
 const AddExpenseModal = dynamic(() => import("./AddExpenseModal"), { ssr: false });
@@ -160,7 +173,12 @@ export default function AnalyticsPage({
                 <BudgetAlerts expenses={expenses} budgets={budgets} onDismissed={handleBudgetDismissed} />
 
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h1 className="font-display text-xl text-foreground">{t("analytics.title")}</h1>
+                  <h1 className="flex items-center gap-2 font-display text-xl text-foreground">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-navy/10 text-navy">
+                      <AnalyticsIcon className="h-4 w-4" />
+                    </span>
+                    {t("analytics.title")}
+                  </h1>
                   <div className="flex items-center gap-2">
                     <PeriodSelector value={periodId} onChange={handlePeriodChange} />
                     <CustomizeSectionsMenu hiddenSections={hiddenSections} onToggle={handleToggleSection} />
@@ -168,12 +186,17 @@ export default function AnalyticsPage({
                 </div>
 
                 {show("overview") && (
-                  <OverviewStrip netWorth={convertedNetWorth} overview={overview} onEditBalance={() => setEditingBalance(true)} />
+                  <OverviewSection
+                    netWorth={convertedNetWorth}
+                    overview={overview}
+                    netWorthHistory={netWorthHistory}
+                    onEditBalance={() => setEditingBalance(true)}
+                  />
                 )}
                 {show("trend") && <TrendSection expensePoints={expenseTrendPoints} incomePoints={incomeTrendPoints} />}
                 {show("categories") && (
-                  <div>
-                    <h2 className="mb-3 font-display text-lg text-foreground">{t("analytics.sectionCategories")}</h2>
+                  <div className="animate-[fade-in-up_0.4s_ease-out] motion-reduce:animate-none">
+                    <SectionHeader icon={<CategoriesIcon className="h-4 w-4" />} title={t("analytics.sectionCategories")} />
                     <CategoryOverview expenses={expenses} categories={categories} />
                   </div>
                 )}

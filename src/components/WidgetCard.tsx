@@ -166,17 +166,26 @@ export default function WidgetCard({
   blob = "top-right",
   blobSize = "h-24 w-24",
   className = "",
+  delayMs,
   children,
 }: {
   color?: CategoryColor;
   blob?: BlobPosition | "none";
   blobSize?: string;
   className?: string;
+  /** Staggers this card's entrance animation — pass the card's index * ~60ms
+   * when rendering a list/grid of these, so they fade in one after another
+   * instead of all at once. Omit for a card that isn't part of a stagger
+   * (e.g. one that mounts on its own later, like a modal). */
+  delayMs?: number;
   children: React.ReactNode;
 }) {
   return (
     <div
-      className={`relative flex h-full flex-col overflow-hidden rounded-card border bg-gradient-to-br via-surface to-surface p-4 shadow-sm ${BORDER[color]} ${FROM[color]} ${className}`}
+      style={delayMs !== undefined ? { animationDelay: `${delayMs}ms` } : undefined}
+      className={`relative flex h-full flex-col overflow-hidden rounded-card border bg-gradient-to-br via-surface to-surface p-4 shadow-sm transition-[transform,box-shadow] duration-200 ${
+        delayMs !== undefined ? "animate-[fade-in-up_0.4s_ease-out_backwards] motion-reduce:animate-none" : ""
+      } sm:hover:-translate-y-0.5 sm:hover:shadow-md ${BORDER[color]} ${FROM[color]} ${className}`}
     >
       {blob !== "none" && (
         <div className={`pointer-events-none absolute ${BLOB_POS[blob]} ${blobSize} rounded-full blur-2xl ${BLOB[color]}`} />

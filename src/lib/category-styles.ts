@@ -38,8 +38,27 @@ export const CATEGORY_DOT_CLASSES: Record<CategoryColor, string> = {
   slate: "bg-neutral-400",
 };
 
+export const CATEGORY_STROKE_CLASSES: Record<CategoryColor, string> = {
+  emerald: "stroke-emerald-500",
+  green: "stroke-green-500",
+  teal: "stroke-teal-500",
+  cyan: "stroke-cyan-500",
+  sky: "stroke-sky-500",
+  blue: "stroke-blue-500",
+  indigo: "stroke-indigo-500",
+  violet: "stroke-violet-500",
+  fuchsia: "stroke-fuchsia-500",
+  pink: "stroke-pink-500",
+  rose: "stroke-rose-500",
+  orange: "stroke-orange-500",
+  amber: "stroke-amber-500",
+  lime: "stroke-lime-500",
+  slate: "stroke-neutral-400",
+};
+
 const FALLBACK_BADGE = "bg-[var(--nav-hover-bg)] text-ink-soft";
 const FALLBACK_DOT = "bg-neutral-400";
+const FALLBACK_STROKE = "stroke-neutral-400";
 
 export function badgeClasses(color: string | undefined): string {
   if (!color) return FALLBACK_BADGE;
@@ -51,6 +70,14 @@ export function dotClasses(color: string | undefined): string {
   if (!color) return FALLBACK_DOT;
   if (isHexColor(color)) return "";
   return CATEGORY_DOT_CLASSES[color as CategoryColor] ?? FALLBACK_DOT;
+}
+
+// Companion to dotClasses, for SVG stroke-based visuals (DonutRing) where a
+// bg-* class doesn't apply. Same palette/order as CATEGORY_DOT_CLASSES.
+export function accentStrokeClasses(color: string | undefined): string {
+  if (!color) return FALLBACK_STROKE;
+  if (isHexColor(color)) return "";
+  return CATEGORY_STROKE_CLASSES[color as CategoryColor] ?? FALLBACK_STROKE;
 }
 
 // Companion to dotClasses/badgeClasses/heroGradientClasses — a custom hex

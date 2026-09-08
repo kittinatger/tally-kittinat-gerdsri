@@ -9,9 +9,9 @@ export type SavingsGoalItem = {
   colorClassName: string;
 };
 
-export default function SavingsGoalsWidget({ items }: { items: SavingsGoalItem[] }) {
+export default function SavingsGoalsWidget({ items, delayMs }: { items: SavingsGoalItem[]; delayMs?: number }) {
   return (
-    <WidgetCard color="violet" blob="bottom-left">
+    <WidgetCard color="violet" blob="bottom-left" delayMs={delayMs}>
       <p className="text-xs font-semibold uppercase tracking-wide text-violet-700/80 dark:text-violet-300/80">Savings goals</p>
       {items.length === 0 ? (
         <p className="mt-2 text-sm text-surface-foreground-soft">No savings goals yet — add one in Settings.</p>
