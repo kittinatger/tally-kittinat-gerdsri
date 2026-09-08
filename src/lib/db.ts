@@ -184,7 +184,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 72;
+const CURRENT_SCHEMA_VERSION = 73;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1547,6 +1547,12 @@ function ensureSchema(): Promise<void> {
       // defensive-fallback approach as an unrecognized language code.
       // "floating" reproduces the app's original, pre-this-feature look.
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS nav_style TEXT NOT NULL DEFAULT 'floating';`;
+
+      // Which layout the Settings-page content itself renders as
+      // (Settings > Settings page design) — same defensive-fallback
+      // convention as nav_style above. "groupedCards" reproduces the
+      // app's original, pre-this-feature layout.
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS settings_home_style TEXT NOT NULL DEFAULT 'groupedCards';`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -3106,6 +3112,18 @@ export async function getNavStyle(userId: number): Promise<string> {
 export async function setNavStyle(userId: number, id: string): Promise<string> {
   await ensureSchema();
   await sql`UPDATE app_settings SET nav_style = ${id} WHERE user_id = ${userId};`;
+  return id;
+}
+
+export async function getSettingsHomeStyle(userId: number): Promise<string> {
+  await ensureSchema();
+  const { rows } = await sql<{ settings_home_style: string }>`SELECT settings_home_style FROM app_settings WHERE user_id = ${userId};`;
+  return rows[0]?.settings_home_style ?? "groupedCards";
+}
+
+export async function setSettingsHomeStyle(userId: number, id: string): Promise<string> {
+  await ensureSchema();
+  await sql`UPDATE app_settings SET settings_home_style = ${id} WHERE user_id = ${userId};`;
   return id;
 }
 
