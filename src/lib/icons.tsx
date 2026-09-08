@@ -481,7 +481,10 @@ export function SunMoonIcon({ className }: IconProps) {
   return (
     <>
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={`${base(className, "h-5 w-5")} dark:hidden`}>
-        <circle cx="10" cy="10" r="3.5" />
+        {/* A filled disc reads as "sun" far more clearly at small sizes
+            than a hollow ring with thin spokes did — those looked like
+            an unlabeled asterisk/scratch mark rather than a sun. */}
+        <circle cx="10" cy="10" r="3.5" fill="currentColor" stroke="none" />
         <path d="M10 2.5v2M10 15.5v2M17.5 10h-2M4.5 10h-2M15.3 4.7l-1.4 1.4M6.1 13.9l-1.4 1.4M15.3 15.3l-1.4-1.4M6.1 6.1 4.7 4.7" />
       </svg>
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={`hidden ${base(className, "h-5 w-5")} dark:block`}>
