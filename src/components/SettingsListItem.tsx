@@ -9,7 +9,11 @@ export function ChevronRight() {
   );
 }
 
-const rowClass = "flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover:bg-[var(--surface-nav-hover)]";
+function rowClass(compact?: boolean) {
+  return `flex w-full items-center gap-3 text-left transition hover:bg-[var(--surface-nav-hover)] ${
+    compact ? "px-3 py-2" : "px-4 py-3.5"
+  }`;
+}
 
 function RowContent({
   icon,
@@ -17,23 +21,27 @@ function RowContent({
   badge,
   accent,
   selected,
+  iconShape = "circle",
+  compact,
 }: {
   icon: React.ReactNode;
   label: string;
   badge?: string;
   accent?: string;
   selected?: boolean;
+  iconShape?: "circle" | "square";
+  compact?: boolean;
 }) {
   return (
     <>
       <span
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-          accent ? badgeClasses(accent) : "text-ink-soft"
-        }`}
+        className={`flex shrink-0 items-center justify-center ${compact ? "h-7 w-7" : "h-9 w-9"} ${
+          iconShape === "square" ? "rounded-xl" : "rounded-full"
+        } ${accent ? badgeClasses(accent) : "text-ink-soft"}`}
       >
         {icon}
       </span>
-      <span className={`flex-1 text-sm font-medium ${selected ? "text-surface-accent" : "text-foreground"}`}>
+      <span className={`flex-1 font-medium ${compact ? "text-[13px]" : "text-sm"} ${selected ? "text-surface-accent" : "text-foreground"}`}>
         {label}
       </span>
       {badge ? (
@@ -54,6 +62,8 @@ export default function SettingsListItem({
   badge,
   accent,
   selected,
+  iconShape,
+  compact,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -66,11 +76,18 @@ export default function SettingsListItem({
   /** Highlights the row — used by the lg:+ two-pane Settings layout so the
    * persistent left list shows which panel the right pane is showing. */
   selected?: boolean;
+  /** "circle" (default) or "square" icon badge — lets a Settings-page
+   * layout (see src/components/settings-home/) restyle the icon shape
+   * without forking the row's click/link/selected-state behavior. */
+  iconShape?: "circle" | "square";
+  /** Tighter padding/icon/text size, for the "Compact dense" Settings-page
+   * layout. */
+  compact?: boolean;
 }) {
   if (href && !disabled) {
     return (
-      <Link href={href} className={`${rowClass} ${selected ? "bg-surface-accent/10" : ""}`}>
-        <RowContent icon={icon} label={label} badge={badge} accent={accent} selected={selected} />
+      <Link href={href} className={`${rowClass(compact)} ${selected ? "bg-surface-accent/10" : ""}`}>
+        <RowContent icon={icon} label={label} badge={badge} accent={accent} selected={selected} iconShape={iconShape} compact={compact} />
       </Link>
     );
   }
@@ -80,9 +97,9 @@ export default function SettingsListItem({
       type="button"
       onClick={onClick}
       disabled={disabled || !onClick}
-      className={`${rowClass} ${disabled || !onClick ? "opacity-60" : ""} ${selected ? "bg-surface-accent/10" : ""}`}
+      className={`${rowClass(compact)} ${disabled || !onClick ? "opacity-60" : ""} ${selected ? "bg-surface-accent/10" : ""}`}
     >
-      <RowContent icon={icon} label={label} badge={badge} accent={accent} selected={selected} />
+      <RowContent icon={icon} label={label} badge={badge} accent={accent} selected={selected} iconShape={iconShape} compact={compact} />
     </button>
   );
 }

@@ -46,6 +46,7 @@ export function renderSettingsRow(
   t: (key: MessageKey) => string,
   pathname: string,
   panelItemProps: (panel: Panel) => { onClick: () => void; selected: boolean } | { href: string },
+  rowStyle?: { iconShape?: "circle" | "square"; compact?: boolean },
 ) {
   if (row.kind === "special") {
     if (row.special === "export") return <ExportDataButton key={key} />;
@@ -54,10 +55,29 @@ export function renderSettingsRow(
   }
   if (row.kind === "href") {
     return (
-      <SettingsListItem key={key} icon={row.icon} label={t(row.labelKey)} accent={row.accent} href={row.href} selected={pathname === row.href} />
+      <SettingsListItem
+        key={key}
+        icon={row.icon}
+        label={t(row.labelKey)}
+        accent={row.accent}
+        href={row.href}
+        selected={pathname === row.href}
+        iconShape={rowStyle?.iconShape}
+        compact={rowStyle?.compact}
+      />
     );
   }
-  return <SettingsListItem key={key} icon={row.icon} label={t(row.labelKey)} accent={row.accent} {...panelItemProps(row.panel)} />;
+  return (
+    <SettingsListItem
+      key={key}
+      icon={row.icon}
+      label={t(row.labelKey)}
+      accent={row.accent}
+      iconShape={rowStyle?.iconShape}
+      compact={rowStyle?.compact}
+      {...panelItemProps(row.panel)}
+    />
+  );
 }
 
 export function ThemeToggleButton() {
@@ -93,7 +113,16 @@ export function ThemeToggleButton() {
 // Anchors the top of the Settings list with the same profile picture used
 // on the Dashboard's Welcome widget, so Settings reads as "your account"
 // rather than a bare list of links.
-export function ProfileAvatar({ username, className = "h-12 w-12" }: { username: string; className?: string }) {
+export function ProfileAvatar({
+  username,
+  className = "h-12 w-12",
+  shape = "circle",
+}: {
+  username: string;
+  className?: string;
+  shape?: "circle" | "square";
+}) {
+  const shapeClass = shape === "square" ? "rounded-2xl" : "rounded-full";
   const [pictureUrl, setPictureUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -114,11 +143,11 @@ export function ProfileAvatar({ username, className = "h-12 w-12" }: { username:
   if (pictureUrl) {
     return (
       // eslint-disable-next-line @next/next/no-img-element -- fetched as a blob URL, not a build-time asset
-      <img src={pictureUrl} alt="" className={`${className} shrink-0 rounded-full object-cover ring-2 ring-surface-accent`} />
+      <img src={pictureUrl} alt="" className={`${className} shrink-0 ${shapeClass} object-cover ring-2 ring-surface-accent`} />
     );
   }
   return (
-    <div className={`flex ${className} shrink-0 items-center justify-center rounded-full bg-surface-accent/10`}>
+    <div className={`flex ${className} shrink-0 items-center justify-center ${shapeClass} bg-surface-accent/10`}>
       <span className="text-lg font-bold text-surface-accent">{username.charAt(0).toUpperCase()}</span>
     </div>
   );
