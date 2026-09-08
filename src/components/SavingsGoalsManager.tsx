@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { badgeClasses, dotClasses, colorDotStyle } from "@/lib/category-styles";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency } from "@/lib/format";
-import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
+import { CATEGORY_PALETTE } from "@/lib/categories";
 import AddItemButton from "./AddItemButton";
 import CsvManagerButtons from "./CsvManagerButtons";
 import ColorPicker from "./ColorPicker";
@@ -97,7 +97,7 @@ export default function SavingsGoalsManager() {
 
   const [name, setName] = useState("");
   const [target, setTarget] = useState("");
-  const [color, setColor] = useState<string>(WIDGET_ACCENTS[0]);
+  const [color, setColor] = useState<string>(CATEGORY_PALETTE[0]);
 
   const refetch = useCallback(() => {
     return fetch("/api/savings-goals")
@@ -239,7 +239,7 @@ export default function SavingsGoalsManager() {
           </div>
           <div>
             <label className="mb-1.5 block text-sm font-semibold text-foreground">{t("savings.color")}</label>
-            <ColorPicker value={color} onChange={setColor} palette={WIDGET_ACCENTS} />
+            <ColorPicker value={color} onChange={setColor} palette={CATEGORY_PALETTE} />
           </div>
 
           {error && <p className="text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}

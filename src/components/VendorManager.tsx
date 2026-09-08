@@ -6,7 +6,7 @@ import { describeFetchError } from "@/lib/fetch-error";
 import { formatCurrency, formatDateLong } from "@/lib/format";
 import { useCurrency } from "@/lib/currency-context";
 import { badgeClasses, hashNameToColor } from "@/lib/category-styles";
-import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
+import { CATEGORY_PALETTE } from "@/lib/categories";
 import { EditIcon } from "@/lib/icons";
 import EmptyState from "./EmptyState";
 import ManagerHeader from "./ManagerHeader";
@@ -50,7 +50,7 @@ function sortVendors(vendors: VendorStat[], mode: SortMode): VendorStat[] {
 // vendors with similar names still land on different colors most of the time
 // without needing any real per-vendor color to be stored anywhere.
 function avatarColor(name: string) {
-  return hashNameToColor(name, WIDGET_ACCENTS);
+  return hashNameToColor(name, CATEGORY_PALETTE);
 }
 
 function mergeVendorRows(rows: VendorStat[], oldName: string, newName: string): VendorStat[] {

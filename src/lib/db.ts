@@ -2,7 +2,6 @@ import { sql, db } from "@vercel/postgres";
 import { createHash, randomBytes, randomUUID } from "crypto";
 import type { ExpenseInput } from "@/lib/validation";
 import { hashPassword } from "@/lib/password";
-import { normalizeDashboardWidgets, type DashboardWidgetInstance } from "@/lib/dashboard-widgets";
 import { normalizeActivitiesPrefs, type ActivitiesPrefs } from "@/lib/activities-prefs";
 import { normalizeAnalyticsPrefs, type AnalyticsPrefs } from "@/lib/analytics-prefs";
 import type { ChallengeType, ChallengeMode } from "@/lib/challenges";
@@ -3189,37 +3188,11 @@ export async function setNotifyBudgetEmail(userId: number, enabled: boolean): Pr
   return enabled;
 }
 
-// When enabled, converts each wallet's balance from its own currency label
-// (if set and different from the app default) into the app's default
-// currency before summing — so a mixed-currency Remaining/net-worth figure
-// is an actual total rather than raw addition across currencies. Falls back
-// to the plain (unconverted) sum if disabled, if a wallet has no currency
-// label, or if a conversion lookup fails.
-export async function getDashboardWidgets(userId: number): Promise<DashboardWidgetInstance[]> {
-  await ensureSchema();
-  const { rows } = await sql<{ dashboard_widgets: string }>`
-    SELECT dashboard_widgets FROM app_settings WHERE user_id = ${userId};
-  `;
-  let parsed: unknown = null;
-  try {
-    parsed = rows[0] ? JSON.parse(rows[0].dashboard_widgets) : null;
-  } catch {
-    parsed = null;
-  }
-  return normalizeDashboardWidgets(parsed);
-}
-
-export async function setDashboardWidgets(
-  userId: number,
-  widgets: DashboardWidgetInstance[],
-): Promise<DashboardWidgetInstance[]> {
-  await ensureSchema();
-  const normalized = normalizeDashboardWidgets(widgets);
-  await sql`
-    UPDATE app_settings SET dashboard_widgets = ${JSON.stringify(normalized)} WHERE user_id = ${userId};
-  `;
-  return normalized;
-}
+// getDashboardWidgets/setDashboardWidgets (the old customizable
+// widget-grid dashboard's read/write functions) were removed when
+// /analytics was rebuilt as a fixed page — app_settings.dashboard_widgets
+// itself is left in place unused rather than dropped, consistent with
+// this codebase's additive-only migration history.
 
 // See activities-prefs.ts for the shape/defaults/normalization —
 // app_settings.activities_prefs is a single JSON-blob column, same

@@ -3,7 +3,7 @@
 import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useRef, useState } from "react";
 import { badgeClasses, hashNameToColor } from "@/lib/category-styles";
-import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
+import { CATEGORY_PALETTE } from "@/lib/categories";
 import { useT } from "@/lib/language-context";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency } from "@/lib/format";
@@ -54,7 +54,7 @@ function BalancePill({ amount }: { amount: number }) {
 type Tab = "friends" | "family" | "requests";
 
 function colorForUsername(username: string): string {
-  return hashNameToColor(username, WIDGET_ACCENTS);
+  return hashNameToColor(username, CATEGORY_PALETTE);
 }
 
 function Avatar({ username }: { username: string }) {

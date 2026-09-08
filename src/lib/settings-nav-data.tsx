@@ -104,17 +104,6 @@ function CalendarIcon() {
   );
 }
 
-function DashboardWidgetsIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <rect x="2.5" y="2.5" width="7" height="7" rx="1.5" />
-      <rect x="11.5" y="2.5" width="6" height="4.5" rx="1.5" />
-      <rect x="11.5" y="9" width="6" height="8.5" rx="1.5" />
-      <rect x="2.5" y="11.5" width="7" height="6" rx="1.5" />
-    </svg>
-  );
-}
-
 function AssistantIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
@@ -450,7 +439,6 @@ export const SETTINGS_SECTIONS: SettingsSectionData[] = [
   {
     titleKey: "settings.section.display",
     rows: [
-      { kind: "panel", icon: <DashboardWidgetsIcon />, labelKey: "settings.dashboardWidgets", accent: "fuchsia", panel: "dashboardWidgets" },
       { kind: "panel", icon: <CalendarIcon />, labelKey: "settings.calendar", accent: "blue", panel: "calendar" },
       { kind: "panel", icon: <NavBarIcon />, labelKey: "settings.navStyle", accent: "violet", panel: "navStyle" },
       { kind: "panel", icon: <LayoutIcon />, labelKey: "settings.settingsHomeStyle", accent: "fuchsia", panel: "settingsHomeStyle" },

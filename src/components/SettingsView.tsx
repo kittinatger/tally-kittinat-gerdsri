@@ -24,7 +24,6 @@ const LanguageSettings = dynamic(() => import("./LanguageSettings"), { ssr: fals
 const CalendarSettings = dynamic(() => import("./CalendarSettings"), { ssr: false });
 const NavStyleSettings = dynamic(() => import("./NavStyleSettings"), { ssr: false });
 const SettingsHomeStyleSettings = dynamic(() => import("./SettingsHomeStyleSettings"), { ssr: false });
-const DashboardWidgetsSettings = dynamic(() => import("./DashboardWidgetsSettings"), { ssr: false });
 const PermissionsSettings = dynamic(() => import("./PermissionsSettings"), { ssr: false });
 const CategoryManager = dynamic(() => import("./CategoryManager"), { ssr: false });
 const TagManager = dynamic(() => import("./TagManager"), { ssr: false });
@@ -72,7 +71,6 @@ const PANEL_TITLES: Record<Panel, string> = {
   calendar: "Calendar settings",
   navStyle: "Nav bar style",
   settingsHomeStyle: "Settings page design",
-  dashboardWidgets: "Customize dashboard",
   recurring: "Recurring transactions",
   budgets: "Budgets",
   savingsGoals: "Savings goals",
@@ -105,7 +103,6 @@ export default function SettingsView({
   username,
   email,
   wallets,
-  remaining,
   activitiesDefaultWalletId,
   githubLinked,
   githubError,
@@ -116,7 +113,6 @@ export default function SettingsView({
   username: string;
   email: string | null;
   wallets: WalletOption[];
-  remaining: number;
   /** Which wallet Activities' balance card is scoped to by default; null means "All wallets". */
   activitiesDefaultWalletId: number | null;
   /** True right after a redirect back from /api/auth/github/link succeeded. */
@@ -162,16 +158,14 @@ export default function SettingsView({
 
   const detailContent = panel && (
     <div>
-      {panel !== "dashboardWidgets" && (
-        <button
-          type="button"
-          onClick={() => setPanel(null)}
-          className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-ink-soft transition hover:text-foreground lg:hidden"
-        >
-          <BackIcon />
-          Settings
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() => setPanel(null)}
+        className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-ink-soft transition hover:text-foreground lg:hidden"
+      >
+        <BackIcon />
+        Settings
+      </button>
       {/* "loans", "assistant", "wallets", "categories", "tags", "vendors",
        * "friends", "challenges" and "splitBills" are deliberately NOT in
        * this list — every manager now renders its own ManagerHeader
@@ -228,14 +222,6 @@ export default function SettingsView({
       {panel === "discountCalculator" && <DiscountCalculatorPanel />}
       {panel === "loanCalculator" && <LoanCalculatorPanel />}
       {panel === "aiUsage" && <AiUsagePanel />}
-      {panel === "dashboardWidgets" && (
-        <DashboardWidgetsSettings
-          categories={categories}
-          remaining={remaining}
-          wallets={wallets}
-          onDone={() => setPanel(null)}
-        />
-      )}
     </div>
   );
 

@@ -3,7 +3,7 @@
 import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useRef, useState } from "react";
 import { badgeClasses, dotClasses, hashNameToColor } from "@/lib/category-styles";
-import { WIDGET_ACCENTS } from "@/lib/dashboard-widgets";
+import { CATEGORY_PALETTE } from "@/lib/categories";
 import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency, todayInputValue } from "@/lib/format";
 import { CHALLENGE_TYPES, CHALLENGE_MODES, type ChallengeType, type ChallengeMode } from "@/lib/challenges";
@@ -57,7 +57,7 @@ const MODE_KEYS: Record<ChallengeMode, MessageKey> = {
 };
 
 function colorForUsername(username: string): string {
-  return hashNameToColor(username, WIDGET_ACCENTS);
+  return hashNameToColor(username, CATEGORY_PALETTE);
 }
 
 function Avatar({ username }: { username: string }) {

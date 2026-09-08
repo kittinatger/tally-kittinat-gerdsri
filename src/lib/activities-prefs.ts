@@ -1,7 +1,7 @@
 // User-configurable defaults/display options for the Activities page —
 // see app_settings.activities_prefs in db.ts. One JSON-blob column
 // rather than one column per field (same convention as
-// dashboard_widgets in dashboard-widgets.ts) since this is one cohesive
+// analytics_prefs in analytics-prefs.ts) since this is one cohesive
 // "Activities preferences" concept likely to keep growing, not a set of
 // unrelated toggles.
 //

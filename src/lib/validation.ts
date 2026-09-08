@@ -1,13 +1,6 @@
 import { z } from "zod";
 import { TRANSACTION_TYPES, TRANSFER_DIRECTIONS } from "@/lib/categories";
 import { WALLET_KINDS } from "@/lib/wallets";
-import {
-  DASHBOARD_WIDGET_TYPES,
-  WIDGET_WIDTHS,
-  SUMMARY_CARDS,
-  WIDGET_ACCENTS,
-  LIMIT_OPTIONS,
-} from "@/lib/dashboard-widgets";
 import { CHALLENGE_TYPES, CHALLENGE_MODES } from "@/lib/challenges";
 import { SPLIT_METHODS, SPLIT_PAYMENT_METHODS } from "@/lib/splits";
 import { LOAN_DIRECTIONS } from "@/lib/loans";
@@ -420,27 +413,6 @@ export const walletTransferInputSchema = z
     message: "Choose two different wallets",
     path: ["toWalletId"],
   });
-
-export const dashboardWidgetsInputSchema = z.object({
-  widgets: z
-    .array(
-      z.object({
-        id: z.string().trim().min(1).max(60),
-        type: z.enum(DASHBOARD_WIDGET_TYPES),
-        width: z.enum(WIDGET_WIDTHS),
-        cards: z.array(z.enum(SUMMARY_CARDS)).optional(),
-        accent: z.enum(WIDGET_ACCENTS).optional(),
-        limit: z
-          .number()
-          .int()
-          .refine((n) => (LIMIT_OPTIONS as readonly number[]).includes(n))
-          .optional(),
-        hideAction: z.boolean().optional(),
-        walletId: z.number().int().positive().nullable().optional(),
-      }),
-    )
-    .max(20),
-});
 
 export const RECURRING_FREQUENCIES = ["weekly", "monthly", "yearly"] as const;
 
