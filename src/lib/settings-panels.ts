@@ -20,6 +20,7 @@ export const PANEL_VALUES = [
   "language",
   "calendar",
   "navStyle",
+  "settingsHomeStyle",
   "dashboardWidgets",
   "recurring",
   "budgets",

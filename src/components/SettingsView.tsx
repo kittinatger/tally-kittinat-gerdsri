@@ -70,6 +70,7 @@ const PANEL_TITLES: Record<Panel, string> = {
   language: "Language",
   calendar: "Calendar settings",
   navStyle: "Nav bar style",
+  settingsHomeStyle: "Settings page design",
   dashboardWidgets: "Customize dashboard",
   recurring: "Recurring transactions",
   budgets: "Budgets",
