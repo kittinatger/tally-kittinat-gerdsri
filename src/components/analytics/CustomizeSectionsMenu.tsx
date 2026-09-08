@@ -4,15 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ANALYTICS_SECTION_IDS, type AnalyticsSectionId } from "@/lib/analytics-prefs";
 import { useT } from "@/lib/language-context";
-
-function GearIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <circle cx="10" cy="10" r="2.5" />
-      <path d="M10 2.5v2M10 15.5v2M17.5 10h-2M4.5 10h-2M15.1 4.9l-1.4 1.4M6.3 13.7l-1.4 1.4M15.1 15.1l-1.4-1.4M6.3 6.3 4.9 4.9" />
-    </svg>
-  );
-}
+import { GearIcon } from "@/lib/icons";
 
 // A basic "which sections show" checklist — deliberately NOT a full
 // picker (no reordering, no per-section config, no adding/removing
