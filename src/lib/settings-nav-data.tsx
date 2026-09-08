@@ -405,29 +405,19 @@ export type SettingsSectionData = {
 // source every selectable layout (Settings > Settings page design) reads
 // from instead of re-declaring its own copy.
 export const SETTINGS_SECTIONS: SettingsSectionData[] = [
+  // Reordered so the everyday-use sections (Account, Money, Organize,
+  // Social, Display) come before the more peripheral ones (AI & Tools,
+  // Data & Backup, Admin, Support), instead of the previous order that
+  // put Tools/AI ahead of Money for no real reason. AI (2 rows) and
+  // Tools (5 rows) — two small, related grab-bags — are also merged
+  // into one "AI & Tools" section, so there's one fewer section header
+  // to scroll past overall.
   {
     titleKey: "settings.section.appSettings",
     rows: [
       { kind: "panel", icon: <AccountIcon />, labelKey: "settings.account", accent: "slate", panel: "account" },
       { kind: "panel", icon: <ShieldIcon />, labelKey: "settings.permissions", accent: "slate", panel: "permissions" },
       { kind: "panel", icon: <LockIcon />, labelKey: "settings.appLock", accent: "rose", panel: "appLock" },
-    ],
-  },
-  {
-    titleKey: "settings.section.tools",
-    rows: [
-      { kind: "panel", icon: <QrCodeIcon />, labelKey: "settings.codeGenerator", accent: "indigo", panel: "codeGenerator" },
-      { kind: "panel", icon: <ScannerIcon />, labelKey: "settings.codeScanner", accent: "indigo", panel: "codeScanner" },
-      { kind: "panel", icon: <ConverterIcon />, labelKey: "settings.currencyConverter", accent: "green", panel: "currencyConverter" },
-      { kind: "panel", icon: <PercentIcon />, labelKey: "settings.discountCalculator", accent: "orange", panel: "discountCalculator" },
-      { kind: "panel", icon: <CalculatorIcon />, labelKey: "settings.loanCalculator", accent: "teal", panel: "loanCalculator" },
-    ],
-  },
-  {
-    titleKey: "settings.section.ai",
-    rows: [
-      { kind: "panel", icon: <AssistantIcon />, labelKey: "settings.assistant", accent: "violet", panel: "assistant" },
-      { kind: "panel", icon: <SparkleIcon />, labelKey: "settings.aiUsage", accent: "violet", panel: "aiUsage" },
     ],
   },
   {
@@ -458,6 +448,29 @@ export const SETTINGS_SECTIONS: SettingsSectionData[] = [
     ],
   },
   {
+    titleKey: "settings.section.display",
+    rows: [
+      { kind: "panel", icon: <DashboardWidgetsIcon />, labelKey: "settings.dashboardWidgets", accent: "fuchsia", panel: "dashboardWidgets" },
+      { kind: "panel", icon: <CalendarIcon />, labelKey: "settings.calendar", accent: "blue", panel: "calendar" },
+      { kind: "panel", icon: <NavBarIcon />, labelKey: "settings.navStyle", accent: "violet", panel: "navStyle" },
+      { kind: "panel", icon: <LayoutIcon />, labelKey: "settings.settingsHomeStyle", accent: "fuchsia", panel: "settingsHomeStyle" },
+      { kind: "panel", icon: <CoinIcon />, labelKey: "settings.currency", accent: "green", panel: "currency" },
+      { kind: "panel", icon: <GlobeIcon />, labelKey: "settings.language", accent: "sky", panel: "language" },
+    ],
+  },
+  {
+    titleKey: "settings.section.ai",
+    rows: [
+      { kind: "panel", icon: <AssistantIcon />, labelKey: "settings.assistant", accent: "violet", panel: "assistant" },
+      { kind: "panel", icon: <SparkleIcon />, labelKey: "settings.aiUsage", accent: "violet", panel: "aiUsage" },
+      { kind: "panel", icon: <QrCodeIcon />, labelKey: "settings.codeGenerator", accent: "indigo", panel: "codeGenerator" },
+      { kind: "panel", icon: <ScannerIcon />, labelKey: "settings.codeScanner", accent: "indigo", panel: "codeScanner" },
+      { kind: "panel", icon: <ConverterIcon />, labelKey: "settings.currencyConverter", accent: "green", panel: "currencyConverter" },
+      { kind: "panel", icon: <PercentIcon />, labelKey: "settings.discountCalculator", accent: "orange", panel: "discountCalculator" },
+      { kind: "panel", icon: <CalculatorIcon />, labelKey: "settings.loanCalculator", accent: "teal", panel: "loanCalculator" },
+    ],
+  },
+  {
     titleKey: "settings.section.data",
     rows: [
       { kind: "special", special: "export" },
@@ -475,17 +488,6 @@ export const SETTINGS_SECTIONS: SettingsSectionData[] = [
     rows: [
       { kind: "panel", icon: <UploadReviewIcon />, labelKey: "wallet.templateReviewTitle", accent: "indigo", panel: "templateReviews" },
       { kind: "panel", icon: <UploadReviewIcon />, labelKey: "membership.passTemplateReviewTitle", accent: "indigo", panel: "passTemplateReviews" },
-    ],
-  },
-  {
-    titleKey: "settings.section.display",
-    rows: [
-      { kind: "panel", icon: <DashboardWidgetsIcon />, labelKey: "settings.dashboardWidgets", accent: "fuchsia", panel: "dashboardWidgets" },
-      { kind: "panel", icon: <CalendarIcon />, labelKey: "settings.calendar", accent: "blue", panel: "calendar" },
-      { kind: "panel", icon: <NavBarIcon />, labelKey: "settings.navStyle", accent: "violet", panel: "navStyle" },
-      { kind: "panel", icon: <LayoutIcon />, labelKey: "settings.settingsHomeStyle", accent: "fuchsia", panel: "settingsHomeStyle" },
-      { kind: "panel", icon: <CoinIcon />, labelKey: "settings.currency", accent: "green", panel: "currency" },
-      { kind: "panel", icon: <GlobeIcon />, labelKey: "settings.language", accent: "sky", panel: "language" },
     ],
   },
   {
