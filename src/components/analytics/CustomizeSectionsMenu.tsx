@@ -3,15 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ANALYTICS_SECTION_IDS, type AnalyticsSectionId } from "@/lib/analytics-prefs";
-
-const SECTION_LABELS: Record<AnalyticsSectionId, string> = {
-  overview: "Overview",
-  trend: "Spending trend",
-  categories: "Categories",
-  netWorth: "Net worth & wallets",
-  budgets: "Budgets & goals",
-  forward: "Forward-looking",
-};
+import { useT } from "@/lib/language-context";
 
 function GearIcon() {
   return (
@@ -33,6 +25,15 @@ export default function CustomizeSectionsMenu({
   hiddenSections: AnalyticsSectionId[];
   onToggle: (id: AnalyticsSectionId) => void;
 }) {
+  const t = useT();
+  const sectionLabels: Record<AnalyticsSectionId, string> = {
+    overview: t("analytics.sectionOverview"),
+    trend: t("analytics.sectionTrend"),
+    categories: t("analytics.sectionCategories"),
+    netWorth: t("analytics.sectionNetWorth"),
+    budgets: t("analytics.sectionBudgets"),
+    forward: t("analytics.sectionForward"),
+  };
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -70,7 +71,7 @@ export default function CustomizeSectionsMenu({
         ref={buttonRef}
         type="button"
         onClick={() => (open ? setOpen(false) : openMenu())}
-        aria-label="Customize"
+        aria-label={t("analytics.customize")}
         aria-expanded={open}
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-ink-soft transition hover:border-navy hover:text-foreground"
       >
@@ -85,7 +86,7 @@ export default function CustomizeSectionsMenu({
             style={{ position: "fixed", top: pos.top, right: pos.right }}
             className="z-[60] w-56 overflow-hidden rounded-2xl border border-line bg-surface p-1.5 shadow-soft animate-[popover-in_0.15s_ease-out] motion-reduce:animate-none"
           >
-            <p className="px-2.5 pb-1.5 pt-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">Show sections</p>
+            <p className="px-2.5 pb-1.5 pt-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">{t("analytics.showSections")}</p>
             {ANALYTICS_SECTION_IDS.map((id) => {
               const checked = !hiddenSections.includes(id);
               return (
@@ -106,7 +107,7 @@ export default function CustomizeSectionsMenu({
                       </svg>
                     )}
                   </span>
-                  {SECTION_LABELS[id]}
+                  {sectionLabels[id]}
                 </button>
               );
             })}

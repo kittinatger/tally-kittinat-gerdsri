@@ -2,22 +2,23 @@
 
 import SelectDropdown from "../SelectDropdown";
 import { ANALYTICS_PERIODS, type AnalyticsPeriodId } from "@/lib/analytics";
-
-const PERIOD_LABELS: Record<AnalyticsPeriodId, string> = {
-  thisMonth: "This month",
-  lastMonth: "Last month",
-  last3Months: "Last 3 months",
-  last6Months: "Last 6 months",
-  yearToDate: "Year to date",
-};
+import { useT } from "@/lib/language-context";
 
 export default function PeriodSelector({ value, onChange }: { value: AnalyticsPeriodId; onChange: (id: AnalyticsPeriodId) => void }) {
+  const t = useT();
+  const periodLabels: Record<AnalyticsPeriodId, string> = {
+    thisMonth: t("analytics.periodThisMonth"),
+    lastMonth: t("analytics.periodLastMonth"),
+    last3Months: t("analytics.periodLast3Months"),
+    last6Months: t("analytics.periodLast6Months"),
+    yearToDate: t("analytics.periodYearToDate"),
+  };
   return (
     <SelectDropdown
-      value={PERIOD_LABELS[value]}
-      options={ANALYTICS_PERIODS.map((id) => PERIOD_LABELS[id])}
+      value={periodLabels[value]}
+      options={ANALYTICS_PERIODS.map((id) => periodLabels[id])}
       onChange={(label) => {
-        const id = ANALYTICS_PERIODS.find((p) => PERIOD_LABELS[p] === label);
+        const id = ANALYTICS_PERIODS.find((p) => periodLabels[p] === label);
         if (id) onChange(id);
       }}
     />

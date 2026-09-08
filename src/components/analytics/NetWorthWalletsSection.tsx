@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useCurrency } from "@/lib/currency-context";
+import { useT } from "@/lib/language-context";
 import { formatCurrency } from "@/lib/format";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import { accentBgClasses } from "@/lib/category-styles";
@@ -13,6 +14,7 @@ import WalletRankedWidget, { type WalletRankedItem } from "../WalletRankedWidget
 
 export default function NetWorthWalletsSection({ netWorthHistory, wallets }: { netWorthHistory: TrendPoint[]; wallets: WalletOption[] }) {
   const currency = useCurrency();
+  const t = useT();
   const [chartType, setChartType] = useState<ChartType>("area");
 
   const rankedWallets = rankWalletsByBalance(wallets);
@@ -27,8 +29,8 @@ export default function NetWorthWalletsSection({ netWorthHistory, wallets }: { n
     <div>
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
-          <h2 className="font-display text-lg text-foreground">Net worth &amp; wallets</h2>
-          <p className="text-xs text-ink-soft">How your total balance has moved, and which wallets make it up.</p>
+          <h2 className="font-display text-lg text-foreground">{t("analytics.sectionNetWorth")}</h2>
+          <p className="text-xs text-ink-soft">{t("analytics.netWorthWalletsDesc")}</p>
         </div>
         <ChartTypeDropdown value={chartType} onChange={setChartType} />
       </div>
@@ -43,7 +45,7 @@ export default function NetWorthWalletsSection({ netWorthHistory, wallets }: { n
             seriesBgClass="bg-navy"
           />
         </div>
-        <WalletRankedWidget title="Wallets by balance" items={walletItems} />
+        <WalletRankedWidget title={t("analytics.walletsByBalance")} items={walletItems} />
       </div>
     </div>
   );

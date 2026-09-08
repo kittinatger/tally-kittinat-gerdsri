@@ -21,6 +21,7 @@ import {
   type AnalyticsPeriodId,
 } from "@/lib/analytics";
 import type { AnalyticsPrefs, AnalyticsSectionId } from "@/lib/analytics-prefs";
+import { useT } from "@/lib/language-context";
 import { CategoriesProvider } from "@/lib/categories-context";
 import { CurrencyProvider } from "@/lib/currency-context";
 import { WalletsProvider } from "@/lib/wallets-context";
@@ -89,6 +90,7 @@ export default function AnalyticsPage({
   const [editingBalance, setEditingBalance] = useState(false);
   const [addingType, setAddingType] = useState<TransactionType | null>(initialAddType);
   const router = useRouter();
+  const t = useT();
 
   useEffect(() => {
     if (!initialAddType) return;
@@ -158,7 +160,7 @@ export default function AnalyticsPage({
                 <BudgetAlerts expenses={expenses} budgets={budgets} onDismissed={handleBudgetDismissed} />
 
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h1 className="font-display text-xl text-foreground">Analytics</h1>
+                  <h1 className="font-display text-xl text-foreground">{t("analytics.title")}</h1>
                   <div className="flex items-center gap-2">
                     <PeriodSelector value={periodId} onChange={handlePeriodChange} />
                     <CustomizeSectionsMenu hiddenSections={hiddenSections} onToggle={handleToggleSection} />
@@ -171,7 +173,7 @@ export default function AnalyticsPage({
                 {show("trend") && <TrendSection expensePoints={expenseTrendPoints} incomePoints={incomeTrendPoints} />}
                 {show("categories") && (
                   <div>
-                    <h2 className="mb-3 font-display text-lg text-foreground">Categories</h2>
+                    <h2 className="mb-3 font-display text-lg text-foreground">{t("analytics.sectionCategories")}</h2>
                     <CategoryOverview expenses={expenses} categories={categories} />
                   </div>
                 )}

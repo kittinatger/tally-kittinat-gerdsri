@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { formatCurrency } from "@/lib/format";
 import { useCurrency } from "@/lib/currency-context";
+import { useT } from "@/lib/language-context";
 import { dotClasses, accentBgClasses } from "@/lib/category-styles";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import type { BudgetProgress } from "@/lib/analytics";
@@ -21,6 +22,7 @@ export default function BudgetsGoalsSection({
   categories: CategoryOption[];
 }) {
   const currency = useCurrency();
+  const t = useT();
 
   const budgetItems: BudgetItem[] = budgetProgress.map((b, i) => {
     const category = categories.find((c) => c.name === b.category);
@@ -47,11 +49,11 @@ export default function BudgetsGoalsSection({
     <div>
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
-          <h2 className="font-display text-lg text-foreground">Budgets &amp; goals</h2>
-          <p className="text-xs text-ink-soft">This month&apos;s budgets and your savings goals, at a glance.</p>
+          <h2 className="font-display text-lg text-foreground">{t("analytics.sectionBudgets")}</h2>
+          <p className="text-xs text-ink-soft">{t("analytics.budgetsGoalsDesc")}</p>
         </div>
         <Link href="/settings?panel=budgets" className="shrink-0 text-xs font-semibold text-navy hover:underline dark:text-blue-300">
-          Manage
+          {t("analytics.manage")}
         </Link>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">

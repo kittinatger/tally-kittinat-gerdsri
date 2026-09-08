@@ -2,13 +2,14 @@
 
 import { formatCurrency } from "@/lib/format";
 import { useCurrency } from "@/lib/currency-context";
+import { useT } from "@/lib/language-context";
 import type { PeriodOverview } from "@/lib/analytics";
 
-function deltaText(current: number, previous: number): { text: string; positive: boolean } | null {
+function deltaText(current: number, previous: number, vsLastPeriod: string): { text: string; positive: boolean } | null {
   if (previous === 0) return null;
   const pct = Math.round(((current - previous) / Math.abs(previous)) * 100);
   if (pct === 0) return null;
-  return { text: `${pct > 0 ? "+" : ""}${pct}% vs last period`, positive: pct >= 0 };
+  return { text: `${pct > 0 ? "+" : ""}${pct}% ${vsLastPeriod}`, positive: pct >= 0 };
 }
 
 function EditIcon() {
@@ -25,12 +26,14 @@ function StatCard({
   delta,
   deltaGoodWhenUp = true,
   onEdit,
+  editLabel,
 }: {
   label: string;
   value: string;
   delta: { text: string; positive: boolean } | null;
   deltaGoodWhenUp?: boolean;
   onEdit?: () => void;
+  editLabel?: string;
 }) {
   const good = delta ? (deltaGoodWhenUp ? delta.positive : !delta.positive) : null;
   return (
@@ -38,7 +41,7 @@ function StatCard({
       <div className="flex items-center justify-between gap-1">
         <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">{label}</p>
         {onEdit && (
-          <button type="button" onClick={onEdit} aria-label={`Edit ${label}`} className="rounded-full p-1 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground">
+          <button type="button" onClick={onEdit} aria-label={editLabel} className="rounded-full p-1 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground">
             <EditIcon />
           </button>
         )}
@@ -63,17 +66,25 @@ export default function OverviewStrip({
   onEditBalance?: () => void;
 }) {
   const currency = useCurrency();
+  const t = useT();
+  const vsLastPeriod = t("analytics.vsLastPeriod");
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      <StatCard label="Net worth" value={formatCurrency(netWorth, currency)} delta={null} onEdit={onEditBalance} />
-      <StatCard label="Income" value={formatCurrency(overview.income, currency)} delta={deltaText(overview.income, overview.incomePrev)} />
       <StatCard
-        label="Expenses"
+        label={t("analytics.netWorth")}
+        value={formatCurrency(netWorth, currency)}
+        delta={null}
+        onEdit={onEditBalance}
+        editLabel={t("analytics.editNetWorth")}
+      />
+      <StatCard label={t("common.income")} value={formatCurrency(overview.income, currency)} delta={deltaText(overview.income, overview.incomePrev, vsLastPeriod)} />
+      <StatCard
+        label={t("common.expense")}
         value={formatCurrency(overview.expense, currency)}
-        delta={deltaText(overview.expense, overview.expensePrev)}
+        delta={deltaText(overview.expense, overview.expensePrev, vsLastPeriod)}
         deltaGoodWhenUp={false}
       />
-      <StatCard label="Net" value={formatCurrency(overview.net, currency)} delta={deltaText(overview.net, overview.netPrev)} />
+      <StatCard label={t("analytics.net")} value={formatCurrency(overview.net, currency)} delta={deltaText(overview.net, overview.netPrev, vsLastPeriod)} />
     </div>
   );
 }
