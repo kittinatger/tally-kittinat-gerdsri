@@ -163,11 +163,16 @@ export function FileIcon({ className }: IconProps) {
   );
 }
 
+// A ticket/pass shape — small semicircle notches biting into the top/
+// bottom edge at the perforation, so it reads as a tearable ticket stub
+// rather than a plain card (see CardIcon below, a similarly-shaped but
+// deliberately distinct payment-card glyph).
 export function MembershipCardIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
       <rect x="2.5" y="4.5" width="15" height="11" rx="2" />
-      <path d="M7.5 4.5v11" strokeDasharray="1.6 1.8" />
+      <path d="M7.5 6.3v7.4" strokeDasharray="1.6 1.8" />
+      <path d="M6.3 4.5a1.2 1.2 0 0 0 2.4 0M6.3 15.5a1.2 1.2 0 0 1 2.4 0" />
     </svg>
   );
 }
@@ -425,11 +430,13 @@ function PillIcon({ className }: IconProps) {
   );
 }
 
+// A lipstick tube (cut bullet tip + tube body) — distinct from
+// SparkleIcon's 4-point star, which this used to duplicate almost exactly.
 function BeautyIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
-      <path d="M10 2.5l1.3 4.2 4.2 1.3-4.2 1.3-1.3 4.2-1.3-4.2-4.2-1.3 4.2-1.3Z" />
-      <path d="M15.5 13.5l.6 1.9 1.9.6-1.9.6-.6 1.9-.6-1.9-1.9-.6 1.9-.6Z" />
+      <path d="M8.4 9.6 7.5 4.3a1 1 0 0 1 .5-1.1L10 2l2 1.2a1 1 0 0 1 .5 1.1l-.9 5.3Z" />
+      <path d="M8.2 9.6h3.6v6.4a1.8 1.8 0 0 1-1.8 1.8h0a1.8 1.8 0 0 1-1.8-1.8Z" />
     </svg>
   );
 }
@@ -484,13 +491,15 @@ function FitnessIcon({ className }: IconProps) {
   );
 }
 
+// A paintbrush (handle + bristle fan + paint dab) — distinct from
+// PaletteIcon's blob-of-color-dots, which this used to duplicate almost
+// exactly.
 function ArtIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
-      <path d="M10 3a7 6.3 0 0 0 0 12.6c1 0 1.6-.5 1.6-1.3 0-.4-.2-.7-.2-1.1 0-.7.6-1.2 1.3-1.2h1.5c1.8 0 3.3-1.4 3.3-3.4C17.5 5.4 14.1 3 10 3Z" />
-      <circle cx="6.2" cy="8.7" r=".9" fill="currentColor" stroke="none" />
-      <circle cx="8.6" cy="6.3" r=".9" fill="currentColor" stroke="none" />
-      <circle cx="12" cy="6.5" r=".9" fill="currentColor" stroke="none" />
+      <path d="M4.8 15.2 14 6" />
+      <path d="M14 6c.4-1.9 2-3 3.7-2.3-.4 1.9-1.5 3.3-3.3 3.9Z" />
+      <circle cx="4.3" cy="15.7" r="1.4" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -548,11 +557,15 @@ function ShirtIcon({ className }: IconProps) {
   );
 }
 
+// A payment card with a chip + number line — distinct from
+// MembershipCardIcon's ticket-stub perforation, which this used to
+// duplicate almost exactly (a plain rect with one divider line).
 function CardIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
       <rect x="2.5" y="4.5" width="15" height="11" rx="2" />
-      <path d="M2.5 8h15M5 12.3h4" />
+      <rect x="4.3" y="7" width="3" height="2.3" rx="0.6" />
+      <path d="M4.3 12.7h6.5" />
     </svg>
   );
 }
@@ -577,11 +590,13 @@ function BankIcon({ className }: IconProps) {
   );
 }
 
+// A clean ascending trend line with an end-point dot — simpler and less
+// ambiguous than the previous zigzag-into-a-corner-box shape.
 function ChartIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
-      <path d="M3 15 8 9.5l3 2.5 6-6.5" />
-      <path d="M13.5 5.5H17.5V9.5" />
+      <path d="M3 14.5 7.5 9l3 2.5 6.2-7" />
+      <circle cx="16.7" cy="4.5" r="1.3" fill="currentColor" stroke="none" />
     </svg>
   );
 }

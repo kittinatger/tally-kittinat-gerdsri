@@ -21,6 +21,7 @@ export const PANEL_VALUES = [
   "calendar",
   "navStyle",
   "settingsHomeStyle",
+  "iconStyle",
   "recurring",
   "budgets",
   "savingsGoals",

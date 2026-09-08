@@ -5,6 +5,7 @@ import {
   getLanguage,
   getNavStyle,
   getSettingsHomeStyle,
+  getIconStyle,
   getRemaining,
   getConvertWalletBalances,
   getNotifyRecurringEmail,
@@ -16,6 +17,7 @@ import {
   setLanguage,
   setNavStyle,
   setSettingsHomeStyle,
+  setIconStyle,
   setRemaining,
   setConvertWalletBalances,
   setNotifyRecurringEmail,
@@ -34,6 +36,7 @@ export async function GET() {
     language,
     navStyle,
     settingsHomeStyle,
+    iconStyle,
     autoConvertCurrency,
     convertWalletBalances,
     notifyRecurringEmail,
@@ -46,6 +49,7 @@ export async function GET() {
     getLanguage(userId),
     getNavStyle(userId),
     getSettingsHomeStyle(userId),
+    getIconStyle(userId),
     getAutoConvertCurrency(userId),
     getConvertWalletBalances(userId),
     getNotifyRecurringEmail(userId),
@@ -59,6 +63,7 @@ export async function GET() {
     language,
     navStyle,
     settingsHomeStyle,
+    iconStyle,
     autoConvertCurrency,
     convertWalletBalances,
     notifyRecurringEmail,
@@ -81,6 +86,7 @@ export async function PATCH(req: NextRequest) {
     language,
     navStyle,
     settingsHomeStyle,
+    iconStyle,
     autoConvertCurrency,
     convertWalletBalances,
     notifyRecurringEmail,
@@ -95,6 +101,7 @@ export async function PATCH(req: NextRequest) {
     parsed.data.settingsHomeStyle !== undefined
       ? setSettingsHomeStyle(userId, parsed.data.settingsHomeStyle)
       : getSettingsHomeStyle(userId),
+    parsed.data.iconStyle !== undefined ? setIconStyle(userId, parsed.data.iconStyle) : getIconStyle(userId),
     parsed.data.autoConvertCurrency !== undefined
       ? setAutoConvertCurrency(userId, parsed.data.autoConvertCurrency)
       : getAutoConvertCurrency(userId),
@@ -120,6 +127,7 @@ export async function PATCH(req: NextRequest) {
     language,
     navStyle,
     settingsHomeStyle,
+    iconStyle,
     autoConvertCurrency,
     convertWalletBalances,
     notifyRecurringEmail,

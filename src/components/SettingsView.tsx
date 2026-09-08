@@ -24,6 +24,7 @@ const LanguageSettings = dynamic(() => import("./LanguageSettings"), { ssr: fals
 const CalendarSettings = dynamic(() => import("./CalendarSettings"), { ssr: false });
 const NavStyleSettings = dynamic(() => import("./NavStyleSettings"), { ssr: false });
 const SettingsHomeStyleSettings = dynamic(() => import("./SettingsHomeStyleSettings"), { ssr: false });
+const IconStyleSettings = dynamic(() => import("./IconStyleSettings"), { ssr: false });
 const PermissionsSettings = dynamic(() => import("./PermissionsSettings"), { ssr: false });
 const CategoryManager = dynamic(() => import("./CategoryManager"), { ssr: false });
 const TagManager = dynamic(() => import("./TagManager"), { ssr: false });
@@ -71,6 +72,7 @@ const PANEL_TITLES: Record<Panel, string> = {
   calendar: "Calendar settings",
   navStyle: "Nav bar style",
   settingsHomeStyle: "Settings page design",
+  iconStyle: "Icon style",
   recurring: "Recurring transactions",
   budgets: "Budgets",
   savingsGoals: "Savings goals",
@@ -200,6 +202,7 @@ export default function SettingsView({
       {panel === "language" && <LanguageSettings />}
       {panel === "calendar" && <CalendarSettings />}
       {panel === "navStyle" && <NavStyleSettings />}
+      {panel === "iconStyle" && <IconStyleSettings />}
       {panel === "settingsHomeStyle" && <SettingsHomeStyleSettings />}
       {panel === "recurring" && <RecurringManager />}
       {panel === "budgets" && <BudgetManager />}

@@ -114,6 +114,21 @@ body {
   color: var(--foreground);
 }
 
+/* Settings > Icon style. "Bold" isn't a second hand-drawn icon set — every
+   icon in the app (src/lib/icons.tsx, settings-nav-data.tsx, and nearly
+   every other inline icon) shares the same 20x20/24x24 viewBox convention,
+   so one rule scoped to those viewBoxes retroactively thickens the whole
+   app's icons with no per-icon changes needed, the same relationship
+   Phosphor's own Regular/Bold icon families have. A plain descendant
+   selector (not scoped to :root) so it also works on a small local
+   preview wrapper carrying the attribute, e.g. IconStyleSettings' preview
+   cards. Chart/graph SVGs use their own custom viewBoxes and are
+   unaffected. */
+[data-icon-style="bold"] svg[viewBox="0 0 20 20"],
+[data-icon-style="bold"] svg[viewBox="0 0 24 24"] {
+  stroke-width: 2.4;
+}
+
 h1, h2, h3 {
   font-family: var(--font-display);
   font-weight: 400;
