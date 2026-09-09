@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Radley, Arimo, Noto_Sans_Thai, Noto_Sans_Arabic, Noto_Sans_Devanagari, Noto_Sans_Bengali } from "next/font/google";
 import ThemeSync from "@/components/ThemeSync";
+import CommandPalette from "@/components/CommandPalette";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import AppLockGate from "@/components/AppLockGate";
 import OfflineProvider from "@/components/OfflineProvider";
@@ -125,6 +126,7 @@ export default function RootLayout({
             <SettingsHomeStyleProvider>
               <AppLockGate>
                 <OfflineProvider>{children}</OfflineProvider>
+                <CommandPalette />
               </AppLockGate>
             </SettingsHomeStyleProvider>
           </NavStyleProvider>
