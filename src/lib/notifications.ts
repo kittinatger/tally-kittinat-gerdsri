@@ -3,12 +3,13 @@ import {
   getNotifyRecurringEmail,
   getNotifyBudgetEmail,
   markBudgetNotified,
+  createNotification,
   type AutoLoggedTransaction,
   type BudgetRow,
 } from "@/lib/db";
 import { sendEmail, recurringLoggedEmailHtml, budgetOverLimitEmailHtml } from "@/lib/email";
 import { computeEffectiveBudgetLimit } from "@/lib/budget-rollover";
-import { monthKey, todayInputValue } from "@/lib/format";
+import { monthKey, todayInputValue, formatCurrency } from "@/lib/format";
 import type { Expense } from "@/types/expense";
 
 // Fires opt-in email notifications for events that just happened during this
@@ -25,22 +26,29 @@ export async function sendPendingNotifications(
 ): Promise<void> {
   try {
     const user = await getUserById(userId);
-    if (!user?.email) return;
 
     const [notifyRecurring, notifyBudget] = await Promise.all([
       getNotifyRecurringEmail(userId),
       getNotifyBudgetEmail(userId),
     ]);
 
-    if (notifyRecurring && loggedRecurring.length > 0) {
-      await sendEmail(
-        user.email,
-        `Tally logged ${loggedRecurring.length} recurring transaction${loggedRecurring.length === 1 ? "" : "s"}`,
-        recurringLoggedEmailHtml(loggedRecurring, currency),
-      );
+    if (loggedRecurring.length > 0) {
+      if (notifyRecurring && user?.email) {
+        await sendEmail(
+          user.email,
+          `Tally logged ${loggedRecurring.length} recurring transaction${loggedRecurring.length === 1 ? "" : "s"}`,
+          recurringLoggedEmailHtml(loggedRecurring, currency),
+        );
+      }
+      await createNotification(userId, {
+        type: "recurring_logged",
+        title: `Logged ${loggedRecurring.length} recurring transaction${loggedRecurring.length === 1 ? "" : "s"}`,
+        body: loggedRecurring.map((t) => t.merchant).join(", "),
+        url: "/",
+      });
     }
 
-    if (notifyBudget) {
+    {
       const currentMonthKey = monthKey(todayInputValue());
       for (const b of budgetRows) {
         if (b.notified_alert_month === currentMonthKey) continue;
@@ -58,7 +66,15 @@ export async function sendPendingNotifications(
           .filter((e) => e.type === "expense" && e.category === b.category && monthKey(e.date) === currentMonthKey)
           .reduce((sum, e) => sum + e.amount, 0);
         if (limit > 0 && spent >= limit) {
-          await sendEmail(user.email, `Over budget: ${b.category}`, budgetOverLimitEmailHtml(b.category, spent, limit, currency));
+          if (notifyBudget && user?.email) {
+            await sendEmail(user.email, `Over budget: ${b.category}`, budgetOverLimitEmailHtml(b.category, spent, limit, currency));
+          }
+          await createNotification(userId, {
+            type: "budget_over_limit",
+            title: `Over budget: ${b.category}`,
+            body: `${formatCurrency(spent, currency)} spent of a ${formatCurrency(limit, currency)} limit`,
+            url: "/analytics",
+          });
           await markBudgetNotified(userId, b.id, currentMonthKey);
         }
       }

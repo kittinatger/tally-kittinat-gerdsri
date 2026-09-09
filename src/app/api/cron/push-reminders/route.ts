@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listDueInstallmentReminders, markInstallmentReminderSent, getCurrency } from "@/lib/db";
+import { listDueInstallmentReminders, markInstallmentReminderSent, getCurrency, createNotification } from "@/lib/db";
 import { sendPushToUser } from "@/lib/push";
 import { formatCurrency } from "@/lib/format";
 
@@ -21,11 +21,11 @@ export async function GET(req: NextRequest) {
   for (const reminder of due) {
     const verb = reminder.direction === "lent" ? "owes you" : "you owe";
     const currency = await getCurrency(reminder.userId);
-    await sendPushToUser(reminder.userId, {
-      title: "Loan payment due",
-      body: `${formatCurrency(Number(reminder.amount), currency)} ${verb} ${reminder.counterpartyName}`,
-      url: "/settings?panel=loans",
-    });
+    const title = "Loan payment due";
+    const body = `${formatCurrency(Number(reminder.amount), currency)} ${verb} ${reminder.counterpartyName}`;
+    const url = "/settings?panel=loans";
+    await sendPushToUser(reminder.userId, { title, body, url });
+    await createNotification(reminder.userId, { type: "loan_due", title, body, url });
     await markInstallmentReminderSent(reminder.installmentId);
     sent++;
   }

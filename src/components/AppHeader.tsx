@@ -7,6 +7,7 @@ import { useT } from "@/lib/language-context";
 import { useNavStyle } from "@/lib/nav-style-context";
 import { NAV_BAR_STYLES } from "@/lib/nav-bar-styles";
 import BottomNavBar from "./BottomNavBar";
+import NotificationBell from "./NotificationBell";
 
 function AddIcon() {
   return <PlusIcon className="h-4 w-4 shrink-0" />;
@@ -88,6 +89,7 @@ export default function AppHeader({ onAddClick }: { onAddClick?: () => void }) {
         </nav>
 
         <div className="flex shrink-0 items-center gap-1.5">
+          <NotificationBell />
           {onAddClick && (
             <button
               onClick={onAddClick}
@@ -99,6 +101,11 @@ export default function AppHeader({ onAddClick }: { onAddClick?: () => void }) {
           )}
         </div>
       </header>
+
+      {/* Mobile has no persistent top chrome otherwise (only the bottom
+          nav) — this gives the bell somewhere to live below the sm
+          breakpoint, where the header pill above is hidden. */}
+      <NotificationBell className="fixed right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] text-ink-soft shadow-soft backdrop-blur-xl sm:hidden" />
 
       <BottomNav pathname={pathname} onAddClick={onAddClick} />
     </>

@@ -1,3 +1,19 @@
+// Coarse "2h ago"/"3d ago"-style relative time for notification rows. Falls
+// back to a plain locale date once it's more than a week old, since "52w
+// ago" stops being useful at that point.
+export function formatRelativeTime(iso: string): string {
+  const then = new Date(iso).getTime();
+  const diffSec = Math.max(0, (Date.now() - then) / 1000);
+  if (diffSec < 60) return "just now";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}h ago`;
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 7) return `${diffDay}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
 export function formatCurrency(amount: number, currency: string = "USD"): string {
   return new Intl.NumberFormat(undefined, {
     style: "currency",

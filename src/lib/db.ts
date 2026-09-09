@@ -184,7 +184,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 76;
+const CURRENT_SCHEMA_VERSION = 77;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1582,6 +1582,25 @@ function ensureSchema(): Promise<void> {
       `;
       await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS folder_id INTEGER REFERENCES card_folders(id) ON DELETE SET NULL;`;
       await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS folder_id INTEGER REFERENCES card_folders(id) ON DELETE SET NULL;`;
+
+      // In-app notification center. Reuses the three detection points that
+      // already exist for email/push (recurring rule auto-logged, category
+      // over budget, loan due) — this table just also *records* the event,
+      // decoupled from those channels' own opt-in toggles. `url` is an
+      // optional deep link, matching the push payload's own `url` field.
+      await sql`
+        CREATE TABLE IF NOT EXISTS notifications (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          type TEXT NOT NULL,
+          title TEXT NOT NULL,
+          body TEXT NOT NULL,
+          url TEXT,
+          read BOOLEAN NOT NULL DEFAULT false,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `;
+      await sql`CREATE INDEX IF NOT EXISTS notifications_user_created_idx ON notifications (user_id, created_at DESC);`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -5888,6 +5907,70 @@ export async function deleteFolder(userId: number, id: number): Promise<boolean>
   await ensureSchema();
   const { rowCount } = await sql`DELETE FROM card_folders WHERE id = ${id} AND user_id = ${userId};`;
   return (rowCount ?? 0) > 0;
+}
+
+// ---- In-app notification center -------------------------------------
+// Recorded at the same three points that already fire an email/push today
+// (recurring rule auto-logged, category over budget, loan due) — see
+// sendPendingNotifications in lib/notifications.ts and the loan-due loop in
+// app/api/cron/push-reminders/route.ts. Titles/bodies are plain English at
+// creation time, same precedent as the existing (untranslated) email HTML
+// in lib/email.ts — only the notification center's own chrome is localized.
+
+export type NotificationType = "recurring_logged" | "budget_over_limit" | "loan_due";
+
+export type NotificationRow = {
+  id: number;
+  type: string;
+  title: string;
+  body: string;
+  url: string | null;
+  read: boolean;
+  created_at: string;
+};
+
+export async function createNotification(
+  userId: number,
+  input: { type: NotificationType; title: string; body: string; url?: string | null },
+): Promise<void> {
+  await ensureSchema();
+  await sql`
+    INSERT INTO notifications (user_id, type, title, body, url)
+    VALUES (${userId}, ${input.type}, ${input.title}, ${input.body}, ${input.url ?? null});
+  `;
+}
+
+export async function listNotifications(userId: number, limit = 50): Promise<NotificationRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<NotificationRow>`
+    SELECT id, type, title, body, url, read, created_at::text AS created_at
+    FROM notifications
+    WHERE user_id = ${userId}
+    ORDER BY created_at DESC
+    LIMIT ${limit};
+  `;
+  return rows;
+}
+
+export async function countUnreadNotifications(userId: number): Promise<number> {
+  await ensureSchema();
+  const { rows } = await sql<{ count: number }>`
+    SELECT COUNT(*)::int AS count FROM notifications WHERE user_id = ${userId} AND read = false;
+  `;
+  return rows[0]?.count ?? 0;
+}
+
+export async function markNotificationRead(userId: number, id: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    UPDATE notifications SET read = true WHERE id = ${id} AND user_id = ${userId};
+  `;
+  return (rowCount ?? 0) > 0;
+}
+
+export async function markAllNotificationsRead(userId: number): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE notifications SET read = true WHERE user_id = ${userId} AND read = false;`;
 }
 
 // Logo (small, top-left) and banner (full-width hero) images — same BYTEA-
