@@ -367,6 +367,15 @@ function AutoImportIcon() {
   );
 }
 
+function KeyboardNavIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <rect x="2" y="5" width="16" height="10" rx="1.8" />
+      <path d="M5 8h.01M8 8h.01M11 8h.01M14 8h.01M5 11.5h8" />
+    </svg>
+  );
+}
+
 function UploadReviewIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
@@ -444,6 +453,7 @@ export const SETTINGS_SECTIONS: SettingsSectionData[] = [
       { kind: "panel", icon: <LayoutIcon />, labelKey: "settings.settingsHomeStyle", accent: "fuchsia", panel: "settingsHomeStyle" },
       { kind: "panel", icon: <CoinIcon />, labelKey: "settings.currency", accent: "green", panel: "currency" },
       { kind: "panel", icon: <GlobeIcon />, labelKey: "settings.language", accent: "sky", panel: "language" },
+      { kind: "panel", icon: <KeyboardNavIcon />, labelKey: "settings.keyboardShortcuts", accent: "slate", panel: "keyboardShortcuts" },
     ],
   },
   {

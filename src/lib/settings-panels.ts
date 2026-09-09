@@ -37,6 +37,7 @@ export const PANEL_VALUES = [
   "discountCalculator",
   "loanCalculator",
   "aiUsage",
+  "keyboardShortcuts",
 ] as const;
 
 export type Panel = (typeof PANEL_VALUES)[number];
