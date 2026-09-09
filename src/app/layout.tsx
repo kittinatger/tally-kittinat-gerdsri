@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Radley, Arimo, Noto_Sans_Thai, Noto_Sans_Arabic, Noto_Sans_Devanagari, Noto_Sans_Bengali } from "next/font/google";
 import ThemeSync from "@/components/ThemeSync";
-import IconStyleSync from "@/components/IconStyleSync";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import AppLockGate from "@/components/AppLockGate";
 import OfflineProvider from "@/components/OfflineProvider";
@@ -117,20 +116,9 @@ export default function RootLayout({
             __html: `(function(){try{var t=localStorage.getItem('tally-theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
           }}
         />
-        {/* Same reasoning as the theme script above, for Settings > Icon
-            style — reads the last-synced choice from localStorage so a
-            repeat visit on this device shows the right icon weight with
-            no flash; IconStyleSync corrects it from the server afterward
-            if another device changed it since. */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var s=localStorage.getItem('tally-icon-style');if(s==='bold'){document.documentElement.setAttribute('data-icon-style',s);}}catch(e){}})();`,
-          }}
-        />
       </head>
       <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
         <ThemeSync />
-        <IconStyleSync />
         <ServiceWorkerRegister />
         <LanguageProvider>
           <NavStyleProvider>

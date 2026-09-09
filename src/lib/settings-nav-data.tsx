@@ -155,15 +155,6 @@ function LayoutIcon() {
   );
 }
 
-function IconStyleNavIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <circle cx="6.5" cy="10" r="4" strokeWidth="1.3" />
-      <circle cx="14" cy="10" r="3.2" strokeWidth="2.6" />
-    </svg>
-  );
-}
-
 function GlobeIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
@@ -451,7 +442,6 @@ export const SETTINGS_SECTIONS: SettingsSectionData[] = [
       { kind: "panel", icon: <CalendarIcon />, labelKey: "settings.calendar", accent: "blue", panel: "calendar" },
       { kind: "panel", icon: <NavBarIcon />, labelKey: "settings.navStyle", accent: "violet", panel: "navStyle" },
       { kind: "panel", icon: <LayoutIcon />, labelKey: "settings.settingsHomeStyle", accent: "fuchsia", panel: "settingsHomeStyle" },
-      { kind: "panel", icon: <IconStyleNavIcon />, labelKey: "settings.iconStyle", accent: "cyan", panel: "iconStyle" },
       { kind: "panel", icon: <CoinIcon />, labelKey: "settings.currency", accent: "green", panel: "currency" },
       { kind: "panel", icon: <GlobeIcon />, labelKey: "settings.language", accent: "sky", panel: "language" },
     ],

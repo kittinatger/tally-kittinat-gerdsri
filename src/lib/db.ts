@@ -1559,10 +1559,9 @@ function ensureSchema(): Promise<void> {
       // same convention as activities_prefs above.
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS analytics_prefs TEXT NOT NULL DEFAULT '{}';`;
 
-      // Which icon family renders app-wide (Settings > Icon style) — a
-      // plain string id validated against ICON_STYLE_IDS in icon-style.ts
-      // at read time, same defensive-fallback convention as nav_style.
-      // "linear" reproduces the app's original, pre-this-feature look.
+      // icon_style was a since-removed "Icon style" (Linear/Bold) setting —
+      // this column is intentionally orphaned rather than dropped, same
+      // reasoning as dashboard_widgets above.
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS icon_style TEXT NOT NULL DEFAULT 'linear';`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
@@ -3135,18 +3134,6 @@ export async function getSettingsHomeStyle(userId: number): Promise<string> {
 export async function setSettingsHomeStyle(userId: number, id: string): Promise<string> {
   await ensureSchema();
   await sql`UPDATE app_settings SET settings_home_style = ${id} WHERE user_id = ${userId};`;
-  return id;
-}
-
-export async function getIconStyle(userId: number): Promise<string> {
-  await ensureSchema();
-  const { rows } = await sql<{ icon_style: string }>`SELECT icon_style FROM app_settings WHERE user_id = ${userId};`;
-  return rows[0]?.icon_style ?? "linear";
-}
-
-export async function setIconStyle(userId: number, id: string): Promise<string> {
-  await ensureSchema();
-  await sql`UPDATE app_settings SET icon_style = ${id} WHERE user_id = ${userId};`;
   return id;
 }
 

@@ -13,107 +13,37 @@ function base(className: string | undefined, fallback: string) {
   return className ?? fallback;
 }
 
-// Renders an icon as two <svg>s — a linear/stroke one and a bold/filled
-// one — toggled by the `icon-bold:` variant (globals.css) exactly the way
-// SunMoonIcon already toggled its light/dark glyphs before this existed.
-// Only the app's most-visible icons get a real filled `bold` drawing this
-// way; everything else still gets the cruder stroke-thickening fallback
-// (see globals.css) until it does too.
-function DualIcon({
-  className,
-  fallback,
-  viewBox = "0 0 20 20",
-  strokeWidth = "1.6",
-  linear,
-  bold,
-}: {
-  className?: string;
-  fallback: string;
-  viewBox?: string;
-  strokeWidth?: string;
-  linear: React.ReactNode;
-  bold: React.ReactNode;
-}) {
-  const sized = base(className, fallback);
-  return (
-    <>
-      <svg
-        viewBox={viewBox}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={`${sized} icon-bold:hidden`}
-      >
-        {linear}
-      </svg>
-      <svg viewBox={viewBox} fill="currentColor" stroke="none" className={`hidden ${sized} icon-bold:block`}>
-        {bold}
-      </svg>
-    </>
-  );
-}
-
 // ---- Common action icons -------------------------------------------------
 
 export function TrashIcon({ className }: IconProps) {
   return (
-    <DualIcon
-      className={className}
-      fallback="h-4 w-4"
-      linear={<path d="M4 5.5h12M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5 6 16a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l.5-10.5" />}
-      bold={
-        <>
-          <path d="M8 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1H8Z" />
-          <rect x="3.5" y="4.7" width="13" height="1.8" rx="0.9" />
-          <path d="M5.3 7.2h9.4L14 16a1.3 1.3 0 0 1-1.3 1.2H7.3A1.3 1.3 0 0 1 6 16Z" />
-        </>
-      }
-    />
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <path d="M4 5.5h12M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5 6 16a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l.5-10.5" />
+    </svg>
   );
 }
 
 export function EditIcon({ className }: IconProps) {
   return (
-    <DualIcon
-      className={className}
-      fallback="h-4 w-4"
-      linear={<path d="M13.6 3.6a2 2 0 0 1 2.8 2.8l-8.5 8.5a2 2 0 0 1-.85.5l-3 .86.86-3a2 2 0 0 1 .5-.85Z" />}
-      bold={
-        <>
-          <path d="M12.4 2.6a2.1 2.1 0 0 1 3 3l-1.1 1.1-3-3Z" />
-          <path d="M13.3 7.7 6 15l-3.6.9L3.3 12.3 10.6 5Z" />
-        </>
-      }
-    />
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <path d="M13.6 3.6a2 2 0 0 1 2.8 2.8l-8.5 8.5a2 2 0 0 1-.85.5l-3 .86.86-3a2 2 0 0 1 .5-.85Z" />
+    </svg>
   );
 }
 
 export function PlusIcon({ className }: IconProps) {
   return (
-    <DualIcon
-      className={className}
-      fallback="h-4 w-4"
-      linear={<path d="M10 3.5v13M3.5 10h13" />}
-      bold={<path d="M8.7 3.5h2.6v5.2h5.2v2.6h-5.2v5.2H8.7v-5.2H3.5V8.7h5.2Z" />}
-    />
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <path d="M10 3.5v13M3.5 10h13" />
+    </svg>
   );
 }
 
 export function CloseIcon({ className }: IconProps) {
   return (
-    <DualIcon
-      className={className}
-      fallback="h-4 w-4"
-      linear={<path d="M5 5l10 10M15 5L5 15" />}
-      bold={
-        <>
-          <rect x="9.1" y="2" width="1.8" height="16" rx="0.9" transform="rotate(45 10 10)" />
-          <rect x="9.1" y="2" width="1.8" height="16" rx="0.9" transform="rotate(-45 10 10)" />
-        </>
-      }
-    />
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <path d="M5 5l10 10M15 5L5 15" />
+    </svg>
   );
 }
 
@@ -122,55 +52,34 @@ export function CloseIcon({ className }: IconProps) {
 // icons per direction.
 export function ChevronIcon({ className }: IconProps) {
   return (
-    <DualIcon
-      className={className}
-      fallback="h-4 w-4"
-      linear={<path d="M5 7.5l5 5 5-5" />}
-      bold={<path d="M4.3 7.3a1 1 0 0 1 1.4-1.4L10 10.2l4.3-4.3a1 1 0 1 1 1.4 1.4l-5 5a1 1 0 0 1-1.4 0Z" />}
-    />
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <path d="M5 7.5l5 5 5-5" />
+    </svg>
   );
 }
 
 export function ChevronLeftIcon({ className }: IconProps) {
   return (
-    <DualIcon
-      className={className}
-      fallback="h-4 w-4"
-      linear={<path d="M12.5 4.5l-6 5.5 6 5.5" />}
-      bold={<path d="M12.7 4.3a1 1 0 0 1 0 1.4L8.4 10l4.3 4.3a1 1 0 1 1-1.4 1.4l-5-5a1 1 0 0 1 0-1.4l5-5a1 1 0 0 1 1.4 0Z" />}
-    />
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <path d="M12.5 4.5l-6 5.5 6 5.5" />
+    </svg>
   );
 }
 
 export function ChevronRightIcon({ className }: IconProps) {
   return (
-    <DualIcon
-      className={className}
-      fallback="h-4 w-4"
-      linear={<path d="M7.5 4.5l6 5.5-6 5.5" />}
-      bold={<path d="M7.3 4.3a1 1 0 0 1 1.4 0l5 5a1 1 0 0 1 0 1.4l-5 5a1 1 0 0 1-1.4-1.4L11.6 10 7.3 5.7a1 1 0 0 1 0-1.4Z" />}
-    />
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <path d="M7.5 4.5l6 5.5-6 5.5" />
+    </svg>
   );
 }
 
 export function SearchIcon({ className }: IconProps) {
   return (
-    <DualIcon
-      className={className}
-      fallback="h-4 w-4"
-      linear={
-        <>
-          <circle cx="8.7" cy="8.7" r="5.5" />
-          <path d="M16.5 16.5l-3.6-3.6" />
-        </>
-      }
-      bold={
-        <>
-          <path fillRule="evenodd" d="M8.7 3.2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Zm0 2.3a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4Z" />
-          <rect x="12.8" y="12.9" width="2" height="6.2" rx="1" transform="rotate(45 13.8 16)" />
-        </>
-      }
-    />
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <circle cx="8.7" cy="8.7" r="5.5" />
+      <path d="M16.5 16.5l-3.6-3.6" />
+    </svg>
   );
 }
 
@@ -194,60 +103,29 @@ export function UploadIcon({ className }: IconProps) {
 
 export function HomeIcon({ className }: IconProps) {
   return (
-    <DualIcon
-      className={className}
-      fallback="h-4 w-4"
-      linear={
-        <>
-          <path d="M3 9.5 10 3l7 6.5" />
-          <path d="M5 8v8h10V8" />
-          <path d="M8 16v-4h4v4" />
-        </>
-      }
-      bold={
-        <path d="M10 2.4a1 1 0 0 1 .66.25l7 6.2a1 1 0 1 1-1.32 1.5L16 10.1V16a1 1 0 0 1-1 1h-2.5a1 1 0 0 1-1-1v-3h-3v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-5.9l-.34.3a1 1 0 1 1-1.32-1.5l7-6.2A1 1 0 0 1 10 2.4Z" />
-      }
-    />
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <path d="M3 9.5 10 3l7 6.5" />
+      <path d="M5 8v8h10V8" />
+      <path d="M8 16v-4h4v4" />
+    </svg>
   );
 }
 
 export function ListIcon({ className }: IconProps) {
   return (
-    <DualIcon
-      className={className}
-      fallback="h-4 w-4"
-      linear={<path d="M4 6h12M4 10h12M4 14h8" />}
-      bold={
-        <>
-          <rect x="4" y="5.1" width="12" height="1.8" rx="0.9" />
-          <rect x="4" y="9.1" width="12" height="1.8" rx="0.9" />
-          <rect x="4" y="13.1" width="8" height="1.8" rx="0.9" />
-        </>
-      }
-    />
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <path d="M4 6h12M4 10h12M4 14h8" />
+    </svg>
   );
 }
 
 // Bar chart glyph — used for the Analytics nav link.
 export function AnalyticsIcon({ className }: IconProps) {
   return (
-    <DualIcon
-      className={className}
-      fallback="h-4 w-4"
-      linear={
-        <>
-          <path d="M3.5 16.5v-6M9.5 16.5v-10M15.5 16.5v-4" />
-          <path d="M2.5 16.5h15" />
-        </>
-      }
-      bold={
-        <>
-          <rect x="2.5" y="10.5" width="2.4" height="6.6" rx="0.8" />
-          <rect x="8.8" y="6.5" width="2.4" height="10.6" rx="0.8" />
-          <rect x="15.1" y="12.5" width="2.4" height="4.6" rx="0.8" />
-        </>
-      }
-    />
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <path d="M3.5 16.5v-6M9.5 16.5v-10M15.5 16.5v-4" />
+      <path d="M2.5 16.5h15" />
+    </svg>
   );
 }
 
@@ -291,92 +169,38 @@ export function FileIcon({ className }: IconProps) {
 // deliberately distinct payment-card glyph).
 export function MembershipCardIcon({ className }: IconProps) {
   return (
-    <DualIcon
-      className={className}
-      fallback="h-4 w-4"
-      linear={
-        <>
-          <rect x="2.5" y="4.5" width="15" height="11" rx="2" />
-          <path d="M7.5 6.3v7.4" strokeDasharray="1.6 1.8" />
-          <path d="M6.3 4.5a1.2 1.2 0 0 0 2.4 0M6.3 15.5a1.2 1.2 0 0 1 2.4 0" />
-        </>
-      }
-      bold={
-        <path
-          fillRule="evenodd"
-          d="M4.5 4.5h11a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Zm3 0a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Zm0 8.6a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z"
-        />
-      }
-    />
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <rect x="2.5" y="4.5" width="15" height="11" rx="2" />
+      <path d="M7.5 6.3v7.4" strokeDasharray="1.6 1.8" />
+      <path d="M6.3 4.5a1.2 1.2 0 0 0 2.4 0M6.3 15.5a1.2 1.2 0 0 1 2.4 0" />
+    </svg>
   );
 }
 
 export function ArchiveIcon({ className }: IconProps) {
   return (
-    <DualIcon
-      className={className}
-      fallback="h-4 w-4"
-      viewBox="0 0 24 24"
-      strokeWidth="1.8"
-      linear={
-        <>
-          <rect x="3" y="4" width="18" height="4" rx="1" />
-          <path d="M5 8v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M10 12h4" />
-        </>
-      }
-      bold={
-        <>
-          <rect x="3" y="4" width="18" height="4" rx="1" />
-          <path fillRule="evenodd" d="M5 9h14v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1Zm5 3a1 1 0 0 0 0 2h4a1 1 0 0 0 0-2Z" />
-        </>
-      }
-    />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <rect x="3" y="4" width="18" height="4" rx="1" />
+      <path d="M5 8v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M10 12h4" />
+    </svg>
   );
 }
 
 export function CheckCircleIcon({ className }: IconProps) {
   return (
-    <DualIcon
-      className={className}
-      fallback="h-4 w-4"
-      viewBox="0 0 24 24"
-      strokeWidth="1.8"
-      linear={
-        <>
-          <circle cx="12" cy="12" r="9" />
-          <path d="M8.5 12.5 11 15l4.5-6" />
-        </>
-      }
-      bold={
-        <path
-          fillRule="evenodd"
-          d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm4.03 7.53a.75.75 0 0 0-1.06-1.06l-4.72 4.72-1.72-1.72a.75.75 0 1 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.06 0l5.25-5.25Z"
-        />
-      }
-    />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8.5 12.5 11 15l4.5-6" />
+    </svg>
   );
 }
 
 export function XCircleIcon({ className }: IconProps) {
   return (
-    <DualIcon
-      className={className}
-      fallback="h-4 w-4"
-      viewBox="0 0 24 24"
-      strokeWidth="1.8"
-      linear={
-        <>
-          <circle cx="12" cy="12" r="9" />
-          <path d="M9.5 9.5l5 5M14.5 9.5l-5 5" />
-        </>
-      }
-      bold={
-        <path
-          fillRule="evenodd"
-          d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-1.72 6.97a.75.75 0 1 0-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06L12 13.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L13.06 12l1.72-1.72a.75.75 0 1 0-1.06-1.06L12 10.94Z"
-        />
-      }
-    />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9.5l5 5M14.5 9.5l-5 5" />
+    </svg>
   );
 }
 
@@ -390,24 +214,12 @@ export function MoreIcon({ className }: IconProps) {
   );
 }
 
-const GEAR_TEETH_PATH =
-  "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.32 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z";
-
 export function GearIcon({ className }: IconProps) {
   return (
-    <DualIcon
-      className={className}
-      fallback="h-4 w-4"
-      viewBox="0 0 24 24"
-      strokeWidth="1.8"
-      linear={
-        <>
-          <circle cx="12" cy="12" r="3" />
-          <path d={GEAR_TEETH_PATH} />
-        </>
-      }
-      bold={<path fillRule="evenodd" d={`${GEAR_TEETH_PATH}M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z`} />}
-    />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.32 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
+    </svg>
   );
 }
 
@@ -464,12 +276,9 @@ export function SparkleIcon({ className }: IconProps) {
 
 export function CheckIcon({ className }: IconProps) {
   return (
-    <DualIcon
-      className={className}
-      fallback="h-4 w-4"
-      linear={<path d="M4.5 10.5l3.5 3.5 7.5-8" />}
-      bold={<path d="M5.3 9.7 8 13.2 14.7 5.2 16.3 6.8 8 14 3.7 11.3Z" />}
-    />
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={base(className, "h-4 w-4")}>
+      <path d="M4.5 10.5l3.5 3.5 7.5-8" />
+    </svg>
   );
 }
 

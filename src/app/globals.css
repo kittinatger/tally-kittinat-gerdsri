@@ -6,12 +6,6 @@
    that attribute — otherwise `dark:` classes can disagree with the CSS custom
    properties above whenever the manual choice differs from the OS setting. */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
-/* Settings > Icon style. Mirrors the `dark` variant above exactly — lets an
-   icon component render two <svg>s (a linear/stroke one, a bold/filled one)
-   and toggle between them with `icon-bold:hidden` / `hidden icon-bold:block`,
-   the same technique SunMoonIcon already used for its light/dark glyphs
-   before this existed. See src/lib/icons.tsx's DualIcon. */
-@custom-variant icon-bold (&:where([data-icon-style="bold"], [data-icon-style="bold"] *));
 
 :root {
   --background: #eef4ef;
@@ -118,26 +112,6 @@
 body {
   background: var(--background);
   color: var(--foreground);
-}
-
-/* Settings > Icon style, fallback layer. "Bold" means genuinely filled
-   icons (see DualIcon in src/lib/icons.tsx, which renders real solid
-   artwork for the app's most-visible icons, toggled via the `icon-bold:`
-   variant above) — but redrawing every icon in the app as filled art is
-   an ongoing effort, not a one-pass job. For everything that doesn't have
-   a dedicated filled variant yet (most category icons, most
-   settings-nav-data.tsx rows, scattered one-off icons), this thickens
-   their stroke instead as a "better than nothing" approximation, since
-   nearly every icon in the app shares the same 20x20/24x24 viewBox
-   convention. A DualIcon's own linear <svg> is hidden in bold mode before
-   this could apply to it, so there's no conflict between the two layers.
-   A plain descendant selector (not scoped to :root) so it also works on a
-   small local preview wrapper carrying the attribute, e.g.
-   IconStyleSettings' preview cards. Chart/graph SVGs use their own custom
-   viewBoxes and are unaffected. */
-[data-icon-style="bold"] svg[viewBox="0 0 20 20"],
-[data-icon-style="bold"] svg[viewBox="0 0 24 24"] {
-  stroke-width: 2.4;
 }
 
 h1, h2, h3 {
