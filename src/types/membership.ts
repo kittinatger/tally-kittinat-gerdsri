@@ -53,4 +53,7 @@ export type MembershipCard = {
    * suppressed on the card face — only the value shows. Purely a display
    * toggle; the field's value and layout placement are untouched. */
   hiddenFieldLabels: string[];
+  /** Which /wallet page folder this card is grouped into — null means
+   * ungrouped, shown loose in the top-level stack. */
+  folderId: number | null;
 };

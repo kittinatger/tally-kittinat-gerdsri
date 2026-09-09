@@ -55,6 +55,7 @@ export function toWalletOption(w: WalletRow): WalletOption {
     cardNumberPosition: isCardNumberPosition(w.card_number_position) ? w.card_number_position : DEFAULT_CARD_NUMBER_POSITION,
     cardNumberLast4Only: w.card_number_last4_only,
     category: w.category && isCardTemplateCategory(w.category) ? w.category : null,
+    folderId: w.folder_id,
   };
 }
 

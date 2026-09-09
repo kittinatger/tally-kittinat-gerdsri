@@ -77,4 +77,7 @@ export type WalletOption = {
    * Same enum as card_templates.category, see card-template-category.ts.
    * Metadata only, never applied automatically. */
   category: CardTemplateCategory | null;
+  /** Which /wallet page folder this wallet is grouped into — null means
+   * ungrouped, shown loose in the top-level stack. */
+  folderId: number | null;
 };

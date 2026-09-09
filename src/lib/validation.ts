@@ -259,6 +259,7 @@ export const walletUpdateSchema = z
     isDefault: z.literal(true).optional(),
     archived: z.boolean().optional(),
     startingBalance: z.number().finite().optional(),
+    folderId: z.number().int().positive().nullable().optional(),
     ...walletCardVisualFields,
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
@@ -581,6 +582,24 @@ export const membershipUpdateSchema = z
     showName: z.boolean().optional(),
     hiddenFieldLabels: hiddenFieldLabelsSchema.optional(),
     showCodeText: z.boolean().optional(),
+    folderId: z.number().int().positive().nullable().optional(),
+  })
+  .refine((data) => Object.values(data).some((v) => v !== undefined), {
+    message: "Provide at least one field to update",
+  });
+
+// A folder on the /wallet page — either wallet/card grouping or pass
+// grouping, never both (see card_folders.kind in db.ts).
+export const folderCreateSchema = z.object({
+  kind: z.enum(["wallet", "pass"]),
+  name: z.string().trim().min(1).max(40),
+  color: z.string().trim().min(1).max(30),
+});
+
+export const folderUpdateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(40).optional(),
+    color: z.string().trim().min(1).max(30).optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
     message: "Provide at least one field to update",

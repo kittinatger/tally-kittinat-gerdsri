@@ -39,6 +39,7 @@ export type MembershipCardApiRow = {
   logo_updated_at: string | null;
   banner_updated_at: string | null;
   show_code_text: boolean;
+  folder_id: number | null;
 };
 
 // The GET /api/memberships/[id]/logo|banner URL never changed on a
@@ -112,6 +113,7 @@ export function toMembershipCard(row: MembershipCardApiRow): MembershipCard {
     logoUpdatedAt: row.logo_updated_at,
     bannerUpdatedAt: row.banner_updated_at,
     showCodeText: row.show_code_text,
+    folderId: row.folder_id,
   };
 }
 

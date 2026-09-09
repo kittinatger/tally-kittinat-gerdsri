@@ -184,7 +184,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 75;
+const CURRENT_SCHEMA_VERSION = 76;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1564,6 +1564,25 @@ function ensureSchema(): Promise<void> {
       // reasoning as dashboard_widgets above.
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS icon_style TEXT NOT NULL DEFAULT 'linear';`;
 
+      // Folders for the /wallet page's card and pass stacks — a folder
+      // never mixes the two, hence `kind` ('wallet' | 'pass') scoping each
+      // to one of the two already-separate stacks. Deleting a folder
+      // ungroups its contents (ON DELETE SET NULL below) rather than
+      // deleting them.
+      await sql`
+        CREATE TABLE IF NOT EXISTS card_folders (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          kind TEXT NOT NULL,
+          name TEXT NOT NULL,
+          color TEXT NOT NULL DEFAULT 'slate',
+          sort_order INTEGER NOT NULL DEFAULT 0,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `;
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS folder_id INTEGER REFERENCES card_folders(id) ON DELETE SET NULL;`;
+      await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS folder_id INTEGER REFERENCES card_folders(id) ON DELETE SET NULL;`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -1811,6 +1830,9 @@ export type WalletRow = {
   /** What kind of real-world card this is — see card-template-category.ts.
    * Null if uncategorized. */
   category: string | null;
+  /** Which /wallet page folder this wallet is grouped into — null means
+   * ungrouped, shown loose in the top-level stack. See card_folders. */
+  folder_id: number | null;
 };
 
 // The full column list every wallet-returning query below selects — one
@@ -1821,7 +1843,7 @@ const WALLET_COLUMNS = `
   w.show_network_badge, w.badge_position, w.icon_color, w.show_chip, w.chip_color,
   w.chip_position, w.show_nfc, w.nfc_position, w.nfc_size, w.notes, w.show_balance, w.show_currency, w.show_card_number, w.show_name,
   w.show_holder_name, w.show_expiry, w.name_position, w.card_number_position, w.card_number_last4_only,
-  w.category
+  w.category, w.folder_id
 `;
 const WALLET_BALANCE_EXPR = `
   (
@@ -1979,7 +2001,7 @@ export async function createWallet(
       show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position,
       card_number_position, card_number_last4_only, category;
   `;
-  return { ...rows[0], is_default: false, archived: false, balance: "0", is_owner: true };
+  return { ...rows[0], is_default: false, archived: false, balance: "0", is_owner: true, folder_id: null };
 }
 
 export async function updateWallet(
@@ -2020,6 +2042,7 @@ export async function updateWallet(
     cardNumberPosition?: string;
     cardNumberLast4Only?: boolean;
     category?: string | null;
+    folderId?: number | null;
   },
 ): Promise<WalletRow | { ok: false; error: string } | null> {
   await ensureSchema();
@@ -2057,13 +2080,14 @@ export async function updateWallet(
     card_number_position: string;
     card_number_last4_only: boolean;
     category: string | null;
+    folder_id: number | null;
   }>`
     SELECT
       name, color, background, text_color, kind, currency, is_default, archived,
       holder_name, last4, expiry_month, expiry_year, network,
       show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, show_nfc, nfc_position, nfc_size, notes,
       show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position,
-      card_number_position, card_number_last4_only, category
+      card_number_position, card_number_last4_only, category, folder_id
     FROM wallets WHERE id = ${id} AND user_id = ${userId};
   `;
   const existing = existingRows[0];
@@ -2111,6 +2135,7 @@ export async function updateWallet(
   const newCardNumberPosition = input.cardNumberPosition ?? existing.card_number_position;
   const newCardNumberLast4Only = input.cardNumberLast4Only ?? existing.card_number_last4_only;
   const newCategory = input.category !== undefined ? input.category : existing.category;
+  const newFolderId = input.folderId !== undefined ? input.folderId : existing.folder_id;
 
   const client = await db.connect();
   try {
@@ -2126,7 +2151,7 @@ export async function updateWallet(
             show_chip = ${newShowChip}, chip_color = ${newChipColor}, chip_position = ${newChipPosition}, show_nfc = ${newShowNfc}, nfc_position = ${newNfcPosition}, nfc_size = ${newNfcSize}, notes = ${newNotes},
             show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}, show_card_number = ${newShowCardNumber}, show_name = ${newShowName},
             show_holder_name = ${newShowHolderName}, show_expiry = ${newShowExpiry}, name_position = ${newNamePosition},
-            card_number_position = ${newCardNumberPosition}, card_number_last4_only = ${newCardNumberLast4Only}, category = ${newCategory}
+            card_number_position = ${newCardNumberPosition}, card_number_last4_only = ${newCardNumberLast4Only}, category = ${newCategory}, folder_id = ${newFolderId}
         WHERE id = ${id} AND user_id = ${userId};
       `;
     } else {
@@ -2138,7 +2163,7 @@ export async function updateWallet(
             show_chip = ${newShowChip}, chip_color = ${newChipColor}, chip_position = ${newChipPosition}, show_nfc = ${newShowNfc}, nfc_position = ${newNfcPosition}, nfc_size = ${newNfcSize}, notes = ${newNotes},
             show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}, show_card_number = ${newShowCardNumber}, show_name = ${newShowName},
             show_holder_name = ${newShowHolderName}, show_expiry = ${newShowExpiry}, name_position = ${newNamePosition},
-            card_number_position = ${newCardNumberPosition}, card_number_last4_only = ${newCardNumberLast4Only}, category = ${newCategory}
+            card_number_position = ${newCardNumberPosition}, card_number_last4_only = ${newCardNumberLast4Only}, category = ${newCategory}, folder_id = ${newFolderId}
         WHERE id = ${id} AND user_id = ${userId};
       `;
     }
@@ -5661,12 +5686,15 @@ export type MembershipCardRow = {
   logo_updated_at: string | null;
   banner_updated_at: string | null;
   show_code_text: boolean;
+  /** Which /wallet page folder this card is grouped into — null means
+   * ungrouped, shown loose in the top-level stack. See card_folders. */
+  folder_id: number | null;
 };
 
 export async function listMembershipCards(userId: number): Promise<MembershipCardRow[]> {
   await ensureSchema();
   const { rows } = await sql<MembershipCardRow>`
-    SELECT id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at, show_code_text,
+    SELECT id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at, show_code_text, folder_id,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner
     FROM membership_cards
     WHERE user_id = ${userId}
@@ -5715,7 +5743,7 @@ export async function createMembershipCard(
   const { rows } = await sql<MembershipCardRow>`
     INSERT INTO membership_cards (user_id, name, code_value, code_format, color, icon, notes, sort_order, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, show_code_text)
     VALUES (${userId}, ${input.name}, ${input.codeValue}, ${input.codeFormat}, ${input.color}, ${input.icon ?? null}, ${input.notes ?? null}, ${nextSort}, ${kind}, ${fields}, ${layout}, ${background}, ${input.textColor ?? null}, ${category}, ${customFieldLabels}, ${showLogo}, ${showName}, ${hiddenFieldLabels}, ${showCodeText})
-    RETURNING id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at, show_code_text,
+    RETURNING id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at, show_code_text, folder_id,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner;
   `;
   return rows[0];
@@ -5742,11 +5770,12 @@ export async function updateMembershipCard(
     showName?: boolean;
     hiddenFieldLabels?: string[];
     showCodeText?: boolean;
+    folderId?: number | null;
   },
 ): Promise<MembershipCardRow | null> {
   await ensureSchema();
   const { rows: existingRows } = await sql<MembershipCardRow>`
-    SELECT id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at, show_code_text,
+    SELECT id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at, show_code_text, folder_id,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner
     FROM membership_cards WHERE id = ${id} AND user_id = ${userId};
   `;
@@ -5772,6 +5801,7 @@ export async function updateMembershipCard(
   const newHiddenFieldLabels =
     input.hiddenFieldLabels !== undefined ? JSON.stringify(input.hiddenFieldLabels) : existing.hidden_field_labels;
   const newShowCodeText = input.showCodeText !== undefined ? input.showCodeText : existing.show_code_text;
+  const newFolderId = input.folderId !== undefined ? input.folderId : existing.folder_id;
 
   const { rows } = await sql<MembershipCardRow>`
     UPDATE membership_cards
@@ -5779,9 +5809,10 @@ export async function updateMembershipCard(
         color = ${newColor}, icon = ${newIcon}, notes = ${newNotes},
         kind = ${newKind}, fields = ${newFields}, layout = ${newLayout}, background = ${newBackground},
         text_color = ${newTextColor}, category = ${newCategory}, custom_field_labels = ${newCustomFieldLabels},
-        show_logo = ${newShowLogo}, show_name = ${newShowName}, hidden_field_labels = ${newHiddenFieldLabels}, show_code_text = ${newShowCodeText}
+        show_logo = ${newShowLogo}, show_name = ${newShowName}, hidden_field_labels = ${newHiddenFieldLabels}, show_code_text = ${newShowCodeText},
+        folder_id = ${newFolderId}
     WHERE id = ${id} AND user_id = ${userId}
-    RETURNING id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at, show_code_text,
+    RETURNING id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at, show_code_text, folder_id,
       (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner;
   `;
   return rows[0];
@@ -5790,6 +5821,72 @@ export async function updateMembershipCard(
 export async function deleteMembershipCard(userId: number, id: number): Promise<boolean> {
   await ensureSchema();
   const { rowCount } = await sql`DELETE FROM membership_cards WHERE id = ${id} AND user_id = ${userId};`;
+  return (rowCount ?? 0) > 0;
+}
+
+// ---- Folders (grouping wallets/cards or passes on the /wallet page) ------
+// A folder never mixes the two — `kind` scopes it to whichever of the
+// page's two already-separate stacks it groups. See card_folders in
+// ensureSchema and wallets.folder_id/membership_cards.folder_id above.
+
+export type CardFolderRow = {
+  id: number;
+  kind: string;
+  name: string;
+  color: string;
+};
+
+export async function listFolders(userId: number, kind: "wallet" | "pass"): Promise<CardFolderRow[]> {
+  await ensureSchema();
+  const { rows } = await sql<CardFolderRow>`
+    SELECT id, kind, name, color FROM card_folders
+    WHERE user_id = ${userId} AND kind = ${kind}
+    ORDER BY sort_order, id;
+  `;
+  return rows;
+}
+
+export async function createFolder(userId: number, kind: "wallet" | "pass", name: string, color: string): Promise<CardFolderRow> {
+  await ensureSchema();
+  const { rows: maxRows } = await sql<{ max: number | null }>`
+    SELECT MAX(sort_order) AS max FROM card_folders WHERE user_id = ${userId} AND kind = ${kind};
+  `;
+  const nextSort = (maxRows[0]?.max ?? -1) + 1;
+  const { rows } = await sql<CardFolderRow>`
+    INSERT INTO card_folders (user_id, kind, name, color, sort_order)
+    VALUES (${userId}, ${kind}, ${name}, ${color}, ${nextSort})
+    RETURNING id, kind, name, color;
+  `;
+  return rows[0];
+}
+
+export async function updateFolder(
+  userId: number,
+  id: number,
+  input: { name?: string; color?: string },
+): Promise<CardFolderRow | null> {
+  await ensureSchema();
+  const { rows: existingRows } = await sql<CardFolderRow>`
+    SELECT id, kind, name, color FROM card_folders WHERE id = ${id} AND user_id = ${userId};
+  `;
+  const existing = existingRows[0];
+  if (!existing) return null;
+  const newName = input.name?.trim() ?? existing.name;
+  const newColor = input.color ?? existing.color;
+  const { rows } = await sql<CardFolderRow>`
+    UPDATE card_folders SET name = ${newName}, color = ${newColor}
+    WHERE id = ${id} AND user_id = ${userId}
+    RETURNING id, kind, name, color;
+  `;
+  return rows[0];
+}
+
+// Deleting a folder ungroups its contents (wallets.folder_id/
+// membership_cards.folder_id both ON DELETE SET NULL) rather than
+// deleting them.
+export async function deleteFolder(userId: number, id: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`DELETE FROM card_folders WHERE id = ${id} AND user_id = ${userId};`;
   return (rowCount ?? 0) > 0;
 }
 

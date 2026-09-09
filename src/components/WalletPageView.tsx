@@ -6,20 +6,24 @@ import { useRouter } from "next/navigation";
 import AppHeader from "./AppHeader";
 import PullToRefresh from "./PullToRefresh";
 import Modal from "./Modal";
-import OverflowMenu from "./OverflowMenu";
+import OverflowMenu, { type OverflowMenuItem } from "./OverflowMenu";
 import CardStack from "./CardStack";
 import CardGrid from "./CardGrid";
 import AccountCardShape from "./AccountCardShape";
 import WalletCardShape from "./WalletCardShape";
 import PassShape from "./PassShape";
+import FolderShape from "./FolderShape";
 import { membershipImageUrl } from "@/lib/membership-card-mapper";
 import { useT } from "@/lib/language-context";
 import { useCurrency } from "@/lib/currency-context";
 import { describeFetchError } from "@/lib/fetch-error";
-import { PlusIcon, EditIcon, ArchiveIcon } from "@/lib/icons";
+import { formatCurrency } from "@/lib/format";
+import { dotClasses, colorDotStyle } from "@/lib/category-styles";
+import { PlusIcon, EditIcon, ArchiveIcon, TrashIcon } from "@/lib/icons";
 import type { WalletOption } from "@/types/wallet";
 import type { MembershipCard } from "@/types/membership";
 import type { MembershipCodeFormat } from "@/lib/memberships";
+import type { CardFolder } from "@/types/card-folder";
 
 // Same glyph as WalletManager's own local ShareIcon — this app keeps
 // ShareIcon defined per-file rather than as one shared icons.tsx export
@@ -46,6 +50,7 @@ const AccountDetail = dynamic(() => import("./AccountDetail"), { ssr: false });
 const WalletEntryModal = dynamic(() => import("./WalletEntryModal"), { ssr: false });
 const AddCardEntryModal = dynamic(() => import("./AddCardEntryModal"), { ssr: false });
 const ScanCardModal = dynamic(() => import("./ScanCardModal"), { ssr: false });
+const FolderFormModal = dynamic(() => import("./FolderFormModal"), { ssr: false });
 
 type PassCategory = "pass" | "membership";
 
@@ -61,10 +66,14 @@ export default function WalletPageView({
   wallets,
   passes: initialPasses,
   memberships: initialMemberships,
+  walletFolders: initialWalletFolders,
+  passFolders: initialPassFolders,
 }: {
   wallets: WalletOption[];
   passes: MembershipCard[];
   memberships: MembershipCard[];
+  walletFolders: CardFolder[];
+  passFolders: CardFolder[];
 }) {
   const t = useT();
   const router = useRouter();
@@ -112,6 +121,24 @@ export default function WalletPageView({
   const [sharingWallet, setSharingWallet] = useState<WalletOption | null>(null);
   const [passEntryOpen, setPassEntryOpen] = useState(false);
   const [passScanOpen, setPassScanOpen] = useState(false);
+
+  // Folders group wallets/cards (kind "wallet") or passes/memberships
+  // (kind "pass") on this page — never both. Kept as local state, same
+  // create/rename/delete-then-router.refresh() pattern as everything
+  // else here, rather than always waiting on a full page reload.
+  const [walletFolders, setWalletFolders] = useState(initialWalletFolders);
+  const [passFolders, setPassFolders] = useState(initialPassFolders);
+  const [viewingFolder, setViewingFolder] = useState<{ kind: "wallet" | "pass"; folder: CardFolder } | null>(null);
+  const [confirmDeleteFolder, setConfirmDeleteFolder] = useState(false);
+  // Opens FolderFormModal in create mode; when `assign` is set, the newly
+  // created folder is immediately assigned to that item too (the "New
+  // folder" action from inside a card's own move-to-folder menu creates
+  // and assigns in one step instead of two).
+  const [folderForm, setFolderForm] = useState<{
+    kind: "wallet" | "pass";
+    folder?: CardFolder;
+    assign?: { type: "wallet" | "pass"; id: number };
+  } | null>(null);
 
   // A saved card's own `category` (derived in MembershipCardModal from
   // whichever kind was picked — see CATEGORY_BY_KIND there) says
@@ -206,14 +233,123 @@ export default function WalletPageView({
     }
   }
 
+  async function moveWalletToFolder(walletId: number, folderId: number | null) {
+    setError(null);
+    try {
+      const res = await fetch(`/api/wallets/${walletId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ folderId }),
+      });
+      if (!res.ok) {
+        setError(t("folder.couldNotSave"));
+        return;
+      }
+      setViewingAccount(null);
+      router.refresh();
+    } catch (err) {
+      setError(describeFetchError(err));
+    }
+  }
+
+  async function movePassToFolder(cardId: number, folderId: number | null) {
+    setError(null);
+    try {
+      const res = await fetch(`/api/memberships/${cardId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ folderId }),
+      });
+      if (!res.ok) {
+        setError(t("folder.couldNotSave"));
+        return;
+      }
+      setViewingPass(null);
+      router.refresh();
+    } catch (err) {
+      setError(describeFetchError(err));
+    }
+  }
+
+  // Called once a FolderFormModal save succeeds — either a brand new
+  // folder (add it to local state) or a renamed/recolored existing one
+  // (patch it in place). A create with `assign` set also immediately
+  // moves that item into the new folder, so "New folder" from inside a
+  // card's own move-to-folder menu creates and assigns in one step.
+  function handleFolderSaved(kind: "wallet" | "pass", folder: CardFolder, assign?: { type: "wallet" | "pass"; id: number }) {
+    const setFolders = kind === "wallet" ? setWalletFolders : setPassFolders;
+    setFolders((prev) => {
+      const exists = prev.some((f) => f.id === folder.id);
+      return exists ? prev.map((f) => (f.id === folder.id ? folder : f)) : [...prev, folder];
+    });
+    setFolderForm(null);
+    // Keep the folder detail view open showing the new name/color if it's
+    // the one that was just renamed, rather than closing it.
+    setViewingFolder((prev) => (prev && prev.folder.id === folder.id ? { kind, folder } : prev));
+    if (assign?.type === "wallet") {
+      moveWalletToFolder(assign.id, folder.id);
+    } else if (assign?.type === "pass") {
+      movePassToFolder(assign.id, folder.id);
+    } else {
+      router.refresh();
+    }
+  }
+
+  async function handleDeleteFolder(kind: "wallet" | "pass", folderId: number) {
+    setError(null);
+    try {
+      const res = await fetch(`/api/folders/${folderId}`, { method: "DELETE" });
+      if (!res.ok) {
+        setError(t("folder.couldNotDelete"));
+        return;
+      }
+      const setFolders = kind === "wallet" ? setWalletFolders : setPassFolders;
+      setFolders((prev) => prev.filter((f) => f.id !== folderId));
+      setViewingFolder(null);
+      setConfirmDeleteFolder(false);
+      router.refresh();
+    } catch (err) {
+      setError(describeFetchError(err));
+    }
+  }
+
+  // The "move to folder" rows shared by both an account's and a pass's
+  // overflow menu — every existing folder of the matching kind (tap to
+  // move there), then "New folder" (creates and assigns in one step, see
+  // handleFolderSaved), then "Remove from folder" if it's currently in one.
+  function folderMenuItems(kind: "wallet" | "pass", currentFolderId: number | null, itemId: number): OverflowMenuItem[] {
+    const folders = kind === "wallet" ? walletFolders : passFolders;
+    const move = kind === "wallet" ? moveWalletToFolder : movePassToFolder;
+    const items: OverflowMenuItem[] = folders
+      .filter((f) => f.id !== currentFolderId)
+      .map((f) => ({
+        label: t("folder.moveToNamed").replace("{name}", f.name),
+        icon: <span className={`inline-block h-3 w-3 shrink-0 rounded-full ${dotClasses(f.color)}`} style={colorDotStyle(f.color)} />,
+        onClick: () => move(itemId, f.id),
+      }));
+    items.push({
+      label: t("folder.newFolder"),
+      icon: <PlusIcon className="h-4 w-4" />,
+      onClick: () => setFolderForm({ kind, assign: { type: kind, id: itemId } }),
+    });
+    if (currentFolderId !== null) {
+      items.push({
+        label: t("folder.removeFromFolder"),
+        onClick: () => move(itemId, null),
+      });
+    }
+    return items;
+  }
+
   // A wallet with a network set gets the payment-card visual
   // (WalletCardShape, including its own balance/currency preview per
   // showBalance/showCurrency); one without renders as a plain account
   // (AccountCardShape, which always shows its balance — that's the whole
   // point of an account, not something the card-only toggles apply to).
-  const accountItems = wallets
-    .filter((w) => !w.archived)
-    .map((wallet) => ({
+  // Pulled into a function (not just an inline .map) so the folder-detail
+  // view below can build the same item shape for a folder's own contents.
+  function accountStackItem(wallet: WalletOption) {
+    return {
       key: `wallet-${wallet.id}`,
       node: wallet.network ? (
         <WalletCardShape
@@ -251,13 +387,40 @@ export default function WalletPageView({
         <AccountCardShape wallet={wallet} currency={currency} />
       ),
       onOpen: () => {
+        setViewingFolder(null);
         setAccountArchiveError(null);
         setConfirmArchiveAccount(false);
         setViewingAccount(wallet);
       },
       ariaLabel: wallet.name,
-    }));
-  const cardsStack = accountItems;
+    };
+  }
+
+  const activeWallets = wallets.filter((w) => !w.archived);
+  const ungroupedWalletItems = activeWallets.filter((w) => w.folderId === null).map(accountStackItem);
+
+  function walletFolderStackItem(folder: CardFolder) {
+    const contained = activeWallets.filter((w) => w.folderId === folder.id);
+    const total = contained.reduce((sum, w) => sum + w.balance, 0);
+    return {
+      key: `folder-wallet-${folder.id}`,
+      node: (
+        <FolderShape
+          folder={folder}
+          previewColors={contained.map((w) => w.color)}
+          summaryLabel={t("wallet.balanceLabel")}
+          summaryValue={formatCurrency(total, currency)}
+        />
+      ),
+      onOpen: () => {
+        setConfirmDeleteFolder(false);
+        setViewingFolder({ kind: "wallet", folder });
+      },
+      ariaLabel: folder.name,
+    };
+  }
+  const walletFolderItems = walletFolders.map(walletFolderStackItem);
+  const cardsStack = [...walletFolderItems, ...ungroupedWalletItems];
 
   function passStackItem(card: MembershipCard) {
     return {
@@ -284,11 +447,38 @@ export default function WalletPageView({
           showCodeText={card.showCodeText}
         />
       ),
-      onOpen: () => setViewingPass(card),
+      onOpen: () => {
+        setViewingFolder(null);
+        setViewingPass(card);
+      },
       ariaLabel: card.name,
     };
   }
-  const passesStack = [...passes, ...memberships].map(passStackItem);
+  const allPassCards = [...passes, ...memberships];
+  const ungroupedPassItems = allPassCards.filter((c) => c.folderId === null).map(passStackItem);
+
+  function passFolderStackItem(folder: CardFolder) {
+    const contained = allPassCards.filter((c) => c.folderId === folder.id);
+    return {
+      key: `folder-pass-${folder.id}`,
+      node: (
+        <FolderShape
+          folder={folder}
+          previewColors={contained.map((c) => c.color)}
+          summaryValue={
+            contained.length === 1 ? t("folder.passCountOne") : t("folder.passCountOther").replace("{count}", String(contained.length))
+          }
+        />
+      ),
+      onOpen: () => {
+        setConfirmDeleteFolder(false);
+        setViewingFolder({ kind: "pass", folder });
+      },
+      ariaLabel: folder.name,
+    };
+  }
+  const passFolderItems = passFolders.map(passFolderStackItem);
+  const passesStack = [...passFolderItems, ...ungroupedPassItems];
 
   const isEmpty = cardsStack.length === 0 && passesStack.length === 0;
 
@@ -422,6 +612,7 @@ export default function WalletPageView({
                   // accounts, unlike the real delete that used to live here.
                   onClick: () => setConfirmArchiveAccount(true),
                 },
+                ...folderMenuItems("wallet", viewingAccount.folderId, viewingAccount.id),
               ]}
             />
           }
@@ -450,7 +641,11 @@ export default function WalletPageView({
       )}
 
       {viewingPass && (
-        <Modal onClose={() => setViewingPass(null)} title={viewingPass.name}>
+        <Modal
+          onClose={() => setViewingPass(null)}
+          title={viewingPass.name}
+          headerRight={<OverflowMenu items={folderMenuItems("pass", viewingPass.folderId, viewingPass.id)} />}
+        >
           <MembershipCardDetail
             key={viewingPass.id}
             card={viewingPass}
@@ -505,6 +700,72 @@ export default function WalletPageView({
           }}
           onSaved={handlePassSaved}
           onScanRequested={() => setPassScanOpen(true)}
+        />
+      )}
+
+      {viewingFolder && (
+        <Modal
+          onClose={() => setViewingFolder(null)}
+          title={viewingFolder.folder.name}
+          headerRight={
+            <OverflowMenu
+              items={[
+                {
+                  label: t("folder.rename"),
+                  icon: <EditIcon className="h-4 w-4" />,
+                  onClick: () => setFolderForm({ kind: viewingFolder.kind, folder: viewingFolder.folder }),
+                },
+                {
+                  label: t("folder.delete"),
+                  icon: <TrashIcon className="h-4 w-4" />,
+                  destructive: true,
+                  onClick: () => setConfirmDeleteFolder(true),
+                },
+              ]}
+            />
+          }
+        >
+          {confirmDeleteFolder ? (
+            <div className="rounded-card border border-red-200 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-900/20">
+              <p className="text-sm text-red-700 dark:text-red-300">{t("folder.deleteConfirm")}</p>
+              <div className="mt-3 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setConfirmDeleteFolder(false)}
+                  className="rounded-full px-4 py-2 text-sm font-semibold text-ink-soft transition hover:bg-[var(--nav-hover-bg)]"
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteFolder(viewingFolder.kind, viewingFolder.folder.id)}
+                  className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+                >
+                  {t("folder.delete")}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {error && (
+                <p className="mb-3 text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>
+              )}
+              {viewingFolder.kind === "wallet" ? (
+                <CardStack items={activeWallets.filter((w) => w.folderId === viewingFolder.folder.id).map(accountStackItem)} />
+              ) : (
+                <CardStack items={allPassCards.filter((c) => c.folderId === viewingFolder.folder.id).map(passStackItem)} />
+              )}
+            </>
+          )}
+        </Modal>
+      )}
+
+      {folderForm && (
+        <FolderFormModal
+          kind={folderForm.kind}
+          folder={folderForm.folder}
+          onClose={() => setFolderForm(null)}
+          onSaved={(folder) => handleFolderSaved(folderForm.kind, folder, folderForm.assign)}
         />
       )}
     </div>
