@@ -18,6 +18,7 @@ import {
   budgetsForThisMonth,
   projectedMonthEndSpend,
   upcomingRecurring,
+  topMerchants,
   type AnalyticsPeriodId,
 } from "@/lib/analytics";
 import type { AnalyticsPrefs, AnalyticsSectionId } from "@/lib/analytics-prefs";
@@ -38,6 +39,7 @@ import CategoryOverview from "./CategoryOverview";
 import NetWorthWalletsSection from "./analytics/NetWorthWalletsSection";
 import BudgetsGoalsSection from "./analytics/BudgetsGoalsSection";
 import ForwardLookingSection from "./analytics/ForwardLookingSection";
+import MerchantLeaderboardSection from "./analytics/MerchantLeaderboardSection";
 import SectionHeader from "./analytics/SectionHeader";
 
 function CategoriesIcon({ className }: { className?: string }) {
@@ -158,6 +160,7 @@ export default function AnalyticsPage({
   const budgetProgress = budgetsForThisMonth(budgets, expenses, today);
   const projected = projectedMonthEndSpend(expenses, today);
   const upcoming = upcomingRecurring(recurringRules, today);
+  const merchants = topMerchants(expenses, period);
 
   const show = (id: AnalyticsSectionId) => !hiddenSections.includes(id);
 
@@ -200,6 +203,7 @@ export default function AnalyticsPage({
                     <CategoryOverview expenses={expenses} categories={categories} />
                   </div>
                 )}
+                {show("merchants") && <MerchantLeaderboardSection merchants={merchants} />}
                 {show("netWorth") && <NetWorthWalletsSection netWorthHistory={netWorthHistory} wallets={wallets} />}
                 {show("budgets") && <BudgetsGoalsSection budgetProgress={budgetProgress} savingsGoals={savingsGoals} categories={categories} />}
                 {show("forward") && <ForwardLookingSection projected={projected} upcoming={upcoming} />}

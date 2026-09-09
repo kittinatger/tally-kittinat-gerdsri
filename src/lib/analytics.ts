@@ -256,3 +256,54 @@ export function projectedMonthEndSpend(expenses: Expense[], todayIso: string): P
   const projected = daysElapsed > 0 ? (spent / daysElapsed) * daysInMonth : spent;
   return { spent, projected, daysElapsed, daysInMonth };
 }
+
+export type MerchantRank = {
+  name: string;
+  totalSpent: number;
+  count: number;
+  /** Share of this period's total expense spend, 0-100. */
+  pct: number;
+  /** Same merchant's totalSpent in the previous same-length period —
+   * lets the section show a rank/spend delta, same "vs previous period"
+   * idea computePeriodOverview already uses. */
+  totalSpentPrev: number;
+};
+
+// Ranks merchants by spend within the period already selected elsewhere on
+// the page — deliberately period-scoped rather than reusing db.ts's
+// listVendorStats (which is all-time, for the Settings > Vendors panel):
+// "top merchants this month" is a more useful analytics question than an
+// all-time list the user can already see in Settings. Restricted to
+// type='expense' for the same reason listVendorStats is — income/transfer
+// "merchant" strings aren't real vendors.
+export function topMerchants(expenses: Expense[], period: AnalyticsPeriod, limit = 8): MerchantRank[] {
+  const current = filterByRange(expenses, period.from, period.to).filter((e) => e.type === "expense");
+  const previous = filterByRange(expenses, period.previousFrom, period.previousTo).filter((e) => e.type === "expense");
+
+  const prevTotals = new Map<string, number>();
+  for (const e of previous) prevTotals.set(e.merchant, (prevTotals.get(e.merchant) ?? 0) + e.amount);
+
+  const totals = new Map<string, { totalSpent: number; count: number }>();
+  for (const e of current) {
+    const existing = totals.get(e.merchant);
+    if (existing) {
+      existing.totalSpent += e.amount;
+      existing.count += 1;
+    } else {
+      totals.set(e.merchant, { totalSpent: e.amount, count: 1 });
+    }
+  }
+
+  const grandTotal = current.reduce((s, e) => s + e.amount, 0);
+
+  return Array.from(totals.entries())
+    .map(([name, { totalSpent, count }]) => ({
+      name,
+      totalSpent,
+      count,
+      pct: grandTotal > 0 ? (totalSpent / grandTotal) * 100 : 0,
+      totalSpentPrev: prevTotals.get(name) ?? 0,
+    }))
+    .sort((a, b) => b.totalSpent - a.totalSpent || a.name.localeCompare(b.name))
+    .slice(0, limit);
+}
