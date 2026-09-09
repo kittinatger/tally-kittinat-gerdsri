@@ -115,6 +115,65 @@ export function computePeriodOverview(expenses: Expense[], period: AnalyticsPeri
   return { income, incomePrev, expense, expensePrev, net: income - expense, netPrev: incomePrev - expensePrev };
 }
 
+export type SavingsRate = {
+  /** (income - expense) / income * 100, 0 when there's no income at all
+   * (rather than a misleading negative-infinity-ish number). */
+  rate: number;
+  ratePrev: number;
+};
+
+// Derived straight from computePeriodOverview's output — no new expense
+// scan needed, since income/expense (current and previous) are already
+// computed for the Overview section.
+export function computeSavingsRate(overview: PeriodOverview): SavingsRate {
+  const rate = overview.income > 0 ? ((overview.income - overview.expense) / overview.income) * 100 : 0;
+  const ratePrev = overview.incomePrev > 0 ? ((overview.incomePrev - overview.expensePrev) / overview.incomePrev) * 100 : 0;
+  return { rate, ratePrev };
+}
+
+export type CategoryMover = {
+  category: string;
+  current: number;
+  previous: number;
+  /** current - previous, signed. */
+  delta: number;
+  /** Percent change vs previous, signed; null when previous was 0 (an
+   * infinite/undefined percent change isn't meaningful to show). */
+  deltaPct: number | null;
+};
+
+// Which expense categories moved the most (up or down) vs the previous
+// same-length period — a "what changed" view, distinct from the current-
+// period-only breakdown CategoryOverview already shows. Sorted by absolute
+// dollar delta (not percent) so a category that jumped from $5 to $50 (a
+// huge percent change but a small dollar one) doesn't crowd out one that
+// jumped from $200 to $400.
+export function categoryMovers(expenses: Expense[], period: AnalyticsPeriod, limit = 5): CategoryMover[] {
+  const current = filterByRange(expenses, period.from, period.to).filter((e) => e.type === "expense");
+  const previous = filterByRange(expenses, period.previousFrom, period.previousTo).filter((e) => e.type === "expense");
+
+  const currentTotals = new Map<string, number>();
+  for (const e of current) currentTotals.set(e.category, (currentTotals.get(e.category) ?? 0) + e.amount);
+  const previousTotals = new Map<string, number>();
+  for (const e of previous) previousTotals.set(e.category, (previousTotals.get(e.category) ?? 0) + e.amount);
+
+  const categories = new Set([...currentTotals.keys(), ...previousTotals.keys()]);
+  return Array.from(categories)
+    .map((category) => {
+      const currentAmount = currentTotals.get(category) ?? 0;
+      const previousAmount = previousTotals.get(category) ?? 0;
+      return {
+        category,
+        current: currentAmount,
+        previous: previousAmount,
+        delta: currentAmount - previousAmount,
+        deltaPct: previousAmount > 0 ? ((currentAmount - previousAmount) / previousAmount) * 100 : null,
+      };
+    })
+    .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+    .slice(0, limit);
+}
+
 function shortDayLabel(key: string): string {
   const [y, m, d] = key.split("-").map(Number);
   return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "short", day: "numeric" });

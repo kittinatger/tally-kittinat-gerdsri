@@ -5,7 +5,7 @@
 //
 // Deliberately small — the page itself is mostly fixed (see the
 // analytics rebuild plan); this only holds the one real cross-cutting
-// setting (which period it opens to) plus which of the 9 fixed sections
+// setting (which period it opens to) plus which of the 11 fixed sections
 // are hidden. No per-section reordering/resizing/config, unlike the old
 // dashboard-widgets system this replaces.
 import { ANALYTICS_PERIODS, type AnalyticsPeriodId } from "@/lib/analytics";
@@ -17,6 +17,8 @@ export const ANALYTICS_SECTION_IDS = [
   "merchants",
   "weekday",
   "biggest",
+  "savings",
+  "movers",
   "netWorth",
   "budgets",
   "forward",
