@@ -307,3 +307,45 @@ export function topMerchants(expenses: Expense[], period: AnalyticsPeriod, limit
     .sort((a, b) => b.totalSpent - a.totalSpent || a.name.localeCompare(b.name))
     .slice(0, limit);
 }
+
+// The single biggest expenses within the period — a quick "what actually
+// moved the needle" list, distinct from the by-category/by-merchant
+// aggregates elsewhere on the page.
+export function biggestTransactions(expenses: Expense[], period: AnalyticsPeriod, limit = 5): Expense[] {
+  return filterByRange(expenses, period.from, period.to)
+    .filter((e) => e.type === "expense")
+    .sort((a, b) => b.amount - a.amount || (a.date < b.date ? 1 : -1))
+    .slice(0, limit);
+}
+
+export type WeekdaySpend = {
+  /** 0 = Sunday, matching Date#getDay(), so the section can format the
+   * label itself via Intl (locale-aware, no per-language i18n keys needed
+   * for 7 day names). */
+  weekday: number;
+  amount: number;
+  count: number;
+  /** Share of this period's total expense spend, 0-100. */
+  pct: number;
+};
+
+// Which day of the week you tend to spend the most on, within the period
+// already selected elsewhere on the page. Always returns exactly 7 entries
+// (Sun-Sat), zeroed out where nothing was spent, so the section can render
+// a fixed 7-bar chart without a sparse-data special case.
+export function spendingByWeekday(expenses: Expense[], period: AnalyticsPeriod): WeekdaySpend[] {
+  const current = filterByRange(expenses, period.from, period.to).filter((e) => e.type === "expense");
+  const totals = Array.from({ length: 7 }, () => ({ amount: 0, count: 0 }));
+  for (const e of current) {
+    const weekday = parseIsoDate(e.date).getDay();
+    totals[weekday].amount += e.amount;
+    totals[weekday].count += 1;
+  }
+  const grandTotal = current.reduce((s, e) => s + e.amount, 0);
+  return totals.map((t, weekday) => ({
+    weekday,
+    amount: t.amount,
+    count: t.count,
+    pct: grandTotal > 0 ? (t.amount / grandTotal) * 100 : 0,
+  }));
+}

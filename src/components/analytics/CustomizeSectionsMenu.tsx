@@ -8,7 +8,7 @@ import { GearIcon } from "@/lib/icons";
 
 // A basic "which sections show" checklist — deliberately NOT a full
 // picker (no reordering, no per-section config, no adding/removing
-// items beyond the 7 fixed sections) — the new analytics page is mostly
+// items beyond the 9 fixed sections) — the new analytics page is mostly
 // fixed by design, this is its one lightweight customization knob.
 export default function CustomizeSectionsMenu({
   hiddenSections,
@@ -23,6 +23,8 @@ export default function CustomizeSectionsMenu({
     trend: t("analytics.sectionTrend"),
     categories: t("analytics.sectionCategories"),
     merchants: t("analytics.sectionMerchants"),
+    weekday: t("analytics.sectionWeekday"),
+    biggest: t("analytics.sectionBiggest"),
     netWorth: t("analytics.sectionNetWorth"),
     budgets: t("analytics.sectionBudgets"),
     forward: t("analytics.sectionForward"),

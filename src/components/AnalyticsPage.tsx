@@ -19,6 +19,8 @@ import {
   projectedMonthEndSpend,
   upcomingRecurring,
   topMerchants,
+  spendingByWeekday,
+  biggestTransactions,
   type AnalyticsPeriodId,
 } from "@/lib/analytics";
 import type { AnalyticsPrefs, AnalyticsSectionId } from "@/lib/analytics-prefs";
@@ -40,6 +42,8 @@ import NetWorthWalletsSection from "./analytics/NetWorthWalletsSection";
 import BudgetsGoalsSection from "./analytics/BudgetsGoalsSection";
 import ForwardLookingSection from "./analytics/ForwardLookingSection";
 import MerchantLeaderboardSection from "./analytics/MerchantLeaderboardSection";
+import WeekdaySpendingSection from "./analytics/WeekdaySpendingSection";
+import BiggestTransactionsSection from "./analytics/BiggestTransactionsSection";
 import SectionHeader from "./analytics/SectionHeader";
 
 function CategoriesIcon({ className }: { className?: string }) {
@@ -161,6 +165,8 @@ export default function AnalyticsPage({
   const projected = projectedMonthEndSpend(expenses, today);
   const upcoming = upcomingRecurring(recurringRules, today);
   const merchants = topMerchants(expenses, period);
+  const weekdays = spendingByWeekday(expenses, period);
+  const biggest = biggestTransactions(expenses, period);
 
   const show = (id: AnalyticsSectionId) => !hiddenSections.includes(id);
 
@@ -204,6 +210,8 @@ export default function AnalyticsPage({
                   </div>
                 )}
                 {show("merchants") && <MerchantLeaderboardSection merchants={merchants} />}
+                {show("weekday") && <WeekdaySpendingSection weekdays={weekdays} />}
+                {show("biggest") && <BiggestTransactionsSection transactions={biggest} categories={categories} />}
                 {show("netWorth") && <NetWorthWalletsSection netWorthHistory={netWorthHistory} wallets={wallets} />}
                 {show("budgets") && <BudgetsGoalsSection budgetProgress={budgetProgress} savingsGoals={savingsGoals} categories={categories} />}
                 {show("forward") && <ForwardLookingSection projected={projected} upcoming={upcoming} />}
