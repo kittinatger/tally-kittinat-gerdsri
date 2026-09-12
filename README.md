@@ -13,7 +13,6 @@ Tally is a personal project designed to make expense tracking simple and private
 - [Screenshots](#screenshots)
 - [Known limitations](#known-limitations)
 - [Security notes](#security-notes)
-- [Running your own separate instance](#running-your-own-separate-instance) / [Local development](#local-development-for-contributors)
 
 ## Just want to use Tally?
 
