@@ -6,6 +6,22 @@ export const dynamic = "force-dynamic";
 
 const RELEASES: { version: string; date: string; sections: { heading: string; items: string[] }[] }[] = [
   {
+    version: "0.23.0",
+    date: "2026-09-12",
+    sections: [
+      {
+        heading: "Added",
+        items: [
+          "Folders for the /wallet page — group wallets/cards and passes into named, colored folders (two independent namespaces); create one inline from a card's \"Move to folder\" menu, rename/recolor/delete from the folder view",
+          "An in-app notification center: a bell in the header (desktop pill and a new mobile-only floating button) recording the same recurring-logged, over-budget, and loan-due events that already sent opt-in emails/push, now always on regardless of those toggles, with unread counts and mark-as-read/mark-all-read",
+          "A desktop command palette (Ctrl/Cmd+K) — fuzzy-filterable list of every page, add-transaction shortcut, and non-admin Settings panel, with arrow-key navigation",
+          "Global desktop keyboard shortcuts: G then A/N/W/S to jump to Activities/Analytics/Wallet/Settings, C to start a new transaction, ? to open the full shortcut list — plus a new Settings > Keyboard shortcuts page listing all of them",
+          "Five new Analytics sections, each independently hideable via the existing Customize menu: a merchant spend leaderboard (ranks Vendors data by spend for the selected period, linking into Activities' vendor filter), spending-by-day-of-week, biggest single transactions, a savings-rate stat with a vs-previous-period delta, and a category-movers list showing which categories changed the most since the prior period",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.22.0",
     date: "2026-09-08",
     sections: [

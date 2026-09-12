@@ -1,8 +1,24 @@
 # Tally — Personal Expense Tracker
 
-A private, personal expense tracker. Add expenses manually or snap a photo of a
-receipt and let Gemini's vision API read the merchant, total, date, and
-category for you to review before saving.
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org)
+[![Deployed on Vercel](https://img.shields.io/badge/deployed%20on-Vercel-black?logo=vercel)](https://tally-kittinat.vercel.app)
+
+A private, personal expense tracker. Add expenses manually, snap a photo of a
+receipt, or just describe it out loud — [Google Gemini](https://ai.google.dev/)
+reads the merchant, total, date, and category for you to review before saving.
+
+**[Try the live demo →](https://tally-kittinat.vercel.app)**
+
+## Contents
+
+- [Just want to use Tally?](#just-want-to-use-tally)
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Known limitations](#known-limitations)
+- [Security notes](#security-notes)
+- [Running your own separate instance](#running-your-own-separate-instance) / [Local development](#local-development-for-contributors)
 
 ## Just want to use Tally?
 
@@ -14,42 +30,34 @@ You don't need to deploy anything — go to **[tally-kittinat.vercel.app](https:
 - **Automatic receipt import from Photos** — create a personal access token in Settings > Automatic import, then set up an iOS Shortcut (fully automatic, or a one-tap Share Sheet variant) or the Android share sheet to log receipts without ever opening the app; auto-imported transactions are tagged `auto-import` and keep the source photo attached so you can spot-check them.
 - **Wallets** — track balances across multiple cash/bank/e-wallet pools, transfer between them (with real currency conversion), set a default, archive old ones, share one with a friend, and give any wallet a payment-card look (network badge, chip, holder name, last 4, expiry) with per-field show/hide toggles and a drag-to-reorder stack.
 - **Wallet passes & membership cards** — digital loyalty cards, coupons, event tickets, boarding passes, gift cards, and transit passes with a QR/barcode/PDF417/Aztec code, custom-named fields, and an attachable logo/banner (with a pan-pinch-zoom crop tool); pick a look from a gallery of admin-reviewed premade pass designs, or submit your own.
+- **Folders** — group wallets/cards and passes into named, colored folders on the Wallet page (two independent groupings — a card folder and a pass folder are never mixed).
 - **Recurring transactions** — rent, subscriptions, salary logged automatically on a weekly/monthly/yearly schedule; editable, pausable, reorderable, and skippable for a single upcoming occurrence.
-- **Budgets** — a monthly spending limit per category, a Dashboard progress widget, optional rollover of unused budget into the next month, and a dismissible alert banner when a category nears or goes over its limit.
-- **Savings goals** — track progress toward something you're saving for, with manual contribute/withdraw and a Dashboard progress widget.
-- **Debt & loan tracker** — track money lent or borrowed, with an optional manual payoff schedule and push notifications for upcoming payments.
+- **Budgets** — a monthly spending limit per category, an Analytics progress section, optional rollover of unused budget into the next month, and a dismissible alert banner when a category nears or goes over its limit.
+- **Savings goals** — track progress toward something you're saving for, with manual contribute/withdraw and an Analytics progress section.
+- **Debt & loan tracker** — track money lent or borrowed, with an optional manual payoff schedule and push/in-app notifications for upcoming payments.
 - **Split transactions** — log one receipt as multiple category lines (shown as a single grouped card in Activities), or share a public, read-only link so anyone can see what they owe without a Tally account.
+- **A rich, customizable Analytics page** — spending trends, category breakdowns, net worth & wallet trends, budget/goal health, and forward-looking end-of-month projections, plus a merchant spend leaderboard, spending-by-day-of-week, biggest single transactions, a savings-rate stat, and a category-movers list showing what changed since the last period — all driven by one shared period selector (This month / Last month / Last 3 months / Last 6 months / Year to date), with a "Customize" menu to show/hide any individual section.
+- **In-app notification center & desktop command palette** — a bell icon surfaces recurring/budget/loan alerts as they happen (regardless of your email/push settings); on desktop, press `Ctrl`/`Cmd`+`K` for a fuzzy-searchable command palette, or use global shortcuts (`G` then a letter to jump between pages, `C` to add a transaction, `?` to see the full list — also browsable at Settings > Keyboard shortcuts).
 - **In-app AI assistant & tools** — ask the spending assistant questions like "how much did I spend on food this month" and get an answer computed from your real transactions; plus a standalone QR/barcode code generator and scanner, currency converter, and discount/tip and loan calculators (Settings > Tools).
 - **Search, filter & bulk actions** — search by merchant/notes/tags; filter by type, category, tags, wallet, or date range; bulk-select transactions in Activities to delete or tag them at once; swipe a transaction left/right on mobile for quick delete/share.
-- **Free-form tags & customizable categories** — label transactions with custom tags, and rename/recolor/add an icon to expense and income categories to match your workflow.
-- **Fully customizable dashboard** — an iOS-style live editor with 50+ widgets (progress rings, gauges, sparklines, donut charts, heatmaps, leaderboards, and more) to build your own layout.
+- **Free-form tags, customizable categories & a vendor directory** — label transactions with custom tags, rename/recolor/add an icon to categories, and manage every merchant you've ever paid (Settings > Vendors) — sortable by spend/recency/usage, with one-tap merge for inconsistently-spelled entries.
 - **CSV export & import** — for transactions, budgets, recurring rules, and savings goals; import accepts common column-name synonyms and infers expense vs. income from the amount's sign.
-- **Currency selection & automatic conversion** — pick your default currency in Settings; optionally auto-convert amounts detected in a different currency (via [Frankfurter](https://frankfurter.app), a free ECB-rate API) when scanning, speaking, or viewing the Dashboard's Remaining total.
+- **Currency selection & automatic conversion** — pick your default currency in Settings; optionally auto-convert amounts detected in a different currency (via [Frankfurter](https://frankfurter.app), a free ECB-rate API) when scanning, speaking, or viewing Analytics.
 - **Installable, offline-capable PWA** — install Tally to your home screen; it works offline with a sync queue for anything you add or edit without a connection, and can be locked behind a passcode or Face ID/Touch ID/Windows Hello.
-- **Email notifications** — opt in (Settings > Permissions) to an email when a recurring rule auto-logs a transaction or a category goes over budget.
+- **Email & in-app notifications** — opt in (Settings > Permissions) to an email when a recurring rule auto-logs a transaction or a category goes over budget; the in-app notification center picks up the same events (plus loan reminders) regardless of that opt-in.
 - **Encrypted backup** — a passphrase-protected full-data export/import (Settings > Backup), encrypted client-side so the passphrase never reaches the server.
 - **Multi-user accounts, fully isolated** — anyone can sign up with their own username and password, or sign in with GitHub (and link/unlink GitHub from an existing account in Settings > Account); each account's data is fully private via signed, httpOnly session cookies. Self-service password reset by email, account deletion, and "sign out of all devices" are all available from Settings.
-- **Liquid-glass UI** — clean, modern design built for quick entry on a phone and full desktop use.
+- **Liquid-glass UI** — clean, modern design built for quick entry on a phone and full desktop use, with 24 selectable nav-bar styles and 6 selectable Settings page layouts.
 - **Postgres storage** — works out of the box with [Vercel's Neon database](https://vercel.com/docs/storage/vercel-postgres) (free tier available).
 
 ## Screenshots
 
-**Dashboard** — a fully customizable, live-editable grid of 50+ widgets: balance hero, category breakdown, spending trends, budgets, savings goals, leaderboards, tickers, and more.
-
-<table>
-<tr>
-<td><img src="screenshots/01-dashboard-desktop-dark-top.jpg" alt="Dashboard, desktop, dark mode" width="360"/></td>
-<td><img src="screenshots/04-dashboard-desktop-light-top.jpg" alt="Dashboard, desktop, light mode" width="360"/></td>
-</tr>
-<tr>
-<td><img src="screenshots/02-dashboard-desktop-dark-mid.jpg" alt="Dashboard mid-scroll, category breakdown and budgets" width="360"/></td>
-<td><img src="screenshots/03-dashboard-desktop-dark-widgets.jpg" alt="Dashboard, wallets and recent transactions" width="360"/></td>
-</tr>
-<tr>
-<td><img src="screenshots/09-dashboard-mobile-dark.jpg" alt="Dashboard, mobile, dark mode" width="200"/></td>
-<td><img src="screenshots/10-dashboard-mobile-light.jpg" alt="Dashboard, mobile, light mode" width="200"/></td>
-</tr>
-</table>
+> The Dashboard screenshots that used to open this section showed a widget-grid
+> page that has since been replaced by the fixed [Analytics](#features) page
+> (see the [changelog](CHANGELOG.md)) — they've been removed rather than left
+> up as an inaccurate first impression. The galleries below (Activities,
+> Settings) still reflect the current app; [try the live demo](https://tally-kittinat.vercel.app)
+> for a look at Analytics, Wallet folders, and everything else added since.
 
 **Adding a transaction** — manual entry, receipt scanning, or voice entry, all from the same modal.
 
@@ -96,7 +104,6 @@ You don't need to deploy anything — go to **[tally-kittinat.vercel.app](https:
 </tr>
 <tr>
 <td><img src="screenshots/23-settings-recurring-desktop.jpg" alt="Settings, Recurring transactions panel" width="300"/></td>
-<td><img src="screenshots/26-settings-customizedashboard-desktop.jpg" alt="Settings, Customize dashboard editor" width="300"/></td>
 <td><img src="screenshots/28-settings-desktop-light-empty.jpg" alt="Settings, desktop, light mode" width="300"/></td>
 </tr>
 <tr>
@@ -122,7 +129,7 @@ You don't need to deploy anything — go to **[tally-kittinat.vercel.app](https:
 - **Environment variables**: Store `SESSION_SECRET` (and `ADMIN_BOOTSTRAP_PASSWORD`, if used) securely in your hosting platform's environment variable settings (Vercel, Railway, etc.), not in code. Never commit `.env.local`.
 - **Rotate secrets**: If you suspect `SESSION_SECRET` has leaked, rotate it immediately — this invalidates all existing sessions for every account, logging everyone out.
 
-<details>
+<details id="running-your-own-separate-instance">
 <summary>Running your own separate instance</summary>
 
 Not recommended for most people — [creating an account on the live instance](#just-want-to-use-tally) already gives you fully private, isolated data. Only do this if you specifically need your own separate database and infrastructure.
@@ -131,7 +138,7 @@ If you still want to: [Vercel deploy link](https://vercel.com/new/clone?reposito
 
 </details>
 
-<details>
+<details id="local-development-for-contributors">
 <summary>Local development (for contributors)</summary>
 
 ### 1. Install dependencies
