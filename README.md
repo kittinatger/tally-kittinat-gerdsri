@@ -1,22 +1,8 @@
 # Tally — Personal Expense Tracker
 
-A private, personal expense tracker. Add expenses manually, snap a photo of a
+Tally is a personal project designed to make expense tracking simple and private. Add expenses manually, snap a photo of a
 receipt, or just describe it out loud — [Google Gemini](https://ai.google.dev/)
-reads the merchant, total, date, and category for you to review before saving.
-
-Tally is a personal project designed to make expense tracking simple and private. [Create an account](https://tally-kittinat.vercel.app) to use it.
-
-## Contents
-
-- [Just want to use Tally?](#just-want-to-use-tally)
-- [Features](#features)
-- [Screenshots](#screenshots)
-- [Known limitations](#known-limitations)
-- [Security notes](#security-notes)
-
-## Just want to use Tally?
-
-You don't need to deploy anything — go to **[tally-kittinat.vercel.app](https://tally-kittinat.vercel.app)** and create your own account. It's free, takes a few seconds, and your data is completely private to your account (no one else, including other accounts on that deployment, can see it).
+reads the merchant, total, date, and category for you to review before saving. [Create an account](https://tally-kittinat.vercel.app) to use it.
 
 ## Features
 
