@@ -1,10 +1,5 @@
 # Tally — Personal Expense Tracker
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org)
-[![Deployed on Vercel](https://img.shields.io/badge/deployed%20on-Vercel-black?logo=vercel)](https://tally-kittinat.vercel.app)
-
 A private, personal expense tracker. Add expenses manually, snap a photo of a
 receipt, or just describe it out loud — [Google Gemini](https://ai.google.dev/)
 reads the merchant, total, date, and category for you to review before saving.
