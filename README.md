@@ -1,8 +1,7 @@
 # Tally — Personal Expense Tracker
 
 Tally is a personal project designed to make expense tracking simple and private. Add expenses manually, snap a photo of a
-receipt, or just describe it out loud — [Google Gemini](https://ai.google.dev/)
-reads the merchant, total, date, and category for you to review before saving. [Create an account](https://tally-kittinat.vercel.app) to use it.
+receipt, or just describe it out loud. [Create an account](https://tally-kittinat.vercel.app) to use it.
 
 ## Features
 
