@@ -4,7 +4,7 @@ A private, personal expense tracker. Add expenses manually, snap a photo of a
 receipt, or just describe it out loud — [Google Gemini](https://ai.google.dev/)
 reads the merchant, total, date, and category for you to review before saving.
 
-**[Try the live demo →](https://tally-kittinat.vercel.app)**
+Tally is a personal project designed to make expense tracking simple and private. [Create an account](https://tally-kittinat.vercel.app) to use it.
 
 ## Contents
 
@@ -123,7 +123,5 @@ You don't need to deploy anything — go to **[tally-kittinat.vercel.app](https:
 - **HTTPS required**: Always deploy on HTTPS in production. Session cookies include the `Secure` flag and will not work over plain HTTP.
 - **Environment variables**: Store `SESSION_SECRET` (and `ADMIN_BOOTSTRAP_PASSWORD`, if used) securely in your hosting platform's environment variable settings (Vercel, Railway, etc.), not in code. Never commit `.env.local`.
 - **Rotate secrets**: If you suspect `SESSION_SECRET` has leaked, rotate it immediately — this invalidates all existing sessions for every account, logging everyone out.
-
-Tally is a personal project designed to make expense tracking simple and private. [Create an account](https://tally-kittinat.vercel.app) to use it — no deployment needed.
 
 See [Acknowledgments](.github/ACKNOWLEDGMENTS.md) for the author, tech stack, and icon credits.
