@@ -19,6 +19,19 @@ const RELEASES: { version: string; date: string; sections: { heading: string; it
           "Five new Analytics sections, each independently hideable via the existing Customize menu: a merchant spend leaderboard (ranks Vendors data by spend for the selected period, linking into Activities' vendor filter), spending-by-day-of-week, biggest single transactions, a savings-rate stat with a vs-previous-period delta, and a category-movers list showing which categories changed the most since the prior period",
         ],
       },
+      {
+        heading: "Changed",
+        items: [
+          "A full visual redesign of the Analytics page (desktop + mobile, animated): a count-up hero net worth figure, a donut chart for wallets-by-balance on desktop, staggered fade-in-up card entrances, and distinct desktop/mobile layouts throughout — no functional/data changes, same period selector and Customize prefs as before",
+        ],
+      },
+      {
+        heading: "Fixed",
+        items: [
+          "The theme toggle's sun/moon icon and the Analytics \"Customize\" button's gear icon were unclear/easy to mix up (the Customize button in particular was rendering as a sun, not a gear)",
+          "SegmentedControl's default size had no horizontal padding",
+        ],
+      },
     ],
   },
   {
