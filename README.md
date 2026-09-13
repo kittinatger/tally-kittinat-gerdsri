@@ -1,28 +1,7 @@
 # Tally — Personal Expense Tracker
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org)
-[![Deployed on Vercel](https://img.shields.io/badge/deployed%20on-Vercel-black?logo=vercel)](https://tally-kittinat.vercel.app)
-
-A private, personal expense tracker. Add expenses manually, snap a photo of a
-receipt, or just describe it out loud — [Google Gemini](https://ai.google.dev/)
-reads the merchant, total, date, and category for you to review before saving.
-
-**[Try the live demo →](https://tally-kittinat.vercel.app)**
-
-## Contents
-
-- [Just want to use Tally?](#just-want-to-use-tally)
-- [Features](#features)
-- [Screenshots](#screenshots)
-- [Known limitations](#known-limitations)
-- [Security notes](#security-notes)
-- [Running your own separate instance](#running-your-own-separate-instance) / [Local development](#local-development-for-contributors)
-
-## Just want to use Tally?
-
-You don't need to deploy anything — go to **[tally-kittinat.vercel.app](https://tally-kittinat.vercel.app)** and create your own account. It's free, takes a few seconds, and your data is completely private to your account (no one else, including other accounts on that deployment, can see it).
+Tally is a personal project designed to make expense tracking simple and private. Add expenses manually, snap a photo of a
+receipt, or just describe it out loud. [Create an account](https://tally-kittinat.vercel.app) to use it.
 
 ## Features
 
@@ -128,67 +107,5 @@ You don't need to deploy anything — go to **[tally-kittinat.vercel.app](https:
 - **HTTPS required**: Always deploy on HTTPS in production. Session cookies include the `Secure` flag and will not work over plain HTTP.
 - **Environment variables**: Store `SESSION_SECRET` (and `ADMIN_BOOTSTRAP_PASSWORD`, if used) securely in your hosting platform's environment variable settings (Vercel, Railway, etc.), not in code. Never commit `.env.local`.
 - **Rotate secrets**: If you suspect `SESSION_SECRET` has leaked, rotate it immediately — this invalidates all existing sessions for every account, logging everyone out.
-
-<details id="running-your-own-separate-instance">
-<summary>Running your own separate instance</summary>
-
-Not recommended for most people — [creating an account on the live instance](#just-want-to-use-tally) already gives you fully private, isolated data. Only do this if you specifically need your own separate database and infrastructure.
-
-If you still want to: [Vercel deploy link](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fkittinatger%2Ftally-kittinat-gerdsri&env=POSTGRES_URL,GEMINI_API_KEY,SESSION_SECRET&envDescription=Required%20environment%20variables%20for%20Tally&envLink=https%3A%2F%2Fgithub.com%2Fkittinatger%2Ftally-kittinat-gerdsri%2Fblob%2Fmaster%2F.env.local.example), or the [step-by-step guide](DEPLOYMENT_VERCEL.md) for a fully manual walkthrough.
-
-</details>
-
-<details id="local-development-for-contributors">
-<summary>Local development (for contributors)</summary>
-
-### 1. Install dependencies
-
-```bash
-npm install
-```
-
-### 2. Configure environment variables
-
-Copy the example file:
-
-```bash
-cp .env.local.example .env.local
-```
-
-Then fill in `.env.local`:
-
-| Variable | Required | Notes |
-| --- | --- | --- |
-| `POSTGRES_URL` | Yes | Connection string for your Postgres database. If you're using Vercel Postgres, run `vercel env pull .env.local` after creating the database (see below) instead of setting it by hand. |
-| `GEMINI_API_KEY` | Yes | Free key from [Google AI Studio](https://aistudio.google.com/apikey). Used for receipt scanning, voice entry, and automatic receipt import; manual entry works without it. |
-| `SESSION_SECRET` | Yes | A random secret that keeps your login session secure. Think of it like a security key that scrambles your session cookie so no one can forge a fake login. Generate one by copying and pasting this into your terminal: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` — it will print out a long random string (like `e7b4d9fccc1ade2ae...`). Paste that string as the value for `SESSION_SECRET`. **Important**: Use a different random string for production (on Vercel) than for local development. |
-| `RESEND_API_KEY` | No | Free key from [Resend](https://resend.com/api-keys). Needed for password reset emails and the optional recurring/budget notification emails; everything else works without it. |
-| `EMAIL_FROM` | No | The "from" address for emails Tally sends. Falls back to Resend's shared testing address if unset — use a verified domain for real deployments. |
-| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | No | Enables the "Continue with GitHub" button on login/register. Create an OAuth App at [github.com/settings/developers](https://github.com/settings/developers) with its callback URL set to `<your-domain>/api/auth/github/callback`. Leave unset to hide the button; username/password sign-in always works. |
-| `ADMIN_USERNAME` / `ADMIN_BOOTSTRAP_PASSWORD` | No | Only needed once, on the very first deploy of an instance that already has data from before multi-user accounts existed — creates an admin account and assigns that existing data to it. Leave unset on a brand-new install; everyone just signs up at `/register` instead. Remove both after confirming the admin account works. |
-
-### 3. Get a Postgres database
-
-Easiest option — use a free [Neon Postgres database](https://neon.tech) via Vercel:
-
-1. Push this repo to GitHub (see below) and import it into a new [Vercel](https://vercel.com) project.
-2. In the Vercel project, go to **Storage → Create Database → Neon**, and connect it to the project.
-3. Locally, run `npx vercel link` once to link this folder to the Vercel project, then `npx vercel env pull .env.local` to pull `POSTGRES_URL` (and any other env vars you've set in Vercel) into your local `.env.local`.
-
-**Note**: Vercel's free Postgres tier now uses Neon. It works exactly the same way — just a different provider.
-
-The `expenses` table is created automatically on first use — no manual migration step needed.
-
-### 4. Run it
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000). You'll be redirected to `/login` first.
-
-</details>
-
-Tally is a personal project designed to make expense tracking simple and private. [Create an account](https://tally-kittinat.vercel.app) to use it — no deployment needed.
 
 See [Acknowledgments](.github/ACKNOWLEDGMENTS.md) for the author, tech stack, and icon credits.
