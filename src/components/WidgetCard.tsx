@@ -182,13 +182,14 @@ export default function WidgetCard({
 }) {
   return (
     <div
+      data-widget-card
       style={delayMs !== undefined ? { animationDelay: `${delayMs}ms` } : undefined}
       className={`relative flex h-full flex-col overflow-hidden rounded-card border bg-gradient-to-br via-surface to-surface p-4 shadow-sm transition-[transform,box-shadow] duration-200 ${
         delayMs !== undefined ? "animate-[fade-in-up_0.4s_ease-out_backwards] motion-reduce:animate-none" : ""
       } sm:hover:-translate-y-0.5 sm:hover:shadow-md ${BORDER[color]} ${FROM[color]} ${className}`}
     >
       {blob !== "none" && (
-        <div className={`pointer-events-none absolute ${BLOB_POS[blob]} ${blobSize} rounded-full blur-2xl ${BLOB[color]}`} />
+        <div data-widget-blob className={`pointer-events-none absolute ${BLOB_POS[blob]} ${blobSize} rounded-full blur-2xl ${BLOB[color]}`} />
       )}
       <div className="relative flex flex-1 flex-col">{children}</div>
     </div>

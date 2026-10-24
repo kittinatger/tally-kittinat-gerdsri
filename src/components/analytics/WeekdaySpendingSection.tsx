@@ -1,6 +1,6 @@
 "use client";
 
-import { formatCurrency } from "@/lib/format";
+import { formatCompactCurrency } from "@/lib/format";
 import { useCurrency } from "@/lib/currency-context";
 import { useT } from "@/lib/language-context";
 import type { WeekdaySpend } from "@/lib/analytics";
@@ -57,8 +57,8 @@ export default function WeekdaySpendingSection({ weekdays }: { weekdays: Weekday
               const heightPct = maxAmount > 0 ? Math.max((w.amount / maxAmount) * 100, w.amount > 0 ? 6 : 2) : 2;
               const isTop = topDay && w.weekday === topDay.weekday && w.amount > 0;
               return (
-                <div key={w.weekday} className="flex flex-1 flex-col items-center gap-1.5">
-                  <p className="text-[11px] font-semibold text-surface-foreground">{w.amount > 0 ? formatCurrency(w.amount, currency) : ""}</p>
+                <div key={w.weekday} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
+                  <p className="max-w-full truncate text-[11px] font-semibold text-surface-foreground">{w.amount > 0 ? formatCompactCurrency(w.amount, currency) : ""}</p>
                   <div className="flex h-24 w-full items-end overflow-hidden rounded-md bg-bg-soft">
                     <div
                       className={`w-full rounded-md transition-all duration-500 ease-out animate-[fade-in-up_0.4s_ease-out_backwards] motion-reduce:animate-none ${

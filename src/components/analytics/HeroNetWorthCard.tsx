@@ -58,11 +58,12 @@ export default function HeroNetWorthCard({
 
   return (
     <div
+      data-hero-card
       className={`relative flex flex-col overflow-hidden rounded-card bg-gradient-to-br from-emerald-700 to-emerald-950 text-white shadow-soft animate-[fade-in-up_0.4s_ease-out_backwards] motion-reduce:animate-none ${
         compact ? "p-4" : "p-5"
       }`}
     >
-      <div className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+      <div data-hero-blob className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
       <div className="relative flex items-start justify-between gap-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-white/70">{t("analytics.netWorth")}</p>
         {onEdit && (

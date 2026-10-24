@@ -329,6 +329,34 @@ h1, h2, h3 {
   color: var(--on-navy);
 }
 
+/* ── Modern: Analytics + shared cards ──────────────────────────────── */
+
+/* Widgets: one flat neutral card instead of per-color tinted gradients with
+   a glowing blob and a hover lift. The color still shows up where it carries
+   meaning (numbers, bars, badges). */
+:root[data-design="modern"] [data-widget-card] {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: none;
+  transform: none !important;
+}
+:root[data-design="modern"] [data-widget-blob],
+:root[data-design="modern"] [data-hero-blob] {
+  display: none;
+}
+/* Net-worth hero: a solid near-black panel rather than the green gradient. */
+:root[data-design="modern"] [data-hero-card] {
+  background: #18181b;
+  box-shadow: none;
+}
+:root[data-design="modern"][data-theme="dark"] [data-hero-card] {
+  background: #1c1c20;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.09);
+}
+:root[data-design="modern"] [data-icon-badge] {
+  border-radius: 8px;
+}
+
 /* ── Modern: add-transaction flow ──────────────────────────────────── */
 
 /* Manual / Scan / Speak: neutral inline tabs instead of three

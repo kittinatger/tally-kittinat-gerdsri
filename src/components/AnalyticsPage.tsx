@@ -189,7 +189,7 @@ export default function AnalyticsPage({
 
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h1 className="flex items-center gap-2 font-display text-xl text-foreground">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-navy/10 text-navy">
+                    <span data-icon-badge className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-navy/10 text-navy">
                       <AnalyticsIcon className="h-4 w-4" />
                     </span>
                     {t("analytics.title")}

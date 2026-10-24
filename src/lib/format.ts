@@ -22,6 +22,17 @@ export function formatCurrency(amount: number, currency: string = "USD"): string
   }).format(amount);
 }
 
+// Short form for tight spots like chart-column labels, e.g. "฿1.2K".
+export function formatCompactCurrency(amount: number, currency: string = "USD"): string {
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency,
+    currencyDisplay: "narrowSymbol",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(amount);
+}
+
 // Plain numeric string (no symbol/grouping) rounded to the currency's own
 // decimal precision — e.g. 2 for USD, 0 for JPY, 3 for BHD — for contexts
 // like CSV export where a hardcoded .toFixed(2) would truncate or pad

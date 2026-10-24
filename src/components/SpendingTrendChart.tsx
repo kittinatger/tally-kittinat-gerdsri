@@ -121,7 +121,8 @@ export default function SpendingTrendChart({
   if (chartType === "bar") {
     const max = Math.max(...points.map((p) => p.amount), 0);
     return (
-      <div className="flex items-end justify-between gap-2">
+      <div className="overflow-x-auto">
+      <div className="flex w-max min-w-full items-end justify-between gap-2">
         {points.map((p) => (
           <div key={p.key} className="flex flex-1 flex-col items-center gap-1.5">
             <span className="text-[11px] font-semibold text-foreground">
@@ -137,6 +138,7 @@ export default function SpendingTrendChart({
           </div>
         ))}
       </div>
+      </div>
     );
   }
 
@@ -150,7 +152,8 @@ export default function SpendingTrendChart({
     );
     return (
       <div>
-        <div className="flex items-end justify-between gap-2">
+        <div className="overflow-x-auto">
+        <div className="flex w-max min-w-full items-end justify-between gap-2">
           {stackedPoints.map((p, i) => (
             <div key={p.key} className="flex flex-1 flex-col items-center gap-1.5">
               <span className="text-[11px] font-semibold text-foreground">
@@ -169,6 +172,7 @@ export default function SpendingTrendChart({
               <span className="text-xs text-ink-soft">{p.label}</span>
             </div>
           ))}
+        </div>
         </div>
         {allCategories.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-x-3 gap-y-1.5 border-t border-line pt-3">
@@ -192,6 +196,9 @@ export default function SpendingTrendChart({
       y: max > 0 ? VIEW_H - PAD - ((p.amount / max) * (VIEW_H - PAD * 2)) : VIEW_H - PAD,
       point: p,
     }));
+    // One label per point overflows the card once a period has more than a
+    // handful of buckets (e.g. a month of daily points) — thin them out.
+    const labelEvery = Math.max(1, Math.ceil(points.length / 6));
     const linePath = coords.map((c, i) => `${i === 0 ? "M" : "L"} ${c.x} ${c.y}`).join(" ");
     const areaPath = `${linePath} L ${coords[coords.length - 1]?.x ?? PAD} ${VIEW_H - PAD} L ${PAD} ${VIEW_H - PAD} Z`;
     return (
@@ -204,9 +211,9 @@ export default function SpendingTrendChart({
           ))}
         </svg>
         <div className="mt-1.5 flex justify-between">
-          {points.map((p) => (
-            <span key={p.key} className="flex-1 text-center text-xs text-ink-soft">
-              {p.label}
+          {points.map((p, i) => (
+            <span key={p.key} className="min-w-0 flex-1 text-center text-xs text-ink-soft">
+              {i % labelEvery === 0 || i === points.length - 1 ? p.label : ""}
             </span>
           ))}
         </div>

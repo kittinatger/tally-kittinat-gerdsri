@@ -17,7 +17,7 @@ export default function SectionHeader({
   return (
     <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
       <div className="flex items-start gap-2.5">
-        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-navy/10 text-navy">{icon}</span>
+        <span data-icon-badge className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-navy/10 text-navy">{icon}</span>
         <div>
           <h2 className="font-display text-lg text-foreground">{title}</h2>
           {description && <p className="text-xs text-ink-soft">{description}</p>}

@@ -54,7 +54,7 @@ export default function StatCard({
   return (
     <WidgetCard color={color} blob="top-right" blobSize="h-20 w-20" delayMs={delayMs}>
       <div className="flex items-center justify-between gap-2">
-        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${WIDGET_SOFT_BG[color]} ${WIDGET_TEXT[color]}`}>
+        <span data-icon-badge className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${WIDGET_SOFT_BG[color]} ${WIDGET_TEXT[color]}`}>
           <Icon className="h-4 w-4" />
         </span>
         {delta && <DeltaBadge pct={delta.pct} positive={positive} label={delta.label} />}
