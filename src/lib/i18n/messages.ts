@@ -924,6 +924,14 @@ export type MessageKey =
   | "wallet.archived"
   | "wallet.archive"
   | "settings.keyboardShortcuts"
+  | "settings.mapsApp"
+  | "maps.intro"
+  | "maps.auto"
+  | "maps.autoDesc"
+  | "maps.apple"
+  | "maps.appleDesc"
+  | "maps.google"
+  | "maps.googleDesc"
   | "settings.design"
   | "design.intro"
   | "design.modern"
@@ -1770,7 +1778,7 @@ export const EN_MESSAGES: Record<MessageKey, string> = {
   "privacy.thirdPartiesMiddle2": ", a free ECB-rate API. If you set an email on your account, password reset links and any opted-in recurring/budget notification emails are sent via",
   "privacy.thirdPartiesAfter": ". No other third parties receive your data.",
   "privacy.locationHeading": "Location",
-  "privacy.locationBody": "A transaction can optionally store where it happened — a place you type, a store address read from a scanned receipt, or your coordinates if you tap \"Use current location\". Your device's location is only read when you tap that button, never in the background. When a transaction with coordinates is opened, its map preview is loaded from OpenStreetMap, which receives that position to draw the map; \"Open in Maps\" hands the place to Google Maps only when you tap it.",
+  "privacy.locationBody": "A transaction can optionally store where it happened — a place you type, a store address read from a scanned receipt, or your coordinates if you tap \"Use current location\". Your device's location is only read when you tap that button, never in the background. When a transaction with coordinates is opened, its map preview is loaded from OpenStreetMap, which receives that position to draw the map; \"Open in Maps\" hands the place to your chosen maps app (Apple Maps or Google Maps, set in Settings > Maps app) only when you tap it.",
   "privacy.selfHostedHeading": "Self-hosted",
   "privacy.selfHostedBody": "Tally is open-source, self-hosted software. Whoever deploys a given instance controls the actual database and infrastructure it runs on — this policy describes how the application itself handles data, not any particular deployment's operational practices.",
   "troubleshooting.title": "Troubleshooting",
@@ -2833,6 +2841,14 @@ export const EN_MESSAGES: Record<MessageKey, string> = {
   "wallet.archived": "Archived",
   "wallet.archive": "Archive",
   "settings.keyboardShortcuts": "Keyboard shortcuts",
+  "settings.mapsApp": "Maps app",
+  "maps.intro": "Choose which app \"Open in Maps\" uses for a transaction's location. Saved on this device.",
+  "maps.auto": "Automatic",
+  "maps.autoDesc": "Apple Maps on iPhone, iPad and Mac; Google Maps everywhere else.",
+  "maps.apple": "Apple Maps",
+  "maps.appleDesc": "Always open locations in Apple Maps.",
+  "maps.google": "Google Maps",
+  "maps.googleDesc": "Always open locations in Google Maps.",
   "settings.design": "Design",
   "design.intro": "Choose how Tally looks. Your data and features are the same in both — this only changes the visual style on this device.",
   "design.modern": "Modern",

@@ -37,6 +37,7 @@ export const PANEL_VALUES = [
   "aiUsage",
   "keyboardShortcuts",
   "design",
+  "mapsApp",
 ] as const;
 
 export type Panel = (typeof PANEL_VALUES)[number];

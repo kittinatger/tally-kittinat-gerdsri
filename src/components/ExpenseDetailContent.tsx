@@ -20,18 +20,9 @@ import { useCurrency } from "@/lib/currency-context";
 import { isCategoryIconKey } from "@/lib/category-icons";
 import { CategoryIcon, EditIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
+import { mapsUrl, resolveMapsApp, useMapsAppPreference } from "@/lib/maps-app";
 import { shareExpense } from "./ExpenseRow";
 import ReceiptLightbox from "./ReceiptLightbox";
-
-function mapsUrl(expense: Expense): string | null {
-  if (expense.latitude != null && expense.longitude != null) {
-    return `https://www.google.com/maps/search/?api=1&query=${expense.latitude},${expense.longitude}`;
-  }
-  if (expense.locationName) {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(expense.locationName)}`;
-  }
-  return null;
-}
 
 // OpenStreetMap's embeddable map, framed tightly around the pin. Loaded
 // lazily and only when the transaction actually has coordinates.
@@ -56,7 +47,12 @@ function DetailRow({ icon, label, children }: { icon: React.ReactNode; label: st
 function LocationCard({ expense, tall }: { expense: Expense; tall: boolean }) {
   const t = useT();
   const hasCoords = expense.latitude != null && expense.longitude != null;
-  const url = mapsUrl(expense);
+  const mapsPref = useMapsAppPreference();
+  const url = mapsUrl(resolveMapsApp(mapsPref), {
+    name: expense.locationName,
+    latitude: expense.latitude,
+    longitude: expense.longitude,
+  });
   return (
     <div className="overflow-hidden rounded-card border border-surface-line bg-surface">
       {hasCoords && (

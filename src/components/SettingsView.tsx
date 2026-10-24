@@ -53,6 +53,7 @@ const LoanCalculatorPanel = dynamic(() => import("./LoanCalculatorPanel"), { ssr
 const AiUsagePanel = dynamic(() => import("./AiUsagePanel"), { ssr: false });
 const KeyboardShortcutsPanel = dynamic(() => import("./KeyboardShortcutsPanel"), { ssr: false });
 const DesignStyleSettings = dynamic(() => import("./DesignStyleSettings"), { ssr: false });
+const MapsAppSettings = dynamic(() => import("./MapsAppSettings"), { ssr: false });
 
 const PANEL_TITLES: Record<Panel, string> = {
   account: "Account",
@@ -88,6 +89,7 @@ const PANEL_TITLES: Record<Panel, string> = {
   aiUsage: "AI usage & models",
   keyboardShortcuts: "Keyboard shortcuts",
   design: "Design",
+  mapsApp: "Maps app",
 };
 
 function BackIcon() {
@@ -219,6 +221,7 @@ export default function SettingsView({
       {panel === "aiUsage" && <AiUsagePanel />}
       {panel === "keyboardShortcuts" && <KeyboardShortcutsPanel />}
       {panel === "design" && <DesignStyleSettings />}
+      {panel === "mapsApp" && <MapsAppSettings />}
     </div>
   );
 
