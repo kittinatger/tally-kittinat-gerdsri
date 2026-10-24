@@ -9,10 +9,10 @@ export type NavBarLink = { href: string; label: string; icon: React.ReactNode };
 // - classic: a floating frosted pill beside the app mark, the active tab a
 //   filled chip showing its label, and the Add button as a separate round
 //   button on the right.
-// - modern: a floating "island" — a rounded, translucent tab bar lifted off
-//   the bottom edge with every label shown and the active tab in a tinted
-//   tile, plus Add as its own matching square button beside it (styled by
-//   globals.css via data-bottom-nav).
+// - modern: the mobile counterpart of the desktop top bar — a flat strip
+//   flush with the bottom edge, every label shown, the current page in a
+//   soft-fill tile, and Add as a green rounded button at the end (styled
+//   by globals.css via data-bottom-nav).
 export default function BottomNavBar({
   variant,
   links,
