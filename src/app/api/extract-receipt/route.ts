@@ -11,7 +11,7 @@ import {
   recordGeminiUsage,
 } from "@/lib/db";
 import { maybeAutoConvert } from "@/lib/exchange-rate";
-import { getUserId } from "@/lib/auth";
+import { getUserId, guestBlockedResponse } from "@/lib/auth";
 import { MAX_GEMINI_CALLS_PER_DAY } from "@/lib/gemini-usage";
 
 const MAX_BYTES = 8 * 1024 * 1024; // 8MB
@@ -27,6 +27,8 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   const userId = await getUserId();
+  const blocked = await guestBlockedResponse(userId);
+  if (blocked) return blocked;
   const formData = await req.formData().catch(() => null);
   const file = formData?.get("image");
 

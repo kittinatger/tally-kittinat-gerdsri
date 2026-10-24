@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { askAssistant } from "@/lib/assistant";
 import { countRecentGeminiUsage, recordGeminiUsage } from "@/lib/db";
-import { getUserId } from "@/lib/auth";
+import { getUserId, guestBlockedResponse } from "@/lib/auth";
 import { MAX_GEMINI_CALLS_PER_DAY } from "@/lib/gemini-usage";
 
 const MAX_QUESTION_LENGTH = 300;
@@ -14,6 +14,8 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   const userId = await getUserId();
+  const blocked = await guestBlockedResponse(userId);
+  if (blocked) return blocked;
   const body = await req.json().catch(() => null);
   const question = typeof (body as Record<string, unknown> | null)?.question === "string" ? (body as { question: string }).question.trim() : "";
   const today = typeof (body as Record<string, unknown> | null)?.today === "string" ? (body as { today: string }).today : undefined;

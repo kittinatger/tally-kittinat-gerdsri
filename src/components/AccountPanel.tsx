@@ -6,6 +6,7 @@ import Modal from "./Modal";
 import { describeFetchError } from "@/lib/fetch-error";
 import { ChevronIcon } from "@/lib/icons";
 import ProfilePictureUploader from "./ProfilePictureUploader";
+import GuestUpgradeCard from "./GuestUpgradeCard";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 
@@ -72,6 +73,7 @@ export default function AccountPanel({
   // have no password — assume true (the common case) until the real value
   // loads, so the password fields don't flash in and back out.
   const [hasPassword, setHasPassword] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
   const [githubId, setGithubId] = useState<boolean | null>(githubLinked ? true : null);
   const [unlinkingGithub, setUnlinkingGithub] = useState(false);
   const [githubActionError, setGithubActionError] = useState<string | null>(
@@ -86,6 +88,7 @@ export default function AccountPanel({
       .then((data) => {
         if (cancelled) return;
         if (typeof data.hasPassword === "boolean") setHasPassword(data.hasPassword);
+        if (data.isGuest === true) setIsGuest(true);
         if (typeof data.githubLinked === "boolean") setGithubId(data.githubLinked);
       })
       .catch(() => {
@@ -418,6 +421,8 @@ export default function AccountPanel({
       setDeleting(false);
     }
   }
+
+  if (isGuest) return <GuestUpgradeCard onLogout={handleLogout} />;
 
   return (
     <div className="space-y-4">

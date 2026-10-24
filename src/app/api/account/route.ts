@@ -3,6 +3,7 @@ import { getUserId } from "@/lib/auth";
 import {
   deleteUser,
   getUserById,
+  isGuestUser,
   getUserByUsername,
   getUserByEmail,
   updatePasswordHash,
@@ -33,6 +34,7 @@ export async function GET() {
     email: user.email,
     hasPassword: user.password_hash !== null,
     githubLinked: user.github_id !== null,
+    isGuest: await isGuestUser(userId),
   });
 }
 

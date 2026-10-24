@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useT } from "@/lib/language-context";
+import GuestButton from "./GuestButton";
 
 const OAUTH_ERROR_MESSAGES: Record<string, string> = {
   github_failed: "GitHub sign-in didn't complete. Please try again.",
@@ -159,6 +160,10 @@ export default function LoginForm({ next, oauthError }: { next: string; oauthErr
           {t("auth.signUp")}
         </Link>
       </p>
+
+      <div className="mt-2 text-center">
+        <GuestButton next={next} />
+      </div>
     </div>
   );
 }

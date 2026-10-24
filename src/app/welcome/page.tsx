@@ -1,6 +1,7 @@
 import Link from "next/link";
 import SettingsMenu from "@/components/SettingsMenu";
 import T from "@/components/T";
+import GuestButton from "@/components/GuestButton";
 
 export default async function WelcomePage({
   searchParams,
@@ -47,6 +48,7 @@ export default async function WelcomePage({
           >
             <T k="auth.createAccount" />
           </Link>
+          <GuestButton next={next ?? "/"} />
         </div>
       </div>
     </main>

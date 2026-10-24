@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listApiTokens, createApiToken, logSecurityEvent } from "@/lib/db";
 import { apiTokenInputSchema } from "@/lib/validation";
-import { getUserId } from "@/lib/auth";
+import { getUserId, guestBlockedResponse } from "@/lib/auth";
 
 export async function GET() {
   const userId = await getUserId();
@@ -11,6 +11,8 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const userId = await getUserId();
+  const blocked = await guestBlockedResponse(userId);
+  if (blocked) return blocked;
   const body = await req.json().catch(() => null);
   const parsed = apiTokenInputSchema.safeParse(body);
   if (!parsed.success) {

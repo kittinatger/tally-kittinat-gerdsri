@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateCardPatternImage } from "@/lib/gemini-pattern";
 import { describeGeminiError } from "@/lib/gemini-error";
 import { countRecentGeminiUsage, recordGeminiUsage } from "@/lib/db";
-import { getUserId } from "@/lib/auth";
+import { getUserId, guestBlockedResponse } from "@/lib/auth";
 import { MAX_GEMINI_CALLS_PER_DAY } from "@/lib/gemini-usage";
 
 const MAX_BYTES = 8 * 1024 * 1024; // 8MB
@@ -10,6 +10,8 @@ const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function POST(req: NextRequest) {
   const userId = await getUserId();
+  const blocked = await guestBlockedResponse(userId);
+  if (blocked) return blocked;
   const formData = await req.formData().catch(() => null);
   const file = formData?.get("image");
 

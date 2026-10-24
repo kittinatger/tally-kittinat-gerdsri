@@ -70,6 +70,6 @@ export const config = {
     // cookie either — it authenticates itself via a CRON_SECRET bearer
     // token instead (checked inside the route), same reasoning as
     // api/intake above.
-    "/((?!welcome|login|register|forgot-password|reset-password|offline|embed|opengraph-image|twitter-image|manifest.json|sw.js|api/auth/login|api/auth/register|api/auth/forgot-password|api/auth/reset-password|api/auth/github/callback|api/auth/github$|api/intake|api/cron|splits|_next/static|_next/image|favicon.ico|favicon-light.svg|favicon-dark.svg).*)",
+    "/((?!welcome|login|register|forgot-password|reset-password|offline|embed|opengraph-image|twitter-image|manifest.json|sw.js|api/auth/login|api/auth/register|api/auth/guest|api/auth/forgot-password|api/auth/reset-password|api/auth/github/callback|api/auth/github$|api/intake|api/cron|splits|_next/static|_next/image|favicon.ico|favicon-light.svg|favicon-dark.svg).*)",
   ],
 };

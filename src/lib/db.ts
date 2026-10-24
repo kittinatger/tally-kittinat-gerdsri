@@ -184,7 +184,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 77;
+const CURRENT_SCHEMA_VERSION = 78;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1601,6 +1601,12 @@ function ensureSchema(): Promise<void> {
         );
       `;
       await sql`CREATE INDEX IF NOT EXISTS notifications_user_created_idx ON notifications (user_id, created_at DESC);`;
+
+      // "Continue without an account" — a guest is a normal user row with a
+      // random unusable password, flagged so it can be upgraded in place and
+      // swept up by the cleanup cron once its 30-day session has lapsed.
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_guest BOOLEAN NOT NULL DEFAULT false;`;
+      await sql`CREATE INDEX IF NOT EXISTS users_guest_created_idx ON users (created_at) WHERE is_guest;`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -4205,6 +4211,58 @@ export async function createUser(username: string, passwordHash: string): Promis
 // account — no password, since there's nothing to hash. `desiredUsername`
 // is the GitHub login, already sanitized/deduped by the caller against
 // getUserByUsername before this is called, so this just inserts it as-is.
+export async function createGuestUser(
+  username: string,
+  passwordHash: string,
+): Promise<{ id: number; username: string }> {
+  await ensureSchema();
+  const { rows } = await sql<{ id: number; username: string }>`
+    INSERT INTO users (username, password_hash, is_guest)
+    VALUES (${username}, ${passwordHash}, true)
+    RETURNING id, username;
+  `;
+  const user = rows[0];
+  await sql`INSERT INTO app_settings (id, user_id, starting_balance) VALUES (${-user.id}, ${user.id}, 0);`;
+  return user;
+}
+
+export async function isGuestUser(userId: number): Promise<boolean> {
+  await ensureSchema();
+  const { rows } = await sql<{ is_guest: boolean }>`SELECT is_guest FROM users WHERE id = ${userId};`;
+  return rows[0]?.is_guest === true;
+}
+
+export async function countGuestsCreatedSince(minutes: number): Promise<number> {
+  await ensureSchema();
+  const { rows } = await sql<{ n: string }>`
+    SELECT count(*)::text AS n FROM users
+    WHERE is_guest AND created_at > now() - (${minutes}::int * interval '1 minute');
+  `;
+  return Number(rows[0]?.n ?? 0);
+}
+
+// Turns a guest into a regular account in place — same user id, so every
+// expense/wallet/setting already created carries over and the existing
+// session cookie stays valid. Returns false if the user isn't a guest.
+export async function convertGuestToAccount(userId: number, username: string, passwordHash: string): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    UPDATE users SET username = ${username}, password_hash = ${passwordHash}, is_guest = false
+    WHERE id = ${userId} AND is_guest;
+  `;
+  return (rowCount ?? 0) > 0;
+}
+
+// Guest sessions last 30 days (SESSION_MAX_AGE_SECONDS) and can't be renewed,
+// so a guest older than that is unreachable — its data is safe to delete.
+export async function deleteExpiredGuests(olderThanDays: number): Promise<number> {
+  await ensureSchema();
+  const { rowCount } = await sql`
+    DELETE FROM users WHERE is_guest AND created_at < now() - (${olderThanDays}::int * interval '1 day');
+  `;
+  return rowCount ?? 0;
+}
+
 export async function createUserFromGithub(
   username: string,
   githubId: string,
