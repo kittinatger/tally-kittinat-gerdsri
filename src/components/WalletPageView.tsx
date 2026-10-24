@@ -36,7 +36,6 @@ function ShareIcon({ className = "h-4 w-4" }: { className?: string }) {
 
 // None of these are needed on first paint — every one requires a tap first.
 const WalletModal = dynamic(() => import("./WalletModal"), { ssr: false });
-const AddExpenseModal = dynamic(() => import("./AddExpenseModal"), { ssr: false });
 const WalletShareModal = dynamic(() => import("./WalletShareModal"), { ssr: false });
 const MembershipCardModal = dynamic(() => import("./MembershipCardModal"), { ssr: false });
 const MembershipCardDetail = dynamic(() => import("./MembershipCardDetail"), { ssr: false });
@@ -106,7 +105,6 @@ export default function WalletPageView({
   // see the wallet_cards table comment in db.ts — so "adding money" is
   // just logging an income transaction, the same as anywhere else in the
   // app).
-  const [addMoneyWallet, setAddMoneyWallet] = useState<WalletOption | null>(null);
   // "Share" on a wallet's "..." menu — invites a friend to co-operate on
   // it (same wallet_members flow WalletManager already offered). Only
   // meaningful for a wallet this account actually owns — a member of a
@@ -573,7 +571,7 @@ export default function WalletPageView({
                   label: t("wallet.addMoney"),
                   icon: <PlusIcon className="h-4 w-4" />,
                   onClick: () => {
-                    setAddMoneyWallet(viewingAccount);
+                    router.push(`/transactions/new?type=income&wallet=${viewingAccount.id}&from=/wallet`);
                     setViewingAccount(null);
                   },
                 },
@@ -620,18 +618,6 @@ export default function WalletPageView({
             onArchive={() => handleArchiveAccount(viewingAccount.id)}
           />
         </Modal>
-      )}
-
-      {addMoneyWallet && (
-        <AddExpenseModal
-          initialType="income"
-          initialWalletId={addMoneyWallet.id}
-          onClose={() => setAddMoneyWallet(null)}
-          onCreated={() => {
-            setAddMoneyWallet(null);
-            router.refresh();
-          }}
-        />
       )}
 
       {viewingPass && (

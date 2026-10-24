@@ -58,7 +58,7 @@ export default function KeyboardShortcuts() {
 
       if (e.key.toLowerCase() === "c") {
         e.preventDefault();
-        router.push("/?add=expense");
+        router.push("/transactions/new");
         return;
       }
 

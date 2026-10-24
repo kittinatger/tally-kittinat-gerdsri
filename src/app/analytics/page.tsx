@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import {
   listExpenses,
   getRemaining,
@@ -38,6 +39,8 @@ export default async function AnalyticsPage({
   searchParams: Promise<{ add?: string }>;
 }) {
   const { add } = await searchParams;
+  // Older "add" links (?add=income etc.) now open the Add page.
+  if (add && isTransactionType(add)) redirect(`/transactions/new?type=${add}&from=/analytics`);
   const userId = await getUserId();
   // The recurring check runs alongside the page's reads (one round trip, not
   // two). If it logged anything, the reads it affects — transactions, the
@@ -131,7 +134,6 @@ export default async function AnalyticsPage({
       savingsGoals={savingsGoals}
       recurringRules={recurringRules}
       initialPrefs={analyticsPrefs}
-      initialAddType={add && isTransactionType(add) ? add : null}
     />
   );
 }

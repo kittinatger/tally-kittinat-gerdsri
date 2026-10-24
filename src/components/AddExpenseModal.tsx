@@ -45,6 +45,7 @@ export default function AddExpenseModal({
   onCreated,
   initialType = "expense",
   initialWalletId = null,
+  asPage = false,
 }: {
   onClose: () => void;
   onCreated: (expense: Expense) => void;
@@ -53,6 +54,9 @@ export default function AddExpenseModal({
    * opens this pre-filled as an income into that specific wallet, rather
    * than whatever wallet happens to be default. */
   initialWalletId?: number | null;
+  /** Renders just the content, without the modal chrome — used by the
+   * /transactions/new page, which supplies its own header and card. */
+  asPage?: boolean;
 }) {
   const allCategories = useAllCategories();
   const wallets = useWallets();
@@ -366,13 +370,13 @@ export default function AddExpenseModal({
     }
   }
 
-  return (
-    <Modal onClose={onClose} title={t("form.addTransaction")} wide={tab === "manual"}>
+  const body = (
+    <>
       {/* Three tappable method tiles instead of a thin pill row — each
           carries its own accent (matching the amber/violet used on the
           scan/voice review cards below) so which entry method you're on
           reads at a glance, not just from a text label. */}
-      <div className="mb-4 grid grid-cols-3 gap-2">
+      <div data-method-tabs className="mb-4 grid grid-cols-3 gap-2">
         <button
           onClick={() => setTab("manual")}
           data-method-tile
@@ -638,6 +642,13 @@ export default function AddExpenseModal({
           )}
         </div>
       )}
+    </>
+  );
+
+  if (asPage) return body;
+  return (
+    <Modal onClose={onClose} title={t("form.addTransaction")} wide={tab === "manual"}>
+      {body}
     </Modal>
   );
 }

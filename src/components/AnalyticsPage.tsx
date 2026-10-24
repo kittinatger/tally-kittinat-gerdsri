@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { signedAmount, type Expense } from "@/types/expense";
+import { markOpenedFromList } from "@/lib/transaction-nav";
+import type { Expense } from "@/types/expense";
 import type { CategoryOption } from "@/types/category";
-import type { TransactionType } from "@/lib/categories";
 import type { WalletOption } from "@/types/wallet";
 import type { Budget } from "@/types/budget";
 import type { SavingsGoal } from "@/types/savings-goal";
@@ -56,12 +56,6 @@ function CategoriesIcon({ className }: { className?: string }) {
 }
 
 const EditBalanceModal = dynamic(() => import("./EditBalanceModal"), { ssr: false });
-const AddExpenseModal = dynamic(() => import("./AddExpenseModal"), { ssr: false });
-
-function sortByDateDesc(a: Expense, b: Expense): number {
-  if (a.date !== b.date) return a.date < b.date ? 1 : -1;
-  return b.id - a.id;
-}
 
 function todayIso(): string {
   const d = new Date();
@@ -85,7 +79,6 @@ export default function AnalyticsPage({
   savingsGoals,
   recurringRules,
   initialPrefs,
-  initialAddType = null,
 }: {
   initialExpenses: Expense[];
   initialRemaining: number;
@@ -97,23 +90,21 @@ export default function AnalyticsPage({
   savingsGoals: SavingsGoal[];
   recurringRules: RecurringRuleRow[];
   initialPrefs: AnalyticsPrefs;
-  initialAddType?: TransactionType | null;
 }) {
-  const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
+  const [expenses] = useState<Expense[]>(initialExpenses);
   const [remaining, setRemaining] = useState(initialRemaining);
   const [budgets, setBudgets] = useState<Budget[]>(initialBudgets);
   const [periodId, setPeriodId] = useState<AnalyticsPeriodId>(initialPrefs.defaultPeriod);
   const [hiddenSections, setHiddenSections] = useState<AnalyticsSectionId[]>(initialPrefs.hiddenSections);
   const [editingBalance, setEditingBalance] = useState(false);
-  const [addingType, setAddingType] = useState<TransactionType | null>(initialAddType);
   const router = useRouter();
   const t = useT();
 
-  useEffect(() => {
-    if (!initialAddType) return;
-    router.replace("/analytics", { scroll: false });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only
-  }, []);
+  // Adding a transaction happens on its own page (/transactions/new).
+  function openAdd() {
+    markOpenedFromList();
+    router.push("/transactions/new?from=/analytics");
+  }
 
   function handleBudgetDismissed(updated: Budget) {
     setBudgets((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
@@ -124,11 +115,6 @@ export default function AnalyticsPage({
     setEditingBalance(false);
   }
 
-  function handleExpenseCreated(expense: Expense) {
-    setExpenses((prev) => [expense, ...prev].sort(sortByDateDesc));
-    setRemaining((prev) => prev + signedAmount(expense));
-    setAddingType(null);
-  }
 
   function savePrefs(patch: Partial<AnalyticsPrefs>) {
     mutateFetch("/api/analytics-prefs", {
@@ -176,7 +162,7 @@ export default function AnalyticsPage({
         <CurrencyProvider currency={currency}>
           <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10 lg:max-w-6xl">
             <PullToRefresh>
-              <AppHeader onAddClick={() => setAddingType("expense")} />
+              <AppHeader onAddClick={openAdd} />
 
               <main className="flex-1 space-y-8 px-1 py-6 sm:px-2">
                 <BudgetAlerts expenses={expenses} budgets={budgets} onDismissed={handleBudgetDismissed} />
@@ -224,7 +210,6 @@ export default function AnalyticsPage({
               <EditBalanceModal currentValue={remaining} onClose={() => setEditingBalance(false)} onSaved={handleBalanceSaved} />
             )}
 
-            {addingType && <AddExpenseModal initialType={addingType} onClose={() => setAddingType(null)} onCreated={handleExpenseCreated} />}
           </div>
         </CurrencyProvider>
       </WalletsProvider>

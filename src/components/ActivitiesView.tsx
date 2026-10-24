@@ -16,10 +16,8 @@ import ExpenseList, { type TypeFilter } from "./ExpenseList";
 import ActivitiesBalanceCard from "./ActivitiesBalanceCard";
 import AppHeader from "./AppHeader";
 
-// Neither of these is ever mounted on first paint (they all require a
-// row click or the Add button first) — loading them on demand keeps them
-// out of Activities' initial JS bundle.
-const AddExpenseModal = dynamic(() => import("./AddExpenseModal"), { ssr: false });
+// Never mounted on first paint (it needs a swipe/hover Edit first) —
+// loading it on demand keeps it out of Activities' initial JS bundle.
 const EditExpenseModal = dynamic(() => import("./EditExpenseModal"), { ssr: false });
 
 function sortByDateDesc(a: Expense, b: Expense): number {
@@ -33,7 +31,6 @@ export default function ActivitiesView({
   currency,
   wallets,
   initialWalletFilter = "all",
-  initialAddOpen = false,
   initialVendorFilter,
   prefs = DEFAULT_ACTIVITIES_PREFS,
 }: {
@@ -45,11 +42,6 @@ export default function ActivitiesView({
    * > Wallets' "Default wallet for Activities" setting. "all" means every
    * wallet. */
   initialWalletFilter?: string;
-  /** Opens the Add-expense modal immediately — from the PWA's "Add
-   * expense" home-screen shortcut (`?add=expense`, read server-side in
-   * page.tsx), same pattern Dashboard.tsx used before Activities became
-   * the root page. */
-  initialAddOpen?: boolean;
   /** Scopes the list to one exact merchant on load — from the Vendors
    * settings panel's row links (`?vendor=NAME`, read server-side in
    * page.tsx) or a same-session merchant-name click (see
@@ -69,12 +61,11 @@ export default function ActivitiesView({
     setPrevInitial(initialExpenses);
     setExpenses(initialExpenses);
   }
-  const [addOpen, setAddOpen] = useState(initialAddOpen);
 
-  // Strips the `?add=expense`/`?vendor=` params once consumed (replace, not
-  // push) so they don't linger in history and reopen/reapply on back/refresh.
+  // Strips the `?vendor=` param once consumed (replace, not push) so it
+  // doesn't linger in history and reapply on back/refresh.
   useEffect(() => {
-    if (!initialAddOpen && !initialVendorFilter) return;
+    if (!initialVendorFilter) return;
     router.replace("/", { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only
   }, []);
@@ -85,6 +76,12 @@ export default function ActivitiesView({
   const [vendorFilter, setVendorFilter] = useState<string | null>(initialVendorFilter ?? null);
 
   const activeWallets = wallets.filter((w) => !w.archived);
+
+  // Adding a transaction happens on its own page (/transactions/new).
+  function openAdd() {
+    markOpenedFromList();
+    router.push("/transactions/new");
+  }
 
   function handleCreated(expense: Expense) {
     setExpenses((prev) => [expense, ...prev].sort(sortByDateDesc));
@@ -122,7 +119,7 @@ export default function ActivitiesView({
       <CurrencyProvider currency={currency}>
         <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10 lg:max-w-6xl">
           <PullToRefresh>
-            <AppHeader onAddClick={() => setAddOpen(true)} />
+            <AppHeader onAddClick={openAdd} />
 
             <main className="flex-1 px-1 py-6 sm:px-2">
               <div className="mx-auto w-full max-w-3xl">
@@ -156,7 +153,6 @@ export default function ActivitiesView({
             </main>
           </PullToRefresh>
 
-          {addOpen && <AddExpenseModal onClose={() => setAddOpen(false)} onCreated={handleCreated} />}
           {editing && (
             <EditExpenseModal
               expense={editing}

@@ -1,4 +1,5 @@
 import { after } from "next/server";
+import { redirect } from "next/navigation";
 import {
   listExpenses,
   listCategories,
@@ -33,6 +34,8 @@ export default async function HomePage({
   searchParams: Promise<{ add?: string; vendor?: string }>;
 }) {
   const { add, vendor } = await searchParams;
+  // The PWA's "Add expense" shortcut and older links still point here.
+  if (add === "expense") redirect("/transactions/new");
   const userId = await getUserId();
   // Activities is the landing page, so due recurring rules (rent, salary,
   // subscriptions) are logged here too — previously only Analytics did this,
@@ -91,7 +94,6 @@ export default async function HomePage({
       currency={currency}
       wallets={wallets}
       initialWalletFilter={initialWalletFilter}
-      initialAddOpen={add === "expense"}
       initialVendorFilter={vendor}
       prefs={activitiesPrefs}
     />

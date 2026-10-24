@@ -530,6 +530,24 @@ h1, h2, h3 {
   background: color-mix(in srgb, var(--navy) 10%, transparent) !important;
   color: var(--foreground) !important;
 }
+/* On the Add page the three methods sit in one segmented control, matching
+   the type tabs on Activities. */
+:root[data-design="modern"] [data-add-page] [data-method-tabs] {
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 20px;
+  border-radius: 9999px;
+  background: var(--surface-soft);
+}
+:root[data-design="modern"] [data-add-page] [data-method-tile] {
+  border-color: transparent !important;
+  border-radius: 9999px;
+  padding-block: 7px;
+}
+:root[data-design="modern"] [data-add-page] [data-method-tile][aria-pressed="true"] {
+  background: var(--surface) !important;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+}
 :root[data-design="modern"] [data-swiped="false"] [data-swipe-backdrop] {
   visibility: hidden;
 }

@@ -36,7 +36,7 @@
     {
       "name": "Add expense",
       "short_name": "Add expense",
-      "url": "/?add=expense",
+      "url": "/transactions/new",
       "icons": [
         {
           "src": "/icon-192.png",
