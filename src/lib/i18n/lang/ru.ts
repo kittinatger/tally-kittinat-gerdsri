@@ -1121,7 +1121,7 @@ const messages: Record<MessageKey, string> = {
   "settings.mapsApp": "Приложение карт",
   "maps.intro": "Выберите, какое приложение использует «Открыть в Картах» для места транзакции. Сохраняется на этом устройстве.",
   "maps.auto": "Автоматически",
-  "maps.autoDesc": "Apple Карты на iPhone, iPad и Mac; Google Карты на остальных устройствах.",
+  "maps.autoDesc": "Следовать настройкам устройства и открывать приложение карт по умолчанию.",
   "maps.apple": "Apple Карты",
   "maps.appleDesc": "Всегда открывать места в Apple Картах.",
   "maps.google": "Google Карты",

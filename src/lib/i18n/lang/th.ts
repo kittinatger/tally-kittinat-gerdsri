@@ -1121,7 +1121,7 @@ const messages: Record<MessageKey, string> = {
   "settings.mapsApp": "แอปแผนที่",
   "maps.intro": "เลือกแอปที่ \"เปิดในแผนที่\" ใช้สำหรับตำแหน่งของรายการ บันทึกไว้ในอุปกรณ์นี้",
   "maps.auto": "อัตโนมัติ",
-  "maps.autoDesc": "ใช้ Apple Maps บน iPhone, iPad และ Mac และใช้ Google Maps ในอุปกรณ์อื่น",
+  "maps.autoDesc": "ทำตามการตั้งค่าของอุปกรณ์นี้และเปิดแอปแผนที่เริ่มต้น",
   "maps.apple": "Apple Maps",
   "maps.appleDesc": "เปิดตำแหน่งใน Apple Maps เสมอ",
   "maps.google": "Google Maps",

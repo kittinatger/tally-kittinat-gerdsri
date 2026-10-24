@@ -1121,7 +1121,7 @@ const messages: Record<MessageKey, string> = {
   "settings.mapsApp": "マップアプリ",
   "maps.intro": "取引の場所を「マップで開く」ときに使うアプリを選びます。このデバイスに保存されます。",
   "maps.auto": "自動",
-  "maps.autoDesc": "iPhone・iPad・Mac では Apple マップ、それ以外では Google マップ。",
+  "maps.autoDesc": "このデバイスの設定に従い、既定のマップアプリで開きます。",
   "maps.apple": "Apple マップ",
   "maps.appleDesc": "場所を常に Apple マップで開きます。",
   "maps.google": "Google マップ",

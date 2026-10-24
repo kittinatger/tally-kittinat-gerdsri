@@ -1121,7 +1121,7 @@ const messages: Record<MessageKey, string> = {
   "settings.mapsApp": "App de mapas",
   "maps.intro": "Elige qué app usa \"Abrir en Mapas\" para la ubicación de una transacción. Se guarda en este dispositivo.",
   "maps.auto": "Automático",
-  "maps.autoDesc": "Apple Maps en iPhone, iPad y Mac; Google Maps en todo lo demás.",
+  "maps.autoDesc": "Seguir los ajustes de este dispositivo y abrir su app de mapas predeterminada.",
   "maps.apple": "Apple Maps",
   "maps.appleDesc": "Abrir siempre las ubicaciones en Apple Maps.",
   "maps.google": "Google Maps",

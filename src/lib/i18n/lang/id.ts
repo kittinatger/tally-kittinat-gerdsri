@@ -1121,7 +1121,7 @@ const messages: Record<MessageKey, string> = {
   "settings.mapsApp": "Aplikasi peta",
   "maps.intro": "Pilih aplikasi yang dipakai \"Buka di Peta\" untuk lokasi transaksi. Disimpan di perangkat ini.",
   "maps.auto": "Otomatis",
-  "maps.autoDesc": "Apple Maps di iPhone, iPad, dan Mac; Google Maps di perangkat lainnya.",
+  "maps.autoDesc": "Ikuti pengaturan perangkat ini dan buka aplikasi peta bawaannya.",
   "maps.apple": "Apple Maps",
   "maps.appleDesc": "Selalu buka lokasi di Apple Maps.",
   "maps.google": "Google Maps",

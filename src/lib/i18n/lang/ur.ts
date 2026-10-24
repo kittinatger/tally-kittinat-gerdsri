@@ -1121,7 +1121,7 @@ const messages: Record<MessageKey, string> = {
   "settings.mapsApp": "نقشہ ایپ",
   "maps.intro": "منتخب کریں کہ لین دین کے مقام کے لیے \"نقشے میں کھولیں\" کون سی ایپ استعمال کرے۔ اسی ڈیوائس پر محفوظ ہوتا ہے۔",
   "maps.auto": "خودکار",
-  "maps.autoDesc": "iPhone، iPad اور Mac پر Apple Maps؛ باقی ہر جگہ Google Maps۔",
+  "maps.autoDesc": "اس ڈیوائس کی ترتیبات پر عمل کریں اور اس کی ڈیفالٹ نقشہ ایپ کھولیں۔",
   "maps.apple": "Apple Maps",
   "maps.appleDesc": "مقامات ہمیشہ Apple Maps میں کھولیں۔",
   "maps.google": "Google Maps",

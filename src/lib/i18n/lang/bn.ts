@@ -1121,7 +1121,7 @@ const messages: Record<MessageKey, string> = {
   "settings.mapsApp": "ম্যাপস অ্যাপ",
   "maps.intro": "লেনদেনের অবস্থানের জন্য \"ম্যাপে খুলুন\" কোন অ্যাপ ব্যবহার করবে তা বেছে নিন। এই ডিভাইসে সংরক্ষিত থাকে।",
   "maps.auto": "স্বয়ংক্রিয়",
-  "maps.autoDesc": "iPhone, iPad ও Mac-এ Apple Maps; অন্য সব জায়গায় Google Maps।",
+  "maps.autoDesc": "এই ডিভাইসের সেটিংস অনুসরণ করুন এবং এর ডিফল্ট ম্যাপস অ্যাপ খুলুন।",
   "maps.apple": "Apple Maps",
   "maps.appleDesc": "অবস্থান সবসময় Apple Maps-এ খুলুন।",
   "maps.google": "Google Maps",

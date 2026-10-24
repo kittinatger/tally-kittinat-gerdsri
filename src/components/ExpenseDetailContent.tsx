@@ -80,7 +80,7 @@ function LocationCard({ expense, tall }: { expense: Expense; tall: boolean }) {
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => {
-              if (openInMapsApp(mapsApp, place)) e.preventDefault();
+              if (openInMapsApp(mapsPref, place)) e.preventDefault();
             }}
             aria-label={t("detail.openInMaps")}
             className="flex shrink-0 items-center gap-1.5 rounded-lg border border-surface-line px-2.5 py-1.5 text-xs font-semibold text-surface-foreground transition hover:border-surface-accent hover:text-surface-accent"

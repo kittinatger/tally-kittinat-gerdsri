@@ -1121,7 +1121,7 @@ const messages: Record<MessageKey, string> = {
   "settings.mapsApp": "मैप्स ऐप",
   "maps.intro": "चुनें कि लेन-देन के स्थान के लिए \"मैप्स में खोलें\" कौन-सा ऐप इस्तेमाल करे। इसी डिवाइस पर सहेजा जाता है।",
   "maps.auto": "स्वचालित",
-  "maps.autoDesc": "iPhone, iPad और Mac पर Apple Maps; बाकी सभी जगह Google Maps।",
+  "maps.autoDesc": "इस डिवाइस की सेटिंग्स का पालन करें और इसका डिफ़ॉल्ट मैप्स ऐप खोलें।",
   "maps.apple": "Apple Maps",
   "maps.appleDesc": "स्थान हमेशा Apple Maps में खोलें।",
   "maps.google": "Google Maps",

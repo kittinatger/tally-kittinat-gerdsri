@@ -1121,7 +1121,7 @@ const messages: Record<MessageKey, string> = {
   "settings.mapsApp": "Harita uygulaması",
   "maps.intro": "\"Haritalarda aç\"ın bir işlemin konumu için hangi uygulamayı kullanacağını seçin. Bu cihazda kaydedilir.",
   "maps.auto": "Otomatik",
-  "maps.autoDesc": "iPhone, iPad ve Mac'te Apple Haritalar; diğer her yerde Google Haritalar.",
+  "maps.autoDesc": "Bu cihazın ayarlarını izle ve varsayılan harita uygulamasını aç.",
   "maps.apple": "Apple Haritalar",
   "maps.appleDesc": "Konumları her zaman Apple Haritalar'da aç.",
   "maps.google": "Google Haritalar",

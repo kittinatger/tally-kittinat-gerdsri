@@ -1121,7 +1121,7 @@ const messages: Record<MessageKey, string> = {
   "settings.mapsApp": "地图应用",
   "maps.intro": "选择“在地图中打开”时用于查看交易地点的应用。仅保存在此设备上。",
   "maps.auto": "自动",
-  "maps.autoDesc": "在 iPhone、iPad 和 Mac 上使用 Apple 地图，其他设备使用 Google 地图。",
+  "maps.autoDesc": "跟随此设备的设置，打开其默认地图应用。",
   "maps.apple": "Apple 地图",
   "maps.appleDesc": "始终在 Apple 地图中打开地点。",
   "maps.google": "Google 地图",

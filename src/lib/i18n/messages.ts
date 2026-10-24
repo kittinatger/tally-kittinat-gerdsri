@@ -2844,7 +2844,7 @@ export const EN_MESSAGES: Record<MessageKey, string> = {
   "settings.mapsApp": "Maps app",
   "maps.intro": "Choose which app \"Open in Maps\" uses for a transaction's location. Saved on this device.",
   "maps.auto": "Automatic",
-  "maps.autoDesc": "Apple Maps on iPhone, iPad and Mac; Google Maps everywhere else.",
+  "maps.autoDesc": "Follow this device's settings and open its default maps app.",
   "maps.apple": "Apple Maps",
   "maps.appleDesc": "Always open locations in Apple Maps.",
   "maps.google": "Google Maps",

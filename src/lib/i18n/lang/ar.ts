@@ -1121,7 +1121,7 @@ const messages: Record<MessageKey, string> = {
   "settings.mapsApp": "تطبيق الخرائط",
   "maps.intro": "اختر التطبيق الذي يستخدمه \"فتح في الخرائط\" لموقع المعاملة. يُحفظ على هذا الجهاز.",
   "maps.auto": "تلقائي",
-  "maps.autoDesc": "خرائط Apple على iPhone وiPad وMac، وخرائط Google في غير ذلك.",
+  "maps.autoDesc": "اتباع إعدادات هذا الجهاز وفتح تطبيق الخرائط الافتراضي فيه.",
   "maps.apple": "خرائط Apple",
   "maps.appleDesc": "افتح المواقع دائمًا في خرائط Apple.",
   "maps.google": "خرائط Google",

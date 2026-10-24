@@ -1121,7 +1121,7 @@ const messages: Record<MessageKey, string> = {
   "settings.mapsApp": "Ứng dụng bản đồ",
   "maps.intro": "Chọn ứng dụng mà \"Mở trong Bản đồ\" dùng cho vị trí giao dịch. Được lưu trên thiết bị này.",
   "maps.auto": "Tự động",
-  "maps.autoDesc": "Apple Maps trên iPhone, iPad và Mac; Google Maps ở các thiết bị khác.",
+  "maps.autoDesc": "Theo cài đặt của thiết bị này và mở ứng dụng bản đồ mặc định.",
   "maps.apple": "Apple Maps",
   "maps.appleDesc": "Luôn mở vị trí bằng Apple Maps.",
   "maps.google": "Google Maps",

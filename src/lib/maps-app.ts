@@ -55,36 +55,63 @@ function isAndroid(): boolean {
 }
 
 /**
- * Opens a place in the chosen maps *app*. Plain https map links don't do
- * that from an installed (home-screen) web app — iOS opens them in an in-app
- * browser sheet showing the map website — so phones get each app's own URL
- * scheme instead: maps:// for Apple Maps, comgooglemaps:// for Google Maps on
- * iOS (falling back to the website if the app isn't installed), and a geo:
- * link on Android. Desktops open the website in a new tab.
+ * Opens a place in a maps *app*. Plain https map links don't do that from an
+ * installed (home-screen) web app — iOS opens them in an in-app browser sheet
+ * showing the map website — so phones get each app's own URL scheme instead.
+ *
+ * "auto" follows the device: Android gets a geo: link, which opens the
+ * system's default maps app (or asks which to use); Apple devices open the
+ * system Maps app; desktops open the Google Maps website. "apple"/"google"
+ * force that app where it exists, falling back to its website otherwise.
  * Returns false when it didn't handle the click (caller follows the link).
  */
 export function openInMapsApp(
-  app: "apple" | "google",
+  pref: MapsAppPreference,
   place: { name?: string | null; latitude?: number | null; longitude?: number | null },
 ): boolean {
   const hasCoords = place.latitude != null && place.longitude != null;
   const name = place.name?.trim() || null;
   if (!hasCoords && !name) return false;
   const coords = hasCoords ? `${place.latitude},${place.longitude}` : null;
-  const webUrl = mapsUrl(app, place);
+  const query = coords ?? name!;
 
-  if (app === "apple" && (isIOS() || /Macintosh/i.test(navigator.userAgent))) {
+  const openAppleMaps = () => {
     const params = new URLSearchParams();
     if (coords) params.set("ll", coords);
     params.set("q", name ?? coords!);
     window.location.href = `maps://?${params.toString()}`;
-    return true;
+  };
+  const openGeo = () => {
+    const label = name ? `(${encodeURIComponent(name)})` : "";
+    window.location.href = coords ? `geo:${coords}?q=${coords}${label}` : `geo:0,0?q=${encodeURIComponent(name!)}`;
+  };
+
+  if (pref === "auto") {
+    if (isAndroid()) {
+      openGeo();
+      return true;
+    }
+    if (isAppleDevice()) {
+      openAppleMaps();
+      return true;
+    }
+    return false;
   }
 
-  if (app === "google" && isIOS()) {
+  if (pref === "apple") {
+    if (isAppleDevice()) {
+      openAppleMaps();
+      return true;
+    }
+    return false;
+  }
+
+  // Google Maps
+  if (isIOS()) {
     const params = new URLSearchParams();
-    params.set("q", coords ?? name!);
+    params.set("q", query);
     if (coords) params.set("center", coords);
+    const webUrl = mapsUrl("google", place);
     // If the Google Maps app isn't installed the scheme does nothing and the
     // page stays visible — fall back to the website after a moment.
     const fallback = window.setTimeout(() => {
@@ -94,13 +121,15 @@ export function openInMapsApp(
     window.location.href = `comgooglemaps://?${params.toString()}`;
     return true;
   }
-
   if (isAndroid()) {
-    const label = name ? `(${encodeURIComponent(name)})` : "";
-    window.location.href = coords ? `geo:${coords}?q=${coords}${label}` : `geo:0,0?q=${encodeURIComponent(name!)}`;
+    // An intent pinned to the Google Maps package, with the website as the
+    // browser's own fallback if the app isn't installed.
+    const webUrl = mapsUrl("google", place)!;
+    window.location.href =
+      `intent://maps.google.com/maps?q=${encodeURIComponent(query)}#Intent;scheme=https;package=com.google.android.apps.maps;` +
+      `S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
     return true;
   }
-
   return false;
 }
 
