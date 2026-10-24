@@ -41,6 +41,7 @@ export default async function TransactionPage({ params }: { params: Promise<{ id
     walletName: row.wallet_name,
     splitGroupId: row.split_group_id,
     ...locationFromRow(row),
+    createdAt: (row as { created_at?: string | null }).created_at ?? null,
   };
   const categories: CategoryOption[] = categoryRows.map((c) => ({
     id: c.id,

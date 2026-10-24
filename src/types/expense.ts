@@ -29,6 +29,9 @@ export type Expense = {
   locationName?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  /** When it was saved (ISO, UTC) — only set on the details page, which
+   * shows the time alongside the date when it was logged on that day. */
+  createdAt?: string | null;
 };
 
 /** Maps a DB/API row's location columns onto Expense's location fields. */

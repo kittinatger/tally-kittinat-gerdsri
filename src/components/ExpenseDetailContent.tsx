@@ -32,6 +32,18 @@ function osmEmbedUrl(lat: number, lng: number): string {
   return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
 }
 
+// The time it was saved, but only when it was saved on the transaction's
+// own date — a backdated entry's save time says nothing about when it
+// actually happened, so those just show the date.
+function savedTimeOnDate(expense: Expense): string | null {
+  if (!expense.createdAt) return null;
+  const saved = new Date(expense.createdAt);
+  if (Number.isNaN(saved.getTime())) return null;
+  const localDate = `${saved.getFullYear()}-${String(saved.getMonth() + 1).padStart(2, "0")}-${String(saved.getDate()).padStart(2, "0")}`;
+  if (localDate !== expense.date) return null;
+  return saved.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
 function DetailRow({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-3 px-4 py-3">
@@ -118,6 +130,8 @@ export default function ExpenseDetailContent({
   const receiptUrl = `/api/expenses/${expense.id}/receipt`;
   const hasLocation = Boolean(expense.locationName) || (expense.latitude != null && expense.longitude != null);
   const hasSide = hasLocation || expense.hasReceipt;
+  const savedTime = savedTimeOnDate(expense);
+  const dateText = savedTime ? `${formatDateLong(expense.date)} · ${savedTime}` : formatDateLong(expense.date);
 
   const amountColor =
     expense.type === "income"
@@ -147,7 +161,7 @@ export default function ExpenseDetailContent({
   const details = (
     <div className="divide-y divide-surface-line self-start overflow-hidden rounded-card border border-surface-line bg-surface">
       <DetailRow icon={<CalendarBlankIcon weight="fill" aria-hidden="true" className="h-[18px] w-[18px]" />} label={t("common.date")}>
-        {formatDateLong(expense.date)}
+        {dateText}
       </DetailRow>
       <DetailRow
         icon={<span className={`mt-1 block h-2.5 w-2.5 rounded-full ${dotClasses(color)}`} />}
@@ -217,7 +231,7 @@ export default function ExpenseDetailContent({
           {formatCurrency(expense.amount, currency)}
         </p>
         <p className="mt-3 rounded-full bg-surface-soft px-3 py-1 text-xs font-medium text-surface-foreground-soft">
-          {formatDateLong(expense.date)}
+          {dateText}
         </p>
 
         <div className="mt-6 flex w-full max-w-sm gap-2">

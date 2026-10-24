@@ -3574,7 +3574,8 @@ export async function getExpense(userId: number, id: number): Promise<Expense | 
       e.split_group_id,
       e.location_name,
       e.latitude,
-      e.longitude
+      e.longitude,
+      to_char(e.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at
     FROM expenses e
     LEFT JOIN wallets w ON w.id = e.wallet_id
     WHERE e.id = ${id}
@@ -3739,10 +3740,13 @@ async function resolveWalletId(userId: number, walletId: number | null | undefin
 export type PossibleDuplicateExpense = { id: number; date: string; amount: string; merchant: string };
 
 // A same-day, same-merchant (case-insensitive), same-amount transaction
-// already on file — surfaced as a non-blocking warning before create
-// (see the `confirmDuplicate` flow in api/expenses/route.ts), not a hard
-// block: a genuine repeat purchase (coffee twice a day) must still be
-// allowed through with one extra confirm tap.
+// saved in the last few minutes — surfaced as a non-blocking warning before
+// create (see the `confirmDuplicate` flow in api/expenses/route.ts), not a
+// hard block. Matching on the save time (created_at), not just the date,
+// means it catches real accidents — a double tap, the same receipt scanned
+// twice — without flagging a genuine repeat purchase hours apart (coffee
+// twice a day).
+const DUPLICATE_WINDOW_MINUTES = 10;
 export async function findPossibleDuplicateExpense(
   userId: number,
   date: string,
@@ -3757,6 +3761,7 @@ export async function findPossibleDuplicateExpense(
       AND date = ${date}
       AND amount = ${amount}
       AND lower(merchant) = lower(${merchant})
+      AND created_at > now() - make_interval(mins => ${DUPLICATE_WINDOW_MINUTES})
     ORDER BY id DESC
     LIMIT 1;
   `;
