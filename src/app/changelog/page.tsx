@@ -6,6 +6,31 @@ export const dynamic = "force-dynamic";
 
 const RELEASES: { version: string; date: string; sections: { heading: string; items: string[] }[] }[] = [
   {
+    version: "0.24.3",
+    date: "2026-10-24",
+    sections: [
+      {
+        heading: "Added",
+        items: [
+          "A Maps app setting (Settings > Maps app): Automatic (follows the device: the default maps app on Android, the system Maps app on Apple devices, the Google Maps website on desktops), or a specific app: Apple Maps and Google Maps up front, plus Waze, Baidu Maps, Amap (Gaode), Naver Map, Kakao Map, Yandex Maps, 2GIS, HERE WeGo, Mapy.com, Citymapper, Moovit, Maps.me, Organic Maps or the OpenStreetMap website under \"Other providers\", each shown with its own logo. If the chosen app isn't installed, its website opens instead. \"Open in Maps\" on a transaction's location uses it and opens the actual app on phones rather than a web overlay. Saved per device.",
+          "Locations on transactions: type a place, tap \"Use current location\" to pin where you are (only read when tapped), or let receipt scanning read the store address off the receipt. The transaction details show a map preview (OpenStreetMap) with an \"Open in Maps\" link. Schema v79; included in encrypted backups.",
+        ],
+      },
+      {
+        heading: "Changed",
+        items: [
+          "Redesigned transaction details: a category tile beside the merchant, a large coloured amount, a location card with map, and a clean list of date, category, type, wallet, tags and notes, plus Edit and Share. Mobile gets a stacked bottom-sheet layout; the desktop pane puts the amount beside the merchant and, on wide screens, the map and receipt beside the details.",
+        ],
+      },
+      {
+        heading: "Fixed",
+        items: [
+          "Receipt scans (and voice entry) failing over and over with \"Gemini couldn't process that image\". Production logs showed the real cause was a timeout, not the photo: each Gemini call was capped at 12 seconds, which the current thinking \"flash\" model regularly overran (504 DEADLINE_EXCEEDED / aborted), and timeouts were never retried. Calls now get 45 seconds, a timeout falls back once to the faster lite model, extraction asks the model to keep its thinking short, and a timeout now says \"took too long, please try again\" instead of blaming the image.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.24.2",
     date: "2026-10-24",
     sections: [
