@@ -35,17 +35,21 @@ export default async function HomePage({
   const { add, vendor } = await searchParams;
   const userId = await getUserId();
   // Activities is the landing page, so due recurring rules (rent, salary,
-  // subscriptions) are logged here before listing — previously only the
-  // Analytics page did this, so they didn't show up until it was opened.
-  const [loggedRecurring] = await Promise.all([processDueRecurringRules(userId), processDueRecurringSplits(userId)]);
-  const [rows, categoryRows, currency, walletRows, activitiesDefaultWalletId, activitiesPrefs] = await Promise.all([
-    listExpenses(userId),
-    listCategories(userId),
-    getCurrency(userId),
-    listWallets(userId),
-    getActivitiesDefaultWalletId(userId),
-    getActivitiesPrefs(userId),
-  ]);
+  // subscriptions) are logged here too — previously only Analytics did this,
+  // so they didn't show up until it was opened. The check runs alongside the
+  // page's own reads (one round trip, not two); the list is only re-read in
+  // the uncommon case that the check just logged something.
+  const [[loggedRecurring], firstRows, categoryRows, currency, walletRows, activitiesDefaultWalletId, activitiesPrefs] =
+    await Promise.all([
+      Promise.all([processDueRecurringRules(userId), processDueRecurringSplits(userId)]),
+      listExpenses(userId),
+      listCategories(userId),
+      getCurrency(userId),
+      listWallets(userId),
+      getActivitiesDefaultWalletId(userId),
+      getActivitiesPrefs(userId),
+    ]);
+  const rows = loggedRecurring.length > 0 ? await listExpenses(userId) : firstRows;
   const expenses: Expense[] = rows.map((r) => ({
     id: r.id,
     type: normalizeExpenseType(r.type),

@@ -193,12 +193,17 @@ const CURRENT_SCHEMA_VERSION = 79;
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
     schemaReady = (async () => {
+      // Common case first: one SELECT, and done if the schema is current.
+      // Only a brand-new database (no schema_meta yet, so the SELECT throws)
+      // or one behind CURRENT_SCHEMA_VERSION goes on to create/migrate.
+      try {
+        const { rows } = await sql<{ version: number }>`SELECT version FROM schema_meta LIMIT 1;`;
+        if (rows.length > 0 && rows[0].version >= CURRENT_SCHEMA_VERSION) return;
+      } catch {
+        // schema_meta doesn't exist yet — created below.
+      }
       await sql`CREATE TABLE IF NOT EXISTS schema_meta (version INTEGER NOT NULL DEFAULT 0);`;
       await sql`INSERT INTO schema_meta (version) SELECT 0 WHERE NOT EXISTS (SELECT 1 FROM schema_meta);`;
-      const { rows: metaRows } = await sql<{ version: number }>`SELECT version FROM schema_meta LIMIT 1;`;
-      if ((metaRows[0]?.version ?? 0) >= CURRENT_SCHEMA_VERSION) {
-        return;
-      }
 
       await sql`
         CREATE TABLE IF NOT EXISTS expenses (
@@ -4519,14 +4524,22 @@ export async function processDueRecurringRules(userId: number): Promise<AutoLogg
         rule.type === "transfer"
           ? { type: "transfer", direction: rule.direction === "in" ? "in" : "out", ...base }
           : { type: rule.type === "income" ? "income" : "expense", ...base };
+      const following = advanceDate(nextRunDate, rule.frequency);
+      // Claim this occurrence before logging it: advance next_run_date only if
+      // it's still the date we read. Activities and Analytics both run this,
+      // and two page loads at once used to both see the rule as due and log
+      // the transaction twice — now only the request whose claim succeeds
+      // logs it. (Trade-off: if createExpense then fails, this one occurrence
+      // is skipped rather than risking a duplicate.)
+      const { rowCount } = await sql`
+        UPDATE recurring_rules SET next_run_date = ${following}
+        WHERE id = ${rule.id} AND next_run_date = ${nextRunDate};
+      `;
+      if (!rowCount) break;
       await createExpense(userId, ruleInput);
       logged.push({ merchant: rule.merchant, amount: Number(rule.amount), date: nextRunDate, type: rule.type });
-      nextRunDate = advanceDate(nextRunDate, rule.frequency);
+      nextRunDate = following;
       iterations += 1;
-      // Advance next_run_date after each occurrence (not just once at the end
-      // of the catch-up loop) so a failure partway through a long catch-up
-      // run can't cause the next call to re-log transactions already created.
-      await sql`UPDATE recurring_rules SET next_run_date = ${nextRunDate} WHERE id = ${rule.id};`;
     }
   }
   return logged;
@@ -5600,6 +5613,14 @@ export async function processDueRecurringSplits(userId: number): Promise<number>
     // ever materializing a single occurrence per dashboard load, same
     // safety behavior as processDueRecurringRules.
     while (nextRunDate <= today) {
+      const following = advanceDate(nextRunDate, rule.frequency);
+      // Claim the occurrence first (see processDueRecurringRules) so two
+      // concurrent page loads can't both create the same split.
+      const { rowCount } = await sql`
+        UPDATE recurring_splits SET next_run_date = ${following}
+        WHERE id = ${rule.id} AND next_run_date = ${nextRunDate};
+      `;
+      if (!rowCount) break;
       const result = await createSplit(userId, {
         title: rule.title,
         totalAmount: Number(rule.total_amount),
@@ -5608,11 +5629,18 @@ export async function processDueRecurringSplits(userId: number): Promise<number>
         date: nextRunDate,
         participantIds: parseParticipantIds(rule.participant_ids),
       });
-      if ("error" in result) break; // e.g. no longer friends with a participant — stop advancing this rule
+      if ("error" in result) {
+        // e.g. no longer friends with a participant — put the claim back so
+        // the rule stays due, as before, rather than silently skipping it.
+        await sql`
+          UPDATE recurring_splits SET next_run_date = ${nextRunDate}
+          WHERE id = ${rule.id} AND next_run_date = ${following};
+        `;
+        break;
+      }
       created++;
-      nextRunDate = advanceDate(nextRunDate, rule.frequency);
+      nextRunDate = following;
     }
-    await sql`UPDATE recurring_splits SET next_run_date = ${nextRunDate} WHERE id = ${rule.id};`;
   }
   return created;
 }

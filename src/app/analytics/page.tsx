@@ -39,20 +39,39 @@ export default async function AnalyticsPage({
 }) {
   const { add } = await searchParams;
   const userId = await getUserId();
-  const [loggedRecurring] = await Promise.all([processDueRecurringRules(userId), processDueRecurringSplits(userId)]);
-  const [rows, remaining, categoryRows, currency, walletRows, recurringRules, analyticsPrefs, budgetRows, savingsGoalRows, convertEnabled] =
-    await Promise.all([
-      listExpenses(userId),
-      getRemaining(userId),
-      listCategories(userId),
-      getCurrency(userId),
-      listWallets(userId),
-      listRecurringRules(userId),
-      getAnalyticsPrefs(userId),
-      listBudgets(userId),
-      listSavingsGoals(userId),
-      getConvertWalletBalances(userId),
-    ]);
+  // The recurring check runs alongside the page's reads (one round trip, not
+  // two). If it logged anything, the reads it affects — transactions, the
+  // balance total, wallet balances and the rules' next run dates — are
+  // re-read so the page reflects them.
+  const [
+    [loggedRecurring],
+    firstRows,
+    firstRemaining,
+    categoryRows,
+    currency,
+    firstWalletRows,
+    firstRecurringRules,
+    analyticsPrefs,
+    budgetRows,
+    savingsGoalRows,
+    convertEnabled,
+  ] = await Promise.all([
+    Promise.all([processDueRecurringRules(userId), processDueRecurringSplits(userId)]),
+    listExpenses(userId),
+    getRemaining(userId),
+    listCategories(userId),
+    getCurrency(userId),
+    listWallets(userId),
+    listRecurringRules(userId),
+    getAnalyticsPrefs(userId),
+    listBudgets(userId),
+    listSavingsGoals(userId),
+    getConvertWalletBalances(userId),
+  ]);
+  const [rows, remaining, walletRows, recurringRules] =
+    loggedRecurring.length > 0
+      ? await Promise.all([listExpenses(userId), getRemaining(userId), listWallets(userId), listRecurringRules(userId)])
+      : [firstRows, firstRemaining, firstWalletRows, firstRecurringRules];
   // Reuses the wallets/currency already fetched above instead of re-querying
   // them, and only touches the network (Frankfurter, with its own cache and
   // timeout — see lib/exchange-rate.ts) when the user has actually opted in.
