@@ -7,17 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Removed
-- The Nav bar style picker (24 styles) and the Settings page design picker (6 layouts). The mobile bottom bar now simply follows the active design (the Modern bar, or Classic's original floating pill), and Settings always uses the grouped-cards layout. Saved choices are ignored; their database columns are left in place.
+Nothing yet.
+
+## [0.25.0] - 2026-10-24
 
 ### Changed
-- Modern mobile nav bar: the Add button sits inline in the middle of the bar instead of floating over list rows, and the current page gets an accent pill behind its icon.
+- Much faster first load. The translations for all 16 languages used to ship in the main script of every page (about 560 KB compressed); English is now bundled and every other language is a separate file loaded only when that language is active, remembered locally so it starts loading immediately on a return visit. Only Inter's Latin font is preloaded now, instead of 12 font files (about 650 KB); the others still load on demand. On the welcome page this cuts scripts from about 736 KB to about 200 KB and fonts from about 653 KB to about 94 KB.
+- The Modern mobile nav bar now matches the desktop top bar: a flat strip along the bottom edge behind a thin line, the current page in the same soft grey tile as the desktop tabs, and the Add button as a green rounded button in the middle.
+- On phones, the Modern design shows a slim top bar (logo and notification bell) instead of a bell floating over the first card.
+
+### Removed
+- The Nav bar style picker (24 styles) and the Settings page design picker (6 layouts). The mobile bottom bar now follows the active design (the Modern bar, or Classic's original floating pill) and Settings always uses the grouped-cards layout. Saved choices are ignored; their database columns are left in place.
 
 ### Fixed
-- The app crashing on page changes ("Cannot read properties of null (reading 'removeChild')"), which broke navigation, buttons and adding items on every device after 0.24.0: the status-bar color sync removed and re-created the theme-color meta tags that React owns, so React failed the next time it updated them. It now only edits their color in place, and re-applies it after each navigation.
-
-### Changed
-- Much faster first load: the translations for all 16 languages used to ship in the main script of every page (about 560 KB compressed); English is now bundled and every other language is a separate file loaded only when that language is active (the last-used language is remembered locally so it starts loading immediately on a return visit). Only Inter's Latin font is preloaded now, rather than 12 font files (about 650 KB) including Thai/Arabic/Devanagari/Bengali ones most visitors never use; the others still load on demand when a page actually shows those characters. On the welcome page this cuts scripts from about 736 KB to about 200 KB and fonts from about 653 KB to about 94 KB.
+- The app crashing on page changes ("Cannot read properties of null (reading 'removeChild')"), which broke navigation, buttons and adding items on every device in 0.24.0. The status-bar color sync was removing and re-creating meta tags that React owns; it now only edits their color in place.
+- The mobile nav bar sitting right on the iPhone home indicator: the app now opts into safe-area insets (viewport-fit=cover), so the bar and the page keep clear of the home indicator and, in landscape, the notch.
+- The last row of a page being hidden behind the mobile nav bar, and long translated tab labels (e.g. "Einstellungen") being cut off.
 
 ## [0.24.0] - 2026-10-24
 
