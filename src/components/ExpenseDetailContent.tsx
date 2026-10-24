@@ -95,25 +95,20 @@ function LocationCard({ expense, tall }: { expense: Expense; tall: boolean }) {
 }
 
 /**
- * Transaction details, in two shapes:
- * - "sheet" (mobile/tablet, inside ExpenseDetailModal's bottom sheet): one
- *   stacked column, read top to bottom.
- * - "pane" (desktop, Activities' right-hand pane): a wide header with the
- *   amount alongside the merchant, then details beside the map/receipt.
- * Both render the same data from this one component.
+ * A transaction's details, laid out for its own page (/transactions/[id]):
+ * a hero card with the category, merchant and amount, then the details list
+ * beside the map and receipt on wide screens (stacked on phones).
  */
 export default function ExpenseDetailContent({
   expense,
   onEdit,
   onMerchantClick,
-  variant = "sheet",
 }: {
   expense: Expense;
   onEdit: () => void;
   /** When provided, the merchant name becomes tappable — jumps to that
-   * merchant's other transactions (see ActivitiesView.handleMerchantClick). */
+   * merchant's other transactions on Activities. */
   onMerchantClick?: (merchant: string) => void;
-  variant?: "sheet" | "pane";
 }) {
   const t = useT();
   const color = useCategoryColor(expense.type, expense.category);
@@ -121,8 +116,8 @@ export default function ExpenseDetailContent({
   const currency = useCurrency();
   const [viewingReceipt, setViewingReceipt] = useState(false);
   const receiptUrl = `/api/expenses/${expense.id}/receipt`;
-  const pane = variant === "pane";
   const hasLocation = Boolean(expense.locationName) || (expense.latitude != null && expense.longitude != null);
+  const hasSide = hasLocation || expense.hasReceipt;
 
   const amountColor =
     expense.type === "income"
@@ -141,7 +136,7 @@ export default function ExpenseDetailContent({
     <button
       type="button"
       onClick={() => onMerchantClick(expense.merchant)}
-      className="line-clamp-2 max-w-full break-words text-left font-semibold text-surface-foreground decoration-surface-foreground-soft/40 underline-offset-4 hover:underline"
+      className="line-clamp-2 max-w-full break-words font-semibold text-surface-foreground decoration-surface-foreground-soft/40 underline-offset-4 hover:underline"
     >
       {expense.merchant}
     </button>
@@ -149,27 +144,8 @@ export default function ExpenseDetailContent({
     <p className="line-clamp-2 break-words font-semibold text-surface-foreground">{expense.merchant}</p>
   );
 
-  const categoryTile = (
-    <span
-      className={`flex shrink-0 items-center justify-center rounded-2xl ${pane ? "h-14 w-14" : "h-12 w-12"} ${badgeClasses(color)}`}
-    >
-      {icon && isCategoryIconKey(icon) ? (
-        <CategoryIcon iconKey={icon} className={pane ? "h-7 w-7" : "h-6 w-6"} />
-      ) : (
-        <span className="text-lg font-semibold">{expense.category.charAt(0).toUpperCase()}</span>
-      )}
-    </span>
-  );
-
-  const amount = (
-    <p className={`font-semibold tabular-nums tracking-tight ${pane ? "text-4xl" : "text-[40px] leading-none"} ${amountColor}`}>
-      {signedAmount(expense) >= 0 ? "+" : "−"}
-      {formatCurrency(expense.amount, currency)}
-    </p>
-  );
-
   const details = (
-    <div className="divide-y divide-surface-line overflow-hidden rounded-card border border-surface-line bg-surface">
+    <div className="divide-y divide-surface-line self-start overflow-hidden rounded-card border border-surface-line bg-surface">
       <DetailRow icon={<CalendarBlankIcon weight="fill" aria-hidden="true" className="h-[18px] w-[18px]" />} label={t("common.date")}>
         {formatDateLong(expense.date)}
       </DetailRow>
@@ -210,87 +186,70 @@ export default function ExpenseDetailContent({
     <button
       type="button"
       onClick={() => setViewingReceipt(true)}
-      className="group flex w-full items-center gap-3 overflow-hidden rounded-card border border-surface-line bg-surface p-2.5 pr-4 text-left transition hover:border-surface-accent"
+      className="group block w-full overflow-hidden rounded-card border border-surface-line bg-surface text-left transition hover:border-surface-accent"
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- authenticated API image, not a build-time asset */}
-      <img src={receiptUrl} alt="" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
-      <span className="flex flex-1 items-center gap-1.5 text-sm font-semibold text-surface-foreground">
+      <img src={receiptUrl} alt="" className="h-44 w-full bg-surface-soft object-cover object-top" />
+      <span className="flex items-center gap-1.5 px-4 py-3 text-sm font-semibold text-surface-foreground">
         <ReceiptIcon weight="fill" aria-hidden="true" className="h-4 w-4 text-surface-foreground-soft" />
         {t("activities.viewReceipt")}
       </span>
     </button>
   );
 
-  const actions = (
-    <div className="flex gap-2">
-      <button
-        type="button"
-        onClick={onEdit}
-        className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-navy px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-dark"
-      >
-        <EditIcon />
-        {t("modal.editTransaction")}
-      </button>
-      <button
-        type="button"
-        onClick={() => shareExpense(expense, currency)}
-        aria-label={t("detail.share")}
-        title={t("detail.share")}
-        className="flex w-11 shrink-0 items-center justify-center rounded-lg border border-surface-line text-surface-foreground-soft transition hover:border-surface-accent hover:text-surface-accent"
-      >
-        <ExportIcon weight="fill" aria-hidden="true" className="h-[18px] w-[18px]" />
-      </button>
-    </div>
-  );
-
   return (
-    <div className="flex flex-col gap-4">
-      {pane ? (
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-3.5">
-            {categoryTile}
-            <div className="min-w-0">
-              <div className="text-lg">{merchant}</div>
-              <p className="mt-0.5 text-sm text-surface-foreground-soft">{typeLabel}</p>
-            </div>
-          </div>
-          <div className="shrink-0 text-right">{amount}</div>
-        </div>
-      ) : (
-        <>
-          <div className="flex items-center gap-3">
-            {categoryTile}
-            <div className="min-w-0">
-              <div className="text-base">{merchant}</div>
-              <p className="mt-0.5 text-sm text-surface-foreground-soft">{expense.category}</p>
-            </div>
-          </div>
-          <div>
-            {amount}
-            <p className="mt-1.5 text-sm text-surface-foreground-soft">{formatDateLong(expense.date)}</p>
-          </div>
-        </>
-      )}
-
-      {pane ? (
-        <div className={`grid gap-4 ${hasLocation || expense.hasReceipt ? "xl:grid-cols-2" : ""}`}>
-          <div className="flex flex-col gap-4">{details}</div>
-          {(hasLocation || expense.hasReceipt) && (
-            <div className="flex flex-col gap-4">
-              {hasLocation && <LocationCard expense={expense} tall />}
-              {receipt}
-            </div>
+    <div className="flex flex-col gap-4 sm:gap-5">
+      {/* Hero: who, how much, when — centred, with the primary actions. */}
+      <section className="flex flex-col items-center rounded-card border border-surface-line bg-surface px-5 pb-5 pt-7 text-center sm:px-8 sm:pt-9">
+        <span className={`flex h-16 w-16 items-center justify-center rounded-2xl ${badgeClasses(color)}`}>
+          {icon && isCategoryIconKey(icon) ? (
+            <CategoryIcon iconKey={icon} className="h-8 w-8" />
+          ) : (
+            <span className="text-2xl font-semibold">{expense.category.charAt(0).toUpperCase()}</span>
           )}
-        </div>
-      ) : (
-        <>
-          {hasLocation && <LocationCard expense={expense} tall={false} />}
-          {details}
-          {receipt}
-        </>
-      )}
+        </span>
+        <div className="mt-3 max-w-full text-lg sm:text-xl">{merchant}</div>
+        <p className="mt-0.5 text-sm text-surface-foreground-soft">
+          {expense.category} · {typeLabel}
+        </p>
+        <p className={`mt-4 text-[44px] font-semibold leading-none tracking-tight tabular-nums sm:text-5xl ${amountColor}`}>
+          {signedAmount(expense) >= 0 ? "+" : "−"}
+          {formatCurrency(expense.amount, currency)}
+        </p>
+        <p className="mt-3 rounded-full bg-surface-soft px-3 py-1 text-xs font-medium text-surface-foreground-soft">
+          {formatDateLong(expense.date)}
+        </p>
 
-      {actions}
+        <div className="mt-6 flex w-full max-w-sm gap-2">
+          <button
+            type="button"
+            onClick={onEdit}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-navy px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-dark"
+          >
+            <EditIcon />
+            {t("modal.editTransaction")}
+          </button>
+          <button
+            type="button"
+            onClick={() => shareExpense(expense, currency)}
+            aria-label={t("detail.share")}
+            title={t("detail.share")}
+            className="flex w-11 shrink-0 items-center justify-center rounded-lg border border-surface-line text-surface-foreground-soft transition hover:border-surface-accent hover:text-surface-accent"
+          >
+            <ExportIcon weight="fill" aria-hidden="true" className="h-[18px] w-[18px]" />
+          </button>
+        </div>
+      </section>
+
+      <div className={`grid gap-4 sm:gap-5 ${hasSide ? "lg:grid-cols-2" : ""}`}>
+        {details}
+        {hasSide && (
+          <div className="flex flex-col gap-4 sm:gap-5">
+            {hasLocation && <LocationCard expense={expense} tall />}
+            {receipt}
+          </div>
+        )}
+      </div>
 
       {viewingReceipt && <ReceiptLightbox src={receiptUrl} onClose={() => setViewingReceipt(false)} />}
     </div>

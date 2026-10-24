@@ -9,21 +9,18 @@ import type { WalletOption } from "@/types/wallet";
 import { CategoriesProvider } from "@/lib/categories-context";
 import { CurrencyProvider } from "@/lib/currency-context";
 import { WalletsProvider } from "@/lib/wallets-context";
-import { useMediaQuery, DESKTOP_QUERY } from "@/lib/use-media-query";
-import { useT } from "@/lib/language-context";
+import { markOpenedFromList } from "@/lib/transaction-nav";
 import { DEFAULT_ACTIVITIES_PREFS, type ActivitiesPrefs } from "@/lib/activities-prefs";
 import PullToRefresh from "./PullToRefresh";
 import ExpenseList, { type TypeFilter } from "./ExpenseList";
 import ActivitiesBalanceCard from "./ActivitiesBalanceCard";
-import ExpenseDetailContent from "./ExpenseDetailContent";
 import AppHeader from "./AppHeader";
 
-// None of these three are ever mounted on first paint (they all require a
+// Neither of these is ever mounted on first paint (they all require a
 // row click or the Add button first) — loading them on demand keeps them
 // out of Activities' initial JS bundle.
 const AddExpenseModal = dynamic(() => import("./AddExpenseModal"), { ssr: false });
 const EditExpenseModal = dynamic(() => import("./EditExpenseModal"), { ssr: false });
-const ExpenseDetailModal = dynamic(() => import("./ExpenseDetailModal"), { ssr: false });
 
 function sortByDateDesc(a: Expense, b: Expense): number {
   if (a.date !== b.date) return a.date < b.date ? 1 : -1;
@@ -63,9 +60,15 @@ export default function ActivitiesView({
    * activitiesDefaultWalletId above. */
   prefs?: ActivitiesPrefs;
 }) {
-  const t = useT();
   const router = useRouter();
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
+  // A fresh server render (e.g. back from a transaction's page after an
+  // edit there) replaces the local list rather than being ignored.
+  const [prevInitial, setPrevInitial] = useState(initialExpenses);
+  if (prevInitial !== initialExpenses) {
+    setPrevInitial(initialExpenses);
+    setExpenses(initialExpenses);
+  }
   const [addOpen, setAddOpen] = useState(initialAddOpen);
 
   // Strips the `?add=expense`/`?vendor=` params once consumed (replace, not
@@ -75,13 +78,11 @@ export default function ActivitiesView({
     router.replace("/", { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only
   }, []);
-  const [viewing, setViewing] = useState<Expense | null>(null);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>(prefs.defaultTypeFilter);
   const [walletFilter, setWalletFilter] = useState(initialWalletFilter);
   const [search, setSearch] = useState("");
   const [vendorFilter, setVendorFilter] = useState<string | null>(initialVendorFilter ?? null);
-  const isDesktop = useMediaQuery(DESKTOP_QUERY);
 
   const activeWallets = wallets.filter((w) => !w.archived);
 
@@ -92,44 +93,27 @@ export default function ActivitiesView({
   function handleUpdated(expense: Expense) {
     setExpenses((prev) => prev.map((e) => (e.id === expense.id ? expense : e)).sort(sortByDateDesc));
     setEditing(null);
-    // Keep the desktop detail pane in sync — without this it would keep
-    // showing the pre-edit amount/category/notes until the row is reselected.
-    setViewing((prev) => (prev && prev.id === expense.id ? expense : prev));
   }
 
   function handleDeleted(id: number) {
     setExpenses((prev) => prev.filter((e) => e.id !== id));
     setEditing(null);
-    // The detail pane must not keep showing (and offering to edit) a
-    // transaction that no longer exists.
-    setViewing((prev) => (prev && prev.id === id ? null : prev));
   }
 
-  function handleEditFromDetail() {
-    setEditing(viewing);
-    setViewing(null);
-  }
-
-  // Tapping a merchant name in the transaction detail view jumps to that
-  // merchant's other transactions via a dedicated exact-match filter (shown
-  // as a dismissible chip in ExpenseList) — distinct from the free-text
-  // search box, so clearing it (the chip's ✕) cleanly returns to the normal,
-  // unfiltered Activities view instead of leaving stale search text behind.
-  function handleMerchantClick(merchant: string) {
-    setVendorFilter(merchant);
-    setViewing(null);
+  // A transaction's details open on their own page (/transactions/[id]).
+  function openTransaction(expense: Expense) {
+    markOpenedFromList();
+    router.push(`/transactions/${expense.id}`);
   }
 
   function handleBulkDeleted(ids: number[]) {
     const idSet = new Set(ids);
     setExpenses((prev) => prev.filter((e) => !idSet.has(e.id)));
-    setViewing((prev) => (prev && idSet.has(prev.id) ? null : prev));
   }
 
   function handleBulkUpdated(updated: Expense[]) {
     const byId = new Map(updated.map((e) => [e.id, e]));
     setExpenses((prev) => prev.map((e) => byId.get(e.id) ?? e));
-    setViewing((prev) => (prev ? (byId.get(prev.id) ?? prev) : prev));
   }
 
   return (
@@ -140,8 +124,8 @@ export default function ActivitiesView({
           <PullToRefresh>
             <AppHeader onAddClick={() => setAddOpen(true)} />
 
-            <main className="flex-1 px-1 py-6 sm:px-2 lg:flex lg:items-start lg:gap-6">
-              <div className="lg:w-[420px] lg:shrink-0">
+            <main className="flex-1 px-1 py-6 sm:px-2">
+              <div className="mx-auto w-full max-w-3xl">
                 <ActivitiesBalanceCard
                   wallets={activeWallets}
                   currency={currency}
@@ -152,7 +136,7 @@ export default function ActivitiesView({
                 />
                 <ExpenseList
                   expenses={expenses}
-                  onSelect={setViewing}
+                  onSelect={openTransaction}
                   onEdit={setEditing}
                   onBulkDeleted={handleBulkDeleted}
                   onBulkUpdated={handleBulkUpdated}
@@ -168,40 +152,10 @@ export default function ActivitiesView({
                 />
               </div>
 
-              {/* Desktop-only right pane — below lg: transaction detail is
-                  always the ExpenseDetailModal bottom sheet instead (see
-                  isDesktop guard further down), so this stays out of the DOM
-                  on mobile/tablet rather than just being visually hidden. */}
-              <div className="hidden lg:sticky lg:top-20 lg:block lg:flex-1">
-                {viewing ? (
-                  // key={viewing.id} forces a remount (and so replays the
-                  // fade-in) on every different row selected, not just the
-                  // first time this pane switches from empty to filled.
-                  <div
-                    key={viewing.id}
-                    className="rounded-card border border-surface-line bg-surface p-5 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none sm:p-6"
-                  >
-                    <ExpenseDetailContent expense={viewing} onEdit={handleEditFromDetail} onMerchantClick={handleMerchantClick} variant="pane" />
-                  </div>
-                ) : (
-                  <div className="flex h-64 flex-col items-center justify-center gap-1 rounded-card border border-dashed border-surface-line px-6 text-center animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">
-                    <p className="text-sm font-medium text-foreground">{t("activities.noTransactionSelected")}</p>
-                    <p className="text-xs text-ink-soft">{t("activities.noTransactionSelectedDesc")}</p>
-                  </div>
-                )}
-              </div>
             </main>
           </PullToRefresh>
 
           {addOpen && <AddExpenseModal onClose={() => setAddOpen(false)} onCreated={handleCreated} />}
-          {viewing && !isDesktop && (
-            <ExpenseDetailModal
-              expense={viewing}
-              onClose={() => setViewing(null)}
-              onEdit={handleEditFromDetail}
-              onMerchantClick={handleMerchantClick}
-            />
-          )}
           {editing && (
             <EditExpenseModal
               expense={editing}

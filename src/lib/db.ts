@@ -3552,6 +3552,42 @@ export async function listExpenses(userId: number): Promise<Expense[]> {
   return rows;
 }
 
+// One transaction, for its own details page (/transactions/[id]) — same
+// columns and the same visibility rule as listExpenses (own rows, rows in
+// wallets the user owns, or wallets shared with them).
+export async function getExpense(userId: number, id: number): Promise<Expense | null> {
+  await ensureSchema();
+  const { rows } = await sql<Expense>`
+    SELECT
+      e.id,
+      e.type,
+      e.direction,
+      to_char(e.date, 'YYYY-MM-DD') AS date,
+      e.amount::text AS amount,
+      e.merchant,
+      e.category,
+      e.notes,
+      e.tags,
+      (e.receipt_image IS NOT NULL OR EXISTS (SELECT 1 FROM expense_receipts er WHERE er.expense_id = e.id)) AS has_receipt,
+      e.wallet_id,
+      w.name AS wallet_name,
+      e.split_group_id,
+      e.location_name,
+      e.latitude,
+      e.longitude
+    FROM expenses e
+    LEFT JOIN wallets w ON w.id = e.wallet_id
+    WHERE e.id = ${id}
+      AND (
+        e.user_id = ${userId}
+        OR e.wallet_id IN (SELECT id FROM wallets WHERE user_id = ${userId})
+        OR e.wallet_id IN (SELECT wallet_id FROM wallet_members WHERE user_id = ${userId} AND status = 'accepted')
+      )
+    LIMIT 1;
+  `;
+  return rows[0] ?? null;
+}
+
 // Powers the "Latest Transactions" list on a wallet's detail view (see
 // AccountDetail.tsx) — a small, wallet-scoped, capped slice rather than
 // making the client fetch and filter the full (up to 10,000-row) list
