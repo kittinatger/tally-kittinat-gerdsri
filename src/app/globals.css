@@ -503,51 +503,8 @@ h1, h2, h3 {
   box-shadow: none;
 }
 
-/* ── Modern: add-transaction flow ──────────────────────────────────── */
+/* ── Modern: Activities rows ──────────────────────────────────────── */
 
-/* Manual / Scan / Speak: neutral inline tabs instead of three
-   individually-colored tall tiles. !important is needed to beat the
-   per-method amber/violet utility colors set inline in the component. */
-:root[data-design="modern"] [data-method-tile] {
-  flex-direction: row;
-  justify-content: center;
-  gap: 8px;
-  padding-block: 8px;
-  border-radius: 10px;
-  font-size: 14px;
-  border-color: var(--line) !important;
-  background: transparent !important;
-  color: var(--ink-soft) !important;
-}
-:root[data-design="modern"] [data-method-tile] > span {
-  width: 18px;
-  height: 18px;
-  background: transparent !important;
-  color: currentColor !important;
-}
-:root[data-design="modern"] [data-method-tile][aria-pressed="true"] {
-  border-color: var(--navy) !important;
-  background: color-mix(in srgb, var(--navy) 10%, transparent) !important;
-  color: var(--foreground) !important;
-}
-/* On the Add page the three methods sit in one segmented control, matching
-   the type tabs on Activities. */
-:root[data-design="modern"] [data-add-page] [data-method-tabs] {
-  gap: 4px;
-  padding: 4px;
-  margin-bottom: 20px;
-  border-radius: 9999px;
-  background: var(--surface-soft);
-}
-:root[data-design="modern"] [data-add-page] [data-method-tile] {
-  border-color: transparent !important;
-  border-radius: 9999px;
-  padding-block: 7px;
-}
-:root[data-design="modern"] [data-add-page] [data-method-tile][aria-pressed="true"] {
-  background: var(--surface) !important;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
-}
 :root[data-design="modern"] [data-swiped="false"] [data-swipe-backdrop] {
   visibility: hidden;
 }

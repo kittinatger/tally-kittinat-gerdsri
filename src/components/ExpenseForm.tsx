@@ -30,9 +30,9 @@ export type ExpenseFormValues = {
   locationName?: string;
   latitude?: number | null;
   longitude?: number | null;
-  /** Only meaningful when allowSplit is used and split mode is on — see AddExpenseModal. */
+  /** Only meaningful when allowSplit is used and split mode is on — see transaction-api.ts. */
   splitLines?: { category: string; amount: string }[];
-  /** Only meaningful when allowFriendSplit is used and friend-split mode is on — see AddExpenseModal. Divides the bill between you (the payer) and the listed friends; your own share is whatever's left after theirs. */
+  /** Only meaningful when allowFriendSplit is used and friend-split mode is on — see transaction-api.ts. Divides the bill between you (the payer) and the listed friends; your own share is whatever's left after theirs. */
   splitWithFriends?: {
     participantIds: number[];
     splitMethod: "equal" | "custom";
@@ -76,9 +76,9 @@ export default function ExpenseForm({
   submitting?: boolean;
   error?: string | null;
   footerLeft?: React.ReactNode;
-  /** Shows a "Split into multiple categories" toggle for expense/income entries — see AddExpenseModal. */
+  /** Shows a "Split into multiple categories" toggle for expense/income entries — see transaction-api.ts. */
   allowSplit?: boolean;
-  /** Shows a "Split this bill with friends" toggle for expense entries — see AddExpenseModal. */
+  /** Shows a "Split this bill with friends" toggle for expense entries — see transaction-api.ts. */
   allowFriendSplit?: boolean;
 }) {
   const t = useT();

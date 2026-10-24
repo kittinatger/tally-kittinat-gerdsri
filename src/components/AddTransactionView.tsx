@@ -12,7 +12,7 @@ import { WalletsProvider } from "@/lib/wallets-context";
 import { useT } from "@/lib/language-context";
 import { consumeOpenedFromList } from "@/lib/transaction-nav";
 import AppHeader from "./AppHeader";
-import AddExpenseModal from "./AddExpenseModal";
+import TransactionComposer from "./TransactionComposer";
 
 export default function AddTransactionView({
   categories,
@@ -65,18 +65,14 @@ export default function AddTransactionView({
                 </button>
               </div>
 
-              <div
-                data-add-page
-                className="rounded-card border border-surface-line bg-surface p-4 text-surface-foreground animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none sm:p-6"
-              >
-                <AddExpenseModal
-                  asPage
+              <div className="animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">
+                <TransactionComposer
                   initialType={initialType}
                   initialWalletId={initialWalletId}
-                  onCreated={() => {
+                  onSaved={() => {
                     savedRef.current = true;
                   }}
-                  onClose={close}
+                  onDone={close}
                 />
               </div>
             </main>
