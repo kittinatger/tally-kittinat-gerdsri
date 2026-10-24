@@ -7,12 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.24.0] - 2026-10-24
+
 ### Added
-- A modern design, now the default: flat neutral surfaces, Inter type, thin borders, rounded-square controls, a flat top bar and a flush bottom nav bar, and a calmer Analytics/Settings/add-transaction look. The original green liquid-glass design is kept as **Classic**, switchable per device in Settings > Design (applied before first paint, so there is no flash).
-- "Continue without an account" on the welcome and sign-in pages: starts a guest account (a real account with a random unusable password) so every feature works with no sign-up. Settings > Account offers an in-place upgrade to a username/password account that keeps all data. Guests cannot use AI scanning, voice entry, the assistant, pattern generation or API tokens; guest creation is capped at 120/hour; a daily cron deletes guest accounts older than 35 days (their 30-day session can no longer reach them). Schema v78.
+- A modern design, now the default: flat neutral surfaces, Inter type, thin borders, rounded-square controls, a flat top bar and a flush bottom nav bar, and calmer Activities, add-transaction, Analytics, Wallet, Settings and welcome/sign-in screens. The original green liquid-glass design is kept as Classic, switchable per device in Settings > Design (applied before first paint, so there is no flash).
+- A "Continue without an account" option on the welcome and sign-in pages: starts a guest account (a real account with a random unusable password) so every feature works with no sign-up. Settings > Account offers an in-place upgrade to a username/password account that keeps all data. Guests cannot use AI scanning, voice entry, the assistant, pattern generation or API tokens; guest creation is capped at 120/hour; a daily cron deletes guest accounts older than 35 days (their 30-day session can no longer reach them). Schema v78.
 
 ### Fixed
 - Analytics: the spending-trend bar charts, the line/area chart labels and the weekday chart no longer widen the page sideways on phones when a period has many data points.
+- A hazy, tinted band above the top bar: the status bar / installed-app title area now takes its color from the active design and theme (a live-updating theme-color meta plus updated manifest colors) instead of the old Classic green tint.
 
 ## [0.23.0] - 2026-09-12
 
