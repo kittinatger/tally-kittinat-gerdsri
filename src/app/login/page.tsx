@@ -30,7 +30,7 @@ export default async function LoginPage({
 
       {/* Desktop: branded split panel */}
       <div className="hidden overflow-hidden rounded-card border border-line bg-surface shadow-soft lg:flex lg:w-full lg:max-w-3xl">
-        <div className="lg:flex lg:w-1/2 lg:flex-col lg:justify-center lg:gap-4 lg:bg-gradient-to-br lg:from-navy lg:via-navy-dark lg:to-navy-darker lg:p-10">
+        <div data-auth-aside className="lg:flex lg:w-1/2 lg:flex-col lg:justify-center lg:gap-4 lg:bg-gradient-to-br lg:from-navy lg:via-navy-dark lg:to-navy-darker lg:p-10">
           <img src="/favicon-dark.svg" alt="" className="h-10 w-10" />
           <h2 className="font-display text-3xl leading-tight text-white">
             <T k="auth.welcomeBackTitle" />

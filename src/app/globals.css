@@ -357,6 +357,39 @@ h1, h2, h3 {
   border-radius: 8px;
 }
 
+/* ── Modern: welcome + sign-in/register ────────────────────────────── */
+
+/* Welcome: plain page background with the logo in a solid green tile,
+   instead of a full-bleed green gradient with a glowing blob. */
+:root[data-design="modern"] [data-welcome] {
+  background-image: none !important;
+  background-color: var(--background);
+}
+:root[data-design="modern"] [data-welcome-blob] {
+  display: none;
+}
+:root[data-design="modern"] [data-welcome-logo] {
+  width: 88px;
+  height: 88px;
+  padding: 20px;
+  border-radius: 24px;
+  background: #157a4f;
+}
+:root[data-design="modern"] [data-welcome-title] {
+  color: var(--foreground) !important;
+}
+:root[data-design="modern"] [data-welcome-toggle] button {
+  color: var(--ink-soft) !important;
+}
+:root[data-design="modern"] [data-welcome-toggle] button:hover {
+  background: var(--nav-hover-bg) !important;
+  color: var(--foreground) !important;
+}
+/* Sign-in/register side panel: solid dark instead of the green gradient. */
+:root[data-design="modern"] [data-auth-aside] {
+  background: #18181b !important;
+}
+
 /* ── Modern: Settings ──────────────────────────────────────────────── */
 
 /* Row icons: neutral rounded squares instead of a different tinted color

@@ -13,22 +13,23 @@ export default async function WelcomePage({
 
   return (
     <main
+      data-welcome
       className="relative flex min-h-screen flex-col overflow-hidden px-6 pb-10 pt-16"
       style={{
         backgroundImage: "linear-gradient(180deg, var(--navy) 0%, var(--navy) 30%, var(--background) 68%)",
       }}
     >
-      <div className="absolute right-4 top-4 z-10 [&_button]:text-white [&_button:hover]:bg-white/10 [&_button:hover]:text-white">
+      <div data-welcome-toggle className="absolute right-4 top-4 z-10 [&_button]:text-white [&_button:hover]:bg-white/10 [&_button:hover]:text-white">
         <SettingsMenu />
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 top-16 flex justify-center">
+      <div data-welcome-blob className="pointer-events-none absolute inset-x-0 top-16 flex justify-center">
         <div className="h-72 w-72 rounded-full bg-white/15 blur-3xl" />
       </div>
 
       <div className="relative flex flex-[1.3] flex-col items-center justify-center gap-3 text-center">
-        <img src="/favicon-dark.svg" alt="" className="h-28 w-28" />
-        <h1 className="font-display text-3xl text-white">Tally</h1>
+        <img data-welcome-logo src="/favicon-dark.svg" alt="" className="h-28 w-28" />
+        <h1 data-welcome-title className="font-display text-3xl text-white">Tally</h1>
       </div>
 
       <div className="relative flex flex-1 flex-col items-center justify-end gap-6 pb-2">
