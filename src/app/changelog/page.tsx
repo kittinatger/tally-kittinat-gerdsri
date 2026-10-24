@@ -6,6 +6,25 @@ export const dynamic = "force-dynamic";
 
 const RELEASES: { version: string; date: string; sections: { heading: string; items: string[] }[] }[] = [
   {
+    version: "0.24.4",
+    date: "2026-10-24",
+    sections: [
+      {
+        heading: "Changed",
+        items: [
+          "Faster page loads: the settings request every page makes was 9 database queries (including a balance total summed over every wallet and transaction); it is now a single query. The Wallet page no longer downloads the barcode/QR library (about 900 KB) up front, and Settings, FAQ, Changelog and the other support pages no longer download the PDF export libraries (about 400 KB); both now load only when a code is drawn or a report is exported. Analytics runs its two recurring-schedule checks in parallel. The notification bell (two are mounted, for desktop and phone) shares one cached request instead of each fetching on every page change, which was up to four database queries per tap between tabs. A cold server start now checks the database schema in one round trip instead of three, and Activities and Analytics load their data at the same time as the recurring check instead of waiting for it.",
+        ],
+      },
+      {
+        heading: "Fixed",
+        items: [
+          "Recurring transactions (rent, salary, subscriptions) only being logged when the Analytics page was opened. Activities, the page the app opens on, now logs anything due before showing the list, and sends the same notification.",
+          "Opening Activities and Analytics at the same moment could log the same recurring transaction or split twice. Each occurrence is now claimed once before it's logged.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.24.3",
     date: "2026-10-24",
     sections: [
