@@ -35,6 +35,7 @@ function RowContent({
   return (
     <>
       <span
+        data-row-icon
         className={`flex shrink-0 items-center justify-center ${compact ? "h-7 w-7" : "h-9 w-9"} ${
           iconShape === "square" ? "rounded-xl" : "rounded-full"
         } ${accent ? badgeClasses(accent) : "text-ink-soft"}`}

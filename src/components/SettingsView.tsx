@@ -255,11 +255,12 @@ export default function SettingsView({
                * near the bottom) drags the short detail pane down and out
                * of view with it. */}
               <div
+                data-settings-pane
                 className={`${panel ? "hidden" : "block"} lg:sticky lg:top-[88px] lg:block lg:max-h-[calc(100dvh-104px)] lg:w-[320px] lg:shrink-0 lg:overflow-y-auto`}
               >
                 {listContent}
               </div>
-              <div className={`${panel ? "block" : "hidden"} lg:sticky lg:top-[88px] lg:block lg:max-h-[calc(100dvh-104px)] lg:flex-1 lg:overflow-y-auto`}>
+              <div data-settings-pane className={`${panel ? "block" : "hidden"} lg:sticky lg:top-[88px] lg:block lg:max-h-[calc(100dvh-104px)] lg:flex-1 lg:overflow-y-auto`}>
                 {panel ? detailContent : detailEmptyState}
               </div>
             </div>

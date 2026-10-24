@@ -33,7 +33,7 @@ export default function BannerHeader({
 
   return (
     <div>
-      <div className="mb-6 flex items-center gap-3 overflow-hidden rounded-card bg-gradient-to-br from-navy to-violet-600 p-4 shadow-soft">
+      <div data-banner className="mb-6 flex items-center gap-3 overflow-hidden rounded-card bg-gradient-to-br from-navy to-violet-600 p-4 shadow-soft">
         <ProfileAvatar username={username} />
         <div className="min-w-0 flex-1">
           <p className="truncate font-display text-lg text-white">{username}</p>

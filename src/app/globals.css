@@ -357,6 +357,28 @@ h1, h2, h3 {
   border-radius: 8px;
 }
 
+/* ── Modern: Settings ──────────────────────────────────────────────── */
+
+/* Row icons: neutral rounded squares instead of a different tinted color
+   per row. !important beats the per-row accent utility classes. */
+:root[data-design="modern"] [data-row-icon] {
+  border-radius: 8px;
+  background: var(--bg-soft) !important;
+  color: var(--ink-soft) !important;
+}
+:root[data-design="modern"] [data-banner] {
+  background: #18181b;
+  box-shadow: none;
+}
+/* Desktop list/detail panes stick under the flatter top bar, which is
+   shorter than the floating pill they were offset for. */
+@media (min-width: 1024px) {
+  :root[data-design="modern"] [data-settings-pane] {
+    top: 72px;
+    max-height: calc(100dvh - 88px);
+  }
+}
+
 /* ── Modern: Wallet ────────────────────────────────────────────────── */
 
 /* Cards keep the user's own colors; what changes is how they're staged — a
