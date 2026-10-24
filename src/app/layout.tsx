@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Radley, Arimo, Noto_Sans_Thai, Noto_Sans_Arabic, Noto_Sans_Devanagari, Noto_Sans_Bengali } from "next/font/google";
+import { Inter, Radley, Arimo, Noto_Sans_Thai, Noto_Sans_Arabic, Noto_Sans_Devanagari, Noto_Sans_Bengali } from "next/font/google";
 import ThemeSync from "@/components/ThemeSync";
 import CommandPalette from "@/components/CommandPalette";
 import KeyboardShortcuts from "@/components/KeyboardShortcuts";
@@ -16,6 +16,11 @@ const radley = Radley({
   weight: "400",
   style: ["normal", "italic"],
   subsets: ["latin"],
+});
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin", "latin-ext", "cyrillic", "vietnamese", "greek"],
 });
 
 const arimo = Arimo({
@@ -108,14 +113,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${radley.variable} ${arimo.variable} ${notoSansThai.variable} ${notoSansArabic.variable} ${notoSansDevanagari.variable} ${notoSansBengali.variable} h-full antialiased`}
+      data-design="modern"
+      className={`${inter.variable} ${radley.variable} ${arimo.variable} ${notoSansThai.variable} ${notoSansArabic.variable} ${notoSansDevanagari.variable} ${notoSansBengali.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
         {/* Runs before first paint so the correct theme is applied with no flash. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('tally-theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('tally-theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);if(localStorage.getItem('tally-design')==='classic'){document.documentElement.setAttribute('data-design','classic');}}catch(e){}})();`,
           }}
         />
       </head>

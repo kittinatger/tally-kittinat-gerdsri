@@ -145,6 +145,16 @@ function NavBarIcon() {
   );
 }
 
+function DesignIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <circle cx="10" cy="10" r="7.5" />
+      <path d="M10 2.5v15" />
+      <path d="M10 2.5a7.5 7.5 0 0 0 0 15" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 function LayoutIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
@@ -448,6 +458,7 @@ export const SETTINGS_SECTIONS: SettingsSectionData[] = [
   {
     titleKey: "settings.section.display",
     rows: [
+      { kind: "panel", icon: <DesignIcon />, labelKey: "settings.design", accent: "green", panel: "design" },
       { kind: "panel", icon: <CalendarIcon />, labelKey: "settings.calendar", accent: "blue", panel: "calendar" },
       { kind: "panel", icon: <NavBarIcon />, labelKey: "settings.navStyle", accent: "violet", panel: "navStyle" },
       { kind: "panel", icon: <LayoutIcon />, labelKey: "settings.settingsHomeStyle", accent: "fuchsia", panel: "settingsHomeStyle" },

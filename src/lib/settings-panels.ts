@@ -38,6 +38,7 @@ export const PANEL_VALUES = [
   "loanCalculator",
   "aiUsage",
   "keyboardShortcuts",
+  "design",
 ] as const;
 
 export type Panel = (typeof PANEL_VALUES)[number];

@@ -99,14 +99,86 @@
      Chinese/Japanese fall back to native OS UI fonts (see layout.tsx for why
      they can't be self-hosted the same way) so those two still render in a
      clean, deliberately-picked font instead of a generic system default. */
-  --font-sans: var(--font-arimo), var(--font-noto-thai), var(--font-noto-arabic), var(--font-noto-devanagari),
-    var(--font-noto-bengali), "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Hiragino Sans", "Yu Gothic",
-    "Meiryo", sans-serif;
-  --font-display: var(--font-radley), var(--font-noto-thai), var(--font-noto-arabic), var(--font-noto-devanagari),
-    var(--font-noto-bengali), "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Hiragino Sans", "Yu Gothic",
-    "Meiryo", sans-serif;
-  --radius-card: 18px;
+  --font-sans: var(--app-font-sans);
+  --font-display: var(--app-font-display);
+  --radius-card: var(--app-radius-card);
   --shadow-soft: var(--shadow-soft-value);
+}
+
+:root {
+  --script-fallbacks: var(--font-noto-thai), var(--font-noto-arabic), var(--font-noto-devanagari),
+    var(--font-noto-bengali), "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Hiragino Sans", "Yu Gothic",
+    "Meiryo", sans-serif;
+  --app-font-sans: var(--font-arimo), var(--script-fallbacks);
+  --app-font-display: var(--font-radley), var(--script-fallbacks);
+  --app-radius-card: 18px;
+  --heading-weight: 400;
+  --heading-tracking: normal;
+}
+
+/* ── Modern design ─────────────────────────────────────────────────────
+   The default look. Classic (the original green liquid-glass design) is
+   everything above this block, kept intact and opt-in via Settings >
+   Design, which sets <html data-design="classic">. Modern only reassigns
+   the same tokens, so every component follows it without forking. */
+:root[data-design="modern"] {
+  --app-font-sans: var(--font-inter), var(--script-fallbacks);
+  --app-font-display: var(--font-inter), var(--script-fallbacks);
+  --app-radius-card: 12px;
+  --heading-weight: 600;
+  --heading-tracking: -0.02em;
+
+  --background: #fafafa;
+  --bg-soft: #f4f4f5;
+  --navy: #157a4f;
+  --navy-dark: #0f6340;
+  --navy-darker: #0a4a30;
+  --foreground: #18181b;
+  --ink-soft: #71717a;
+  --line: #e4e4e7;
+  --glass-bg: linear-gradient(#ffffff, #ffffff);
+  --glass-border: #e4e4e7;
+  --glass-shadow: 0 0 #0000;
+  --nav-hover-bg: rgba(24, 24, 27, 0.05);
+  --shadow-soft-value: 0 1px 2px rgba(24, 24, 27, 0.04), 0 1px 3px rgba(24, 24, 27, 0.05);
+  --panel-shadow: 0 12px 32px -12px rgba(24, 24, 27, 0.18), 0 0 0 1px #e4e4e7;
+  --surface: #ffffff;
+  --fab-glass-bg: linear-gradient(#157a4f, #157a4f);
+  --fab-glass-border: transparent;
+  --fab-glass-shadow: 0 6px 16px -6px rgba(21, 122, 79, 0.5);
+  color-scheme: light;
+}
+
+:root[data-design="modern"][data-theme="dark"] {
+  --background: #09090b;
+  --bg-soft: #18181b;
+  --navy: #5fd39b;
+  --navy-dark: #86e2b6;
+  --navy-darker: #b4eed2;
+  --foreground: #fafafa;
+  --ink-soft: #a1a1aa;
+  --line: rgba(255, 255, 255, 0.09);
+  --glass-bg: linear-gradient(#111113, #111113);
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-shadow: 0 0 #0000;
+  --nav-hover-bg: rgba(255, 255, 255, 0.06);
+  --shadow-soft-value: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --panel-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.09);
+  --surface: #111113;
+  --fab-glass-bg: linear-gradient(#5fd39b, #5fd39b);
+  --fab-glass-border: transparent;
+  --fab-glass-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+
+/* Hard-coded utilities that don't route through tokens yet. Unlayered, so
+   these outrank Tailwind's own @layer utilities without !important. */
+:root[data-design="modern"] .rounded-2xl,
+:root[data-design="modern"] .rounded-3xl {
+  border-radius: 14px;
+}
+:root[data-design="modern"] .shadow-soft {
+  box-shadow: var(--shadow-soft-value), 0 0 0 1px var(--line);
 }
 
 body {
@@ -116,7 +188,17 @@ body {
 
 h1, h2, h3 {
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: var(--heading-weight);
+  letter-spacing: var(--heading-tracking);
+}
+
+:root[data-design="modern"] body {
+  font-feature-settings: "cv11", "ss01";
+}
+:root[data-design="modern"] [class*="font-display"] {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 /* iOS Safari can start its native text-selection/callout gesture (the
