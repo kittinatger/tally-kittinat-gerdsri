@@ -229,9 +229,9 @@ export default function ExpenseRow({
   }
 
   return (
-    <div ref={rowRef} className={`group relative overflow-hidden ${isLast ? "" : "border-b border-surface-line"}`}>
+    <div ref={rowRef} data-swiped={liveX !== 0 || restX !== 0} className={`group relative overflow-hidden ${isLast ? "" : "border-b border-surface-line"}`}>
       {swipeEnabled && (
-        <div className="absolute inset-y-0 left-0 right-0 flex items-stretch justify-between">
+        <div data-swipe-backdrop className="absolute inset-y-0 left-0 right-0 flex items-stretch justify-between">
           <button
             type="button"
             onClick={handleShare}
@@ -294,6 +294,7 @@ export default function ExpenseRow({
           )}
           {!hideIcon && (
             <span
+              data-row-badge
               className={`flex shrink-0 items-center justify-center rounded-full ${compact ? "h-9 w-9" : "h-11 w-11"} ${badgeClasses(color)}`}
             >
               {icon && isCategoryIconKey(icon) ? (
@@ -322,6 +323,7 @@ export default function ExpenseRow({
             )}
           </div>
           <p
+            data-amount
             className={`shrink-0 font-semibold ${
               expense.type === "income"
                 ? "text-emerald-600 dark:text-emerald-400"

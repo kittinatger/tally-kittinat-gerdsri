@@ -5,6 +5,7 @@ import { formatCurrency } from "@/lib/format";
 import { dotClasses } from "@/lib/category-styles";
 import { GearIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
+import { useDesign } from "@/lib/use-design";
 import type { TypeFilter } from "./ExpenseList";
 
 function IncomeIcon() {
@@ -47,6 +48,7 @@ export default function ActivitiesBalanceCard({
   onWalletFilterChange: (wallet: string) => void;
 }) {
   const t = useT();
+  const modern = useDesign() === "modern";
   const FILTER_BUTTONS: { type: Exclude<TypeFilter, "all">; label: string; icon: () => React.ReactNode }[] = [
     { type: "expense", label: t("common.expense"), icon: ExpenseIcon },
     { type: "income", label: t("common.income"), icon: IncomeIcon },
@@ -140,8 +142,31 @@ export default function ActivitiesBalanceCard({
         <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">
           {walletFilter === "all" ? t("activities.yourBalance") : (selectedWallet?.name ?? t("activities.yourBalance"))}
         </p>
-        <p className="mt-1.5 truncate font-display text-3xl">{formatCurrency(balance, currency)}</p>
+        <p className="mt-1.5 truncate font-display text-3xl sm:text-4xl">{formatCurrency(balance, currency)}</p>
 
+        {modern ? (
+          <div className="mt-4 flex items-center gap-2">
+            {FILTER_BUTTONS.map(({ type, label, icon: Icon }) => {
+              const active = typeFilter === type;
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => toggleType(type)}
+                  aria-pressed={active}
+                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-2 py-1.5 text-sm font-semibold transition ${
+                    active
+                      ? "border-surface-accent bg-surface-accent text-surface"
+                      : "border-surface-line text-surface-foreground-soft hover:text-surface-foreground"
+                  }`}
+                >
+                  <Icon />
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
         <div className="mt-4 flex items-center justify-between gap-2 rounded-2xl bg-surface-soft p-2.5">
           {FILTER_BUTTONS.map(({ type, label, icon: Icon }) => {
             const active = typeFilter === type;
@@ -171,6 +196,7 @@ export default function ActivitiesBalanceCard({
             );
           })}
         </div>
+        )}
       </div>
     </div>
   );

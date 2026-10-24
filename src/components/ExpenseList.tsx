@@ -698,10 +698,11 @@ export default function ExpenseList({
               <section key={key}>
                 {prefs.groupBy !== "none" && (
                   <div className="mb-2 flex items-center justify-between px-1">
-                    <h2 className="font-display text-base text-foreground">
+                    <h2 data-date-heading className="font-display text-base text-foreground">
                       {prefs.groupBy === "day" ? dayLabel(key) : prefs.groupBy === "week" ? weekLabel(key) : monthLabel(key)}
                     </h2>
                     <span
+                      data-group-net
                       className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
                         net >= 0
                           ? badgeClasses("emerald")

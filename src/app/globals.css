@@ -299,6 +299,37 @@ h1, h2, h3 {
 :root[data-design="modern"] [data-segmented] > button {
   border-radius: 9px;
 }
+:root[data-design="modern"] input.rounded-full:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
+  border-radius: 10px;
+}
+
+/* ── Modern: Activities ────────────────────────────────────────────── */
+
+/* Date group headings become quiet section labels; the day's net total is
+   plain colored text instead of a tinted pill. */
+:root[data-design="modern"] [data-date-heading] {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+:root[data-design="modern"] [data-group-net] {
+  background: transparent;
+  padding-inline: 0;
+  font-variant-numeric: tabular-nums;
+}
+:root[data-design="modern"] [data-swiped="false"] [data-swipe-backdrop] {
+  visibility: hidden;
+}
+:root[data-design="modern"] [data-row-badge] {
+  border-radius: 10px;
+}
+:root[data-design="modern"] [data-amount] {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
 :root[data-design="modern"] [class*="font-display"] {
   font-weight: 600;
   letter-spacing: -0.02em;
