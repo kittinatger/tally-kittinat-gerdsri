@@ -232,15 +232,18 @@ h1, h2, h3 {
   transform: none;
 }
 
-/* Bottom bar: flush to the screen edge, hairline on top, add button as a
-   rounded-square FAB sitting above it at the right. */
+/* Bottom bar: flush to the screen edge with a hairline on top, the Add button
+   inline in the middle (no floating button covering list rows), and the
+   current page marked by a soft accent pill behind its icon. */
 :root[data-design="modern"] [data-bottom-nav="modern"] {
   left: 0;
   right: 0;
   bottom: 0;
   gap: 0;
   border-top: 1px solid var(--line);
-  background: var(--background);
+  background: color-mix(in srgb, var(--background) 94%, transparent);
+  -webkit-backdrop-filter: saturate(1.4) blur(16px);
+  backdrop-filter: saturate(1.4) blur(16px);
   padding-bottom: env(safe-area-inset-bottom);
 }
 :root[data-design="modern"] [data-bottom-nav="modern"] > nav {
@@ -248,26 +251,40 @@ h1, h2, h3 {
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  padding: 6px 8px;
+  padding: 6px 4px 4px;
 }
 :root[data-design="modern"] [data-bottom-nav="modern"] > nav a {
-  border-radius: 10px;
-  gap: 2px;
-  padding-block: 6px;
+  gap: 4px;
+  padding-block: 2px 4px;
+  border-radius: 0;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-soft);
 }
-:root[data-design="modern"] [data-bottom-nav="modern"] > [data-nav-fab] {
-  position: absolute;
-  right: 16px;
-  bottom: calc(100% + 14px);
-  width: 52px;
-  height: 52px;
-  border: 0;
-  border-radius: 16px;
+:root[data-design="modern"] [data-bottom-nav="modern"] > nav a > svg {
+  box-sizing: content-box;
+  padding: 4px 18px;
+  border-radius: 999px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+:root[data-design="modern"] [data-bottom-nav="modern"] > nav a[aria-current="page"] {
+  color: var(--foreground);
+  font-weight: 600;
+}
+:root[data-design="modern"] [data-bottom-nav="modern"] > nav a[aria-current="page"] > svg {
+  background: color-mix(in srgb, var(--navy) 16%, transparent);
+  color: var(--navy);
+}
+:root[data-design="modern"] [data-bottom-nav="modern"] [data-nav-cta] {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
   background: var(--navy);
-  color: var(--background);
-  box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.45);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
+  color: var(--on-navy);
+  box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--navy) 60%, transparent);
+}
+:root[data-design="modern"] [data-bottom-nav="modern"] [data-nav-cta]:active {
+  transform: scale(0.94);
 }
 
 /* Dialogs: solid panel, small radius, light scrim. */
@@ -324,8 +341,7 @@ h1, h2, h3 {
 }
 /* White text on the accent fill, but dark text once the accent turns light
    in dark mode (white on #5fd39b is hard to read). */
-:root[data-design="modern"] .bg-navy.text-white,
-:root[data-design="modern"] [data-nav-fab] {
+:root[data-design="modern"] .bg-navy.text-white {
   color: var(--on-navy);
 }
 

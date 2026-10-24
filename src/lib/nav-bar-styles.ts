@@ -108,7 +108,8 @@ export const NAV_BAR_STYLES: Record<NavBarStyleId, NavBarStyleConfig> = {
 };
 
 // What the default "floating" style renders as under the Modern design: a
-// flat, full-width bar attached to the bottom edge with every label shown.
+// flat, full-width bar attached to the bottom edge with every label shown and
+// the Add button inline in the middle (a floating button covered list rows).
 // Anyone who explicitly picked a different style keeps it in both designs.
 export const MODERN_DEFAULT_NAV_BAR: NavBarStyleConfig = {
   attach: "attached",
@@ -116,6 +117,6 @@ export const MODERN_DEFAULT_NAV_BAR: NavBarStyleConfig = {
   shape: "rounded",
   indicator: "color",
   labels: "all",
-  cta: "external",
+  cta: "inlineCircle",
   accent: "navy",
 };

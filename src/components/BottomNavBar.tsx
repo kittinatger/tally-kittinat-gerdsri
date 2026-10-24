@@ -152,6 +152,7 @@ function CtaSlot({
         onClick={onAddClick}
         disabled={preview}
         aria-label="Add transaction"
+        data-nav-cta
         className={`flex shrink-0 items-center justify-center text-white shadow-soft transition hover:brightness-110 ${preview ? "h-7 w-7" : "h-11 w-11"} ${
           overlap ? (preview ? "-mt-4" : "-mt-7") : ""
         } ${diamond ? "rotate-45 rounded-xl bg-gradient-to-br from-navy to-blue-500" : "rounded-full"} ${
@@ -246,7 +247,7 @@ function NavTab({
     return <div className={wrapperClass}>{content}</div>;
   }
   return (
-    <Link href={link.href} className={wrapperClass}>
+    <Link href={link.href} aria-current={active ? "page" : undefined} className={wrapperClass}>
       {content}
     </Link>
   );
