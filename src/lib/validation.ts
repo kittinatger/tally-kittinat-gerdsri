@@ -88,6 +88,9 @@ const sharedFields = {
   category: z.string().trim().min(1).max(60),
   notes: z.string().trim().max(500).nullable().optional(),
   walletId: z.number().int().positive().nullable().optional(),
+  locationName: z.string().trim().max(200).nullable().optional(),
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
   tags: z
     .array(z.string().trim().min(1).max(30))
     .max(10)

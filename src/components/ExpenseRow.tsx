@@ -23,7 +23,7 @@ function ShareIcon({ className = "h-5 w-5" }: { className?: string }) {
   return <PhExportIcon weight="fill" aria-hidden="true" className={className} />;
 }
 
-async function shareExpense(expense: Expense, currency: string) {
+export async function shareExpense(expense: Expense, currency: string) {
   const amount = `${signedAmount(expense) >= 0 ? "+" : "-"}${formatCurrency(expense.amount, currency)}`;
   const text = `${expense.merchant} — ${amount} (${expense.category}, ${formatDateLong(expense.date)})`;
   if (typeof navigator !== "undefined" && navigator.share) {

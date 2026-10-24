@@ -11,6 +11,7 @@ import { ChevronIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 import TagInput from "./TagInput";
 import DatePicker from "./DatePicker";
+import LocationField from "./LocationField";
 import SelectDropdown from "./SelectDropdown";
 
 export type ExpenseFormValues = {
@@ -25,6 +26,10 @@ export type ExpenseFormValues = {
   tags: string[];
   /** null means "use the default wallet" — resolved server-side. */
   walletId: number | null;
+  /** Optional place; see LocationField. Omitted by flows with no location UI (voice, duplicate). */
+  locationName?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   /** Only meaningful when allowSplit is used and split mode is on — see AddExpenseModal. */
   splitLines?: { category: string; amount: string }[];
   /** Only meaningful when allowFriendSplit is used and friend-split mode is on — see AddExpenseModal. Divides the bill between you (the payer) and the listed friends; your own share is whatever's left after theirs. */
@@ -474,6 +479,18 @@ export default function ExpenseForm({
           />
         </div>
       )}
+
+      <div className="sm:order-6 sm:col-span-2">
+        <LocationField
+          labelClass={labelClass}
+          value={{
+            locationName: values.locationName ?? "",
+            latitude: values.latitude ?? null,
+            longitude: values.longitude ?? null,
+          }}
+          onChange={(loc) => setValues((prev) => ({ ...prev, ...loc }))}
+        />
+      </div>
 
       {allowFriendSplit && values.type === "expense" && friends.length > 0 && (
         <label className="flex items-center gap-2 text-sm font-medium text-surface-foreground-soft sm:order-7 sm:col-span-2">

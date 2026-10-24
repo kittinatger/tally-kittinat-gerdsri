@@ -21,6 +21,10 @@ export type Expense = {
   wallet_id: number | null;
   wallet_name: string | null;
   split_group_id: string | null;
+  /** Only selected by the queries that feed the transaction detail view. */
+  location_name?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 // Dates and amounts are cast explicitly to text in every query so the
@@ -184,7 +188,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 78;
+const CURRENT_SCHEMA_VERSION = 79;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1601,6 +1605,13 @@ function ensureSchema(): Promise<void> {
       // swept up by the cleanup cron once its 30-day session has lapsed.
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_guest BOOLEAN NOT NULL DEFAULT false;`;
       await sql`CREATE INDEX IF NOT EXISTS users_guest_created_idx ON users (created_at) WHERE is_guest;`;
+
+      // Where a transaction happened: a free-text place (typed, or read off a
+      // scanned receipt) and/or coordinates from "Use current location". All
+      // optional; shown on the transaction detail view with a map preview.
+      await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS location_name TEXT;`;
+      await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION;`;
+      await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -3478,7 +3489,10 @@ export async function listExpenses(userId: number): Promise<Expense[]> {
       (e.receipt_image IS NOT NULL OR EXISTS (SELECT 1 FROM expense_receipts er WHERE er.expense_id = e.id)) AS has_receipt,
       e.wallet_id,
       w.name AS wallet_name,
-      e.split_group_id
+      e.split_group_id,
+      e.location_name,
+      e.latitude,
+      e.longitude
     FROM expenses e
     LEFT JOIN wallets w ON w.id = e.wallet_id
     WHERE e.user_id = ${userId}
@@ -3510,7 +3524,10 @@ export async function listRecentWalletExpenses(userId: number, walletId: number,
       (e.receipt_image IS NOT NULL OR EXISTS (SELECT 1 FROM expense_receipts er WHERE er.expense_id = e.id)) AS has_receipt,
       e.wallet_id,
       w.name AS wallet_name,
-      e.split_group_id
+      e.split_group_id,
+      e.location_name,
+      e.latitude,
+      e.longitude
     FROM expenses e
     LEFT JOIN wallets w ON w.id = e.wallet_id
     WHERE e.wallet_id = ${walletId}
@@ -3668,8 +3685,8 @@ export async function createExpense(userId: number, input: ExpenseInput): Promis
   const walletId = await resolveWalletId(userId, input.walletId);
   const { rows } = await sql<Expense>`
     WITH inserted AS (
-      INSERT INTO expenses (user_id, type, direction, date, amount, merchant, category, notes, tags, wallet_id)
-      VALUES (${userId}, ${input.type}, ${direction}, ${input.date}, ${input.amount}, ${input.merchant}, ${input.category}, ${input.notes ?? null}, ${toPgTextArray(input.tags ?? [])}::text[], ${walletId})
+      INSERT INTO expenses (user_id, type, direction, date, amount, merchant, category, notes, tags, wallet_id, location_name, latitude, longitude)
+      VALUES (${userId}, ${input.type}, ${direction}, ${input.date}, ${input.amount}, ${input.merchant}, ${input.category}, ${input.notes ?? null}, ${toPgTextArray(input.tags ?? [])}::text[], ${walletId}, ${input.locationName ?? null}, ${input.latitude ?? null}, ${input.longitude ?? null})
       RETURNING *
     )
     SELECT
@@ -3685,7 +3702,10 @@ export async function createExpense(userId: number, input: ExpenseInput): Promis
       (inserted.receipt_image IS NOT NULL) AS has_receipt,
       inserted.wallet_id,
       w.name AS wallet_name,
-      inserted.split_group_id
+      inserted.split_group_id,
+      inserted.location_name,
+      inserted.latitude,
+      inserted.longitude
     FROM inserted
     LEFT JOIN wallets w ON w.id = inserted.wallet_id;
   `;
@@ -3696,6 +3716,9 @@ export async function updateExpense(userId: number, id: number, input: ExpenseIn
   await ensureSchema();
   const direction = input.type === "transfer" ? input.direction : null;
   const walletId = await resolveWalletId(userId, input.walletId);
+  // A request that doesn't mention location at all (older clients, queued
+  // offline edits) leaves it as-is; an explicit null clears it.
+  const keepLocation = input.locationName === undefined && input.latitude === undefined && input.longitude === undefined;
   const { rows } = await sql<Expense>`
     WITH updated AS (
       UPDATE expenses
@@ -3707,7 +3730,10 @@ export async function updateExpense(userId: number, id: number, input: ExpenseIn
           category = ${input.category},
           notes = ${input.notes ?? null},
           tags = ${toPgTextArray(input.tags ?? [])}::text[],
-          wallet_id = ${walletId}
+          wallet_id = ${walletId},
+          location_name = CASE WHEN ${keepLocation} THEN location_name ELSE ${input.locationName ?? null} END,
+          latitude = CASE WHEN ${keepLocation} THEN latitude ELSE ${input.latitude ?? null}::double precision END,
+          longitude = CASE WHEN ${keepLocation} THEN longitude ELSE ${input.longitude ?? null}::double precision END
       WHERE id = ${id} AND user_id = ${userId}
       RETURNING *
     )
@@ -3724,7 +3750,10 @@ export async function updateExpense(userId: number, id: number, input: ExpenseIn
       (updated.receipt_image IS NOT NULL OR EXISTS (SELECT 1 FROM expense_receipts er WHERE er.expense_id = updated.id)) AS has_receipt,
       updated.wallet_id,
       w.name AS wallet_name,
-      updated.split_group_id
+      updated.split_group_id,
+      updated.location_name,
+      updated.latitude,
+      updated.longitude
     FROM updated
     LEFT JOIN wallets w ON w.id = updated.wallet_id;
   `;

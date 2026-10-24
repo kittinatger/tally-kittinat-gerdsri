@@ -17,6 +17,8 @@ export type TransactionExtraction = {
   currency?: string;
   /** Name of one of the user's existing wallets, if mentioned/shown (e.g. "paid with cash", "on my Kasikorn card"). */
   wallet?: string;
+  /** Where it happened — the store branch/address printed on a receipt. Receipt scans only. */
+  location?: string;
 };
 
 export type CategoriesByType = {
@@ -142,8 +144,9 @@ First decide which of the three it is, then extract:
   in, inferred from any symbol ($, €, £, ¥, ฿, etc.), currency name/code text, or country context
   on the document. Empty string if you genuinely cannot tell.
 ${walletNames.length > 0 ? `- wallet: which of the user's own wallets this was paid with/into, if the document indicates it (e.g. a card name/number matching a wallet, "cash" for a cash receipt). Choose EXACTLY one from: ${walletNames.join(", ")}. Empty string if you can't tell.` : ""}
+- location: where the transaction took place, as printed on the document — the store branch name and/or its address, written as a short single line (e.g. "Siam Paragon, Rama I Rd, Bangkok"). Empty string if no place is shown; do not guess one.
 
-If any field is illegible or absent, make your best reasonable guess rather than leaving it blank.
+If any field other than location is illegible or absent, make your best reasonable guess rather than leaving it blank.
 Respond with JSON only, matching the provided schema.`;
 }
 
@@ -207,7 +210,7 @@ function responseSchema(allCategories: string[], includeNotes: boolean, walletNa
       date: { type: Type.STRING },
       category: { type: Type.STRING, enum: allCategories },
       currency: { type: Type.STRING },
-      ...(includeNotes ? { notes: { type: Type.STRING } } : {}),
+      ...(includeNotes ? { notes: { type: Type.STRING } } : { location: { type: Type.STRING } }),
       // No empty-string sentinel in the enum -- Gemini's schema validation
       // now rejects empty-string enum values outright. `wallet` is omitted
       // from `required` below, so the model can just leave the field out
@@ -250,8 +253,9 @@ function parseOne(
   const currency = /^[A-Z]{3}$/.test(currencyRaw) ? currencyRaw : undefined;
   const walletRaw = typeof record.wallet === "string" ? record.wallet.trim() : "";
   const wallet = walletNames.find((w) => w.toLowerCase() === walletRaw.toLowerCase());
+  const location = typeof record.location === "string" ? record.location.trim().slice(0, 200) : "";
 
-  return { type, direction, merchant, amount, date, category, notes: notes || undefined, currency, wallet };
+  return { type, direction, merchant, amount, date, category, notes: notes || undefined, currency, wallet, location: location || undefined };
 }
 
 function parseExtraction(

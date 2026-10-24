@@ -1,7 +1,7 @@
 import { listExpenses, listCategories, getCurrency, listWallets, getActivitiesDefaultWalletId, getActivitiesPrefs } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import ActivitiesView from "@/components/ActivitiesView";
-import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
+import { locationFromRow, normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
 import { isTransactionType } from "@/lib/categories";
 import { toWalletOption } from "@/lib/wallet-mapper";
 import type { CategoryOption } from "@/types/category";
@@ -45,6 +45,7 @@ export default async function HomePage({
     walletId: r.wallet_id,
     walletName: r.wallet_name,
     splitGroupId: r.split_group_id,
+    ...locationFromRow(r),
   }));
   const categories: CategoryOption[] = categoryRows.map((c) => ({
     id: c.id,

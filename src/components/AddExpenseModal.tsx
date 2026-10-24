@@ -5,7 +5,7 @@ import Modal from "./Modal";
 import ExpenseForm, { emptyExpenseFormValues, type ExpenseFormValues } from "./ExpenseForm";
 import ReceiptDropzone from "./ReceiptDropzone";
 import VoiceRecorder from "./VoiceRecorder";
-import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
+import { locationFromRow, normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
 import { isTransactionType, isTransferDirection, type TransactionType } from "@/lib/categories";
 import { useAllCategories } from "@/lib/categories-context";
 import { useWallets } from "@/lib/wallets-context";
@@ -117,6 +117,7 @@ export default function AddExpenseModal({
         date: string;
         category: string;
         wallet?: string;
+        location?: string;
         originalAmount?: number;
         originalCurrency?: string;
       };
@@ -134,6 +135,9 @@ export default function AddExpenseModal({
         notes: "",
         tags: [],
         walletId: matchedWallet?.id ?? null,
+        locationName: extraction.location ?? "",
+        latitude: null,
+        longitude: null,
       });
       setScanConversion(
         extraction.originalAmount !== undefined && extraction.originalCurrency
@@ -746,6 +750,9 @@ async function createExpense(values: ExpenseFormValues, confirmDuplicate = false
       notes: values.notes || undefined,
       tags: values.tags,
       walletId: values.walletId,
+      locationName: values.locationName?.trim() ? values.locationName.trim() : null,
+      latitude: values.latitude ?? null,
+      longitude: values.longitude ?? null,
       confirmDuplicate,
     }),
   });
@@ -775,6 +782,9 @@ async function createExpense(values: ExpenseFormValues, confirmDuplicate = false
       walletId: values.walletId ?? null,
       walletName: null,
       splitGroupId: null,
+      locationName: values.locationName?.trim() || null,
+      latitude: values.latitude ?? null,
+      longitude: values.longitude ?? null,
     };
   }
   return {
@@ -791,5 +801,6 @@ async function createExpense(values: ExpenseFormValues, confirmDuplicate = false
     walletId: data.expense.wallet_id ?? null,
     walletName: data.expense.wallet_name ?? null,
     splitGroupId: data.expense.split_group_id ?? null,
+    ...locationFromRow(data.expense),
   };
 }

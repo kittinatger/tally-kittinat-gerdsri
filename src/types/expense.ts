@@ -24,7 +24,27 @@ export type Expense = {
   walletId: number | null;
   walletName: string | null;
   splitGroupId: string | null;
+  /** Where it happened — a place name and/or coordinates. Optional: only the
+   * screens that show transaction details populate these. */
+  locationName?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 };
+
+/** Maps a DB/API row's location columns onto Expense's location fields. */
+export function locationFromRow(row: {
+  location_name?: string | null;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
+}): Pick<Expense, "locationName" | "latitude" | "longitude"> {
+  const lat = row.latitude == null ? null : Number(row.latitude);
+  const lng = row.longitude == null ? null : Number(row.longitude);
+  return {
+    locationName: row.location_name ?? null,
+    latitude: lat != null && Number.isFinite(lat) ? lat : null,
+    longitude: lng != null && Number.isFinite(lng) ? lng : null,
+  };
+}
 
 export function signedAmount(expense: Expense): number {
   if (expense.type === "transfer") {

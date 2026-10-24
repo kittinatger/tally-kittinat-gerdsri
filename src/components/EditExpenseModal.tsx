@@ -7,7 +7,7 @@ import { useT } from "@/lib/language-context";
 import Modal from "./Modal";
 import ReceiptLightbox from "./ReceiptLightbox";
 import ExpenseForm, { type ExpenseFormValues } from "./ExpenseForm";
-import { normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
+import { locationFromRow, normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
 import { todayInputValue } from "@/lib/format";
 import { downscaleImage } from "@/lib/image-downscale";
 import { PlusIcon, CloseIcon } from "@/lib/icons";
@@ -88,6 +88,9 @@ export default function EditExpenseModal({
     notes: expense.notes ?? "",
     tags: expense.tags,
     walletId: expense.walletId,
+    locationName: expense.locationName ?? "",
+    latitude: expense.latitude ?? null,
+    longitude: expense.longitude ?? null,
   };
 
   async function handleSubmit(values: ExpenseFormValues) {
@@ -107,6 +110,9 @@ export default function EditExpenseModal({
           notes: values.notes || undefined,
           tags: values.tags,
           walletId: values.walletId,
+          locationName: values.locationName?.trim() ? values.locationName.trim() : null,
+          latitude: values.latitude ?? null,
+          longitude: values.longitude ?? null,
         }),
       });
       const data = await res.json();
@@ -133,6 +139,7 @@ export default function EditExpenseModal({
               walletId: data.expense.wallet_id ?? null,
               walletName: data.expense.wallet_name ?? null,
               splitGroupId: data.expense.split_group_id ?? null,
+              ...locationFromRow(data.expense),
             }
           : {
               ...expense,
@@ -145,6 +152,9 @@ export default function EditExpenseModal({
               notes: values.notes || null,
               tags: values.tags,
               walletId: values.walletId ?? null,
+              locationName: values.locationName?.trim() || null,
+              latitude: values.latitude ?? null,
+              longitude: values.longitude ?? null,
             },
       );
     } catch (err) {

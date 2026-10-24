@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+- Locations on transactions: type a place, tap "Use current location" to pin where you are (only read when tapped), or let receipt scanning read the store address off the receipt. The transaction details show a map preview (OpenStreetMap) with an "Open in Maps" link. Schema v79; included in encrypted backups.
+
+### Changed
+- Redesigned transaction details: a category tile beside the merchant, a large coloured amount, a location card with map, and a clean list of date, category, type, wallet, tags and notes, plus Edit and Share. Mobile gets a stacked bottom-sheet layout; the desktop pane puts the amount beside the merchant and, on wide screens, the map and receipt beside the details.
 
 ## [0.24.2] - 2026-10-24
 

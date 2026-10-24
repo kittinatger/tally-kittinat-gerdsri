@@ -557,6 +557,18 @@ export type MessageKey =
   | "common.notes"
   | "common.tags"
   | "common.category"
+  | "form.location"
+  | "form.locationPlaceholder"
+  | "form.useCurrentLocation"
+  | "form.locationPinned"
+  | "form.locationRemovePin"
+  | "form.locationDenied"
+  | "form.locationUnavailable"
+  | "detail.location"
+  | "detail.pinnedLocation"
+  | "detail.openInMaps"
+  | "detail.type"
+  | "detail.share"
   | "common.or"
   | "form.moneyOut"
   | "form.moneyIn"
@@ -1548,6 +1560,8 @@ export type MessageKey =
   | "privacy.thirdPartiesMiddle1"
   | "privacy.thirdPartiesMiddle2"
   | "privacy.thirdPartiesAfter"
+  | "privacy.locationHeading"
+  | "privacy.locationBody"
   | "privacy.selfHostedHeading"
   | "privacy.selfHostedBody"
   | "troubleshooting.title"
@@ -1755,6 +1769,8 @@ export const EN_MESSAGES: Record<MessageKey, string> = {
   "privacy.thirdPartiesMiddle1": "to extract the transaction details. If automatic currency conversion is enabled, detected amounts are converted using exchange rates from",
   "privacy.thirdPartiesMiddle2": ", a free ECB-rate API. If you set an email on your account, password reset links and any opted-in recurring/budget notification emails are sent via",
   "privacy.thirdPartiesAfter": ". No other third parties receive your data.",
+  "privacy.locationHeading": "Location",
+  "privacy.locationBody": "A transaction can optionally store where it happened — a place you type, a store address read from a scanned receipt, or your coordinates if you tap \"Use current location\". Your device's location is only read when you tap that button, never in the background. When a transaction with coordinates is opened, its map preview is loaded from OpenStreetMap, which receives that position to draw the map; \"Open in Maps\" hands the place to Google Maps only when you tap it.",
   "privacy.selfHostedHeading": "Self-hosted",
   "privacy.selfHostedBody": "Tally is open-source, self-hosted software. Whoever deploys a given instance controls the actual database and infrastructure it runs on — this policy describes how the application itself handles data, not any particular deployment's operational practices.",
   "troubleshooting.title": "Troubleshooting",
@@ -2450,6 +2466,18 @@ export const EN_MESSAGES: Record<MessageKey, string> = {
   "common.notes": "Notes",
   "common.tags": "Tags",
   "common.category": "Category",
+  "form.location": "Location",
+  "form.locationPlaceholder": "Where was this? (optional)",
+  "form.useCurrentLocation": "Use current location",
+  "form.locationPinned": "Current location pinned",
+  "form.locationRemovePin": "Remove pinned location",
+  "form.locationDenied": "Location access was denied. Allow it in your browser settings to pin where you are.",
+  "form.locationUnavailable": "Couldn't get your location right now.",
+  "detail.location": "Location",
+  "detail.pinnedLocation": "Pinned location",
+  "detail.openInMaps": "Open in Maps",
+  "detail.type": "Type",
+  "detail.share": "Share",
   "common.or": "or",
   "form.moneyOut": "Money out",
   "form.moneyIn": "Money in",

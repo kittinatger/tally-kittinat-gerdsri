@@ -122,6 +122,9 @@ export const BACKUP_TABLES: BackupTable[] = [
       { name: "tags" },
       { name: "direction" },
       { name: "wallet_id", refTable: "wallets", nullableRef: true },
+      { name: "location_name" },
+      { name: "latitude" },
+      { name: "longitude" },
       // transfer_group_id / split_group_id are left as-is (opaque grouping
       // strings, not foreign keys) so paired transfer legs and split-bill
       // lines that were both exported still visually group together after

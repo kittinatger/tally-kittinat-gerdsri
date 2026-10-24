@@ -181,7 +181,7 @@ export default function ActivitiesView({
                     key={viewing.id}
                     className="rounded-card border border-surface-line bg-surface p-5 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none sm:p-6"
                   >
-                    <ExpenseDetailContent expense={viewing} onEdit={handleEditFromDetail} onMerchantClick={handleMerchantClick} />
+                    <ExpenseDetailContent expense={viewing} onEdit={handleEditFromDetail} onMerchantClick={handleMerchantClick} variant="pane" />
                   </div>
                 ) : (
                   <div className="flex h-64 flex-col items-center justify-center gap-1 rounded-card border border-dashed border-surface-line px-6 text-center animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">

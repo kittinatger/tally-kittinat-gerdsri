@@ -70,6 +70,15 @@ export default function PrivacyPage() {
 
           <section>
             <h3 className="mb-1.5 font-semibold text-foreground">
+              <T k="privacy.locationHeading" />
+            </h3>
+            <p>
+              <T k="privacy.locationBody" />
+            </p>
+          </section>
+
+          <section>
+            <h3 className="mb-1.5 font-semibold text-foreground">
               <T k="privacy.selfHostedHeading" />
             </h3>
             <p>
