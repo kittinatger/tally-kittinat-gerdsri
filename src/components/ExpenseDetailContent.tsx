@@ -20,7 +20,7 @@ import { useCurrency } from "@/lib/currency-context";
 import { isCategoryIconKey } from "@/lib/category-icons";
 import { CategoryIcon, EditIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
-import { mapsUrl, resolveMapsApp, useMapsAppPreference } from "@/lib/maps-app";
+import { mapsUrl, openInMapsApp, resolveMapsApp, useMapsAppPreference } from "@/lib/maps-app";
 import { shareExpense } from "./ExpenseRow";
 import ReceiptLightbox from "./ReceiptLightbox";
 
@@ -48,11 +48,9 @@ function LocationCard({ expense, tall }: { expense: Expense; tall: boolean }) {
   const t = useT();
   const hasCoords = expense.latitude != null && expense.longitude != null;
   const mapsPref = useMapsAppPreference();
-  const url = mapsUrl(resolveMapsApp(mapsPref), {
-    name: expense.locationName,
-    latitude: expense.latitude,
-    longitude: expense.longitude,
-  });
+  const mapsApp = resolveMapsApp(mapsPref);
+  const place = { name: expense.locationName, latitude: expense.latitude, longitude: expense.longitude };
+  const url = mapsUrl(mapsApp, place);
   return (
     <div className="overflow-hidden rounded-card border border-surface-line bg-surface">
       {hasCoords && (
@@ -81,6 +79,9 @@ function LocationCard({ expense, tall }: { expense: Expense; tall: boolean }) {
             href={url}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={(e) => {
+              if (openInMapsApp(mapsApp, place)) e.preventDefault();
+            }}
             aria-label={t("detail.openInMaps")}
             className="flex shrink-0 items-center gap-1.5 rounded-lg border border-surface-line px-2.5 py-1.5 text-xs font-semibold text-surface-foreground transition hover:border-surface-accent hover:text-surface-accent"
           >
