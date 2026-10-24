@@ -232,56 +232,53 @@ h1, h2, h3 {
   transform: none;
 }
 
-/* Bottom bar: flush to the screen edge with a hairline on top, the Add button
-   inline in the middle (no floating button covering list rows), and the
-   current page marked by a soft accent pill behind its icon. */
+/* Bottom bar: a floating "island" — a rounded, translucent tab bar lifted off
+   the bottom edge (above the home indicator), with the current page in a
+   tinted tile, and Add as its own matching square button beside it. */
 :root[data-design="modern"] [data-bottom-nav="modern"] {
-  left: 0;
-  right: 0;
-  bottom: 0;
-  gap: 0;
-  border-top: 1px solid var(--line);
-  background: color-mix(in srgb, var(--background) 94%, transparent);
-  -webkit-backdrop-filter: saturate(1.4) blur(16px);
-  backdrop-filter: saturate(1.4) blur(16px);
-  padding-bottom: env(safe-area-inset-bottom);
+  left: 12px;
+  right: 12px;
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  gap: 10px;
 }
-:root[data-design="modern"] [data-bottom-nav="modern"] > nav {
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  padding: 6px 4px 4px;
+:root[data-design="modern"] [data-nav-island],
+:root[data-design="modern"] [data-bottom-nav="modern"] [data-nav-cta] {
+  height: 62px;
+  border-radius: 22px;
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.28), 0 2px 6px -2px rgba(0, 0, 0, 0.08);
 }
-:root[data-design="modern"] [data-bottom-nav="modern"] > nav a {
-  gap: 4px;
-  padding-block: 2px 4px;
-  border-radius: 0;
-  font-size: 11px;
+:root[data-design="modern"] [data-nav-island] {
+  padding: 5px;
+  gap: 2px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  -webkit-backdrop-filter: saturate(1.6) blur(20px);
+  backdrop-filter: saturate(1.6) blur(20px);
+}
+:root[data-design="modern"] [data-nav-island] a {
+  border-radius: 17px;
+  font-size: 10.5px;
   font-weight: 500;
+  letter-spacing: 0.01em;
   color: var(--ink-soft);
-}
-:root[data-design="modern"] [data-bottom-nav="modern"] > nav a > svg {
-  box-sizing: content-box;
-  padding: 4px 18px;
-  border-radius: 999px;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
-:root[data-design="modern"] [data-bottom-nav="modern"] > nav a[aria-current="page"] {
-  color: var(--foreground);
+:root[data-design="modern"] [data-nav-island] a > svg {
+  width: 22px;
+  height: 22px;
+}
+:root[data-design="modern"] [data-nav-island] a:active {
+  transform: scale(0.96);
+}
+:root[data-design="modern"] [data-nav-island] a[aria-current="page"] {
+  background: color-mix(in srgb, var(--navy) 13%, transparent);
+  color: var(--navy);
   font-weight: 600;
 }
-:root[data-design="modern"] [data-bottom-nav="modern"] > nav a[aria-current="page"] > svg {
-  background: color-mix(in srgb, var(--navy) 16%, transparent);
-  color: var(--navy);
-}
 :root[data-design="modern"] [data-bottom-nav="modern"] [data-nav-cta] {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width: 62px;
   background: var(--navy);
   color: var(--on-navy);
-  box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--navy) 60%, transparent);
 }
 :root[data-design="modern"] [data-bottom-nav="modern"] [data-nav-cta]:active {
   transform: scale(0.94);

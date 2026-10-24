@@ -9,9 +9,10 @@ export type NavBarLink = { href: string; label: string; icon: React.ReactNode };
 // - classic: a floating frosted pill beside the app mark, the active tab a
 //   filled chip showing its label, and the Add button as a separate round
 //   button on the right.
-// - modern: a full-width bar flush with the bottom edge (positioned and
-//   flattened by globals.css via data-bottom-nav), every label shown, the
-//   active tab marked with an accent pill, and Add inline in the middle.
+// - modern: a floating "island" — a rounded, translucent tab bar lifted off
+//   the bottom edge with every label shown and the active tab in a tinted
+//   tile, plus Add as its own matching square button beside it (styled by
+//   globals.css via data-bottom-nav).
 export default function BottomNavBar({
   variant,
   links,
@@ -28,31 +29,24 @@ export default function BottomNavBar({
   const hasAdd = showAdd || Boolean(onAddClick);
 
   if (variant === "modern") {
-    const leftLinks = hasAdd ? links.slice(0, 2) : links;
-    const rightLinks = hasAdd ? links.slice(2) : [];
     return (
-      <div data-bottom-nav="modern" className="fixed inset-x-3 bottom-3 z-20 flex items-center gap-2 sm:hidden">
-        <nav className="relative flex flex-1 items-center gap-1 p-1.5">
-          {leftLinks.map((link) => (
-            <ModernTab key={link.href} link={link} active={link.href === pathname} />
-          ))}
-          {hasAdd && (
-            <div className="flex w-10 shrink-0 items-center justify-center">
-              <button
-                type="button"
-                onClick={onAddClick}
-                aria-label="Add transaction"
-                data-nav-cta
-                className="flex h-11 w-11 shrink-0 items-center justify-center transition"
-              >
-                <PlusIcon className="h-4 w-4 shrink-0" />
-              </button>
-            </div>
-          )}
-          {rightLinks.map((link) => (
+      <div data-bottom-nav="modern" className="fixed z-20 flex items-stretch sm:hidden">
+        <nav data-nav-island className="flex flex-1 items-stretch">
+          {links.map((link) => (
             <ModernTab key={link.href} link={link} active={link.href === pathname} />
           ))}
         </nav>
+        {hasAdd && (
+          <button
+            type="button"
+            onClick={onAddClick}
+            aria-label="Add transaction"
+            data-nav-cta
+            className="flex shrink-0 items-center justify-center transition"
+          >
+            <PlusIcon className="h-5 w-5 shrink-0" />
+          </button>
+        )}
       </div>
     );
   }
@@ -107,10 +101,10 @@ function ModernTab({ link, active }: { link: NavBarLink; active: boolean }) {
     <Link
       href={link.href}
       aria-current={active ? "page" : undefined}
-      className="flex flex-1 flex-col items-center justify-center gap-1 py-2 text-[10px] font-semibold transition"
+      className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 transition"
     >
       {link.icon}
-      <span>{link.label}</span>
+      <span className="max-w-full truncate">{link.label}</span>
     </Link>
   );
 }
