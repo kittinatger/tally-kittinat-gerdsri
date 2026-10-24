@@ -1,4 +1,4 @@
-// Category icon keys — each maps to a line-icon component in @/lib/icons
+// Category icon keys — each maps to a Phosphor icon component in @/lib/icons
 // (CATEGORY_ICON_COMPONENTS). Kept in a plain .ts module (no JSX) so
 // validation.ts can import the key list for its zod schema without pulling
 // React into server-only code.

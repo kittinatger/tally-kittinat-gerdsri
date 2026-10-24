@@ -15,35 +15,21 @@ import ManagerHeader from "./ManagerHeader";
 import ReorderButtons from "./ReorderButtons";
 import { useT } from "@/lib/language-context";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
+import { ClockCounterClockwiseIcon as PhClockCounterClockwiseIcon, TargetIcon as PhTargetIcon, TrashIcon as PhTrashIcon } from "@phosphor-icons/react/dist/ssr";
 
 type SavingsGoal = { id: number; name: string; color: string; target_amount: string; current_amount: string };
 type Contribution = { id: number; delta: string; created_at: string };
 
 function TargetIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <circle cx="10" cy="10" r="7" />
-      <circle cx="10" cy="10" r="3.5" />
-      <circle cx="10" cy="10" r="0.75" fill="currentColor" stroke="none" />
-    </svg>
-  );
+  return <PhTargetIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 function TrashIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <path d="M4.5 5.5h11M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M14.5 5.5l-.6 9.4a1.5 1.5 0 0 1-1.5 1.4H7.6a1.5 1.5 0 0 1-1.5-1.4l-.6-9.4" />
-    </svg>
-  );
+  return <PhTrashIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 function HistoryIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <path d="M4 10a6 6 0 1 0 1.8-4.3M4 4v3h3" />
-      <path d="M10 6.5V10l2.3 2.3" />
-    </svg>
-  );
+  return <PhClockCounterClockwiseIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 export default function SavingsGoalsManager() {

@@ -16,6 +16,7 @@ import CategoryIconBadge from "./CategoryIconBadge";
 import ManagedList from "./ManagedList";
 import ManagerHeader from "./ManagerHeader";
 import AddItemButton from "./AddItemButton";
+import { EyeIcon as PhEyeIcon, TrashIcon as PhTrashIcon, TrophyIcon as PhTrophyIcon } from "@phosphor-icons/react/dist/ssr";
 
 type Challenge = {
   id: number;
@@ -71,30 +72,15 @@ function Avatar({ username }: { username: string }) {
 }
 
 function TrophyIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <path d="M6 3h8v4a4 4 0 0 1-8 0V3Z" />
-      <path d="M6 4H3.5a1 1 0 0 0-1 1.2l.4 1.6A2 2 0 0 0 4.85 8.3H6M14 4h2.5a1 1 0 0 1 1 1.2l-.4 1.6a2 2 0 0 1-1.95 1.5H14" />
-      <path d="M8 12v2a2 2 0 0 0 2 2 2 2 0 0 0 2-2v-2M7 17h6" />
-    </svg>
-  );
+  return <PhTrophyIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 function TrashIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <path d="M4 5.5h12M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5 6 16a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l.5-10.5" />
-    </svg>
-  );
+  return <PhTrashIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 function EyeIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
-      <path d="M1.5 10S4.5 4.5 10 4.5 18.5 10 18.5 10 15.5 15.5 10 15.5 1.5 10 1.5 10Z" />
-      <circle cx="10" cy="10" r="2.25" />
-    </svg>
-  );
+  return <PhEyeIcon weight="fill" aria-hidden="true" className="h-3.5 w-3.5" />;
 }
 
 function formatProgress(

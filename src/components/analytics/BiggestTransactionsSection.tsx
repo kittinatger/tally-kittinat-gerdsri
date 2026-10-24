@@ -7,15 +7,10 @@ import { useCurrency } from "@/lib/currency-context";
 import { useT } from "@/lib/language-context";
 import { badgeClasses } from "@/lib/category-styles";
 import SectionHeader from "./SectionHeader";
+import { TargetIcon as PhTargetIcon } from "@phosphor-icons/react/dist/ssr";
 
 function TargetIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <circle cx="10" cy="10" r="7.25" />
-      <circle cx="10" cy="10" r="4" />
-      <circle cx="10" cy="10" r="0.75" fill="currentColor" stroke="none" />
-    </svg>
-  );
+  return <PhTargetIcon weight="fill" aria-hidden="true" className={className} />;
 }
 
 // The single biggest expenses within the period — a quick "what actually

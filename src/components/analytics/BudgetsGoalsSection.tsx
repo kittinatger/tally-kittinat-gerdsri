@@ -12,15 +12,10 @@ import type { CategoryOption } from "@/types/category";
 import BudgetOverviewWidget, { type BudgetItem } from "../BudgetOverviewWidget";
 import SavingsGoalsWidget, { type SavingsGoalItem } from "../SavingsGoalsWidget";
 import SectionHeader from "./SectionHeader";
+import { ChartPieSliceIcon as PhChartPieSliceIcon } from "@phosphor-icons/react/dist/ssr";
 
 function BudgetsIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <circle cx="10" cy="10" r="7" />
-      <circle cx="10" cy="10" r="3.5" />
-      <path d="M10 10 13 7" />
-    </svg>
-  );
+  return <PhChartPieSliceIcon weight="fill" aria-hidden="true" className={className} />;
 }
 
 export default function BudgetsGoalsSection({

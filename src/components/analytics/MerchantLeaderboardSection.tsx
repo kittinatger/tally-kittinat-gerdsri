@@ -8,15 +8,10 @@ import { hashNameToColor } from "@/lib/category-styles";
 import { CATEGORY_PALETTE } from "@/lib/categories";
 import type { MerchantRank } from "@/lib/analytics";
 import SectionHeader from "./SectionHeader";
+import { TrophyIcon as PhTrophyIcon } from "@phosphor-icons/react/dist/ssr";
 
 function TrophyIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M6 3h8v4a4 4 0 0 1-8 0V3Z" />
-      <path d="M6 4H3.5a1 1 0 0 0-1 1.2l.4 1.6A2 2 0 0 0 4.85 8.3H6M14 4h2.5a1 1 0 0 1 1 1.2l-.4 1.6a2 2 0 0 1-1.95 1.5H14" />
-      <path d="M8 12v2a2 2 0 0 0 2 2 2 2 0 0 0 2-2v-2M7 17h6" />
-    </svg>
-  );
+  return <PhTrophyIcon weight="fill" aria-hidden="true" className={className} />;
 }
 
 // Same deterministic per-name accent color VendorManager's avatarColor uses

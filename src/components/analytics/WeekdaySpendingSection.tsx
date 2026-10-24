@@ -5,15 +5,10 @@ import { useCurrency } from "@/lib/currency-context";
 import { useT } from "@/lib/language-context";
 import type { WeekdaySpend } from "@/lib/analytics";
 import SectionHeader from "./SectionHeader";
+import { CalendarDotsIcon as PhCalendarDotsIcon } from "@phosphor-icons/react/dist/ssr";
 
 function CalendarBarsIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <rect x="3" y="4" width="14" height="13" rx="2" />
-      <path d="M3 8h14" />
-      <path d="M6.5 11v3M10 10v4M13.5 12v2" />
-    </svg>
-  );
+  return <PhCalendarDotsIcon weight="fill" aria-hidden="true" className={className} />;
 }
 
 // Locale-aware weekday labels via Intl rather than a per-language i18n key

@@ -11,6 +11,7 @@ import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import SegmentedControl from "./SegmentedControl";
 import ManagerHeader from "./ManagerHeader";
+import { HouseLineIcon as PhHouseLineIcon, MagnifyingGlassIcon as PhMagnifyingGlassIcon, TrashIcon as PhTrashIcon, UserPlusIcon as PhUserPlusIcon } from "@phosphor-icons/react/dist/ssr";
 
 type Friend = { id: number; username: string; is_family: boolean };
 type FriendRequest = { id: number; username: string; created_at: string };
@@ -68,37 +69,19 @@ function Avatar({ username }: { username: string }) {
 }
 
 function SearchIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <circle cx="8.5" cy="8.5" r="6" />
-      <path d="M17 17l-4-4" />
-    </svg>
-  );
+  return <PhMagnifyingGlassIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 function PersonPlusIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
-      <circle cx="7.5" cy="6.5" r="3" />
-      <path d="M1.5 17c0-3 2.7-5 6-5s6 2 6 5M15.5 6.5v5M13 9h5" />
-    </svg>
-  );
+  return <PhUserPlusIcon weight="fill" aria-hidden="true" className="h-3.5 w-3.5" />;
 }
 
 function HomeHeartIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
-      <path d="M3 9.5 10 3l7 6.5V17a1 1 0 0 1-1 1h-3v-5H7v5H4a1 1 0 0 1-1-1Z" />
-    </svg>
-  );
+  return <PhHouseLineIcon weight="fill" aria-hidden="true" className="h-3.5 w-3.5" />;
 }
 
 function TrashIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <path d="M4 5.5h12M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5 6 16a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l.5-10.5" />
-    </svg>
-  );
+  return <PhTrashIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 export default function FriendsManager() {

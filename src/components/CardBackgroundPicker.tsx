@@ -16,23 +16,14 @@ import {
   type CardBackground,
 } from "@/lib/card-backgrounds";
 import { isSvgDataUrl, decodeSvgDataUrl, encodeSvgDataUrl, extractSvgColors, recolorSvg } from "@/lib/svg-recolor";
+import { LockSimpleIcon as PhLockSimpleIcon, LockSimpleOpenIcon as PhLockSimpleOpenIcon } from "@phosphor-icons/react/dist/ssr";
 
 function LockIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <rect x="4.5" y="9" width="11" height="8" rx="2" />
-      <path d="M6.5 9V6.5a3.5 3.5 0 0 1 7 0V9" />
-    </svg>
-  );
+  return <PhLockSimpleIcon weight="fill" aria-hidden="true" className={className} />;
 }
 
 function UnlockIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <rect x="4.5" y="9" width="11" height="8" rx="2" />
-      <path d="M6.5 9V6.5a3.5 3.5 0 0 1 6.5-1.8" />
-    </svg>
-  );
+  return <PhLockSimpleOpenIcon weight="fill" aria-hidden="true" className={className} />;
 }
 
 // Lets a user pick one of the many pattern/gradient treatments for a

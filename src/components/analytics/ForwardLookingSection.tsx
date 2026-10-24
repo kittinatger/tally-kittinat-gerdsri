@@ -7,22 +7,13 @@ import { useT } from "@/lib/language-context";
 import type { ProjectedSpend, UpcomingRecurringItem } from "@/lib/analytics";
 import WidgetCard from "../WidgetCard";
 import SectionHeader from "./SectionHeader";
+import { ClockIcon as PhClockIcon, CompassIcon as PhCompassIcon } from "@phosphor-icons/react/dist/ssr";
 
 function ClockIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <circle cx="10" cy="10" r="7.25" />
-      <path d="M10 5.5V10l3 2" />
-    </svg>
-  );
+  return <PhClockIcon weight="fill" aria-hidden="true" className={className} />;
 }
 function CompassIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <circle cx="10" cy="10" r="7.25" />
-      <path d="m12.3 7.7-1.4 3.6-3.6 1.4 1.4-3.6z" />
-    </svg>
-  );
+  return <PhCompassIcon weight="fill" aria-hidden="true" className={className} />;
 }
 
 export default function ForwardLookingSection({

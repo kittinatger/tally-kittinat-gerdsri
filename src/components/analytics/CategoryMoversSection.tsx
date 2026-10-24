@@ -7,14 +7,10 @@ import { badgeClasses } from "@/lib/category-styles";
 import type { CategoryOption } from "@/types/category";
 import type { CategoryMover } from "@/lib/analytics";
 import SectionHeader from "./SectionHeader";
+import { ArrowsDownUpIcon as PhArrowsDownUpIcon } from "@phosphor-icons/react/dist/ssr";
 
 function TrendUpDownIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M3 6h5.5l-2 2M8.5 6 6.5 4" />
-      <path d="M17 14h-5.5l2-2M11.5 14l2 2" />
-    </svg>
-  );
+  return <PhArrowsDownUpIcon weight="fill" aria-hidden="true" className={className} />;
 }
 
 // Which expense categories moved the most vs the previous period, up or

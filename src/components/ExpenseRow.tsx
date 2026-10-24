@@ -8,6 +8,7 @@ import { useCategoryColor, useCategoryIcon } from "@/lib/categories-context";
 import { useCurrency } from "@/lib/currency-context";
 import { isCategoryIconKey } from "@/lib/category-icons";
 import { CategoryIcon, TrashIcon, EditIcon } from "@/lib/icons";
+import { ExportIcon as PhExportIcon } from "@phosphor-icons/react/dist/ssr";
 
 const OPEN_DELETE = -76;
 const OPEN_SHARE = 76;
@@ -19,12 +20,7 @@ function DeleteIcon({ className = "h-5 w-5" }: { className?: string }) {
 }
 
 function ShareIcon({ className = "h-5 w-5" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M10 12.5V3.5M6.5 7 10 3.5 13.5 7" />
-      <path d="M4 10.5v4a1.5 1.5 0 0 0 1.5 1.5h9a1.5 1.5 0 0 0 1.5-1.5v-4" />
-    </svg>
-  );
+  return <PhExportIcon weight="fill" aria-hidden="true" className={className} />;
 }
 
 async function shareExpense(expense: Expense, currency: string) {

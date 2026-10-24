@@ -20,6 +20,7 @@ import ReorderButtons from "./ReorderButtons";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
+import { PauseIcon as PhPauseIcon, PlayIcon as PhPlayIcon, RepeatIcon as PhRepeatIcon, SkipForwardIcon as PhSkipForwardIcon } from "@phosphor-icons/react/dist/ssr";
 
 type RecurringCandidate = {
   key: string;
@@ -55,37 +56,19 @@ const FREQUENCY_KEYS: Record<string, MessageKey> = {
 };
 
 function RepeatIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <path d="M4 7h9a2.5 2.5 0 0 1 2.5 2.5V11M16 13H7a2.5 2.5 0 0 1-2.5-2.5V9" />
-      <path d="M6.5 4.5 4 7l2.5 2.5M13.5 15.5 16 13l-2.5-2.5" />
-    </svg>
-  );
+  return <PhRepeatIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 function SkipIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <path d="M4 4v12l7-6-7-6ZM12 4v12l7-6-7-6" fill="currentColor" stroke="none" />
-    </svg>
-  );
+  return <PhSkipForwardIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 function PauseIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-      <rect x="4.5" y="3.5" width="4" height="13" rx="1" />
-      <rect x="11.5" y="3.5" width="4" height="13" rx="1" />
-    </svg>
-  );
+  return <PhPauseIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 function PlayIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-      <path d="M5.5 3.7c0-.9 1-1.4 1.7-.9l9.4 6.3a1 1 0 0 1 0 1.7l-9.4 6.3c-.7.5-1.7 0-1.7-.9Z" />
-    </svg>
-  );
+  return <PhPlayIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 export default function RecurringManager() {

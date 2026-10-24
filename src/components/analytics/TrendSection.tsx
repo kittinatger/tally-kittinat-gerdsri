@@ -7,13 +7,10 @@ import type { TrendPoint } from "../SpendingTrendChart";
 import SpendingTrendChart, { ChartTypeDropdown, type ChartType } from "../SpendingTrendChart";
 import SegmentedControl from "../SegmentedControl";
 import SectionHeader from "./SectionHeader";
+import { TrendUpIcon as PhTrendUpIcon } from "@phosphor-icons/react/dist/ssr";
 
 function TrendIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M3 16V9M8.5 16V4M14 16v-6M19.5 16v-3" />
-    </svg>
-  );
+  return <PhTrendUpIcon weight="fill" aria-hidden="true" className={className} />;
 }
 
 export default function TrendSection({ expensePoints, incomePoints }: { expensePoints: TrendPoint[]; incomePoints: TrendPoint[] }) {

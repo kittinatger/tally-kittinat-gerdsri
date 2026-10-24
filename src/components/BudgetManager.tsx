@@ -16,17 +16,12 @@ import ManagerHeader from "./ManagerHeader";
 import AddItemButton from "./AddItemButton";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
 import { useT } from "@/lib/language-context";
+import { ChartPieSliceIcon as PhChartPieSliceIcon } from "@phosphor-icons/react/dist/ssr";
 
 type Budget = { id: number; category: string; monthly_limit: string; rollover: boolean };
 
 function BudgetGlyphIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <rect x="3" y="4" width="14" height="12" rx="1.5" />
-      <path d="M3 8.5h14" />
-      <path d="M7 12h2" />
-    </svg>
-  );
+  return <PhChartPieSliceIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 export default function BudgetManager() {

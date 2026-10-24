@@ -3,15 +3,10 @@
 import Modal from "./Modal";
 import { MembershipCardIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
+import { BankIcon as PhBankIcon } from "@phosphor-icons/react/dist/ssr";
 
 function BankIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <path d="M2.5 8.5 10 3l7.5 5.5" />
-      <path d="M4 8.5v7M8 8.5v7M12 8.5v7M16 8.5v7" />
-      <path d="M2.5 15.5h15" />
-    </svg>
-  );
+  return <PhBankIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 function Row({ icon, label, desc, onClick }: { icon: React.ReactNode; label: string; desc: string; onClick: () => void }) {

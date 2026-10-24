@@ -18,26 +18,14 @@ import FilterDropdown from "./FilterDropdown";
 import OverflowMenu, { type OverflowMenuItem } from "./OverflowMenu";
 import { useT } from "@/lib/language-context";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
+import { ExportIcon as PhExportIcon, WalletIcon as PhWalletIcon } from "@phosphor-icons/react/dist/ssr";
 
 function ShareIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <circle cx="15" cy="5" r="2.25" />
-      <circle cx="5" cy="10" r="2.25" />
-      <circle cx="15" cy="15" r="2.25" />
-      <path d="M7 8.9l6-2.8M7 11.1l6 2.8" />
-    </svg>
-  );
+  return <PhExportIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 function WalletGlyphIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h9A1.5 1.5 0 0 1 15 6.5v8A1.5 1.5 0 0 1 13.5 16h-9A1.5 1.5 0 0 1 3 14.5Z" />
-      <path d="M3 8.5h13.5A1.5 1.5 0 0 1 18 10v4a1.5 1.5 0 0 1-1.5 1.5" />
-      <circle cx="13.5" cy="11.5" r="1" fill="currentColor" stroke="none" />
-    </svg>
-  );
+  return <PhWalletIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 

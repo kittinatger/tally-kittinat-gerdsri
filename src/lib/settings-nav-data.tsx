@@ -4,372 +4,158 @@
 // hooks), so either can import it without duplicating the ~40 rows.
 import type { Panel } from "@/lib/settings-panels";
 import type { MessageKey } from "@/lib/i18n/messages";
+import { BookOpenIcon as PhBookOpenIcon, CalculatorIcon as PhCalculatorIcon, CalendarBlankIcon as PhCalendarBlankIcon, ChartPieSliceIcon as PhChartPieSliceIcon, ChatCircleDotsIcon as PhChatCircleDotsIcon, CircleHalfIcon as PhCircleHalfIcon, ClipboardTextIcon as PhClipboardTextIcon, ClockCounterClockwiseIcon as PhClockCounterClockwiseIcon, CloudArrowUpIcon as PhCloudArrowUpIcon, CoinsIcon as PhCoinsIcon, CurrencyCircleDollarIcon as PhCurrencyCircleDollarIcon, EnvelopeIcon as PhEnvelopeIcon, FlagIcon as PhFlagIcon, GiftIcon as PhGiftIcon, GlobeIcon as PhGlobeIcon, HandshakeIcon as PhHandshakeIcon, HashIcon as PhHashIcon, IdentificationCardIcon as PhIdentificationCardIcon, ImagesIcon as PhImagesIcon, KeyboardIcon as PhKeyboardIcon, LockSimpleIcon as PhLockSimpleIcon, PercentIcon as PhPercentIcon, QrCodeIcon as PhQrCodeIcon, QuestionIcon as PhQuestionIcon, ReceiptIcon as PhReceiptIcon, RepeatIcon as PhRepeatIcon, ScanIcon as PhScanIcon, ShieldCheckIcon as PhShieldCheckIcon, SparkleIcon as PhSparkleIcon, SquaresFourIcon as PhSquaresFourIcon, StorefrontIcon as PhStorefrontIcon, TargetIcon as PhTargetIcon, TrophyIcon as PhTrophyIcon, UserIcon as PhUserIcon, UsersIcon as PhUsersIcon, WalletIcon as PhWalletIcon, WarningIcon as PhWarningIcon, WrenchIcon as PhWrenchIcon } from "@phosphor-icons/react/dist/ssr";
 
 function AccountIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <circle cx="10" cy="6.5" r="3.25" />
-      <path d="M3.5 17c0-3.5 2.9-6 6.5-6s6.5 2.5 6.5 6" />
-    </svg>
-  );
+  return <PhUserIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function ShieldIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M10 2.5l6 2.2v4.8c0 4.2-2.6 6.9-6 8-3.4-1.1-6-3.8-6-8V4.7Z" />
-      <path d="M7.5 10l1.8 1.8L13 8.2" />
-    </svg>
-  );
+  return <PhShieldCheckIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function GridIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <rect x="2.75" y="2.75" width="6" height="6" rx="1.5" />
-      <rect x="11.25" y="2.75" width="6" height="6" rx="1.5" />
-      <rect x="2.75" y="11.25" width="6" height="6" rx="1.5" />
-      <rect x="11.25" y="11.25" width="6" height="6" rx="1.5" />
-    </svg>
-  );
+  return <PhSquaresFourIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function HashIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M7.5 2.5L5.5 17.5M14.5 2.5l-2 15M3 7h14M2.5 13h14" />
-    </svg>
-  );
+  return <PhHashIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function StoreIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M3 7.5 4 3h12l1 4.5" />
-      <path d="M3 7.5a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0" />
-      <path d="M4 8v8.5h12V8" />
-      <path d="M8 16.5V12h4v4.5" />
-    </svg>
-  );
+  return <PhStorefrontIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function WalletIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h9A1.5 1.5 0 0 1 15 6.5v8A1.5 1.5 0 0 1 13.5 16h-9A1.5 1.5 0 0 1 3 14.5Z" />
-      <path d="M3 8.5h13.5A1.5 1.5 0 0 1 18 10v4a1.5 1.5 0 0 1-1.5 1.5" />
-      <circle cx="13.5" cy="11.5" r="1" fill="currentColor" stroke="none" />
-    </svg>
-  );
+  return <PhWalletIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function FriendsIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <circle cx="7" cy="6.5" r="2.75" />
-      <path d="M1.5 17c0-3 2.46-5 5.5-5s5.5 2 5.5 5" />
-      <circle cx="14.5" cy="7" r="2.25" />
-      <path d="M12.9 12.3c2.53.24 4.6 2.13 4.6 4.7" />
-    </svg>
-  );
+  return <PhUsersIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function ReceiptNavIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M5 2.5h10v15l-2-1.3-1.5 1.3-1.5-1.3-1.5 1.3-1.5-1.3-2 1.3v-15Z" />
-      <path d="M7.5 6.5h5M7.5 9.5h5M7.5 12.5h3" />
-    </svg>
-  );
+  return <PhReceiptIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function TrophyNavIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M6 3h8v4a4 4 0 0 1-8 0V3Z" />
-      <path d="M6 4H3.5a1 1 0 0 0-1 1.2l.4 1.6A2 2 0 0 0 4.85 8.3H6M14 4h2.5a1 1 0 0 1 1 1.2l-.4 1.6a2 2 0 0 1-1.95 1.5H14" />
-      <path d="M8 12v2a2 2 0 0 0 2 2 2 2 0 0 0 2-2v-2M7 17h6" />
-    </svg>
-  );
+  return <PhTrophyIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function CalendarIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <rect x="3" y="4" width="14" height="13" rx="2" />
-      <path d="M3 8h14M7 2.5v3M13 2.5v3" />
-    </svg>
-  );
+  return <PhCalendarBlankIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function AssistantIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M10 2.5c-3.6 0-6.5 2.5-6.5 5.75 0 1.85.95 3.5 2.45 4.6L5 17l3.35-1.5c.53.1 1.08.15 1.65.15 3.6 0 6.5-2.5 6.5-5.75S13.6 2.5 10 2.5Z" />
-      <circle cx="7.25" cy="8.25" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="10" cy="8.25" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="12.75" cy="8.25" r="0.9" fill="currentColor" stroke="none" />
-    </svg>
-  );
+  return <PhChatCircleDotsIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function LoanIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M3 10c0-3.5 3-6.5 7-6.5s7 3 7 6.5-3 6.5-7 6.5c-1.2 0-2.3-.25-3.3-.7L3 17l1.3-3.6C3.5 12.4 3 11.3 3 10Z" />
-      <path d="M7.5 10h5M10 7.5v5" />
-    </svg>
-  );
+  return <PhHandshakeIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function CoinIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <circle cx="10" cy="10" r="7.25" />
-      <path d="M12.2 7.6c-.4-.7-1.2-1.1-2.2-1.1-1.5 0-2.6 1-2.6 2.3 0 1.1.8 1.8 2.1 2.1l1 .2c1.3.3 2.1 1 2.1 2.1 0 1.3-1.1 2.3-2.7 2.3-1.1 0-2-.4-2.4-1.2" />
-      <path d="M10 5.3v9.4" />
-    </svg>
-  );
+  return <PhCoinsIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function DesignIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <circle cx="10" cy="10" r="7.5" />
-      <path d="M10 2.5v15" />
-      <path d="M10 2.5a7.5 7.5 0 0 0 0 15" fill="currentColor" stroke="none" />
-    </svg>
-  );
+  return <PhCircleHalfIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function GlobeIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <circle cx="10" cy="10" r="7.25" />
-      <path d="M2.75 10h14.5M10 2.75c2 2 3 4.7 3 7.25s-1 5.25-3 7.25c-2-2-3-4.7-3-7.25s1-5.25 3-7.25Z" />
-    </svg>
-  );
+  return <PhGlobeIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function BookIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M10 5.2C8.9 4 7 3.3 3.5 3.3v11c3.5 0 5.4.7 6.5 1.9 1.1-1.2 3-1.9 6.5-1.9v-11C13 3.3 11.1 4 10 5.2Z" />
-      <path d="M10 5.2v11.5" />
-    </svg>
-  );
+  return <PhBookOpenIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function QuestionIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <circle cx="10" cy="10" r="7.25" />
-      <path d="M7.9 8a2.15 2.15 0 0 1 4.2.7c0 1.4-2.1 1.6-2.1 3.1" />
-      <circle cx="10" cy="14.4" r="0.9" fill="currentColor" stroke="none" />
-    </svg>
-  );
+  return <PhQuestionIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function MailIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <rect x="2.5" y="4.5" width="15" height="11" rx="2" />
-      <path d="M3 5.5 10 11l7-5.5" />
-    </svg>
-  );
+  return <PhEnvelopeIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function FlagIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M5 17.5v-15" />
-      <path d="M5 3.5h9l-2.3 3.5L14 10.5H5" />
-    </svg>
-  );
+  return <PhFlagIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function ClockIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <circle cx="10" cy="10" r="7.25" />
-      <path d="M10 5.5V10l3 2" />
-    </svg>
-  );
+  return <PhClockCounterClockwiseIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function WarningIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M10 3.2 17.3 15.8a1 1 0 0 1-.87 1.5H3.57a1 1 0 0 1-.87-1.5L10 3.2Z" />
-      <path d="M10 8.3v3.4" />
-      <circle cx="10" cy="14.2" r="0.9" fill="currentColor" stroke="none" />
-    </svg>
-  );
+  return <PhWarningIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function WrenchIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M13.8 3.7a4.2 4.2 0 0 0-5.6 5.1L3.4 13.6l3 3 4.8-4.8a4.2 4.2 0 0 0 5.1-5.6l-2.7 2.7-2.1-2.1Z" />
-    </svg>
-  );
+  return <PhWrenchIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function RecurringIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M4.4 8.2A6 6 0 0 1 15.8 6l1.7 1.7" />
-      <path d="M17.6 4.5v3.5h-3.5" />
-      <path d="M15.6 11.8A6 6 0 0 1 4.2 14l-1.7-1.7" />
-      <path d="M2.4 15.5V12h3.5" />
-    </svg>
-  );
+  return <PhRepeatIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function BudgetIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M10 2.5v7.5h7.5A7.5 7.5 0 1 1 10 2.5Z" />
-      <path d="M13 2.9A7.5 7.5 0 0 1 17.1 7H10Z" />
-    </svg>
-  );
+  return <PhChartPieSliceIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function GoalIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <circle cx="10" cy="10" r="7.25" />
-      <circle cx="10" cy="10" r="4" />
-      <circle cx="10" cy="10" r="0.75" fill="currentColor" stroke="none" />
-    </svg>
-  );
+  return <PhTargetIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function BackupIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M5.5 8A4 4 0 0 1 13.4 6.4 3.25 3.25 0 0 1 16.5 9.5 3 3 0 0 1 13.5 12.5H6a3.5 3.5 0 0 1-.5-6.96Z" />
-      <path d="M10 9.5v5.5M7.8 12.6l2.2 2.4 2.2-2.4" />
-    </svg>
-  );
+  return <PhCloudArrowUpIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function LockIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <rect x="4.5" y="9" width="11" height="8" rx="2" />
-      <path d="M6.5 9V6.5a3.5 3.5 0 0 1 7 0V9" />
-      <circle cx="10" cy="12.75" r="1" fill="currentColor" stroke="none" />
-    </svg>
-  );
+  return <PhLockSimpleIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function GiftIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <rect x="3" y="8" width="14" height="9" rx="1.5" />
-      <path d="M3 11.5h14M10 8v9" />
-      <path d="M10 8C10 8 6.7 8 6.7 5.7 6.7 4.2 8 3.5 9 4c1 .5 1 4 1 4Z" />
-      <path d="M10 8c0 0 3.3 0 3.3-2.3 0-1.5-1.3-2.2-2.3-1.7-1 .5-1 4-1 4Z" />
-    </svg>
-  );
+  return <PhGiftIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function QrCodeIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <rect x="2.5" y="2.5" width="5.5" height="5.5" rx="1" />
-      <rect x="12" y="2.5" width="5.5" height="5.5" rx="1" />
-      <rect x="2.5" y="12" width="5.5" height="5.5" rx="1" />
-      <path d="M12 12h2.25v2.25M12 16.75h2.25M16.75 12v1.75M16.75 16.75v.01" />
-    </svg>
-  );
+  return <PhQrCodeIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function ScannerIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M3 7V4.5A1.5 1.5 0 0 1 4.5 3H7M13 3h2.5A1.5 1.5 0 0 1 17 4.5V7M17 13v2.5a1.5 1.5 0 0 1-1.5 1.5H13M7 17H4.5A1.5 1.5 0 0 1 3 15.5V13" />
-      <path d="M4 10h12" />
-    </svg>
-  );
+  return <PhScanIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function ConverterIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M4 7h11l-3-3M16 13H5l3 3" />
-      <circle cx="10" cy="10" r="7.25" />
-    </svg>
-  );
+  return <PhCurrencyCircleDollarIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function PercentIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M15 5 5 15" />
-      <circle cx="6" cy="6" r="1.75" />
-      <circle cx="14" cy="14" r="1.75" />
-    </svg>
-  );
+  return <PhPercentIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function CalculatorIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <rect x="3.5" y="2.5" width="13" height="15" rx="2" />
-      <path d="M6.5 5.5h7" />
-      <path d="M6.5 9.5h.01M10 9.5h.01M13.5 9.5h.01M6.5 12.5h.01M10 12.5h.01M13.5 12.5h.01M6.5 15.5h.01M10 15.5h.01M13.5 15.5h.01" />
-    </svg>
-  );
+  return <PhCalculatorIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function SparkleIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M10 3v3M10 14v3M3 10h3M14 10h3M5.3 5.3l2.1 2.1M12.6 12.6l2.1 2.1M14.7 5.3l-2.1 2.1M7.4 12.6l-2.1 2.1" />
-      <circle cx="10" cy="10" r="1.75" fill="currentColor" stroke="none" />
-    </svg>
-  );
+  return <PhSparkleIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function CardGuidelinesIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <rect x="2" y="5.3" width="16" height="9.4" rx="1.8" />
-      <path d="M2 8.2h16" />
-      <path d="M4.5 11.5h3" />
-    </svg>
-  );
+  return <PhIdentificationCardIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function AutoImportIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <rect x="2.5" y="3.5" width="12" height="10" rx="2" />
-      <circle cx="6.5" cy="7.5" r="1.25" />
-      <path d="M14.5 10.5 11 7l-5 5" />
-      <path d="M17 12v3.5M15.2 14.2l1.8 1.8 1.8-1.8" />
-    </svg>
-  );
+  return <PhImagesIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function KeyboardNavIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <rect x="2" y="5" width="16" height="10" rx="1.8" />
-      <path d="M5 8h.01M8 8h.01M11 8h.01M14 8h.01M5 11.5h8" />
-    </svg>
-  );
+  return <PhKeyboardIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function UploadReviewIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M10 12.5V3.5M6.5 7l3.5-3.5L13.5 7" />
-      <path d="M3.5 13v2a1.5 1.5 0 0 0 1.5 1.5h10a1.5 1.5 0 0 0 1.5-1.5v-2" />
-    </svg>
-  );
+  return <PhClipboardTextIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 export type SettingsAccent = string;

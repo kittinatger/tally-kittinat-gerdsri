@@ -5,90 +5,44 @@ import SettingsSubpageLayout from "@/components/SettingsSubpageLayout";
 import SupportScreenshot from "@/components/SupportScreenshot";
 import T from "@/components/T";
 import type { MessageKey } from "@/lib/i18n/messages";
+import { ArrowsSplitIcon as PhArrowsSplitIcon, ChartPieSliceIcon as PhChartPieSliceIcon, ImagesIcon as PhImagesIcon, ListBulletsIcon as PhListBulletsIcon, PlusCircleIcon as PhPlusCircleIcon, SignInIcon as PhSignInIcon, SquaresFourIcon as PhSquaresFourIcon, WalletIcon as PhWalletIcon, WifiSlashIcon as PhWifiSlashIcon } from "@phosphor-icons/react/dist/ssr";
 
 export const dynamic = "force-dynamic";
 
 function SignInIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <path d="M8 10h9m0 0-3-3m3 3-3 3" />
-      <path d="M8 3.5H5A1.5 1.5 0 0 0 3.5 5v10A1.5 1.5 0 0 0 5 16.5h3" />
-    </svg>
-  );
+  return <PhSignInIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 function AddIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <path d="M10 4v12M4 10h12" />
-    </svg>
-  );
+  return <PhPlusCircleIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 function AutoImportIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <rect x="2.5" y="4.5" width="15" height="12" rx="2" />
-      <circle cx="7.5" cy="10" r="2.5" />
-      <path d="M14 7.5h.01M6 4.5V3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v1.5" />
-    </svg>
-  );
+  return <PhImagesIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 function WalletIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h9A1.5 1.5 0 0 1 15 6.5v8A1.5 1.5 0 0 1 13.5 16h-9A1.5 1.5 0 0 1 3 14.5Z" />
-      <path d="M3 8.5h13.5A1.5 1.5 0 0 1 18 10v4a1.5 1.5 0 0 1-1.5 1.5" />
-      <circle cx="13.5" cy="11.5" r="1" fill="currentColor" stroke="none" />
-    </svg>
-  );
+  return <PhWalletIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 function BudgetIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <circle cx="10" cy="10" r="7" />
-      <path d="M10 5.5v4.5l3 2" />
-    </svg>
-  );
+  return <PhChartPieSliceIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 function SplitIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <path d="M4 4h5l-2.5 5.5L4 16h5" />
-      <path d="M12 4h4v4M16 4l-6 12" />
-    </svg>
-  );
+  return <PhArrowsSplitIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 function DashboardIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <rect x="2.5" y="2.5" width="7" height="7" rx="1.5" />
-      <rect x="10.5" y="2.5" width="7" height="4" rx="1.5" />
-      <rect x="10.5" y="8" width="7" height="9.5" rx="1.5" />
-      <rect x="2.5" y="11" width="7" height="6.5" rx="1.5" />
-    </svg>
-  );
+  return <PhSquaresFourIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 function ActivitiesIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <path d="M4 6h12M4 10h12M4 14h7" />
-    </svg>
-  );
+  return <PhListBulletsIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 function OfflineIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <path d="M5.5 13a4 4 0 0 1 1-7.87 5 5 0 0 1 9.5 1.4A3.5 3.5 0 0 1 15.5 13" />
-      <path d="M3 3l14 14" />
-    </svg>
-  );
+  return <PhWifiSlashIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 const SECTIONS: { id: string; title: MessageKey; icon: React.ReactNode; body: React.ReactNode }[] = [

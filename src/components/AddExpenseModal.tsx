@@ -16,6 +16,7 @@ import { describeFetchError } from "@/lib/fetch-error";
 import { logAppError } from "@/lib/error-log";
 import { useT } from "@/lib/language-context";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
+import { MicrophoneIcon as PhMicrophoneIcon, PencilSimpleIcon as PhPencilSimpleIcon, ScanIcon as PhScanIcon } from "@phosphor-icons/react/dist/ssr";
 
 type Tab = "manual" | "scan" | "voice";
 type ScanStatus = "idle" | "analyzing" | "review" | "error";
@@ -29,28 +30,15 @@ type ConversionInfo = { originalAmount: number; originalCurrency: string };
 const SCAN_FETCH_TIMEOUT_MS = 100_000;
 
 function PencilTabIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
-      <path d="M13.5 3.5a1.5 1.5 0 0 1 2 2l-8.5 8.5-3 1 1-3Z" />
-    </svg>
-  );
+  return <PhPencilSimpleIcon weight="fill" aria-hidden="true" className="h-3.5 w-3.5" />;
 }
 
 function ScanTabIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
-      <path d="M4 6.5V5a1 1 0 0 1 1-1h1.5M14.5 4H16a1 1 0 0 1 1 1v1.5M17 13.5V15a1 1 0 0 1-1 1h-1.5M5.5 16H4a1 1 0 0 1-1-1v-1.5M3 10h14" />
-    </svg>
-  );
+  return <PhScanIcon weight="fill" aria-hidden="true" className="h-3.5 w-3.5" />;
 }
 
 function MicTabIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
-      <rect x="7.5" y="2.5" width="5" height="9" rx="2.5" />
-      <path d="M4.5 9.5a5.5 5.5 0 0 0 11 0M10 15v2.5" />
-    </svg>
-  );
+  return <PhMicrophoneIcon weight="fill" aria-hidden="true" className="h-3.5 w-3.5" />;
 }
 
 export default function AddExpenseModal({

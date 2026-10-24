@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { BackspaceIcon as PhBackspaceIcon } from "@phosphor-icons/react/dist/ssr";
 
 // A tappable numeric keypad + dot progress indicator for entering a 4-8
 // digit passcode — used by AppLockGate's unlock screen. When the caller
@@ -16,12 +17,7 @@ import { useEffect, useRef } from "react";
 const DEFAULT_MAX_LENGTH = 8;
 
 function BackspaceIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M7.5 4.5h8A1.5 1.5 0 0 1 17 6v8a1.5 1.5 0 0 1-1.5 1.5h-8L2.5 10Z" />
-      <path d="M8.5 7.5l4 5M12.5 7.5l-4 5" />
-    </svg>
-  );
+  return <PhBackspaceIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 export default function PinKeypad({

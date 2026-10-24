@@ -4,14 +4,10 @@ import { useT } from "@/lib/language-context";
 import type { PeriodOverview, SavingsRate } from "@/lib/analytics";
 import WidgetCard from "../WidgetCard";
 import SectionHeader from "./SectionHeader";
+import { PiggyBankIcon as PhPiggyBankIcon } from "@phosphor-icons/react/dist/ssr";
 
 function PiggyBankIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M5.5 8A4 4 0 0 1 13.4 6.4 3.25 3.25 0 0 1 16.5 9.5 3 3 0 0 1 13.5 12.5H6a3.5 3.5 0 0 1-.5-6.96Z" />
-      <path d="M10 9.5v5.5M7.8 12.6l2.2 2.4 2.2-2.4" />
-    </svg>
-  );
+  return <PhPiggyBankIcon weight="fill" aria-hidden="true" className={className} />;
 }
 
 // Derived straight from the Overview section's own income/expense totals

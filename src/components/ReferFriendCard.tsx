@@ -3,41 +3,22 @@
 import { useEffect, useRef, useState } from "react";
 import bwipjs from "bwip-js/browser";
 import { useT } from "@/lib/language-context";
+import { CheckIcon as PhCheckIcon, CodeIcon as PhCodeIcon, CopyIcon as PhCopyIcon, ExportIcon as PhExportIcon } from "@phosphor-icons/react/dist/ssr";
 
 function CopyIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <rect x="7" y="7" width="10" height="10" rx="2" />
-      <path d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
-    </svg>
-  );
+  return <PhCopyIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 function CheckIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <path d="M4 10.5l3.5 3.5L16 5.5" />
-    </svg>
-  );
+  return <PhCheckIcon weight="bold" aria-hidden="true" className="h-4 w-4" />;
 }
 
 function ShareIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <circle cx="15.5" cy="4.5" r="2" />
-      <circle cx="15.5" cy="15.5" r="2" />
-      <circle cx="4.5" cy="10" r="2" />
-      <path d="M6.3 9 13.7 5.5M6.3 11l7.4 3.5" />
-    </svg>
-  );
+  return <PhExportIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 function CodeIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <path d="M7 6 3 10l4 4M13 6l4 4-4 4" />
-    </svg>
-  );
+  return <PhCodeIcon weight="bold" aria-hidden="true" className="h-4 w-4" />;
 }
 
 const EMBED_WIDTH = 320;

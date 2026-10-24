@@ -12,33 +12,20 @@ import { todayInputValue } from "@/lib/format";
 import { downscaleImage } from "@/lib/image-downscale";
 import { PlusIcon, CloseIcon } from "@/lib/icons";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
+import { CopyIcon as PhCopyIcon, ReceiptIcon as PhReceiptIcon, TrashIcon as PhTrashIcon } from "@phosphor-icons/react/dist/ssr";
 
 const MAX_RECEIPTS_PER_EXPENSE = 10;
 
 function ReceiptIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <path d="M5 2.5h10v15l-2-1.3-1.5 1.3-1.5-1.3-1.5 1.3-1.5-1.3-2 1.3v-15Z" />
-      <path d="M7.5 6.5h5M7.5 9.5h5M7.5 12.5h3" />
-    </svg>
-  );
+  return <PhReceiptIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 function CopyIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <rect x="7" y="7" width="10" height="10" rx="2" />
-      <path d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
-    </svg>
-  );
+  return <PhCopyIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 function TrashIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <path d="M4 5.5h12M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5 6 16a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l.5-10.5" />
-    </svg>
-  );
+  return <PhTrashIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 export default function EditExpenseModal({

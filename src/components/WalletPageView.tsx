@@ -24,20 +24,14 @@ import type { WalletOption } from "@/types/wallet";
 import type { MembershipCard } from "@/types/membership";
 import type { MembershipCodeFormat } from "@/lib/memberships";
 import type { CardFolder } from "@/types/card-folder";
+import { ExportIcon as PhExportIcon } from "@phosphor-icons/react/dist/ssr";
 
 // Same glyph as WalletManager's own local ShareIcon — this app keeps
 // ShareIcon defined per-file rather than as one shared icons.tsx export
 // (ExpenseRow and WalletCardShape each have their own too, for a
 // different "share to app" meaning), so this follows that convention.
 function ShareIcon({ className = "h-4 w-4" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <circle cx="15" cy="5" r="2.25" />
-      <circle cx="5" cy="10" r="2.25" />
-      <circle cx="15" cy="15" r="2.25" />
-      <path d="M7 8.9l6-2.8M7 11.1l6 2.8" />
-    </svg>
-  );
+  return <PhExportIcon weight="fill" aria-hidden="true" className={className} />;
 }
 
 // None of these are needed on first paint — every one requires a tap first.

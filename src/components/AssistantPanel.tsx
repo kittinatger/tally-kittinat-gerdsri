@@ -4,6 +4,7 @@ import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useRef, useState } from "react";
 import { todayInputValue } from "@/lib/format";
 import { useT } from "@/lib/language-context";
+import { PaperPlaneRightIcon as PhPaperPlaneRightIcon } from "@phosphor-icons/react/dist/ssr";
 
 type Message = { role: "user" | "assistant"; text: string; model?: string };
 
@@ -30,12 +31,7 @@ function BotAvatar() {
 }
 
 function SendIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <path d="M17 3 3 9.5l6 2.5 2 6L17 3Z" />
-      <path d="M17 3 9 11" />
-    </svg>
-  );
+  return <PhPaperPlaneRightIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 // Three staggered bouncing dots instead of a plain "Loading..." line —

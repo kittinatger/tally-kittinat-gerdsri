@@ -1,11 +1,8 @@
 import Link from "next/link";
+import { CaretLeftIcon as PhCaretLeftIcon } from "@phosphor-icons/react/dist/ssr";
 
 function BackIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0">
-      <path d="M12.5 4.5l-6 5.5 6 5.5" />
-    </svg>
-  );
+  return <PhCaretLeftIcon weight="fill" aria-hidden="true" className="h-4 w-4 shrink-0" />;
 }
 
 // These pages (Usage guide, FAQs, Troubleshooting, etc.) are real routes

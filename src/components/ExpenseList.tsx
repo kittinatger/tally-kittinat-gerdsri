@@ -16,25 +16,16 @@ import FilterDropdown from "./FilterDropdown";
 import DateRangeFilter from "./DateRangeFilter";
 import Modal from "./Modal";
 import { DEFAULT_ACTIVITIES_PREFS, compareActivitiesSort, resolveDefaultDateRange, type ActivitiesPrefs } from "@/lib/activities-prefs";
+import { CheckSquareIcon as PhCheckSquareIcon, DownloadSimpleIcon as PhDownloadSimpleIcon } from "@phosphor-icons/react/dist/ssr";
 
 export type TypeFilter = "all" | TransactionType;
 
 function DownloadIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <path d="M10 3v9.5M6 9l4 4 4-4" />
-      <path d="M4 15.5h12" />
-    </svg>
-  );
+  return <PhDownloadSimpleIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 function SelectCheckIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <rect x="3" y="3" width="14" height="14" rx="4" />
-      <path d="M6.5 10l2.5 2.5 4.5-5" />
-    </svg>
-  );
+  return <PhCheckSquareIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 type DisplayRow = { kind: "single"; expense: Expense } | { kind: "split"; groupId: string; items: Expense[] };

@@ -12,6 +12,7 @@ import ManagerHeader from "./ManagerHeader";
 import { useT } from "@/lib/language-context";
 import type { LoanDirection } from "@/lib/loans";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
+import { HandshakeIcon as PhHandshakeIcon } from "@phosphor-icons/react/dist/ssr";
 
 type Loan = {
   id: number;
@@ -37,12 +38,7 @@ function counterpartyLabel(loan: Loan): string {
 // its empty state (unlike every sibling manager), which is exactly the
 // drift EmptyState.tsx was extracted to stop from spreading further.
 function HandshakeIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <path d="M2.5 9.5 6 6l3 2 2-2 3 3-3.5 3.5-3-2-1.5 1.5" />
-      <path d="M6 6 3.5 8.5M14 9l3.5-3.5" />
-    </svg>
-  );
+  return <PhHandshakeIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 export default function LoanManager() {

@@ -5,30 +5,14 @@ import type { Expense } from "@/types/expense";
 import { formatCurrency, formatDateLong } from "@/lib/format";
 import { useCurrency } from "@/lib/currency-context";
 import { badgeClasses } from "@/lib/category-styles";
+import { ArrowsSplitIcon as PhArrowsSplitIcon, CaretDownIcon as PhCaretDownIcon } from "@phosphor-icons/react/dist/ssr";
 
 function SplitIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <path d="M4 6h5.5M4 6l2.5-2.5M4 6l2.5 2.5" />
-      <path d="M16 14h-5.5M16 14l-2.5-2.5M16 14l-2.5 2.5" />
-    </svg>
-  );
+  return <PhArrowsSplitIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function ChevronIcon({ open }: { open: boolean }) {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={`h-4 w-4 shrink-0 text-surface-foreground-soft transition-transform ${open ? "rotate-180" : ""}`}
-    >
-      <path d="M5 7.5l5 5 5-5" />
-    </svg>
-  );
+  return <PhCaretDownIcon weight="fill" aria-hidden="true" className={`h-4 w-4 shrink-0 text-surface-foreground-soft transition-transform ${open ? "rotate-180" : ""}`} />;
 }
 
 export default function SplitExpenseGroup({

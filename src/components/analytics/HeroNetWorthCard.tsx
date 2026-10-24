@@ -5,13 +5,10 @@ import { useCurrency } from "@/lib/currency-context";
 import { useT } from "@/lib/language-context";
 import { useCountUp } from "@/lib/use-count-up";
 import type { TrendPoint } from "../SpendingTrendChart";
+import { PencilSimpleIcon as PhPencilSimpleIcon } from "@phosphor-icons/react/dist/ssr";
 
 function EditIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M13.6 3.6a2 2 0 0 1 2.8 2.8l-8.5 8.5a2 2 0 0 1-.85.5l-3 .86.86-3a2 2 0 0 1 .5-.85Z" />
-    </svg>
-  );
+  return <PhPencilSimpleIcon weight="fill" aria-hidden="true" className={className} />;
 }
 
 // A tiny decorative sparkline — no axes/labels, just a felt sense of

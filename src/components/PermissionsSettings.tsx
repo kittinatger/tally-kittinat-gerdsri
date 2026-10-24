@@ -6,26 +6,16 @@ import { describeMediaError } from "@/lib/media-error";
 import { badgeClasses } from "@/lib/category-styles";
 import { MicIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
+import { CameraIcon as PhCameraIcon, ImagesIcon as PhImagesIcon } from "@phosphor-icons/react/dist/ssr";
 
 type PermissionStatus = "granted" | "denied" | "prompt" | "unsupported";
 
 function CameraIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <path d="M2.5 6.5A1.5 1.5 0 0 1 4 5h1.5l.8-1.4A1 1 0 0 1 7.16 3h5.68a1 1 0 0 1 .87.6l.8 1.4H16a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 16 15.5H4A1.5 1.5 0 0 1 2.5 14Z" />
-      <circle cx="10" cy="10.25" r="3.25" />
-    </svg>
-  );
+  return <PhCameraIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 function PhotosIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <rect x="2.5" y="3.5" width="15" height="13" rx="2" />
-      <circle cx="7" cy="8" r="1.5" />
-      <path d="M17 12.5 13 9l-6.5 6.5" />
-    </svg>
-  );
+  return <PhImagesIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 export default function PermissionsSettings({ hasEmail }: { hasEmail: boolean }) {

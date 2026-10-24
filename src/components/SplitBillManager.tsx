@@ -17,6 +17,7 @@ import CategoryIconBadge from "./CategoryIconBadge";
 import ManagedList from "./ManagedList";
 import ManagerHeader from "./ManagerHeader";
 import AddItemButton from "./AddItemButton";
+import { CheckIcon as PhCheckIcon, ReceiptIcon as PhReceiptIcon, TrashIcon as PhTrashIcon } from "@phosphor-icons/react/dist/ssr";
 
 type Split = {
   id: number;
@@ -70,28 +71,15 @@ function Avatar({ username }: { username: string }) {
 }
 
 function ReceiptIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <path d="M5 2.5h10v15l-2-1.3-1.5 1.3-1.5-1.3-1.5 1.3-1.5-1.3-2 1.3v-15Z" />
-      <path d="M7.5 6.5h5M7.5 9.5h5M7.5 12.5h3" />
-    </svg>
-  );
+  return <PhReceiptIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 function TrashIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <path d="M4 5.5h12M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5 6 16a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l.5-10.5" />
-    </svg>
-  );
+  return <PhTrashIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 function CheckIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
-      <path d="M4 10.5 8 14l8-8" />
-    </svg>
-  );
+  return <PhCheckIcon weight="bold" aria-hidden="true" className="h-3.5 w-3.5" />;
 }
 
 function netLabel(

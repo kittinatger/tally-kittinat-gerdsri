@@ -5,14 +5,10 @@ import { startAuthentication } from "@simplewebauthn/browser";
 import { usePathname } from "next/navigation";
 import { useT } from "@/lib/language-context";
 import PinKeypad from "./PinKeypad";
+import { LockSimpleIcon as PhLockSimpleIcon } from "@phosphor-icons/react/dist/ssr";
 
 function LockIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
-      <rect x="4.5" y="9" width="11" height="8" rx="2" />
-      <path d="M6.5 9V6.5a3.5 3.5 0 0 1 7 0V9" />
-    </svg>
-  );
+  return <PhLockSimpleIcon weight="fill" aria-hidden="true" className="h-6 w-6" />;
 }
 
 // Pages that never need app-lock: unauthenticated ones (a locked-out

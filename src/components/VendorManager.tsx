@@ -12,20 +12,14 @@ import EmptyState from "./EmptyState";
 import ManagerHeader from "./ManagerHeader";
 import { useT, useLanguage } from "@/lib/language-context";
 import type { VendorStat } from "@/lib/db";
+import { StorefrontIcon as PhStorefrontIcon } from "@phosphor-icons/react/dist/ssr";
 
 // Same glyph as SettingsNavList's own StoreIcon — kept as its own local
 // copy rather than a shared export since every icon in this codebase is
 // defined per-file by convention (see e.g. WalletCardShape/ExpenseRow's
 // own ShareIcon).
 function StoreIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <path d="M3 7.5 4 3h12l1 4.5" />
-      <path d="M3 7.5a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0" />
-      <path d="M4 8v8.5h12V8" />
-      <path d="M8 16.5V12h4v4.5" />
-    </svg>
-  );
+  return <PhStorefrontIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 type SortMode = "mostUsed" | "alphabetical" | "recent" | "highestSpend";

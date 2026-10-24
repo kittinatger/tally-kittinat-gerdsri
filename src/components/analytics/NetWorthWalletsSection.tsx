@@ -13,16 +13,12 @@ import SpendingTrendChart, { ChartTypeDropdown, type ChartType } from "../Spendi
 import WidgetCard from "../WidgetCard";
 import DonutRing from "./DonutRing";
 import SectionHeader from "./SectionHeader";
+import { WalletIcon as PhWalletIcon } from "@phosphor-icons/react/dist/ssr";
 
 type WalletRankedItem = { label: string; value: number; displayValue: string; colorClassName: string };
 
 function WalletIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h11A1.5 1.5 0 0 1 17 6.5V14a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 3 14Z" />
-      <path d="M13 10.5h2" />
-    </svg>
-  );
+  return <PhWalletIcon weight="fill" aria-hidden="true" className={className} />;
 }
 
 // Mobile-only: a compact horizontally-scrollable "chip" row instead of the

@@ -14,6 +14,7 @@ import { type Panel } from "@/lib/settings-panels";
 import PullToRefresh from "./PullToRefresh";
 import AppHeader from "./AppHeader";
 import SettingsNavList from "./SettingsNavList";
+import { CaretLeftIcon as PhCaretLeftIcon } from "@phosphor-icons/react/dist/ssr";
 
 // Exactly one of these renders at a time (whichever `panel` is selected), so
 // loading them on demand instead of bundling all ~16 into every Settings
@@ -90,11 +91,7 @@ const PANEL_TITLES: Record<Panel, string> = {
 };
 
 function BackIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0">
-      <path d="M12.5 4.5l-6 5.5 6 5.5" />
-    </svg>
-  );
+  return <PhCaretLeftIcon weight="fill" aria-hidden="true" className="h-4 w-4 shrink-0" />;
 }
 
 export default function SettingsView({

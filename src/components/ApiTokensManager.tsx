@@ -8,24 +8,16 @@ import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import ManagerHeader from "./ManagerHeader";
 import AddItemButton from "./AddItemButton";
+import { KeyIcon as PhKeyIcon, TrashIcon as PhTrashIcon } from "@phosphor-icons/react/dist/ssr";
 
 type ApiToken = { id: number; name: string; created_at: string; last_used_at: string | null };
 
 function KeyIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <circle cx="7" cy="13" r="3.25" />
-      <path d="M9.3 10.7 15.5 4.5M13.5 6.5l1.75 1.75M15.75 4.25 17.5 6" />
-    </svg>
-  );
+  return <PhKeyIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 function TrashIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <path d="M4 5.5h12M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5 6 16a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l.5-10.5" />
-    </svg>
-  );
+  return <PhTrashIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 export default function ApiTokensManager() {

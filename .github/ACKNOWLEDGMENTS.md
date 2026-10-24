@@ -15,22 +15,12 @@
 
 ## Icons
 
-Several icons in Tally's interface (theme toggle, sign-out, receipt, and chart
-icons, among others) are derived from [Apple's SF Symbols](https://developer.apple.com/sf-symbols/).
+Tally's interface icons — navigation, actions, Settings rows, Analytics
+sections and category icons — are from [Phosphor Icons](https://phosphoricons.com/)
+(mostly the "fill" weight, matching the author's portfolio site), used via
+[`@phosphor-icons/react`](https://github.com/phosphor-icons/react) under the
+MIT License, Copyright (c) 2020-2024 Phosphor Icons.
 
-SF Symbols are provided by Apple Inc. under the SF Symbols license included
-with Xcode and the Apple SDKs. Per that license, the symbols are intended for
-use in software, marketing materials, and other content created for Apple
-platforms (iOS, iPadOS, macOS, watchOS, tvOS, and visionOS); use outside that
-context is not covered by the license grant.
-
-Tally is a web application, not an Apple-platform app, so this usage sits
-outside the license's stated scope. It's included here as a design/UX choice
-consistent with the rest of the interface, not as a claim of a license grant
-that covers this use. If you fork or redeploy Tally, be aware of this and
-consider substituting icons from a web-appropriate, openly licensed set
-(e.g. [Lucide](https://lucide.dev) or [Heroicons](https://heroicons.com)) if
-that matters for your use case.
-
-All trademarks, including "Apple" and "SF Symbols," are the property of
-Apple Inc.
+The handful of remaining graphics that aren't icon-pack glyphs (charts, the
+payment-card chip and contactless marks, the app's own tally-mark logo) are
+drawn in-house.

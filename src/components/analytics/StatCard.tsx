@@ -6,27 +6,16 @@ import { useCurrency } from "@/lib/currency-context";
 import { useCountUp } from "@/lib/use-count-up";
 import WidgetCard, { WIDGET_SOFT_BG, WIDGET_TEXT } from "../WidgetCard";
 import DeltaBadge from "./DeltaBadge";
+import { ArrowDownLeftIcon as PhArrowDownLeftIcon, ArrowUpRightIcon as PhArrowUpRightIcon, ScalesIcon as PhScalesIcon } from "@phosphor-icons/react/dist/ssr";
 
 function IncomeIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M10 15V5M5 10l5-5 5 5" />
-    </svg>
-  );
+  return <PhArrowUpRightIcon weight="fill" aria-hidden="true" className={className} />;
 }
 function ExpenseIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M10 5v10M5 10l5 5 5-5" />
-    </svg>
-  );
+  return <PhArrowDownLeftIcon weight="fill" aria-hidden="true" className={className} />;
 }
 function NetIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M4 7h12M4 13h12M8 4 6 7l2 3M12 16l2-3-2-3" />
-    </svg>
-  );
+  return <PhScalesIcon weight="fill" aria-hidden="true" className={className} />;
 }
 const ICONS = { income: IncomeIcon, expense: ExpenseIcon, net: NetIcon };
 

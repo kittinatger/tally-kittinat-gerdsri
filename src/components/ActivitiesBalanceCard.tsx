@@ -7,29 +7,18 @@ import { GearIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 import { useDesign } from "@/lib/use-design";
 import type { TypeFilter } from "./ExpenseList";
+import { ArrowDownLeftIcon as PhArrowDownLeftIcon, ArrowUpRightIcon as PhArrowUpRightIcon, ArrowsLeftRightIcon as PhArrowsLeftRightIcon } from "@phosphor-icons/react/dist/ssr";
 
 function IncomeIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <path d="M5 15L15 5M15 5H7M15 5V13" />
-    </svg>
-  );
+  return <PhArrowUpRightIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 function ExpenseIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <path d="M15 5L5 15M5 15H13M5 15V7" />
-    </svg>
-  );
+  return <PhArrowDownLeftIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 function TransferIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-      <path d="M3 6.5h12l-3-3M17 13.5H5l3 3" />
-    </svg>
-  );
+  return <PhArrowsLeftRightIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
 export default function ActivitiesBalanceCard({

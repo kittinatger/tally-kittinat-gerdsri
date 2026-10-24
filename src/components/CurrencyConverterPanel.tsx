@@ -6,13 +6,10 @@ import { CURRENCIES } from "@/lib/currencies";
 import { formatCurrency } from "@/lib/format";
 import { useCurrency } from "@/lib/currency-context";
 import { useT } from "@/lib/language-context";
+import { ArrowsDownUpIcon as PhArrowsDownUpIcon } from "@phosphor-icons/react/dist/ssr";
 
 function SwapIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <path d="M4 7h11l-3-3M16 13H5l3 3" />
-    </svg>
-  );
+  return <PhArrowsDownUpIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 // A quick "convert X from A to B" calculator, independent of an actual

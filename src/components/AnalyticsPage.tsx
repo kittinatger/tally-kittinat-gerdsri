@@ -49,16 +49,10 @@ import BiggestTransactionsSection from "./analytics/BiggestTransactionsSection";
 import SavingsRateSection from "./analytics/SavingsRateSection";
 import CategoryMoversSection from "./analytics/CategoryMoversSection";
 import SectionHeader from "./analytics/SectionHeader";
+import { SquaresFourIcon as PhSquaresFourIcon } from "@phosphor-icons/react/dist/ssr";
 
 function CategoriesIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <rect x="3" y="3" width="6" height="6" rx="1.5" />
-      <rect x="11" y="3" width="6" height="6" rx="1.5" />
-      <rect x="3" y="11" width="6" height="6" rx="1.5" />
-      <rect x="11" y="11" width="6" height="6" rx="1.5" />
-    </svg>
-  );
+  return <PhSquaresFourIcon weight="fill" aria-hidden="true" className={className} />;
 }
 
 const EditBalanceModal = dynamic(() => import("./EditBalanceModal"), { ssr: false });
