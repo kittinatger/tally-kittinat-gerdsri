@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import bwipjs from "bwip-js/browser";
+import { loadBwip } from "@/lib/bwip";
 import { useT } from "@/lib/language-context";
 import { MEMBERSHIP_CODE_FORMATS, type MembershipCodeFormat } from "@/lib/memberships";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -57,9 +57,9 @@ export default function CodeGeneratorPanel() {
 
   useEffect(() => {
     let cancelled = false;
-    // Deferred to a microtask so the setError(null) below doesn't run
-    // synchronously inside the effect — same pattern as MembershipCardCode.
-    Promise.resolve().then(() => {
+    // Runs once the barcode library has loaded (lazily, see lib/bwip.ts),
+    // which also keeps setError(null) out of the synchronous effect body.
+    loadBwip().then((bwipjs) => {
       if (cancelled) return;
       setError(null);
       if (isEmpty) return;
@@ -89,8 +89,9 @@ export default function CodeGeneratorPanel() {
     a.click();
   }
 
-  function handleDownload(kind: DownloadKind) {
+  async function handleDownload(kind: DownloadKind) {
     if (isEmpty || error) return;
+    const bwipjs = await loadBwip();
     if (kind === "svg") {
       // bwip-js can render straight to an SVG string, independent of the
       // canvas preview — a real vector file, not a canvas-to-image trace.

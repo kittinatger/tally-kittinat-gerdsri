@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import bwipjs from "bwip-js/browser";
+import { loadBwip } from "@/lib/bwip";
 import { useT } from "@/lib/language-context";
 import { CheckIcon as PhCheckIcon, CodeIcon as PhCodeIcon, CopyIcon as PhCopyIcon, ExportIcon as PhExportIcon } from "@phosphor-icons/react/dist/ssr";
 
@@ -34,17 +34,23 @@ export default function ReferFriendCard({ shareUrl, embedUrl }: { shareUrl: stri
   const embedCode = `<iframe src="${embedUrl}" width="${EMBED_WIDTH}" height="${EMBED_HEIGHT}" style="border:0;border-radius:16px;" title="Refer a friend to Tally" loading="lazy"></iframe>`;
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    try {
-      bwipjs.toCanvas(canvas, {
-        bcid: "qrcode",
-        text: shareUrl,
-        scale: 6,
-      });
-    } catch (err) {
-      console.error("Referral QR render failed:", err);
-    }
+    let cancelled = false;
+    loadBwip().then((bwipjs) => {
+      const canvas = canvasRef.current;
+      if (cancelled || !canvas) return;
+      try {
+        bwipjs.toCanvas(canvas, {
+          bcid: "qrcode",
+          text: shareUrl,
+          scale: 6,
+        });
+      } catch (err) {
+        console.error("Referral QR render failed:", err);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [shareUrl]);
 
   async function handleCopy() {

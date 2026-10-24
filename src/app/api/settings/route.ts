@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  getAppSettingsRow,
   getAutoConvertCurrency,
   getCurrency,
   getLanguage,
@@ -22,40 +23,13 @@ import {
 import { settingsInputSchema } from "@/lib/validation";
 import { getUserId } from "@/lib/auth";
 
+// One query. The wallet balance total (`remaining`) is deliberately not part
+// of this read: it's an aggregate over every wallet and transaction, no
+// reader of this endpoint uses it, and this runs on every page load. PATCH
+// still returns it after a balance edit (EditBalanceModal reads that).
 export async function GET() {
   const userId = await getUserId();
-  const [
-    remaining,
-    currency,
-    language,
-    autoConvertCurrency,
-    convertWalletBalances,
-    notifyRecurringEmail,
-    notifyBudgetEmail,
-    notifyPushReminders,
-    requireSplitConfirmation,
-  ] = await Promise.all([
-    getRemaining(userId),
-    getCurrency(userId),
-    getLanguage(userId),
-    getAutoConvertCurrency(userId),
-    getConvertWalletBalances(userId),
-    getNotifyRecurringEmail(userId),
-    getNotifyBudgetEmail(userId),
-    getNotifyPushReminders(userId),
-    getRequireSplitConfirmation(userId),
-  ]);
-  return NextResponse.json({
-    remaining,
-    currency,
-    language,
-    autoConvertCurrency,
-    convertWalletBalances,
-    notifyRecurringEmail,
-    notifyBudgetEmail,
-    notifyPushReminders,
-    requireSplitConfirmation,
-  });
+  return NextResponse.json(await getAppSettingsRow(userId));
 }
 
 export async function PATCH(req: NextRequest) {

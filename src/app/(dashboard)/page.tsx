@@ -1,4 +1,15 @@
-import { listExpenses, listCategories, getCurrency, listWallets, getActivitiesDefaultWalletId, getActivitiesPrefs } from "@/lib/db";
+import { after } from "next/server";
+import {
+  listExpenses,
+  listCategories,
+  getCurrency,
+  listWallets,
+  getActivitiesDefaultWalletId,
+  getActivitiesPrefs,
+  processDueRecurringRules,
+  processDueRecurringSplits,
+} from "@/lib/db";
+import { sendPendingNotifications } from "@/lib/notifications";
 import { getUserId } from "@/lib/auth";
 import ActivitiesView from "@/components/ActivitiesView";
 import { locationFromRow, normalizeExpenseType, normalizeDirection, type Expense } from "@/types/expense";
@@ -23,6 +34,10 @@ export default async function HomePage({
 }) {
   const { add, vendor } = await searchParams;
   const userId = await getUserId();
+  // Activities is the landing page, so due recurring rules (rent, salary,
+  // subscriptions) are logged here before listing — previously only the
+  // Analytics page did this, so they didn't show up until it was opened.
+  const [loggedRecurring] = await Promise.all([processDueRecurringRules(userId), processDueRecurringSplits(userId)]);
   const [rows, categoryRows, currency, walletRows, activitiesDefaultWalletId, activitiesPrefs] = await Promise.all([
     listExpenses(userId),
     listCategories(userId),
@@ -55,6 +70,11 @@ export default async function HomePage({
     icon: c.icon,
   }));
   const wallets: WalletOption[] = walletRows.map(toWalletOption);
+  if (loggedRecurring.length > 0) {
+    // Same "recurring transactions logged" email/in-app notification Analytics
+    // sends; no budget rows here, so only the recurring part applies.
+    after(() => sendPendingNotifications(userId, loggedRecurring, [], [], currency));
+  }
 
   const initialWalletFilter = wallets.find((w) => w.id === activitiesDefaultWalletId && !w.archived)
     ? String(activitiesDefaultWalletId)

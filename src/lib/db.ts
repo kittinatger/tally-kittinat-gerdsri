@@ -3156,6 +3156,49 @@ export async function setCurrency(userId: number, code: string): Promise<string>
   return code;
 }
 
+export type AppSettingsRow = {
+  currency: string;
+  language: string;
+  autoConvertCurrency: boolean;
+  convertWalletBalances: boolean;
+  notifyRecurringEmail: boolean;
+  notifyBudgetEmail: boolean;
+  notifyPushReminders: boolean;
+  requireSplitConfirmation: boolean;
+};
+
+// Every simple per-user preference in one round trip — GET /api/settings is
+// hit on every full page load (LanguageProvider reads the language from it),
+// and used to run one query per field.
+export async function getAppSettingsRow(userId: number): Promise<AppSettingsRow> {
+  await ensureSchema();
+  const { rows } = await sql<{
+    currency: string | null;
+    language: string | null;
+    auto_convert_currency: boolean | null;
+    convert_wallet_balances: boolean | null;
+    notify_recurring_email: boolean | null;
+    notify_budget_email: boolean | null;
+    notify_push_reminders: boolean | null;
+    require_split_confirmation: boolean | null;
+  }>`
+    SELECT currency, language, auto_convert_currency, convert_wallet_balances, notify_recurring_email,
+           notify_budget_email, notify_push_reminders, require_split_confirmation
+    FROM app_settings WHERE user_id = ${userId};
+  `;
+  const r = rows[0];
+  return {
+    currency: r?.currency ?? "USD",
+    language: r?.language ?? "en",
+    autoConvertCurrency: r?.auto_convert_currency ?? false,
+    convertWalletBalances: r?.convert_wallet_balances ?? false,
+    notifyRecurringEmail: r?.notify_recurring_email ?? false,
+    notifyBudgetEmail: r?.notify_budget_email ?? false,
+    notifyPushReminders: r?.notify_push_reminders ?? false,
+    requireSplitConfirmation: r?.require_split_confirmation ?? false,
+  };
+}
+
 export async function getLanguage(userId: number): Promise<string> {
   await ensureSchema();
   const { rows } = await sql<{ language: string }>`SELECT language FROM app_settings WHERE user_id = ${userId};`;

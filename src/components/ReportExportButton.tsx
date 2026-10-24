@@ -2,7 +2,6 @@
 
 import { describeFetchError } from "@/lib/fetch-error";
 import { useState } from "react";
-import { jsPDF } from "jspdf";
 import { normalizeExpenseType, normalizeDirection, signedAmount } from "@/types/expense";
 import { formatCurrency, todayInputValue } from "@/lib/format";
 import { DownloadIcon } from "@/lib/icons";
@@ -67,6 +66,8 @@ export default function ReportExportButton() {
       }
       const categoryRows = [...byCategory.entries()].sort((a, b) => b[1] - a[1]);
 
+      // Loaded on tap: jsPDF is large and only this button needs it.
+      const { jsPDF } = await import("jspdf");
       const doc = new jsPDF();
       let y = MARGIN;
 

@@ -39,8 +39,7 @@ export default async function AnalyticsPage({
 }) {
   const { add } = await searchParams;
   const userId = await getUserId();
-  const loggedRecurring = await processDueRecurringRules(userId);
-  await processDueRecurringSplits(userId);
+  const [loggedRecurring] = await Promise.all([processDueRecurringRules(userId), processDueRecurringSplits(userId)]);
   const [rows, remaining, categoryRows, currency, walletRows, recurringRules, analyticsPrefs, budgetRows, savingsGoalRows, convertEnabled] =
     await Promise.all([
       listExpenses(userId),

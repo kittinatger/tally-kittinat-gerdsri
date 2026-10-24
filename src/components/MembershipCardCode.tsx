@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import bwipjs from "bwip-js/browser";
+import { loadBwip } from "@/lib/bwip";
 import { useT } from "@/lib/language-context";
 import type { MembershipCodeFormat } from "@/lib/memberships";
 
@@ -48,10 +48,10 @@ export default function MembershipCardCode({
 
   useEffect(() => {
     let cancelled = false;
-    // Deferred by a microtask so the initial setError(null) below doesn't
-    // run synchronously in the effect body (same pattern used elsewhere in
-    // this app to avoid the cascading-render lint rule).
-    Promise.resolve().then(() => {
+    // Runs once the barcode library has loaded (lazily, see lib/bwip.ts) —
+    // which also keeps the setError(null) below out of the synchronous effect
+    // body (the cascading-render lint rule).
+    loadBwip().then((bwipjs) => {
       if (cancelled) return;
       setError(null);
       // bwip-js throws on an empty string — skip the render attempt (and
