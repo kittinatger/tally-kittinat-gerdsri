@@ -4,8 +4,8 @@
   "description": "A private, personal expense tracker with receipt scanning, voice entry, and automatic currency conversion.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#eef4ef",
-  "theme_color": "#eef4ef",
+  "background_color": "#fafafa",
+  "theme_color": "#fafafa",
   "icons": [
     {
       "src": "/icon-192.png",
