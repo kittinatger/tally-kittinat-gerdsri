@@ -109,7 +109,7 @@ function ModernTab({ link, active }: { link: NavBarLink; active: boolean }) {
       className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 transition"
     >
       {link.icon}
-      <span className="max-w-full truncate">{link.label}</span>
+      <span>{link.label}</span>
     </Link>
   );
 }

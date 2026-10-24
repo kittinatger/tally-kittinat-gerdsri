@@ -53,6 +53,7 @@ export function BottomNav({
 export default function AppHeader({ onAddClick }: { onAddClick?: () => void }) {
   const pathname = usePathname();
   const t = useT();
+  const design = useDesign();
   const navLinks = [
     { href: "/", label: t("nav.activities") },
     { href: "/analytics", label: t("nav.analytics") },
@@ -102,10 +103,21 @@ export default function AppHeader({ onAddClick }: { onAddClick?: () => void }) {
         </div>
       </header>
 
-      {/* Mobile has no persistent top chrome otherwise (only the bottom
-          nav) — this gives the bell somewhere to live below the sm
-          breakpoint, where the header pill above is hidden. */}
-      <NotificationBell className="fixed right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] text-ink-soft shadow-soft backdrop-blur-xl sm:hidden" />
+      {/* Below sm the header above is hidden. Modern gets a slim top bar in
+          the page flow (so the bell never sits on top of content); Classic
+          keeps its original floating bell. */}
+      {design === "modern" ? (
+        <header data-app-header className="sticky top-3 z-10 flex items-center justify-between gap-2 py-2 sm:hidden">
+          <div className="flex shrink-0 items-center gap-2">
+            <img src="/favicon-light.svg" alt="Tally" className="h-7 w-7 shrink-0 dark:hidden" />
+            <img src="/favicon-dark.svg" alt="Tally" className="hidden h-7 w-7 shrink-0 dark:block" />
+            <span className="font-display text-base text-foreground">Tally</span>
+          </div>
+          <NotificationBell />
+        </header>
+      ) : (
+        <NotificationBell className="fixed right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] text-ink-soft shadow-soft backdrop-blur-xl sm:hidden" />
+      )}
 
       <BottomNav pathname={pathname} onAddClick={onAddClick} />
     </>
