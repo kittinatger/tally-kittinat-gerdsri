@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { signedAmount, type Expense } from "@/types/expense";
 import type { TransactionType } from "@/lib/categories";
 import { monthKey, monthLabel, dayKey, dayLabel, weekKey, weekLabel, formatCurrency, formatAmountRaw, todayInputValue } from "@/lib/format";
@@ -123,9 +123,11 @@ export default function ExpenseList({
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkError, setBulkError] = useState<string | null>(null);
   const [bulkTagInput, setBulkTagInput] = useState("");
-  const [renameTarget, setRenameTarget] = useState("");
+  // The picked rename target/error belong to one search query; a new query
+  // falls back to the default target (see renameTarget below) instead of an
+  // effect resetting them after every keystroke.
+  const [renameEdit, setRenameEdit] = useState<{ query: string; target: string | null; error: string | null } | null>(null);
   const [renaming, setRenaming] = useState(false);
-  const [renameError, setRenameError] = useState<string | null>(null);
   const [renameDismissed, setRenameDismissed] = useState("");
 
   function toggleSelectMode() {
@@ -315,14 +317,17 @@ export default function ExpenseList({
   }, [filtered, search]);
   const showRenameBanner = merchantVariants.length > 1 && search.trim() !== renameDismissed;
 
-  // Re-pick the default target (most common spelling) whenever the search
-  // changes to a different merchant — otherwise a stale target from a
-  // previous search could linger and get applied to the wrong vendor.
-  useEffect(() => {
-    setRenameTarget(merchantVariants[0]?.[0] ?? "");
-    setRenameError(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-derive when the search query itself changes
-  }, [search]);
+  // Default target is the most common spelling for the current search; a
+  // choice made for an earlier search never carries over to a new one.
+  const editForSearch = renameEdit?.query === search ? renameEdit : null;
+  const renameTarget = editForSearch?.target ?? merchantVariants[0]?.[0] ?? "";
+  const renameError = editForSearch?.error ?? null;
+  function setRenameTarget(target: string) {
+    setRenameEdit({ query: search, target, error: editForSearch?.error ?? null });
+  }
+  function setRenameError(error: string | null) {
+    setRenameEdit((prev) => ({ query: search, target: prev?.query === search ? prev.target : null, error }));
+  }
 
   async function handleRenameMerchants() {
     const target = renameTarget.trim();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import ColorPicker from "./ColorPicker";
 import CardPhotoScanModal from "./CardPhotoScanModal";
 import { CameraIcon, ChevronIcon } from "@/lib/icons";
@@ -73,14 +73,14 @@ export default function CardBackgroundPicker({
   // editing right now", so it resets to locked again whenever the
   // background itself changes (a different pattern, or a newly
   // scanned/uploaded photo/SVG).
-  const [svgColorsUnlocked, setSvgColorsUnlocked] = useState(false);
   const lockResetKey = !value ? null : value.pattern === "photo" ? value.photoDataUrl : value.pattern;
+  // Unlocking applies to one background only — a different pattern or photo
+  // reads as locked again, derived rather than reset by an effect.
+  const [unlockedFor, setUnlockedFor] = useState<string | null | undefined>(undefined);
+  const svgColorsUnlocked = unlockedFor !== undefined && unlockedFor === lockResetKey;
+  const toggleSvgColorsUnlocked = () => setUnlockedFor(svgColorsUnlocked ? undefined : lockResetKey);
   const isCustomSvg = value?.pattern === "photo" && isSvgDataUrl(value.photoDataUrl);
   const customSvgColors = isCustomSvg ? extractSvgColors(decodeSvgDataUrl((value as { photoDataUrl: string }).photoDataUrl)) : [];
-
-  useEffect(() => {
-    setSvgColorsUnlocked(false);
-  }, [lockResetKey]);
 
   function recolorCustomSvg(from: string, to: string) {
     if (!value || value.pattern !== "photo") return;
@@ -180,7 +180,7 @@ export default function CardBackgroundPicker({
             {isCustomSvg && customSvgColors.length > 0 && !svgColorsLocked && (
               <button
                 type="button"
-                onClick={() => setSvgColorsUnlocked((v) => !v)}
+                onClick={toggleSvgColorsUnlocked}
                 className={`flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
                   svgColorsUnlocked
                     ? "border-navy bg-navy/10 text-navy dark:text-blue-300"
@@ -233,7 +233,7 @@ export default function CardBackgroundPicker({
             {isSvgPattern(value.pattern) && (
               <button
                 type="button"
-                onClick={() => setSvgColorsUnlocked((v) => !v)}
+                onClick={toggleSvgColorsUnlocked}
                 className={`flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
                   svgColorsUnlocked
                     ? "border-navy bg-navy/10 text-navy dark:text-blue-300"

@@ -87,7 +87,7 @@ export default function VendorManager() {
 
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [mergeTarget, setMergeTarget] = useState("");
+  const [mergeChoice, setMergeTarget] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -107,20 +107,16 @@ export default function VendorManager() {
   const sorted = useMemo(() => (vendors ? sortVendors(vendors, sortMode) : []), [vendors, sortMode]);
   const selectedVendors = useMemo(() => sorted.filter((v) => selected.has(v.name)), [sorted, selected]);
 
-  // The merge target dropdown must always point at one of the currently
-  // selected vendors — re-pick (most-used of the selection) whenever the
-  // selection itself changes, rather than letting a stale target from a
-  // previous selection silently carry over.
-  useEffect(() => {
-    if (selectedVendors.length === 0) {
-      setMergeTarget("");
-      return;
-    }
-    if (!selectedVendors.some((v) => v.name === mergeTarget)) {
-      setMergeTarget([...selectedVendors].sort((a, b) => b.count - a.count)[0].name);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-derive when the selection changes
-  }, [selectedVendors]);
+  // The merge target always points at one of the currently selected vendors:
+  // the user's pick while it's still selected, otherwise the most-used of the
+  // selection — derived, so a stale target from an earlier selection can't
+  // carry over.
+  const mergeTarget =
+    selectedVendors.length === 0
+      ? ""
+      : selectedVendors.some((v) => v.name === mergeChoice)
+        ? mergeChoice
+        : [...selectedVendors].sort((a, b) => b.count - a.count)[0].name;
 
   function toggleSelectMode() {
     setSelectMode((v) => !v);
