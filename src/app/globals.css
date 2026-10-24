@@ -122,8 +122,8 @@
    Design, which sets <html data-design="classic">. Modern only reassigns
    the same tokens, so every component follows it without forking. */
 :root[data-design="modern"] {
-  --app-font-sans: var(--font-inter), var(--script-fallbacks);
-  --app-font-display: var(--font-inter), var(--script-fallbacks);
+  --app-font-sans: var(--font-inter), var(--font-inter-ext), var(--script-fallbacks);
+  --app-font-display: var(--font-inter), var(--font-inter-ext), var(--script-fallbacks);
   --app-radius-card: 12px;
   --heading-weight: 600;
   --heading-tracking: -0.02em;

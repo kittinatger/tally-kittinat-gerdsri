@@ -11,21 +11,37 @@ import { NavStyleProvider } from "@/lib/nav-style-context";
 import { SettingsHomeStyleProvider } from "@/lib/settings-home-style-context";
 import "./globals.css";
 
+// Only Inter's Latin file is preloaded (it is what virtually every first paint
+// uses). Everything else is declared with preload: false — the @font-face rules
+// still exist, so the browser fetches a file only when a page actually renders a
+// character from it (via unicode-range) instead of every visitor downloading all
+// of them up front. Preloading all of these was ~650KB on the welcome page.
 const radley = Radley({
   variable: "--font-radley",
   weight: "400",
   style: ["normal", "italic"],
   subsets: ["latin"],
+  preload: false,
 });
 
 const inter = Inter({
   variable: "--font-inter",
-  subsets: ["latin", "latin-ext", "cyrillic", "vietnamese", "greek"],
+  subsets: ["latin"],
+});
+
+// Inter's other scripts as a second, never-preloaded family chained after the
+// Latin one in globals.css, so Russian/Vietnamese/Greek/extended-Latin text
+// still renders in Inter without everyone paying for those files.
+const interExtended = Inter({
+  variable: "--font-inter-ext",
+  subsets: ["latin-ext", "cyrillic", "vietnamese", "greek"],
+  preload: false,
 });
 
 const arimo = Arimo({
   variable: "--font-arimo",
   subsets: ["latin"],
+  preload: false,
 });
 
 // Arimo/Radley only cover Latin (plus Arimo covers Cyrillic + Vietnamese) —
@@ -39,21 +55,25 @@ const arimo = Arimo({
 const notoSansThai = Noto_Sans_Thai({
   variable: "--font-noto-thai",
   subsets: ["thai"],
+  preload: false,
 });
 
 const notoSansArabic = Noto_Sans_Arabic({
   variable: "--font-noto-arabic",
   subsets: ["arabic"],
+  preload: false,
 });
 
 const notoSansDevanagari = Noto_Sans_Devanagari({
   variable: "--font-noto-devanagari",
   subsets: ["devanagari"],
+  preload: false,
 });
 
 const notoSansBengali = Noto_Sans_Bengali({
   variable: "--font-noto-bengali",
   subsets: ["bengali"],
+  preload: false,
 });
 
 // Same "pin a canonical domain via APP_URL, fall back to the request's own
@@ -114,7 +134,7 @@ export default function RootLayout({
     <html
       lang="en"
       data-design="modern"
-      className={`${inter.variable} ${radley.variable} ${arimo.variable} ${notoSansThai.variable} ${notoSansArabic.variable} ${notoSansDevanagari.variable} ${notoSansBengali.variable} h-full antialiased`}
+      className={`${inter.variable} ${interExtended.variable} ${radley.variable} ${arimo.variable} ${notoSansThai.variable} ${notoSansArabic.variable} ${notoSansDevanagari.variable} ${notoSansBengali.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
