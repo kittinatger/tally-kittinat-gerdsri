@@ -143,6 +143,7 @@
   --shadow-soft-value: 0 1px 2px rgba(24, 24, 27, 0.04), 0 1px 3px rgba(24, 24, 27, 0.05);
   --panel-shadow: 0 12px 32px -12px rgba(24, 24, 27, 0.18), 0 0 0 1px #e4e4e7;
   --surface: #ffffff;
+  --on-navy: #ffffff;
   --fab-glass-bg: linear-gradient(#157a4f, #157a4f);
   --fab-glass-border: transparent;
   --fab-glass-shadow: 0 6px 16px -6px rgba(21, 122, 79, 0.5);
@@ -165,6 +166,7 @@
   --shadow-soft-value: 0 1px 2px rgba(0, 0, 0, 0.5);
   --panel-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.09);
   --surface: #111113;
+  --on-navy: #04231a;
   --fab-glass-bg: linear-gradient(#5fd39b, #5fd39b);
   --fab-glass-border: transparent;
   --fab-glass-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.6);
@@ -319,6 +321,40 @@ h1, h2, h3 {
   background: transparent;
   padding-inline: 0;
   font-variant-numeric: tabular-nums;
+}
+/* White text on the accent fill, but dark text once the accent turns light
+   in dark mode (white on #5fd39b is hard to read). */
+:root[data-design="modern"] .bg-navy.text-white,
+:root[data-design="modern"] [data-nav-fab] {
+  color: var(--on-navy);
+}
+
+/* ── Modern: add-transaction flow ──────────────────────────────────── */
+
+/* Manual / Scan / Speak: neutral inline tabs instead of three
+   individually-colored tall tiles. !important is needed to beat the
+   per-method amber/violet utility colors set inline in the component. */
+:root[data-design="modern"] [data-method-tile] {
+  flex-direction: row;
+  justify-content: center;
+  gap: 8px;
+  padding-block: 8px;
+  border-radius: 10px;
+  font-size: 14px;
+  border-color: var(--line) !important;
+  background: transparent !important;
+  color: var(--ink-soft) !important;
+}
+:root[data-design="modern"] [data-method-tile] > span {
+  width: 18px;
+  height: 18px;
+  background: transparent !important;
+  color: currentColor !important;
+}
+:root[data-design="modern"] [data-method-tile][aria-pressed="true"] {
+  border-color: var(--navy) !important;
+  background: color-mix(in srgb, var(--navy) 10%, transparent) !important;
+  color: var(--foreground) !important;
 }
 :root[data-design="modern"] [data-swiped="false"] [data-swipe-backdrop] {
   visibility: hidden;

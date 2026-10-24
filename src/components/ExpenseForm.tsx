@@ -1,5 +1,6 @@
 "use client";
 
+import { useDesign } from "@/lib/use-design";
 import { useEffect, useState } from "react";
 import type { TransactionType, TransferDirection } from "@/lib/categories";
 import { useAllCategories } from "@/lib/categories-context";
@@ -139,6 +140,7 @@ export default function ExpenseForm({
   // One accent per type, threaded through the header band, the submit
   // button, and the torn-edge divider between them — the whole form reads
   // as a single "ticket" for whichever kind of entry you're making.
+  const modern = useDesign() === "modern";
   const bandGradientClass =
     values.type === "income"
       ? "from-emerald-400 to-emerald-600 dark:from-emerald-600 dark:to-emerald-800"
@@ -151,6 +153,19 @@ export default function ExpenseForm({
       : values.type === "expense"
         ? "bg-white text-rose-700"
         : "bg-white text-sky-700";
+  const modernChipActiveClass =
+    values.type === "income"
+      ? "bg-surface text-emerald-700 dark:text-emerald-400"
+      : values.type === "expense"
+        ? "bg-surface text-rose-700 dark:text-rose-400"
+        : "bg-surface text-sky-700 dark:text-sky-400";
+  const bandClass = modern
+    ? "px-5 pb-1 pt-1 sm:px-6"
+    : `bg-gradient-to-br px-5 pb-5 pt-1 text-white transition-colors sm:px-6 ${bandGradientClass}`;
+  const toggleTrack = modern ? "flex gap-1 rounded-xl bg-bg-soft p-1" : "flex gap-1 rounded-full bg-white/15 p-1 backdrop-blur-sm";
+  const toggleInactive = modern ? "text-ink-soft hover:text-foreground" : "text-white/75 hover:text-white";
+  const toggleShape = modern ? "rounded-lg" : "rounded-full";
+  const dirActive = modern ? "bg-surface text-foreground shadow-sm" : "bg-white text-sky-700 shadow-sm";
   const submitButtonClass =
     values.type === "income"
       ? "bg-emerald-500 hover:bg-emerald-600"
@@ -242,13 +257,13 @@ export default function ExpenseForm({
           edge past the modal's own padding, torn off from the plain body
           below it with a faked paper-notch edge instead of a hard line. */}
       <div className="-mx-5 sm:order-1 sm:col-span-2 sm:-mx-6">
-        <div className={`bg-gradient-to-br px-5 pb-5 pt-1 text-white transition-colors sm:px-6 ${bandGradientClass}`}>
-          <div className="flex gap-1 rounded-full bg-white/15 p-1 backdrop-blur-sm">
+        <div className={bandClass}>
+          <div className={toggleTrack}>
             <button
               type="button"
               onClick={() => updateType("expense")}
-              className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-                values.type === "expense" ? chipActiveClass + " shadow-sm" : "text-white/75 hover:text-white"
+              className={`flex-1 ${toggleShape} py-2 text-sm font-semibold transition ${
+                values.type === "expense" ? (modern ? modernChipActiveClass : chipActiveClass) + " shadow-sm" : toggleInactive
               }`}
             >
               {t("common.expense")}
@@ -256,8 +271,8 @@ export default function ExpenseForm({
             <button
               type="button"
               onClick={() => updateType("income")}
-              className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-                values.type === "income" ? chipActiveClass + " shadow-sm" : "text-white/75 hover:text-white"
+              className={`flex-1 ${toggleShape} py-2 text-sm font-semibold transition ${
+                values.type === "income" ? (modern ? modernChipActiveClass : chipActiveClass) + " shadow-sm" : toggleInactive
               }`}
             >
               {t("common.income")}
@@ -265,8 +280,8 @@ export default function ExpenseForm({
             <button
               type="button"
               onClick={() => updateType("transfer")}
-              className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-                values.type === "transfer" ? chipActiveClass + " shadow-sm" : "text-white/75 hover:text-white"
+              className={`flex-1 ${toggleShape} py-2 text-sm font-semibold transition ${
+                values.type === "transfer" ? (modern ? modernChipActiveClass : chipActiveClass) + " shadow-sm" : toggleInactive
               }`}
             >
               {t("common.transfer")}
@@ -275,12 +290,12 @@ export default function ExpenseForm({
 
           {values.type === "transfer" && (
             <div className="mt-3">
-              <div className="flex gap-1 rounded-full bg-white/15 p-1 backdrop-blur-sm">
+              <div className={toggleTrack}>
                 <button
                   type="button"
                   onClick={() => update("direction", "out")}
-                  className={`flex-1 rounded-full py-1.5 text-xs font-semibold transition ${
-                    values.direction === "out" ? "bg-white text-sky-700 shadow-sm" : "text-white/75 hover:text-white"
+                  className={`flex-1 ${toggleShape} py-1.5 text-xs font-semibold transition ${
+                    values.direction === "out" ? dirActive : toggleInactive
                   }`}
                 >
                   {t("form.moneyOut")}
@@ -288,19 +303,19 @@ export default function ExpenseForm({
                 <button
                   type="button"
                   onClick={() => update("direction", "in")}
-                  className={`flex-1 rounded-full py-1.5 text-xs font-semibold transition ${
-                    values.direction === "in" ? "bg-white text-sky-700 shadow-sm" : "text-white/75 hover:text-white"
+                  className={`flex-1 ${toggleShape} py-1.5 text-xs font-semibold transition ${
+                    values.direction === "in" ? dirActive : toggleInactive
                   }`}
                 >
                   {t("form.moneyIn")}
                 </button>
               </div>
-              <p className="mt-1.5 text-xs text-white/70">{t("form.transferNote")}</p>
+              <p className={`mt-1.5 text-xs ${modern ? "text-ink-soft" : "text-white/70"}`}>{t("form.transferNote")}</p>
             </div>
           )}
 
-          <div className="mt-4 text-center sm:text-left">
-            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-white/70" htmlFor="amount">
+          <div className={`mt-4 sm:text-left ${modern ? "" : "text-center"}`}>
+            <label className={`mb-1 block text-xs font-semibold uppercase tracking-wide ${modern ? "text-ink-soft" : "text-white/70"}`} htmlFor="amount">
               {t("form.amount")}
             </label>
             {splitMode ? (
@@ -316,12 +331,12 @@ export default function ExpenseForm({
                 value={values.amount}
                 onChange={(e) => update("amount", e.target.value)}
                 placeholder="0.00"
-                className="w-full bg-transparent text-center text-4xl font-bold tabular-nums outline-none placeholder:text-white/40 sm:text-left sm:text-3xl"
+                className={`w-full bg-transparent text-4xl font-bold tabular-nums outline-none sm:text-3xl ${modern ? "text-left text-foreground placeholder:text-ink-soft/40" : "text-center placeholder:text-white/40 sm:text-left"}`}
               />
             )}
           </div>
         </div>
-        <div className="h-3.5" style={tornEdgeStyle} />
+        {!modern && <div className="h-3.5" style={tornEdgeStyle} />}
       </div>
 
       <div className="sm:order-2 sm:col-span-2">

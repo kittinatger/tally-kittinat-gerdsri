@@ -384,6 +384,8 @@ export default function AddExpenseModal({
       <div className="mb-4 grid grid-cols-3 gap-2">
         <button
           onClick={() => setTab("manual")}
+          data-method-tile
+          aria-pressed={tab === "manual"}
           className={`flex flex-col items-center gap-1.5 rounded-2xl border py-3 text-xs font-semibold transition ${
             tab === "manual"
               ? "border-navy/30 bg-navy/10 text-navy dark:border-blue-400/30 dark:bg-blue-400/10 dark:text-blue-300"
@@ -401,6 +403,8 @@ export default function AddExpenseModal({
         </button>
         <button
           onClick={() => setTab("scan")}
+          data-method-tile
+          aria-pressed={tab === "scan"}
           className={`flex flex-col items-center gap-1.5 rounded-2xl border py-3 text-xs font-semibold transition ${
             tab === "scan"
               ? "border-amber-400/40 bg-amber-500/10 text-amber-700 dark:text-amber-400"
@@ -418,6 +422,8 @@ export default function AddExpenseModal({
         </button>
         <button
           onClick={() => setTab("voice")}
+          data-method-tile
+          aria-pressed={tab === "voice"}
           className={`flex flex-col items-center gap-1.5 rounded-2xl border py-3 text-xs font-semibold transition ${
             tab === "voice"
               ? "border-violet-400/40 bg-violet-500/10 text-violet-700 dark:text-violet-400"
