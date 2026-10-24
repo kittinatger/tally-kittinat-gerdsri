@@ -16,7 +16,7 @@ import FilterDropdown from "./FilterDropdown";
 import DateRangeFilter from "./DateRangeFilter";
 import Modal from "./Modal";
 import { DEFAULT_ACTIVITIES_PREFS, compareActivitiesSort, resolveDefaultDateRange, type ActivitiesPrefs } from "@/lib/activities-prefs";
-import { CheckSquareIcon as PhCheckSquareIcon, DownloadSimpleIcon as PhDownloadSimpleIcon, XIcon as PhXIcon } from "@phosphor-icons/react/dist/ssr";
+import { ListChecksIcon as PhListChecksIcon, DownloadSimpleIcon as PhDownloadSimpleIcon, XIcon as PhXIcon } from "@phosphor-icons/react/dist/ssr";
 
 export type TypeFilter = "all" | TransactionType;
 
@@ -25,7 +25,7 @@ function DownloadIcon() {
 }
 
 function SelectCheckIcon() {
-  return <PhCheckSquareIcon weight="bold" aria-hidden="true" className="h-4 w-4" />;
+  return <PhListChecksIcon weight="bold" aria-hidden="true" className="h-4 w-4" />;
 }
 
 function CancelSelectIcon() {
