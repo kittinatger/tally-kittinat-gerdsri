@@ -928,10 +928,10 @@ export type MessageKey =
   | "maps.intro"
   | "maps.auto"
   | "maps.autoDesc"
+  | "maps.alwaysOpenIn"
+  | "maps.fallbackNote"
   | "maps.apple"
-  | "maps.appleDesc"
   | "maps.google"
-  | "maps.googleDesc"
   | "settings.design"
   | "design.intro"
   | "design.modern"
@@ -2845,10 +2845,10 @@ export const EN_MESSAGES: Record<MessageKey, string> = {
   "maps.intro": "Choose which app \"Open in Maps\" uses for a transaction's location. Saved on this device.",
   "maps.auto": "Automatic",
   "maps.autoDesc": "Follow this device's settings and open its default maps app.",
+  "maps.alwaysOpenIn": "Always open locations in {app}.",
+  "maps.fallbackNote": "If the chosen app isn't installed on this device, its website opens instead.",
   "maps.apple": "Apple Maps",
-  "maps.appleDesc": "Always open locations in Apple Maps.",
   "maps.google": "Google Maps",
-  "maps.googleDesc": "Always open locations in Google Maps.",
   "settings.design": "Design",
   "design.intro": "Choose how Tally looks. Your data and features are the same in both — this only changes the visual style on this device.",
   "design.modern": "Modern",
