@@ -403,7 +403,7 @@ export default function SplitBillManager() {
         </button>
       </label>
 
-      <RecurringSplitsSection myId={myId} friends={friends} />
+      <RecurringSplitsSection friends={friends} />
 
       <div className="flex items-center justify-between gap-3">
         <div className="flex gap-1 rounded-full bg-bg-soft p-1">

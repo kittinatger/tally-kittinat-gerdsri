@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import { BellIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
@@ -9,35 +9,60 @@ import type { NotificationRow } from "@/lib/db";
 const Modal = dynamic(() => import("./Modal"));
 const NotificationList = dynamic(() => import("./NotificationList"));
 
-// Self-fetches on mount, same pattern as LanguageProvider —
-// silently stays empty if the fetch 401s (no session in this render
-// context) rather than surfacing an error.
-export default function NotificationBell({ className }: { className?: string }) {
-  const t = useT();
-  const [notifications, setNotifications] = useState<NotificationRow[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [open, setOpen] = useState(false);
+// One shared store for every bell on the page. AppHeader mounts two (the
+// desktop header and the phone top bar, one hidden by CSS) and remounts on
+// every page change, so each bell fetching for itself meant several requests
+// per navigation. Now: one request at most every 60s, plus a fresh one
+// whenever the bell is opened. Stays empty if the fetch 401s (no session).
+type BellState = { notifications: NotificationRow[]; unreadCount: number };
+const EMPTY: BellState = { notifications: [], unreadCount: 0 };
+const FRESH_FOR_MS = 60_000;
+let bellState: BellState = EMPTY;
+let fetchedAt = 0;
+let inflight: Promise<void> | null = null;
+const listeners = new Set<() => void>();
 
-  async function refresh() {
-    try {
-      const res = await fetch("/api/notifications");
+function setBellState(next: BellState) {
+  bellState = next;
+  listeners.forEach((l) => l());
+}
+
+function loadNotifications(force = false): void {
+  if (inflight || (!force && Date.now() - fetchedAt < FRESH_FOR_MS)) return;
+  inflight = fetch("/api/notifications")
+    .then(async (res) => {
       if (!res.ok) return;
       const data = await res.json();
-      setNotifications(data.notifications ?? []);
-      setUnreadCount(data.unreadCount ?? 0);
-    } catch {
+      fetchedAt = Date.now();
+      setBellState({ notifications: data.notifications ?? [], unreadCount: data.unreadCount ?? 0 });
+    })
+    .catch(() => {
       // Best-effort — an unauthenticated/offline render just shows no bell badge.
-    }
-  }
+    })
+    .finally(() => {
+      inflight = null;
+    });
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+export default function NotificationBell({ className }: { className?: string }) {
+  const t = useT();
+  const { notifications, unreadCount } = useSyncExternalStore(subscribe, () => bellState, () => EMPTY);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    refresh();
+    loadNotifications();
   }, []);
 
   async function markRead(id: number) {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-    setUnreadCount((c) => Math.max(0, c - 1));
+    setBellState({
+      notifications: bellState.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
+      unreadCount: Math.max(0, bellState.unreadCount - 1),
+    });
     try {
       await fetch(`/api/notifications/${id}`, { method: "PATCH" });
     } catch {
@@ -46,8 +71,7 @@ export default function NotificationBell({ className }: { className?: string }) 
   }
 
   async function markAllRead() {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    setUnreadCount(0);
+    setBellState({ notifications: bellState.notifications.map((n) => ({ ...n, read: true })), unreadCount: 0 });
     try {
       await fetch("/api/notifications/read-all", { method: "POST" });
     } catch {
@@ -60,7 +84,7 @@ export default function NotificationBell({ className }: { className?: string }) 
       <button
         onClick={() => {
           setOpen(true);
-          refresh();
+          loadNotifications(true);
         }}
         aria-label={t("notification.title")}
         className={className ?? "relative flex h-9 w-9 items-center justify-center rounded-full text-ink-soft transition hover:bg-bg-soft hover:text-foreground"}

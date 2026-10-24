@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
-- Faster page loads: the settings request every page makes was 9 database queries (including a balance total summed over every wallet and transaction); it is now a single query. The Wallet page no longer downloads the barcode/QR library (about 900 KB) up front, and Settings, FAQ, Changelog and the other support pages no longer download the PDF export libraries (about 400 KB); both now load only when a code is drawn or a report is exported. Analytics runs its two recurring-schedule checks in parallel.
+- Faster page loads: the settings request every page makes was 9 database queries (including a balance total summed over every wallet and transaction); it is now a single query. The Wallet page no longer downloads the barcode/QR library (about 900 KB) up front, and Settings, FAQ, Changelog and the other support pages no longer download the PDF export libraries (about 400 KB); both now load only when a code is drawn or a report is exported. Analytics runs its two recurring-schedule checks in parallel. The notification bell (two are mounted, for desktop and phone) shares one cached request instead of each fetching on every page change, which was up to four database queries per tap between tabs.
 
 ### Fixed
 - Recurring transactions (rent, salary, subscriptions) only being logged when the Analytics page was opened. Activities, the page the app opens on, now logs anything due before showing the list, and sends the same notification.

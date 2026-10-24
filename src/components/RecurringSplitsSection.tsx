@@ -33,7 +33,7 @@ const FREQUENCY_KEYS: Record<string, MessageKey> = {
 // next_run_date). Equal-split/single-payer only, to keep the quick-add
 // form here simple — a custom-amount or itemized recurring split can
 // still be recreated by hand each time if needed.
-export default function RecurringSplitsSection({ myId, friends }: { myId: number | null; friends: Friend[] }) {
+export default function RecurringSplitsSection({ friends }: { friends: Friend[] }) {
   const t = useT();
   const currency = useCurrency();
   const FREQUENCY_LABELS: Record<string, string> = Object.fromEntries(
