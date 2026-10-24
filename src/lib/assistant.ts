@@ -1,5 +1,11 @@
 import { Type, type FunctionCall, type Tool } from "@google/genai";
-import { getClient, withGeminiFallback, REQUEST_TIMEOUT_MS } from "@/lib/gemini";
+import { getClient, withGeminiFallback } from "@/lib/gemini";
+
+// Each assistant attempt is two sequential calls (tool request, then answer),
+// so it uses its own tighter per-call cap rather than the extraction one —
+// worst case (two calls on MODEL, then two on the lite model) stays inside
+// the route's maxDuration.
+const ASSISTANT_CALL_TIMEOUT_MS = 25_000;
 import { getSpendingByCategory, getSpendingTotal, getTopMerchants } from "@/lib/spending-queries";
 
 // The in-app spending assistant answers questions like "how much did I
@@ -84,7 +90,8 @@ export async function askAssistant(userId: number, question: string, todayIso: s
   // `attempts: 1` below (1 try against MODEL, no retry, before falling back
   // to LITE_MODEL) — see withGeminiFallback's comment on why a full 3x
   // retry of a 2-call exchange isn't used here.
-  const { result: answer, model } = await withGeminiFallback(async (model) => {
+  const { result: answer, model } = await withGeminiFallback(async (model, timeoutMs) => {
+    const timeout = Math.min(timeoutMs, ASSISTANT_CALL_TIMEOUT_MS);
     const contents: Array<{ role: string; parts: Array<Record<string, unknown>> }> = [
       { role: "user", parts: [{ text: question }] },
     ];
@@ -92,7 +99,7 @@ export async function askAssistant(userId: number, question: string, todayIso: s
     const first = await ai.models.generateContent({
       model,
       contents,
-      config: { systemInstruction, tools: TOOLS, httpOptions: { timeout: REQUEST_TIMEOUT_MS } },
+      config: { systemInstruction, tools: TOOLS, httpOptions: { timeout } },
     });
 
     const calls = first.functionCalls;
@@ -117,7 +124,7 @@ export async function askAssistant(userId: number, question: string, todayIso: s
     const second = await ai.models.generateContent({
       model,
       contents,
-      config: { systemInstruction, tools: TOOLS, httpOptions: { timeout: REQUEST_TIMEOUT_MS } },
+      config: { systemInstruction, tools: TOOLS, httpOptions: { timeout } },
     });
 
     return second.text ?? "Sorry, I couldn't come up with an answer to that.";

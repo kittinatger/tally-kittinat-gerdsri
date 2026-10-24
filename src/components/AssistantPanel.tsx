@@ -15,7 +15,7 @@ const SUGGESTIONS = ["How much did I spend this month?", "What's my top spending
 // REQUEST_TIMEOUT_MS and withGeminiFallback) so a genuinely stuck request
 // still resolves to a clear error instead of leaving the chat "typing"
 // forever.
-const ASK_FETCH_TIMEOUT_MS = 100_000;
+const ASK_FETCH_TIMEOUT_MS = 125_000;
 
 function BotAvatar() {
   return (

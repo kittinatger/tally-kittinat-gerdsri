@@ -17,13 +17,11 @@ import { MAX_GEMINI_CALLS_PER_DAY } from "@/lib/gemini-usage";
 const MAX_BYTES = 8 * 1024 * 1024; // 8MB
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 
-// Worst case here is 3 retries against MODEL plus one fallback attempt
-// against LITE_MODEL (see withGeminiFallback in gemini.ts), each capped at
-// REQUEST_TIMEOUT_MS — comfortably under this, but without it the platform's
-// own default function timeout (much shorter) could kill the request mid-
-// retry, which looks to the client like a request that never resolves at
-// all (no response, no error) rather than a clean failure.
-export const maxDuration = 60;
+// Worst case is one MODEL attempt (REQUEST_TIMEOUT_MS, 45s) plus one
+// LITE_MODEL fallback (30s) — see withGeminiFallback in gemini.ts. This has
+// to stay above that, or the platform kills the function mid-fallback and
+// the client gets no response at all instead of a clean error.
+export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
   const userId = await getUserId();

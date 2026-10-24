@@ -23,9 +23,24 @@ const KNOWN_GEMINI_MESSAGES = [
   /unexpected response shape/i,
 ];
 
+// A request that ran out of time — Google's own deadline (504
+// DEADLINE_EXCEEDED) or our client-side cap aborting the fetch. Nothing is
+// wrong with the photo/recording in this case; retrying usually works.
+export function isGeminiTimeout(err: unknown): boolean {
+  if (err instanceof ApiError) return err.status === 504;
+  if (err instanceof Error) {
+    return err.name === "AbortError" || err.name === "TimeoutError" || /deadline|timed out|aborted/i.test(err.message);
+  }
+  return false;
+}
+
 export function describeGeminiError(err: unknown, kind: "image" | "audio"): { message: string; log: boolean } {
   const noun = kind === "image" ? "image" : "recording";
   const retryHint = kind === "image" ? "try a different photo" : "try recording again";
+
+  if (isGeminiTimeout(err)) {
+    return { message: `Gemini took too long to read that ${noun}. Please try again.`, log: true };
+  }
 
   if (err instanceof ApiError) {
     if (err.status === 429 || err.status === 503) {

@@ -26,7 +26,7 @@ const ALLOWED_TYPES = new Set([
 ]);
 
 // See extract-receipt/route.ts's comment — same retry/fallback worst case.
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
   const userId = await getUserId();

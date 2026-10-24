@@ -18,15 +18,18 @@ export const MODEL = "gemini-flash-latest";
 // provider, a paid tier, or any new setup.
 export const LITE_MODEL = "gemini-flash-lite-latest";
 
-// Neither the SDK nor our own retry loop ever bounded how long a single
-// generateContent call is allowed to hang — before the lite-model fallback
-// existed, a stuck request was still just one stuck request; now a stall on
-// MODEL can be followed by a second stall on LITE_MODEL, doubling the
-// exposure. Every call sets this via httpOptions.timeout so a request that
-// never gets a response is forced to fail (and retry/fall back, or surface
-// a clear error) instead of leaving the UI stuck on "analyzing" forever
-// with no success and no error either.
-export const REQUEST_TIMEOUT_MS = 12_000;
+// How long a single generateContent call may take before it's abandoned
+// (passed as httpOptions.timeout, which the SDK also forwards to Google as
+// the server-side deadline). This was 12s, which the current "flash" model —
+// a thinking model — regularly overran on receipt photos: production logs
+// showed scans failing with 504 DEADLINE_EXCEEDED or an AbortError, and since
+// timeouts weren't retried, users had to re-upload a photo many times.
+export const REQUEST_TIMEOUT_MS = 45_000;
+
+// The lite model is the fast fallback, tried once when MODEL times out or is
+// overloaded; it gets a shorter cap so the worst case (one MODEL attempt plus
+// one lite attempt) stays well inside the routes' maxDuration.
+export const LITE_REQUEST_TIMEOUT_MS = 30_000;
 
 // The one image-generation call in the app (card-pattern generation) has
 // no separate lite model to fall back to — see gemini-pattern.ts.

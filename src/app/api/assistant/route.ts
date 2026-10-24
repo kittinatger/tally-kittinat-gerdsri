@@ -10,7 +10,7 @@ const MAX_QUESTION_LENGTH = 300;
 // LITE_MODEL, each 2 sequential calls capped at gemini.ts's
 // REQUEST_TIMEOUT_MS) stays comfortably under this — see
 // extract-receipt/route.ts's comment for why this needs to be set at all.
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
   const userId = await getUserId();

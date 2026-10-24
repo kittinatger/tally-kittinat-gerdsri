@@ -22,12 +22,11 @@ type Tab = "manual" | "scan" | "voice";
 type ScanStatus = "idle" | "analyzing" | "review" | "error";
 type ConversionInfo = { originalAmount: number; originalCurrency: string };
 
-// Generous enough to cover the server's own worst case (gemini.ts's
-// REQUEST_TIMEOUT_MS per attempt, times up to 3 retries plus one lite-
-// model fallback attempt, plus the retry backoff delays) with headroom —
-// this is a backstop so a genuinely stuck request always resolves to a
-// clear error within a bounded time, not the primary timeout.
-const SCAN_FETCH_TIMEOUT_MS = 100_000;
+// Above the server's own worst case (one 45s MODEL attempt plus one 30s
+// lite fallback, under the route's 120s maxDuration) — a backstop so a
+// genuinely stuck request always resolves to a clear error, not the primary
+// timeout.
+const SCAN_FETCH_TIMEOUT_MS = 125_000;
 
 function PencilTabIcon() {
   return <PhPencilSimpleIcon weight="fill" aria-hidden="true" className="h-3.5 w-3.5" />;

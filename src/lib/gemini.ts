@@ -1,6 +1,7 @@
 import { GoogleGenAI, Type, ApiError } from "@google/genai";
 import { isTransactionType, isTransferDirection, type TransactionType, type TransferDirection } from "@/lib/categories";
-import { MODEL, LITE_MODEL, REQUEST_TIMEOUT_MS } from "@/lib/gemini-models";
+import { MODEL, LITE_MODEL, REQUEST_TIMEOUT_MS, LITE_REQUEST_TIMEOUT_MS } from "@/lib/gemini-models";
+import { isGeminiTimeout } from "@/lib/gemini-error";
 
 export { MODEL, LITE_MODEL, REQUEST_TIMEOUT_MS };
 
@@ -70,9 +71,12 @@ export async function withGeminiRetry<T>(fn: () => Promise<T>, attempts = 3): Pr
   throw new Error("withGeminiRetry: exhausted attempts without returning or throwing.");
 }
 
-// Runs `run` against MODEL with a retry (3x by default); if every attempt
-// is still rate-limited/overloaded, makes one more attempt against
-// LITE_MODEL instead of giving up. `run` takes the model id so the same
+// Runs `run` against MODEL with a retry (3x by default) for rate-limit/
+// overload errors; if every attempt is still rate-limited/overloaded — or
+// the attempt simply timed out — makes one more attempt against LITE_MODEL
+// (faster, with its own shorter cap) instead of giving up. Timeouts aren't
+// retried against MODEL itself: a second 45s wait on the same slow model is
+// worse than switching to the fast one. `run` takes the model id so the same
 // logical request (single call, or — for askAssistant's two-step
 // tool-calling exchange — the whole exchange) can be replayed against
 // whichever model ends up serving it, rather than mixing models
@@ -91,14 +95,17 @@ export async function withGeminiRetry<T>(fn: () => Promise<T>, attempts = 3): Pr
 // (see maxDuration in the API routes that call into this), which kills
 // the request outright and leaves the client with no response at all —
 // not a clean error, just a hang. Single-call callers keep the default.
-export async function withGeminiFallback<T>(run: (model: string) => Promise<T>, attempts = 3): Promise<{ result: T; model: string }> {
+export async function withGeminiFallback<T>(
+  run: (model: string, timeoutMs: number) => Promise<T>,
+  attempts = 3,
+): Promise<{ result: T; model: string }> {
   try {
-    const result = await withGeminiRetry(() => run(MODEL), attempts);
+    const result = await withGeminiRetry(() => run(MODEL, REQUEST_TIMEOUT_MS), attempts);
     return { result, model: MODEL };
   } catch (err) {
-    if (!isRetryableGeminiError(err)) throw err;
+    if (!isRetryableGeminiError(err) && !isGeminiTimeout(err)) throw err;
     try {
-      const result = await run(LITE_MODEL);
+      const result = await run(LITE_MODEL, LITE_REQUEST_TIMEOUT_MS);
       return { result, model: LITE_MODEL };
     } catch {
       // The lite attempt failed too (including for reasons unrelated to
@@ -107,6 +114,32 @@ export async function withGeminiFallback<T>(run: (model: string) => Promise<T>, 
       throw err;
     }
   }
+}
+
+// Reading a receipt or a short voice memo is extraction, not reasoning, so
+// MODEL is asked to keep its thinking short — the default thinking pass is
+// what pushed scans past the deadline. Lite models don't think by default, so
+// this only applies to MODEL. If the API ever rejects the setting (a model
+// alias moved to a family that doesn't accept it), it's dropped for the rest
+// of this server instance's life rather than failing every scan.
+const EXTRACTION_THINKING_BUDGET = 512;
+let thinkingBudgetAccepted = true;
+
+type GenerateParams = Parameters<GoogleGenAI["models"]["generateContent"]>[0];
+
+async function generateExtraction(ai: GoogleGenAI, params: GenerateParams) {
+  if (params.model === MODEL && thinkingBudgetAccepted) {
+    try {
+      return await ai.models.generateContent({
+        ...params,
+        config: { ...params.config, thinkingConfig: { thinkingBudget: EXTRACTION_THINKING_BUDGET } },
+      });
+    } catch (err) {
+      if (!(err instanceof ApiError && err.status === 400 && /thinking/i.test(err.message))) throw err;
+      thinkingBudgetAccepted = false;
+    }
+  }
+  return ai.models.generateContent(params);
 }
 
 // Shared by both prompts — instructs the model to reuse an existing
@@ -317,8 +350,8 @@ export async function extractTransaction(
   const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
   const ai = getClient();
 
-  const { result: text, model } = await withGeminiFallback(async (model) => {
-    const response = await ai.models.generateContent({
+  const { result: text, model } = await withGeminiFallback(async (model, timeoutMs) => {
+    const response = await generateExtraction(ai, {
       model,
       contents: [
         {
@@ -332,7 +365,7 @@ export async function extractTransaction(
       config: {
         responseMimeType: "application/json",
         responseSchema: responseSchema(allCategories, false, walletNames),
-        httpOptions: { timeout: REQUEST_TIMEOUT_MS },
+        httpOptions: { timeout: timeoutMs },
       },
     });
     if (!response.text) {
@@ -358,8 +391,8 @@ export async function extractTransactionsFromAudio(
   const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
   const ai = getClient();
 
-  const { result: text, model } = await withGeminiFallback(async (model) => {
-    const response = await ai.models.generateContent({
+  const { result: text, model } = await withGeminiFallback(async (model, timeoutMs) => {
+    const response = await generateExtraction(ai, {
       model,
       contents: [
         {
@@ -373,7 +406,7 @@ export async function extractTransactionsFromAudio(
       config: {
         responseMimeType: "application/json",
         responseSchema: arrayResponseSchema(allCategories, walletNames),
-        httpOptions: { timeout: REQUEST_TIMEOUT_MS },
+        httpOptions: { timeout: timeoutMs },
       },
     });
     if (!response.text) {

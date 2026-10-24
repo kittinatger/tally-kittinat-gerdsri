@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Locations on transactions: type a place, tap "Use current location" to pin where you are (only read when tapped), or let receipt scanning read the store address off the receipt. The transaction details show a map preview (OpenStreetMap) with an "Open in Maps" link. Schema v79; included in encrypted backups.
 
+### Fixed
+- Receipt scans (and voice entry) failing over and over with "Gemini couldn't process that image". Production logs showed the real cause was a timeout, not the photo: each Gemini call was capped at 12 seconds, which the current thinking "flash" model regularly overran (504 DEADLINE_EXCEEDED / aborted), and timeouts were never retried. Calls now get 45 seconds, a timeout falls back once to the faster lite model, extraction asks the model to keep its thinking short, and a timeout now says "took too long, please try again" instead of blaming the image.
 ### Changed
 - Redesigned transaction details: a category tile beside the merchant, a large coloured amount, a location card with map, and a clean list of date, category, type, wallet, tags and notes, plus Edit and Share. Mobile gets a stacked bottom-sheet layout; the desktop pane puts the amount beside the merchant and, on wide screens, the map and receipt beside the details.
 
