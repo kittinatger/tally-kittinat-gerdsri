@@ -16,7 +16,7 @@ import FilterDropdown from "./FilterDropdown";
 import DateRangeFilter from "./DateRangeFilter";
 import Modal from "./Modal";
 import { DEFAULT_ACTIVITIES_PREFS, compareActivitiesSort, resolveDefaultDateRange, type ActivitiesPrefs } from "@/lib/activities-prefs";
-import { CheckSquareIcon as PhCheckSquareIcon, DownloadSimpleIcon as PhDownloadSimpleIcon } from "@phosphor-icons/react/dist/ssr";
+import { CheckSquareIcon as PhCheckSquareIcon, DownloadSimpleIcon as PhDownloadSimpleIcon, XIcon as PhXIcon } from "@phosphor-icons/react/dist/ssr";
 
 export type TypeFilter = "all" | TransactionType;
 
@@ -25,7 +25,11 @@ function DownloadIcon() {
 }
 
 function SelectCheckIcon() {
-  return <PhCheckSquareIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
+  return <PhCheckSquareIcon weight="bold" aria-hidden="true" className="h-4 w-4" />;
+}
+
+function CancelSelectIcon() {
+  return <PhXIcon weight="bold" aria-hidden="true" className="h-4 w-4" />;
 }
 
 type DisplayRow = { kind: "single"; expense: Expense } | { kind: "split"; groupId: string; items: Expense[] };
@@ -634,7 +638,7 @@ export default function ExpenseList({
               selectMode ? "border-surface-accent bg-surface-accent/10 text-surface-accent" : "border-line text-foreground hover:bg-bg-soft"
             }`}
           >
-            <SelectCheckIcon />
+            {selectMode ? <CancelSelectIcon /> : <SelectCheckIcon />}
             {selectMode ? t("common.cancel") : t("activities.select")}
           </button>
         </div>

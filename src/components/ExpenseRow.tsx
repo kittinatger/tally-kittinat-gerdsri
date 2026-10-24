@@ -13,6 +13,15 @@ import { ExportIcon as PhExportIcon } from "@phosphor-icons/react/dist/ssr";
 const OPEN_DELETE = -76;
 const OPEN_SHARE = 76;
 const MOVE_THRESHOLD = 6;
+// A drag only counts as a swipe once it has gone this far and is clearly
+// more sideways than up/down — otherwise it's treated as a scroll, so
+// scrolling the list no longer nudges rows open by accident.
+const SWIPE_SLOP = 12;
+const SWIPE_AXIS_RATIO = 1.4;
+// On release, a row snaps open only past this share of the action width,
+// or with a quick flick (px per ms) in that direction.
+const OPEN_FRACTION = 0.55;
+const FLICK_VELOCITY = 0.45;
 const LONG_PRESS_MS = 450;
 
 function DeleteIcon({ className = "h-5 w-5" }: { className?: string }) {
@@ -105,6 +114,12 @@ export default function ExpenseRow({
   // Instead, click-and-hold reveals the same action cluster used for hover.
   const [heldOpen, setHeldOpen] = useState(false);
   const isMouseRef = useRef(false);
+  // Per-gesture tracking that never needs a re-render: where the press
+  // started vertically, which axis the gesture locked to, and the last
+  // sample for flick velocity.
+  const startYRef = useRef(0);
+  const axisRef = useRef<"x" | "y" | null>(null);
+  const lastSampleRef = useRef({ x: 0, t: 0, v: 0 });
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rowRef = useRef<HTMLDivElement | null>(null);
   const swipeEnabled = Boolean(onDelete) && !selectMode;
@@ -155,6 +170,9 @@ export default function ExpenseRow({
     isMouseRef.current = e.pointerType === "mouse";
     setGestureStartX(e.clientX);
     setMoved(false);
+    startYRef.current = e.clientY;
+    axisRef.current = null;
+    lastSampleRef.current = { x: e.clientX, t: e.timeStamp, v: 0 };
     e.currentTarget.setPointerCapture(e.pointerId);
     if (isMouseRef.current && showHoverActions && !heldOpen) {
       clearLongPress();
@@ -169,13 +187,26 @@ export default function ExpenseRow({
   function handlePointerMove(e: React.PointerEvent) {
     if (gestureStartX === null) return;
     const delta = e.clientX - gestureStartX;
-    if (Math.abs(delta) > MOVE_THRESHOLD) {
+    const deltaY = e.clientY - startYRef.current;
+    if (Math.abs(delta) > MOVE_THRESHOLD || Math.abs(deltaY) > MOVE_THRESHOLD) {
       setMoved(true);
       clearLongPress();
     }
-    if (swipeEnabled && !isMouseRef.current) {
-      setLiveX(Math.max(OPEN_DELETE, Math.min(OPEN_SHARE, restX + delta)));
+    if (!swipeEnabled || isMouseRef.current) return;
+    if (axisRef.current === null) {
+      if (Math.max(Math.abs(delta), Math.abs(deltaY)) < SWIPE_SLOP) return;
+      axisRef.current = Math.abs(delta) > Math.abs(deltaY) * SWIPE_AXIS_RATIO ? "x" : "y";
     }
+    if (axisRef.current !== "x") return;
+    const last = lastSampleRef.current;
+    const dt = e.timeStamp - last.t;
+    if (dt > 0) lastSampleRef.current = { x: e.clientX, t: e.timeStamp, v: (e.clientX - last.x) / dt };
+    // Measured from where the swipe actually began (past the slop), with a
+    // little resistance beyond the fully-open position instead of a hard stop.
+    const effective = delta - Math.sign(delta) * SWIPE_SLOP;
+    const raw = restX + effective;
+    const resist = (limit: number) => limit + (raw - limit) * 0.25;
+    setLiveX(raw < OPEN_DELETE ? Math.max(OPEN_DELETE - 24, resist(OPEN_DELETE)) : raw > OPEN_SHARE ? Math.min(OPEN_SHARE + 24, resist(OPEN_SHARE)) : raw);
   }
 
   function handlePointerUp() {
@@ -193,13 +224,26 @@ export default function ExpenseRow({
         onClick();
       }
     } else if (swipeEnabled && !isMouseRef.current) {
-      let next = 0;
-      if (liveX <= OPEN_DELETE / 2) next = OPEN_DELETE;
-      else if (liveX >= OPEN_SHARE / 2) next = OPEN_SHARE;
-      setRestX(next);
-      setLiveX(next);
-      onOpenChange?.(next !== 0);
+      if (axisRef.current !== "x") {
+        // A scroll, not a swipe: leave the row exactly as it was.
+        setLiveX(restX);
+      } else {
+        const v = lastSampleRef.current.v;
+        let next = 0;
+        if (restX === 0) {
+          if (liveX <= OPEN_DELETE * OPEN_FRACTION || (liveX < 0 && v < -FLICK_VELOCITY)) next = OPEN_DELETE;
+          else if (liveX >= OPEN_SHARE * OPEN_FRACTION || (liveX > 0 && v > FLICK_VELOCITY)) next = OPEN_SHARE;
+        } else {
+          // Already open: stays open unless dragged back a fair way or flicked shut.
+          const closing = restX < 0 ? liveX > restX * OPEN_FRACTION || v > FLICK_VELOCITY : liveX < restX * OPEN_FRACTION || v < -FLICK_VELOCITY;
+          next = closing ? 0 : restX;
+        }
+        setRestX(next);
+        setLiveX(next);
+        onOpenChange?.(next !== 0);
+      }
     }
+    axisRef.current = null;
     setGestureStartX(null);
   }
 
