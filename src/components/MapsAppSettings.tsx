@@ -15,6 +15,7 @@ import {
   type SimpleIcon,
 } from "simple-icons";
 import { useT } from "@/lib/language-context";
+import { EXTRA_MAP_LOGOS } from "@/lib/map-logos";
 import {
   MAPS_PROVIDERS,
   MAPS_PROVIDER_NAMES,
@@ -26,8 +27,8 @@ import {
 
 const PRIMARY: MapsProvider[] = ["apple", "google"];
 
-// Brand marks from Simple Icons (simpleicons.org, CC0). Providers it doesn't
-// include get a neutral generic pin rather than a hand-drawn imitation logo.
+// Brand marks from Simple Icons (simpleicons.org, CC0); the providers it
+// doesn't cover come from other open icon sets (see map-logos.ts).
 const LOGOS: Partial<Record<MapsProvider, SimpleIcon>> = {
   apple: siApple,
   google: siGooglemaps,
@@ -50,6 +51,27 @@ function glyphColor(hex: string): string {
 
 function ProviderTile({ provider }: { provider: MapsProvider | "auto" }) {
   const logo = provider === "auto" ? undefined : LOGOS[provider];
+  const extra = provider === "auto" ? undefined : EXTRA_MAP_LOGOS[provider];
+  if (!logo && extra) {
+    const mono = extra.mode === "mono";
+    // The 48-unit line-icon artwork uses 1-unit strokes, far too thin at tile
+    // size, so those get a heavier stroke.
+    const body = extra.viewBox === "0 0 48 48" ? `<g stroke-width="3">${extra.body}</g>` : extra.body;
+    return (
+      <span
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1 ring-inset ring-black/5 dark:ring-white/10 ${mono ? "" : "bg-white"}`}
+        style={mono && extra.hex ? { backgroundColor: `#${extra.hex}`, color: "#ffffff" } : undefined}
+      >
+        <svg
+          viewBox={extra.viewBox}
+          aria-hidden="true"
+          className="h-5 w-5"
+          // Static artwork from this repo (map-logos.ts), never user input.
+          dangerouslySetInnerHTML={{ __html: body }}
+        />
+      </span>
+    );
+  }
   if (!logo) {
     const Icon = provider === "auto" ? DeviceMobileIcon : MapPinIcon;
     return (

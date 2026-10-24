@@ -23,8 +23,13 @@ MIT License, Copyright (c) 2020-2024 Phosphor Icons.
 
 Map-app logos in Settings > Maps app (Apple, Google Maps, Waze, Baidu, Naver,
 Kakao, HERE, Organic Maps, OpenStreetMap) are from [Simple Icons](https://simpleicons.org/)
-(CC0). Those logos remain trademarks of their respective owners and are used
-only to identify each app; providers not in Simple Icons get a generic pin icon.
+(CC0). The rest come from open icon sets via [Iconify](https://iconify.design/):
+Maps.me from [gilbarbara/logos](https://github.com/gilbarbara/logos) (CC0), Yandex from
+[theSVG](https://thesvg.org/) (MIT), Citymapper from [Tabler Icons](https://tabler.io/icons) (MIT),
+and 2GIS, Mapy.com, Moovit and Amap from [Arcticons](https://github.com/Arcticons-Team/Arcticons)
+by Donnnno (CC BY-SA 4.0). Their tile colours were sampled from each company's own
+app icon or site. All of these logos remain trademarks of their respective owners
+and are used only to identify each app.
 
 The handful of remaining graphics that aren't icon-pack glyphs (charts, the
 payment-card chip and contactless marks, the app's own tally-mark logo) are

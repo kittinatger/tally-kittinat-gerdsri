@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- A Maps app setting (Settings > Maps app): Automatic (follows the device: the default maps app on Android, the system Maps app on Apple devices, the Google Maps website on desktops), or a specific app: Apple Maps and Google Maps up front, plus Waze, Baidu Maps, Amap (Gaode), Naver Map, Kakao Map, Yandex Maps, 2GIS, HERE WeGo, Mapy.com, Citymapper, Moovit, Maps.me, Organic Maps or the OpenStreetMap website under "Other providers", each shown with its logo where available. If the chosen app isn't installed, its website opens instead. "Open in Maps" on a transaction's location uses it and opens the actual app on phones rather than a web overlay. Saved per device.
+- A Maps app setting (Settings > Maps app): Automatic (follows the device: the default maps app on Android, the system Maps app on Apple devices, the Google Maps website on desktops), or a specific app: Apple Maps and Google Maps up front, plus Waze, Baidu Maps, Amap (Gaode), Naver Map, Kakao Map, Yandex Maps, 2GIS, HERE WeGo, Mapy.com, Citymapper, Moovit, Maps.me, Organic Maps or the OpenStreetMap website under "Other providers", each shown with its own logo. If the chosen app isn't installed, its website opens instead. "Open in Maps" on a transaction's location uses it and opens the actual app on phones rather than a web overlay. Saved per device.
 - Locations on transactions: type a place, tap "Use current location" to pin where you are (only read when tapped), or let receipt scanning read the store address off the receipt. The transaction details show a map preview (OpenStreetMap) with an "Open in Maps" link. Schema v79; included in encrypted backups.
 
 ### Fixed
