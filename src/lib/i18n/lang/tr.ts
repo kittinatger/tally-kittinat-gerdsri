@@ -1123,6 +1123,7 @@ const messages: Record<MessageKey, string> = {
   "maps.auto": "Otomatik",
   "maps.autoDesc": "Bu cihazın ayarlarını izle ve varsayılan harita uygulamasını aç.",
   "maps.alwaysOpenIn": "Konumları her zaman {app} ile aç.",
+  "maps.otherProviders": "Diğer sağlayıcılar",
   "maps.fallbackNote": "Seçilen uygulama bu cihazda yüklü değilse onun web sitesi açılır.",
   "maps.apple": "Apple Haritalar",
   "maps.google": "Google Haritalar",

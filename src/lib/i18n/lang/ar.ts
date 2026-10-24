@@ -1123,6 +1123,7 @@ const messages: Record<MessageKey, string> = {
   "maps.auto": "تلقائي",
   "maps.autoDesc": "اتباع إعدادات هذا الجهاز وفتح تطبيق الخرائط الافتراضي فيه.",
   "maps.alwaysOpenIn": "افتح المواقع دائمًا في {app}.",
+  "maps.otherProviders": "مزوّدون آخرون",
   "maps.fallbackNote": "إذا لم يكن التطبيق المختار مثبتًا على هذا الجهاز، فسيُفتح موقعه الإلكتروني بدلًا منه.",
   "maps.apple": "خرائط Apple",
   "maps.google": "خرائط Google",

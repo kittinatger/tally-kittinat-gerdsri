@@ -1123,6 +1123,7 @@ const messages: Record<MessageKey, string> = {
   "maps.auto": "Автоматически",
   "maps.autoDesc": "Следовать настройкам устройства и открывать приложение карт по умолчанию.",
   "maps.alwaysOpenIn": "Всегда открывать места в {app}.",
+  "maps.otherProviders": "Другие сервисы",
   "maps.fallbackNote": "Если выбранное приложение не установлено на этом устройстве, откроется его сайт.",
   "maps.apple": "Apple Карты",
   "maps.google": "Google Карты",

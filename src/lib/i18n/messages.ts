@@ -929,6 +929,7 @@ export type MessageKey =
   | "maps.auto"
   | "maps.autoDesc"
   | "maps.alwaysOpenIn"
+  | "maps.otherProviders"
   | "maps.fallbackNote"
   | "maps.apple"
   | "maps.google"
@@ -2846,6 +2847,7 @@ export const EN_MESSAGES: Record<MessageKey, string> = {
   "maps.auto": "Automatic",
   "maps.autoDesc": "Follow this device's settings and open its default maps app.",
   "maps.alwaysOpenIn": "Always open locations in {app}.",
+  "maps.otherProviders": "Other providers",
   "maps.fallbackNote": "If the chosen app isn't installed on this device, its website opens instead.",
   "maps.apple": "Apple Maps",
   "maps.google": "Google Maps",

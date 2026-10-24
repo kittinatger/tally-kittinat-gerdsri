@@ -1123,6 +1123,7 @@ const messages: Record<MessageKey, string> = {
   "maps.auto": "自动",
   "maps.autoDesc": "跟随此设备的设置，打开其默认地图应用。",
   "maps.alwaysOpenIn": "始终在 {app} 中打开地点。",
+  "maps.otherProviders": "其他地图服务",
   "maps.fallbackNote": "如果此设备未安装所选应用，将改为打开其网站。",
   "maps.apple": "Apple 地图",
   "maps.google": "Google 地图",

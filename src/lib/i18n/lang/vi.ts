@@ -1123,6 +1123,7 @@ const messages: Record<MessageKey, string> = {
   "maps.auto": "Tự động",
   "maps.autoDesc": "Theo cài đặt của thiết bị này và mở ứng dụng bản đồ mặc định.",
   "maps.alwaysOpenIn": "Luôn mở vị trí bằng {app}.",
+  "maps.otherProviders": "Nhà cung cấp khác",
   "maps.fallbackNote": "Nếu ứng dụng đã chọn chưa được cài trên thiết bị này, trang web của nó sẽ mở thay thế.",
   "maps.apple": "Apple Maps",
   "maps.google": "Google Maps",

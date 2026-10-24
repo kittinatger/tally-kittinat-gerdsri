@@ -1123,6 +1123,7 @@ const messages: Record<MessageKey, string> = {
   "maps.auto": "Otomatis",
   "maps.autoDesc": "Ikuti pengaturan perangkat ini dan buka aplikasi peta bawaannya.",
   "maps.alwaysOpenIn": "Selalu buka lokasi di {app}.",
+  "maps.otherProviders": "Penyedia lain",
   "maps.fallbackNote": "Jika aplikasi yang dipilih tidak terpasang di perangkat ini, situs webnya akan dibuka.",
   "maps.apple": "Apple Maps",
   "maps.google": "Google Maps",
