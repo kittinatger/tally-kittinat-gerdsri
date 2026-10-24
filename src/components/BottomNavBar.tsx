@@ -11,7 +11,7 @@ export type NavBarLink = { href: string; label: string; icon: React.ReactNode };
 //   button on the right.
 // - modern: the mobile counterpart of the desktop top bar — a flat strip
 //   flush with the bottom edge, every label shown, the current page in a
-//   soft-fill tile, and Add as a green rounded button at the end (styled
+//   soft-fill tile, and Add as a green rounded button in the middle (styled
 //   by globals.css via data-bottom-nav).
 export default function BottomNavBar({
   variant,
@@ -29,24 +29,29 @@ export default function BottomNavBar({
   const hasAdd = showAdd || Boolean(onAddClick);
 
   if (variant === "modern") {
+    const leftLinks = hasAdd ? links.slice(0, 2) : links;
+    const rightLinks = hasAdd ? links.slice(2) : [];
     return (
       <div data-bottom-nav="modern" className="fixed z-20 flex items-stretch sm:hidden">
-        <nav data-nav-island className="flex flex-1 items-stretch">
-          {links.map((link) => (
+        <nav data-nav-island className="flex flex-1 items-center">
+          {leftLinks.map((link) => (
+            <ModernTab key={link.href} link={link} active={link.href === pathname} />
+          ))}
+          {hasAdd && (
+            <button
+              type="button"
+              onClick={onAddClick}
+              aria-label="Add transaction"
+              data-nav-cta
+              className="mx-1 flex shrink-0 items-center justify-center transition"
+            >
+              <PlusIcon className="h-5 w-5 shrink-0" />
+            </button>
+          )}
+          {rightLinks.map((link) => (
             <ModernTab key={link.href} link={link} active={link.href === pathname} />
           ))}
         </nav>
-        {hasAdd && (
-          <button
-            type="button"
-            onClick={onAddClick}
-            aria-label="Add transaction"
-            data-nav-cta
-            className="flex shrink-0 items-center justify-center transition"
-          >
-            <PlusIcon className="h-5 w-5 shrink-0" />
-          </button>
-        )}
       </div>
     );
   }

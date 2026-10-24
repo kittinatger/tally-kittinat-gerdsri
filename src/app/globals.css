@@ -235,7 +235,7 @@ h1, h2, h3 {
 /* Bottom bar: the mobile counterpart of the desktop top bar — a flat,
    solid strip flush with the bottom edge behind a hairline, the current page
    in the same neutral soft-fill tile the desktop tabs use, and Add as the
-   same green rounded button. */
+   same green rounded button, in the middle of the row. */
 :root[data-design="modern"] [data-bottom-nav="modern"] {
   left: 0;
   right: 0;
