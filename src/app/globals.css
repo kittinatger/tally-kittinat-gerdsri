@@ -193,6 +193,14 @@ body {
   padding-right: env(safe-area-inset-right);
 }
 
+/* No rubber-band bounce past the top or bottom of the page. Pull-to-refresh
+   is the app's own touch handler (PullToRefresh.tsx), so it doesn't depend on
+   the browser's native overscroll. */
+html,
+body {
+  overscroll-behavior-y: none;
+}
+
 /* The status-bar area itself: iPadOS/iOS draw it as a translucent frosted
    layer over whatever is beneath, so without a solid backing, content
    scrolling under it (the green Add button especially) shows through as a
