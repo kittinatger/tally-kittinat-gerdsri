@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 const RELEASES: { version: string; date: string; sections: { heading: string; items: string[] }[] }[] = [
   {
-    version: "0.25.0",
+    version: "0.24.1",
     date: "2026-10-24",
     sections: [
       {

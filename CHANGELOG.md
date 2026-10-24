@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
-## [0.25.0] - 2026-10-24
+## [0.24.1] - 2026-10-24
 
 ### Changed
 - Much faster first load. The translations for all 16 languages used to ship in the main script of every page (about 560 KB compressed); English is now bundled and every other language is a separate file loaded only when that language is active, remembered locally so it starts loading immediately on a return visit. Only Inter's Latin font is preloaded now, instead of 12 font files (about 650 KB); the others still load on demand. On the welcome page this cuts scripts from about 736 KB to about 200 KB and fonts from about 653 KB to about 94 KB.
