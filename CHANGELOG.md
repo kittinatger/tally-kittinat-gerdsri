@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- The app crashing on page changes ("Cannot read properties of null (reading 'removeChild')"), which broke navigation, buttons and adding items on every device after 0.24.0: the status-bar color sync removed and re-created the theme-color meta tags that React owns, so React failed the next time it updated them. It now only edits their color in place, and re-applies it after each navigation.
+
 ### Changed
 - Much faster first load: the translations for all 16 languages used to ship in the main script of every page (about 560 KB compressed); English is now bundled and every other language is a separate file loaded only when that language is active (the last-used language is remembered locally so it starts loading immediately on a return visit). Only Inter's Latin font is preloaded now, rather than 12 font files (about 650 KB) including Thai/Arabic/Devanagari/Bengali ones most visitors never use; the others still load on demand when a page actually shows those characters. On the welcome page this cuts scripts from about 736 KB to about 200 KB and fonts from about 653 KB to about 94 KB.
 
