@@ -21,6 +21,11 @@ sections and category icons — are from [Phosphor Icons](https://phosphoricons.
 [`@phosphor-icons/react`](https://github.com/phosphor-icons/react) under the
 MIT License, Copyright (c) 2020-2024 Phosphor Icons.
 
+Map-app logos in Settings > Maps app (Apple, Google Maps, Waze, Baidu, Naver,
+Kakao, HERE, Organic Maps, OpenStreetMap) are from [Simple Icons](https://simpleicons.org/)
+(CC0). Those logos remain trademarks of their respective owners and are used
+only to identify each app; providers not in Simple Icons get a generic pin icon.
+
 The handful of remaining graphics that aren't icon-pack glyphs (charts, the
 payment-card chip and contactless marks, the app's own tally-mark logo) are
 drawn in-house.

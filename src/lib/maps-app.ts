@@ -9,8 +9,14 @@ export const MAPS_PROVIDERS = [
   "waze",
   "baidu",
   "amap",
+  "naver",
+  "kakao",
   "yandex",
+  "dgis",
   "here",
+  "mapy",
+  "citymapper",
+  "moovit",
   "mapsme",
   "organic",
   "osm",
@@ -26,8 +32,14 @@ export const MAPS_PROVIDER_NAMES: Record<Exclude<MapsProvider, "apple" | "google
   waze: "Waze",
   baidu: "Baidu Maps",
   amap: "Amap (Gaode)",
+  naver: "Naver Map",
+  kakao: "Kakao Map",
   yandex: "Yandex Maps",
+  dgis: "2GIS",
   here: "HERE WeGo",
+  mapy: "Mapy.com",
+  citymapper: "Citymapper",
+  moovit: "Moovit",
   mapsme: "Maps.me",
   organic: "Organic Maps",
   osm: "OpenStreetMap",
@@ -131,6 +143,26 @@ export function mapsUrl(provider: MapsProvider, place: Place): string | null {
       return coords
         ? `https://share.here.com/l/${coords}${name ? `,${enc(name)}` : ""}`
         : `https://wego.here.com/search/${enc(name!)}`;
+    case "naver":
+      return `https://map.naver.com/p/search/${enc(name ?? coords!)}`;
+    case "kakao":
+      return coords
+        ? `https://map.kakao.com/link/map/${enc(name ?? "Location")},${lat},${lng}`
+        : `https://map.kakao.com/link/search/${enc(name!)}`;
+    case "dgis":
+      return coords ? `https://2gis.com/geo/${lng},${lat}` : `https://2gis.com/search/${enc(name!)}`;
+    case "mapy":
+      return coords
+        ? `https://mapy.com/fnc/v1/showmap?mapset=basic&center=${lng},${lat}&zoom=17&marker=true`
+        : `https://mapy.com/fnc/v1/search?query=${enc(name!)}`;
+    case "citymapper":
+      return coords
+        ? `https://citymapper.com/directions?endcoord=${coords}${name ? `&endname=${enc(name)}` : ""}`
+        : `https://citymapper.com/directions?endaddress=${enc(name!)}`;
+    case "moovit":
+      return coords
+        ? `https://moovitapp.com/?to=${enc(name ?? coords)}&tll=${lat}_${lng}`
+        : `https://moovitapp.com/?to=${enc(name!)}`;
     case "mapsme":
     case "organic":
     case "osm":
@@ -162,6 +194,20 @@ function appScheme(provider: MapsProvider, place: Place): string | null {
       return coords ? `yandexmaps://maps.yandex.ru/?pt=${lng},${lat}&z=16` : `yandexmaps://maps.yandex.ru/?text=${enc(name!)}`;
     case "here":
       return coords ? `here-location://${coords}${name ? `,${enc(name)}` : ""}` : null;
+    case "naver":
+      return coords
+        ? `nmap://place?lat=${lat}&lng=${lng}&name=${enc(name ?? coords)}&appname=app.tally`
+        : `nmap://search?query=${enc(name!)}&appname=app.tally`;
+    case "kakao":
+      return coords ? `kakaomap://look?p=${coords}` : `kakaomap://search?q=${enc(name!)}`;
+    case "dgis":
+      return coords ? `dgis://2gis.ru/geo/${lng},${lat}` : `dgis://2gis.ru/search/${enc(name!)}`;
+    case "citymapper":
+      return coords ? `citymapper://directions?endcoord=${coords}${name ? `&endname=${enc(name)}` : ""}` : null;
+    case "moovit":
+      return coords
+        ? `moovit://directions?dest_lat=${lat}&dest_lon=${lng}${name ? `&dest_name=${enc(name)}` : ""}&partner_id=tally`
+        : null;
     case "mapsme":
       return coords ? `mapsme://map?ll=${coords}${name ? `&n=${enc(name)}` : ""}&v=1` : `mapsme://search?query=${enc(name!)}`;
     case "organic":
