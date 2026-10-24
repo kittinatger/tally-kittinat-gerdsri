@@ -55,6 +55,7 @@ export default function ExpenseRow({
   hideIcon = false,
   compact = false,
   hideTags = false,
+  hideDate = false,
 }: {
   expense: Expense;
   onClick: () => void;
@@ -86,6 +87,9 @@ export default function ExpenseRow({
   /** From Settings > Activities' "Hide tag chips in list" — tags stay
    * visible in the expense detail view either way. */
   hideTags?: boolean;
+  /** Leaves the date out of the subtitle — set when the list is grouped by
+   * day, where the group heading already says it. */
+  hideDate?: boolean;
 }) {
   const color = useCategoryColor(expense.type, expense.category);
   const icon = useCategoryIcon(expense.type, expense.category);
@@ -303,7 +307,8 @@ export default function ExpenseRow({
           <div className="min-w-0 flex-1">
             <p className="truncate font-semibold text-surface-foreground">{expense.merchant}</p>
             <p className="mt-0.5 truncate text-xs text-surface-foreground-soft">
-              {expense.category} · {formatDateLong(expense.date)}
+              {expense.category}
+              {!hideDate && <> · {formatDateLong(expense.date)}</>}
             </p>
             {!hideTags && expense.tags.length > 0 && (
               <div className="mt-1 flex flex-wrap items-center gap-1">

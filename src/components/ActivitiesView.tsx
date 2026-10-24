@@ -127,6 +127,7 @@ export default function ActivitiesView({
             <main className="flex-1 px-1 py-6 sm:px-2">
               <div className="mx-auto w-full max-w-3xl">
                 <ActivitiesBalanceCard
+                  expenses={expenses}
                   wallets={activeWallets}
                   currency={currency}
                   typeFilter={typeFilter}

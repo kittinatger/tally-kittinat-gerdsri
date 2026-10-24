@@ -380,6 +380,17 @@ h1, h2, h3 {
   text-transform: uppercase;
   color: var(--ink-soft);
 }
+/* The count + net-total summary above the list is a slim toolbar line rather
+   than another bordered card under the balance hero. */
+:root[data-design="modern"] [data-list-summary] {
+  border: 0;
+  background: transparent;
+  padding: 0 4px;
+  margin-bottom: 12px;
+}
+:root[data-design="modern"] [data-list-summary] .text-lg {
+  font-size: 15px;
+}
 :root[data-design="modern"] [data-group-net] {
   background: transparent;
   padding-inline: 0;

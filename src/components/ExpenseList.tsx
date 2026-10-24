@@ -601,7 +601,7 @@ export default function ExpenseList({
         </Modal>
       )}
 
-      <div className="mb-4 flex items-center justify-between gap-3 rounded-card border border-surface-line bg-surface px-4 py-3.5">
+      <div data-list-summary className="mb-4 flex items-center justify-between gap-3 rounded-card border border-surface-line bg-surface px-4 py-3.5">
         <div className="min-w-0">
           <p className="text-xs font-medium text-surface-foreground-soft">
             {filtered.length} {t("activities.transaction")}
@@ -724,6 +724,7 @@ export default function ExpenseList({
                           hideIcon={prefs.hideMerchantIcons}
                           compact={prefs.compactRows}
                           hideTags={prefs.hideTagsInRow}
+                          hideDate={prefs.groupBy === "day"}
                         />
                       ))
                     : buildDisplayRows(items).map((row, i, arr) =>
@@ -750,6 +751,7 @@ export default function ExpenseList({
                             hideIcon={prefs.hideMerchantIcons}
                             compact={prefs.compactRows}
                             hideTags={prefs.hideTagsInRow}
+                            hideDate={prefs.groupBy === "day"}
                           />
                         ),
                       )}
