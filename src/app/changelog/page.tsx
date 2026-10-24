@@ -6,6 +6,18 @@ export const dynamic = "force-dynamic";
 
 const RELEASES: { version: string; date: string; sections: { heading: string; items: string[] }[] }[] = [
   {
+    version: "0.24.2",
+    date: "2026-10-24",
+    sections: [
+      {
+        heading: "Changed",
+        items: [
+          "Icons switched to Phosphor Icons (the \"fill\" weight, matching the author's portfolio site) across navigation, actions, Settings rows, Analytics sections and category icons. Bare glyphs (+, ×, ✓) use the bold weight, since Phosphor's fill version of those is a boxed square.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.24.1",
     date: "2026-10-24",
     sections: [

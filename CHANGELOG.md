@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.24.2] - 2026-10-24
+
 ### Changed
 - Icons switched to Phosphor Icons (the "fill" weight, matching the author's portfolio site) across navigation, actions, Settings rows, Analytics sections and category icons. Bare glyphs (+, ×, ✓) use the bold weight, since Phosphor's fill version of those is a boxed square.
 
