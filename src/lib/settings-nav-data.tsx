@@ -1,9 +1,7 @@
 // The Settings home content — one source of truth for every section/row
-// (icon, label key, accent color, and where it goes), shared by every
-// selectable Settings-page layout (Settings > Settings page design). Pure
-// data + stateless icon components (no hooks), so it can be imported by
-// any of the layout renderers without duplicating the ~40 rows across
-// them — only each layout's own header/section/row chrome differs.
+// (icon, label key, accent color, and where it goes), read by the Settings
+// list and the command palette. Pure data + stateless icon components (no
+// hooks), so either can import it without duplicating the ~40 rows.
 import type { Panel } from "@/lib/settings-panels";
 import type { MessageKey } from "@/lib/i18n/messages";
 
@@ -134,33 +132,12 @@ function CoinIcon() {
   );
 }
 
-function NavBarIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <rect x="2.5" y="12.5" width="15" height="5" rx="2.5" />
-      <circle cx="7" cy="15" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="10" cy="15" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="13" cy="15" r="0.9" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
 function DesignIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
       <circle cx="10" cy="10" r="7.5" />
       <path d="M10 2.5v15" />
       <path d="M10 2.5a7.5 7.5 0 0 0 0 15" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
-function LayoutIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-      <rect x="2.5" y="2.5" width="15" height="4.5" rx="1.5" />
-      <rect x="2.5" y="9" width="6.5" height="8.5" rx="1.5" />
-      <rect x="11" y="9" width="6.5" height="8.5" rx="1.5" />
     </svg>
   );
 }
@@ -409,9 +386,7 @@ export type SettingsSectionData = {
   adminOnly?: boolean;
 };
 
-// Every section/row the Settings home shows, in display order — the one
-// source every selectable layout (Settings > Settings page design) reads
-// from instead of re-declaring its own copy.
+// Every section/row the Settings home shows, in display order.
 export const SETTINGS_SECTIONS: SettingsSectionData[] = [
   // Reordered so the everyday-use sections (Account, Money, Organize,
   // Social, Display) come before the more peripheral ones (AI & Tools,
@@ -460,8 +435,6 @@ export const SETTINGS_SECTIONS: SettingsSectionData[] = [
     rows: [
       { kind: "panel", icon: <DesignIcon />, labelKey: "settings.design", accent: "green", panel: "design" },
       { kind: "panel", icon: <CalendarIcon />, labelKey: "settings.calendar", accent: "blue", panel: "calendar" },
-      { kind: "panel", icon: <NavBarIcon />, labelKey: "settings.navStyle", accent: "violet", panel: "navStyle" },
-      { kind: "panel", icon: <LayoutIcon />, labelKey: "settings.settingsHomeStyle", accent: "fuchsia", panel: "settingsHomeStyle" },
       { kind: "panel", icon: <CoinIcon />, labelKey: "settings.currency", accent: "green", panel: "currency" },
       { kind: "panel", icon: <GlobeIcon />, labelKey: "settings.language", accent: "sky", panel: "language" },
       { kind: "panel", icon: <KeyboardNavIcon />, labelKey: "settings.keyboardShortcuts", accent: "slate", panel: "keyboardShortcuts" },

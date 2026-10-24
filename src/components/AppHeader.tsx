@@ -4,8 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ListIcon, AnalyticsIcon, GearIcon, PlusIcon, MembershipCardIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
-import { useNavStyle } from "@/lib/nav-style-context";
-import { NAV_BAR_STYLES, MODERN_DEFAULT_NAV_BAR } from "@/lib/nav-bar-styles";
 import { useDesign } from "@/lib/use-design";
 import BottomNavBar from "./BottomNavBar";
 import NotificationBell from "./NotificationBell";
@@ -21,9 +19,8 @@ function AddIcon() {
 // otherwise disappear and reappear across the navigation — loading.tsx
 // can't pass onAddClick itself (functions can't cross the server->client
 // boundary), so it uses showAdd instead to render an inert placeholder
-// button. The actual bar/shape/indicator/etc. is BottomNavBar.tsx, driven
-// by the user's chosen style (Settings > Nav bar style) — this just
-// supplies the real links/icons and looks the style up.
+// button. The bar itself is BottomNavBar.tsx, in the active design's look —
+// this just supplies the real links/icons.
 export function BottomNav({
   pathname,
   showAdd = false,
@@ -34,9 +31,7 @@ export function BottomNav({
   onAddClick?: () => void;
 }) {
   const t = useT();
-  const navStyleId = useNavStyle();
   const design = useDesign();
-  const modernDefault = design === "modern" && navStyleId === "floating";
   const bottomNavLinks = [
     { href: "/", label: t("nav.activities"), icon: <ListIcon className="h-5 w-5 shrink-0" /> },
     { href: "/analytics", label: t("nav.analytics"), icon: <AnalyticsIcon className="h-5 w-5 shrink-0" /> },
@@ -46,8 +41,7 @@ export function BottomNav({
 
   return (
     <BottomNavBar
-      config={modernDefault ? MODERN_DEFAULT_NAV_BAR : NAV_BAR_STYLES[navStyleId]}
-      styleId={modernDefault ? "modern" : navStyleId}
+      variant={design}
       links={bottomNavLinks}
       pathname={pathname}
       showAdd={showAdd}

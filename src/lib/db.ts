@@ -1541,17 +1541,11 @@ function ensureSchema(): Promise<void> {
       // activities-prefs.ts for the shape/defaults.
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS activities_prefs TEXT NOT NULL DEFAULT '{}';`;
 
-      // Which visual style the mobile bottom nav bar renders as (Settings >
-      // Nav bar style) — a plain string id validated against NAV_BAR_STYLE_IDS
-      // in nav-bar-styles.ts at read time (getNavStyle below), same
-      // defensive-fallback approach as an unrecognized language code.
-      // "floating" reproduces the app's original, pre-this-feature look.
+      // nav_style and settings_home_style backed the since-removed nav bar
+      // style and Settings page layout pickers. Nothing reads them anymore;
+      // the columns are left in place rather than dropped so no migration
+      // ever destroys data.
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS nav_style TEXT NOT NULL DEFAULT 'floating';`;
-
-      // Which layout the Settings-page content itself renders as
-      // (Settings > Settings page design) — same defensive-fallback
-      // convention as nav_style above. "groupedCards" reproduces the
-      // app's original, pre-this-feature layout.
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS settings_home_style TEXT NOT NULL DEFAULT 'groupedCards';`;
 
       // Preferences for the rebuilt /analytics page (default period +
@@ -3161,30 +3155,6 @@ export async function setLanguage(userId: number, code: string): Promise<string>
   await ensureSchema();
   await sql`UPDATE app_settings SET language = ${code} WHERE user_id = ${userId};`;
   return code;
-}
-
-export async function getNavStyle(userId: number): Promise<string> {
-  await ensureSchema();
-  const { rows } = await sql<{ nav_style: string }>`SELECT nav_style FROM app_settings WHERE user_id = ${userId};`;
-  return rows[0]?.nav_style ?? "floating";
-}
-
-export async function setNavStyle(userId: number, id: string): Promise<string> {
-  await ensureSchema();
-  await sql`UPDATE app_settings SET nav_style = ${id} WHERE user_id = ${userId};`;
-  return id;
-}
-
-export async function getSettingsHomeStyle(userId: number): Promise<string> {
-  await ensureSchema();
-  const { rows } = await sql<{ settings_home_style: string }>`SELECT settings_home_style FROM app_settings WHERE user_id = ${userId};`;
-  return rows[0]?.settings_home_style ?? "groupedCards";
-}
-
-export async function setSettingsHomeStyle(userId: number, id: string): Promise<string> {
-  await ensureSchema();
-  await sql`UPDATE app_settings SET settings_home_style = ${id} WHERE user_id = ${userId};`;
-  return id;
 }
 
 export async function getAutoConvertCurrency(userId: number): Promise<boolean> {

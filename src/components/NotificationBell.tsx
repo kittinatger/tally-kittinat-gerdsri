@@ -9,7 +9,7 @@ import type { NotificationRow } from "@/lib/db";
 const Modal = dynamic(() => import("./Modal"));
 const NotificationList = dynamic(() => import("./NotificationList"));
 
-// Self-fetches on mount, same pattern as NavStyleProvider/IconStyleSync —
+// Self-fetches on mount, same pattern as LanguageProvider —
 // silently stays empty if the fetch 401s (no session in this render
 // context) rather than surfacing an error.
 export default function NotificationBell({ className }: { className?: string }) {

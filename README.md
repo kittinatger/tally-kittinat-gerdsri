@@ -26,7 +26,7 @@ receipt, or just describe it out loud. [Create an account](https://tally-kittina
 - **Email & in-app notifications** — opt in (Settings > Permissions) to an email when a recurring rule auto-logs a transaction or a category goes over budget; the in-app notification center picks up the same events (plus loan reminders) regardless of that opt-in.
 - **Encrypted backup** — a passphrase-protected full-data export/import (Settings > Backup), encrypted client-side so the passphrase never reaches the server.
 - **Multi-user accounts, fully isolated** — anyone can sign up with their own username and password, or sign in with GitHub (and link/unlink GitHub from an existing account in Settings > Account); each account's data is fully private via signed, httpOnly session cookies. Self-service password reset by email, account deletion, and "sign out of all devices" are all available from Settings.
-- **Liquid-glass UI** — clean, modern design built for quick entry on a phone and full desktop use, with 24 selectable nav-bar styles and 6 selectable Settings page layouts.
+- **Modern and Classic designs** — a clean, flat Modern look by default, built for quick entry on a phone and full desktop use, with the original green liquid-glass design one tap away in Settings > Design.
 - **Postgres storage** — works out of the box with [Vercel's Neon database](https://vercel.com/docs/storage/vercel-postgres) (free tier available).
 
 ## Screenshots

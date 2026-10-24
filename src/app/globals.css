@@ -415,10 +415,6 @@ h1, h2, h3 {
   background: var(--bg-soft) !important;
   color: var(--ink-soft) !important;
 }
-:root[data-design="modern"] [data-banner] {
-  background: #18181b;
-  box-shadow: none;
-}
 /* Desktop list/detail panes stick under the flatter top bar, which is
    shorter than the floating pill they were offset for. */
 @media (min-width: 1024px) {

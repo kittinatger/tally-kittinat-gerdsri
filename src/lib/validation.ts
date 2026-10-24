@@ -6,8 +6,6 @@ import { SPLIT_METHODS, SPLIT_PAYMENT_METHODS } from "@/lib/splits";
 import { LOAN_DIRECTIONS } from "@/lib/loans";
 import { CATEGORY_ICON_KEYS } from "@/lib/category-icons";
 import { MEMBERSHIP_CODE_FORMATS } from "@/lib/memberships";
-import { NAV_BAR_STYLE_IDS } from "@/lib/nav-bar-styles";
-import { SETTINGS_HOME_STYLE_IDS } from "@/lib/settings-home-styles";
 import { PASS_KINDS, PASS_ZONES, MAX_CUSTOM_FIELDS, type PassZone } from "@/lib/membership-templates";
 import { CARD_NETWORKS } from "@/lib/wallet-cards";
 import { CARD_PATTERNS, PATTERN_COLOR_COUNT } from "@/lib/card-backgrounds";
@@ -132,8 +130,6 @@ export const settingsInputSchema = z
     notifyPushReminders: z.boolean().optional(),
     requireSplitConfirmation: z.boolean().optional(),
     language: z.string().refine(isLanguageCode, { message: "Unsupported language" }).optional(),
-    navStyle: z.enum(NAV_BAR_STYLE_IDS).optional(),
-    settingsHomeStyle: z.enum(SETTINGS_HOME_STYLE_IDS).optional(),
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
     message: "Provide at least one setting to update",

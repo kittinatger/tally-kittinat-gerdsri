@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- The Nav bar style picker (24 styles) and the Settings page design picker (6 layouts). The mobile bottom bar now simply follows the active design (the Modern bar, or Classic's original floating pill), and Settings always uses the grouped-cards layout. Saved choices are ignored; their database columns are left in place.
+
+### Changed
+- Modern mobile nav bar: the Add button sits inline in the middle of the bar instead of floating over list rows, and the current page gets an accent pill behind its icon.
+
 ### Fixed
 - The app crashing on page changes ("Cannot read properties of null (reading 'removeChild')"), which broke navigation, buttons and adding items on every device after 0.24.0: the status-bar color sync removed and re-created the theme-color meta tags that React owns, so React failed the next time it updated them. It now only edits their color in place, and re-applies it after each navigation.
 

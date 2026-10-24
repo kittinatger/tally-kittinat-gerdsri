@@ -7,8 +7,6 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import AppLockGate from "@/components/AppLockGate";
 import OfflineProvider from "@/components/OfflineProvider";
 import { LanguageProvider } from "@/lib/language-context";
-import { NavStyleProvider } from "@/lib/nav-style-context";
-import { SettingsHomeStyleProvider } from "@/lib/settings-home-style-context";
 import "./globals.css";
 
 // Only Inter's Latin file is preloaded (it is what virtually every first paint
@@ -149,15 +147,11 @@ export default function RootLayout({
         <ThemeSync />
         <ServiceWorkerRegister />
         <LanguageProvider>
-          <NavStyleProvider>
-            <SettingsHomeStyleProvider>
-              <AppLockGate>
-                <OfflineProvider>{children}</OfflineProvider>
-                <CommandPalette />
-                <KeyboardShortcuts />
-              </AppLockGate>
-            </SettingsHomeStyleProvider>
-          </NavStyleProvider>
+          <AppLockGate>
+            <OfflineProvider>{children}</OfflineProvider>
+            <CommandPalette />
+            <KeyboardShortcuts />
+          </AppLockGate>
         </LanguageProvider>
       </body>
     </html>

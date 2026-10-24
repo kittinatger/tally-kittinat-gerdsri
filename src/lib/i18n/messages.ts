@@ -526,68 +526,6 @@ export type MessageKey =
   | "settings.calendar"
   | "settings.currency"
   | "settings.language"
-  | "settings.navStyle"
-  | "settings.settingsHomeStyle"
-  | "settingsHomeStyle.groupedCards.name"
-  | "settingsHomeStyle.groupedCards.description"
-  | "settingsHomeStyle.flatSections.name"
-  | "settingsHomeStyle.flatSections.description"
-  | "settingsHomeStyle.titleHeader.name"
-  | "settingsHomeStyle.titleHeader.description"
-  | "settingsHomeStyle.squareIcons.name"
-  | "settingsHomeStyle.squareIcons.description"
-  | "settingsHomeStyle.compactDense.name"
-  | "settingsHomeStyle.compactDense.description"
-  | "settingsHomeStyle.bannerHeader.name"
-  | "settingsHomeStyle.bannerHeader.description"
-  | "navStyle.floating.name"
-  | "navStyle.floating.description"
-  | "navStyle.classic.name"
-  | "navStyle.classic.description"
-  | "navStyle.minimalClean.name"
-  | "navStyle.minimalClean.description"
-  | "navStyle.activeText.name"
-  | "navStyle.activeText.description"
-  | "navStyle.pillHighlight.name"
-  | "navStyle.pillHighlight.description"
-  | "navStyle.bubble.name"
-  | "navStyle.bubble.description"
-  | "navStyle.dotIndicator.name"
-  | "navStyle.dotIndicator.description"
-  | "navStyle.topBar.name"
-  | "navStyle.topBar.description"
-  | "navStyle.iconOnly.name"
-  | "navStyle.iconOnly.description"
-  | "navStyle.outline.name"
-  | "navStyle.outline.description"
-  | "navStyle.glassGradient.name"
-  | "navStyle.glassGradient.description"
-  | "navStyle.gradientBold.name"
-  | "navStyle.gradientBold.description"
-  | "navStyle.neumorphic.name"
-  | "navStyle.neumorphic.description"
-  | "navStyle.elevatedShadow.name"
-  | "navStyle.elevatedShadow.description"
-  | "navStyle.segmentedTrack.name"
-  | "navStyle.segmentedTrack.description"
-  | "navStyle.compactFloating.name"
-  | "navStyle.compactFloating.description"
-  | "navStyle.circleCta.name"
-  | "navStyle.circleCta.description"
-  | "navStyle.diamondCta.name"
-  | "navStyle.diamondCta.description"
-  | "navStyle.centerFab.name"
-  | "navStyle.centerFab.description"
-  | "navStyle.curvedCta.name"
-  | "navStyle.curvedCta.description"
-  | "navStyle.dock.name"
-  | "navStyle.dock.description"
-  | "navStyle.underlineTrack.name"
-  | "navStyle.underlineTrack.description"
-  | "navStyle.twoTone.name"
-  | "navStyle.twoTone.description"
-  | "navStyle.softColor.name"
-  | "navStyle.softColor.description"
   | "settings.usageGuide"
   | "settings.cardGuidelines"
   | "settings.passGuidelines"
@@ -2481,68 +2419,6 @@ export const EN_MESSAGES: Record<MessageKey, string> = {
   "settings.calendar": "Calendar settings",
   "settings.currency": "Currency",
   "settings.language": "Language",
-  "settings.navStyle": "Nav bar style",
-  "settings.settingsHomeStyle": "Settings page design",
-  "settingsHomeStyle.groupedCards.name": "Grouped cards",
-  "settingsHomeStyle.groupedCards.description": "Sections in bordered cards, circular icon badges — today's look",
-  "settingsHomeStyle.flatSections.name": "Flat sections",
-  "settingsHomeStyle.flatSections.description": "Borderless profile, tinted sections with thin dividers",
-  "settingsHomeStyle.titleHeader.name": "Title header",
-  "settingsHomeStyle.titleHeader.description": "A large page title above the profile card",
-  "settingsHomeStyle.squareIcons.name": "Square icons",
-  "settingsHomeStyle.squareIcons.description": "A minimal flat list with rounded-square icon badges",
-  "settingsHomeStyle.compactDense.name": "Compact dense",
-  "settingsHomeStyle.compactDense.description": "Smaller rows, so more fit on screen at once",
-  "settingsHomeStyle.bannerHeader.name": "Banner header",
-  "settingsHomeStyle.bannerHeader.description": "The profile card becomes a bold gradient banner",
-  "navStyle.floating.name": "Floating",
-  "navStyle.floating.description": "A floating glass pill with a separate Add button",
-  "navStyle.classic.name": "Classic",
-  "navStyle.classic.description": "A plain bar with every label always shown",
-  "navStyle.minimalClean.name": "Minimal clean",
-  "navStyle.minimalClean.description": "All labels shown, with an underline on the active tab",
-  "navStyle.activeText.name": "Active text",
-  "navStyle.activeText.description": "Icon only, until you're on that tab",
-  "navStyle.pillHighlight.name": "Pill highlight",
-  "navStyle.pillHighlight.description": "The active tab sits in a soft tinted pill",
-  "navStyle.bubble.name": "Bubble",
-  "navStyle.bubble.description": "The active icon lifts into a small circle",
-  "navStyle.dotIndicator.name": "Dot indicator",
-  "navStyle.dotIndicator.description": "A small dot marks the active tab",
-  "navStyle.topBar.name": "Top bar",
-  "navStyle.topBar.description": "A short bar above the active tab",
-  "navStyle.iconOnly.name": "Icon only",
-  "navStyle.iconOnly.description": "Icons only, no labels",
-  "navStyle.outline.name": "Outline",
-  "navStyle.outline.description": "A bordered bar with no fill",
-  "navStyle.glassGradient.name": "Glass gradient",
-  "navStyle.glassGradient.description": "A frosted bar over a blue-violet gradient",
-  "navStyle.gradientBold.name": "Gradient bold",
-  "navStyle.gradientBold.description": "A bold navy-to-violet gradient bar",
-  "navStyle.neumorphic.name": "Neumorphic",
-  "navStyle.neumorphic.description": "A soft bar with a gentle raised shadow",
-  "navStyle.elevatedShadow.name": "Elevated shadow",
-  "navStyle.elevatedShadow.description": "The floating bar with a deeper shadow",
-  "navStyle.segmentedTrack.name": "Segmented track",
-  "navStyle.segmentedTrack.description": "The active tab sits on a sliding track",
-  "navStyle.compactFloating.name": "Compact floating",
-  "navStyle.compactFloating.description": "The floating pill, icons only",
-  "navStyle.circleCta.name": "Circle CTA",
-  "navStyle.circleCta.description": "A raised circle button above the middle",
-  "navStyle.diamondCta.name": "Diamond CTA",
-  "navStyle.diamondCta.description": "A raised diamond button above the middle",
-  "navStyle.centerFab.name": "Center FAB",
-  "navStyle.centerFab.description": "A circle button inline in the middle",
-  "navStyle.curvedCta.name": "Curved CTA",
-  "navStyle.curvedCta.description": "A gradient bar with a light center button",
-  "navStyle.dock.name": "Dock",
-  "navStyle.dock.description": "A wide rounded pill, icons only",
-  "navStyle.underlineTrack.name": "Underline track",
-  "navStyle.underlineTrack.description": "A track along the bottom, lit under the active tab",
-  "navStyle.twoTone.name": "Two-tone",
-  "navStyle.twoTone.description": "A subtle tint highlights the half you're on",
-  "navStyle.softColor.name": "Soft color",
-  "navStyle.softColor.description": "A soft tinted circle behind the active icon",
   "settings.usageGuide": "Usage guide",
   "settings.cardGuidelines": "Card guidelines",
   "settings.passGuidelines": "Pass guidelines",
