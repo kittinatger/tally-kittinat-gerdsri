@@ -357,6 +357,28 @@ h1, h2, h3 {
   border-radius: 8px;
 }
 
+/* ── Modern: Wallet ────────────────────────────────────────────────── */
+
+/* Cards keep the user's own colors; what changes is how they're staged — a
+   tighter radius and one soft shadow instead of the heavy drop shadow, and
+   a hairline instead of a shadow on the peeking strips. */
+:root[data-design="modern"] [data-stack-card] {
+  border-radius: 16px;
+}
+:root[data-design="modern"] [data-stack-card][data-stack-front="true"] {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 12px 24px -14px rgba(0, 0, 0, 0.4);
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+}
+:root[data-design="modern"] [data-stack-card][data-stack-front="false"] {
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.14);
+}
+:root[data-design="modern"] [data-stack-card] > * {
+  border-radius: inherit;
+  box-shadow: none;
+}
+
 /* ── Modern: add-transaction flow ──────────────────────────────────── */
 
 /* Manual / Scan / Speak: neutral inline tabs instead of three

@@ -39,6 +39,8 @@ export default function CardStack({
             type="button"
             {...getHandlers(item.key, item.onOpen)}
             aria-label={item.ariaLabel}
+            data-stack-card
+            data-stack-front={isLast}
             // Lets PullToRefresh (an ancestor wrapping this whole stack)
             // recognize and skip touches that start on a reorderable card
             // — see its own comment for why that matters.
