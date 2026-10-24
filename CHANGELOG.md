@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.24.5] - 2026-10-24
+
+### Changed
+- Transaction details open on their own page instead of a bottom sheet or side pane, with a new layout: a centred card with the category, merchant, amount, date and Edit/Share, then the details beside the map and receipt on wide screens. Back returns to the list; deleting returns to Activities; tapping the merchant shows their other transactions.
+- Redesigned Activities (Modern design): the balance card is a centred hero with a wallet picker, this month's income and spending for the chosen wallet, and All/Expense/Income/Transfer tabs. The count and net total above the list is a slim line instead of another card, the list is one centred column on desktop, and rows no longer repeat the date when grouped by day.
+- The Select button has a new list-checks icon, and shows an X while selecting.
+
+### Fixed
+- Swiping rows to Share/Delete was too sensitive: scrolling could drag rows open. A swipe now only starts after a clearly sideways movement, snaps open past about half the action width or on a quick flick, and an open row stays open unless dragged back a fair way.
+
 ## [0.24.4] - 2026-10-24
 
 ### Changed
