@@ -19,6 +19,7 @@ export type NavBarLink = { href: string; label: string; icon: React.ReactNode };
 // maintained mock.
 export default function BottomNavBar({
   config,
+  styleId,
   links,
   pathname,
   showAdd = false,
@@ -27,6 +28,8 @@ export default function BottomNavBar({
   activeHref,
 }: {
   config: NavBarStyleConfig;
+  /** "modern" marks the Modern design's default bar so globals.css can restyle it flat and full-width. */
+  styleId?: string;
   links: NavBarLink[];
   pathname: string;
   showAdd?: boolean;
@@ -68,10 +71,11 @@ export default function BottomNavBar({
                 : "border border-line bg-surface shadow-soft"; // solid, twoTone (tint layered on top separately)
 
   return (
-    <div className={`${preview ? "relative" : "fixed inset-x-3 bottom-3 z-20"} flex items-center gap-2 ${preview ? "" : "sm:hidden"}`}>
+    <div data-bottom-nav={preview ? undefined : styleId} className={`${preview ? "relative" : "fixed inset-x-3 bottom-3 z-20"} flex items-center gap-2 ${preview ? "" : "sm:hidden"}`}>
       {config.attach === "floating" && (
         <div
           aria-hidden="true"
+          data-nav-logo
           className={`flex shrink-0 items-center justify-center rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] shadow-soft backdrop-blur-xl ${
             preview ? "h-8 w-8" : "h-[46px] w-[46px]"
           }`}
@@ -117,6 +121,7 @@ export default function BottomNavBar({
           onClick={onAddClick}
           aria-label="Add transaction"
           disabled={preview}
+          data-nav-fab
           className={`flex shrink-0 items-center justify-center rounded-full border border-[var(--fab-glass-border)] bg-[image:var(--fab-glass-bg)] text-white shadow-[var(--shadow-soft),var(--fab-glass-shadow)] backdrop-blur-xl transition hover:brightness-110 ${
             preview ? "h-8 w-8" : "h-[46px] w-[46px]"
           }`}

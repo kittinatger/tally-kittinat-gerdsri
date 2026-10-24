@@ -106,3 +106,16 @@ export const NAV_BAR_STYLES: Record<NavBarStyleId, NavBarStyleConfig> = {
   twoTone: { attach: "attached", background: "twoTone", shape: "rounded", indicator: "color", labels: "all", cta: "external", accent: "navy" },
   softColor: { attach: "attached", background: "solid", shape: "rounded", indicator: "softChip", labels: "all", cta: "external", accent: "navy" },
 };
+
+// What the default "floating" style renders as under the Modern design: a
+// flat, full-width bar attached to the bottom edge with every label shown.
+// Anyone who explicitly picked a different style keeps it in both designs.
+export const MODERN_DEFAULT_NAV_BAR: NavBarStyleConfig = {
+  attach: "attached",
+  background: "solid",
+  shape: "rounded",
+  indicator: "color",
+  labels: "all",
+  cta: "external",
+  accent: "navy",
+};

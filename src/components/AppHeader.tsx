@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import { ListIcon, AnalyticsIcon, GearIcon, PlusIcon, MembershipCardIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 import { useNavStyle } from "@/lib/nav-style-context";
-import { NAV_BAR_STYLES } from "@/lib/nav-bar-styles";
+import { NAV_BAR_STYLES, MODERN_DEFAULT_NAV_BAR } from "@/lib/nav-bar-styles";
+import { useDesign } from "@/lib/use-design";
 import BottomNavBar from "./BottomNavBar";
 import NotificationBell from "./NotificationBell";
 
@@ -34,6 +35,8 @@ export function BottomNav({
 }) {
   const t = useT();
   const navStyleId = useNavStyle();
+  const design = useDesign();
+  const modernDefault = design === "modern" && navStyleId === "floating";
   const bottomNavLinks = [
     { href: "/", label: t("nav.activities"), icon: <ListIcon className="h-5 w-5 shrink-0" /> },
     { href: "/analytics", label: t("nav.analytics"), icon: <AnalyticsIcon className="h-5 w-5 shrink-0" /> },
@@ -43,7 +46,8 @@ export function BottomNav({
 
   return (
     <BottomNavBar
-      config={NAV_BAR_STYLES[navStyleId]}
+      config={modernDefault ? MODERN_DEFAULT_NAV_BAR : NAV_BAR_STYLES[navStyleId]}
+      styleId={modernDefault ? "modern" : navStyleId}
       links={bottomNavLinks}
       pathname={pathname}
       showAdd={showAdd}
@@ -64,20 +68,21 @@ export default function AppHeader({ onAddClick }: { onAddClick?: () => void }) {
 
   return (
     <>
-      <header className="sticky top-3 z-10 hidden items-center justify-between gap-2 rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] px-3 py-2 shadow-soft backdrop-blur-xl sm:flex sm:gap-3 sm:px-5 sm:py-2.5">
+      <header data-app-header className="sticky top-3 z-10 hidden items-center justify-between gap-2 rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] px-3 py-2 shadow-soft backdrop-blur-xl sm:flex sm:gap-3 sm:px-5 sm:py-2.5">
         <div className="flex shrink-0 items-center gap-2">
           <img src="/favicon-light.svg" alt="Tally" className="h-8 w-8 shrink-0 dark:hidden" />
           <img src="/favicon-dark.svg" alt="Tally" className="hidden h-8 w-8 shrink-0 dark:block" />
           <h1 className="hidden font-display text-lg text-foreground min-[420px]:block">Tally</h1>
         </div>
 
-        <nav className="hidden items-center gap-1 rounded-full bg-bg-soft p-1 sm:flex">
+        <nav data-app-nav className="hidden items-center gap-1 rounded-full bg-bg-soft p-1 sm:flex">
           {navLinks.map((link) => {
             const active = pathname === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
+                data-active={active}
                 className={`rounded-full px-2.5 py-1 text-xs font-semibold transition sm:px-3.5 sm:py-1.5 sm:text-sm ${
                   active ? "bg-surface text-foreground shadow-sm" : "text-ink-soft hover:text-foreground"
                 }`}
@@ -93,6 +98,7 @@ export default function AppHeader({ onAddClick }: { onAddClick?: () => void }) {
           {onAddClick && (
             <button
               onClick={onAddClick}
+              data-app-add
               className="hidden items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97] hover:-translate-y-0.5 sm:flex"
             >
               <AddIcon />

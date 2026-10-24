@@ -30,7 +30,7 @@ export default function SegmentedControl<T extends string>({
   size?: "default" | "compact";
 }) {
   return (
-    <div className="flex gap-1 rounded-full bg-bg-soft p-1">
+    <div data-segmented className="flex gap-1 rounded-full bg-bg-soft p-1">
       {options.map((opt) => (
         <button
           key={opt.value}

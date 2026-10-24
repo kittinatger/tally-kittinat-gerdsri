@@ -195,6 +195,110 @@ h1, h2, h3 {
 :root[data-design="modern"] body {
   font-feature-settings: "cv11", "ss01";
 }
+
+/* ── Modern: app shell ─────────────────────────────────────────────── */
+
+/* Top bar: a flat, full-width strip with a hairline instead of a floating
+   frosted pill. */
+:root[data-design="modern"] [data-app-header] {
+  top: 0;
+  margin-top: -0.75rem;
+  padding-top: 0.75rem;
+  border-radius: 0;
+  border-width: 0 0 1px 0;
+  border-color: var(--line);
+  background: var(--background);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root[data-design="modern"] [data-app-nav] {
+  background: transparent;
+  padding: 0;
+  gap: 2px;
+}
+:root[data-design="modern"] [data-app-nav] a {
+  border-radius: 8px;
+  box-shadow: none;
+}
+:root[data-design="modern"] [data-app-nav] a[data-active="true"] {
+  background: var(--bg-soft);
+}
+:root[data-design="modern"] [data-app-add] {
+  border-radius: 8px;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Bottom bar: flush to the screen edge, hairline on top, add button as a
+   rounded-square FAB sitting above it at the right. */
+:root[data-design="modern"] [data-bottom-nav="modern"] {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  gap: 0;
+  border-top: 1px solid var(--line);
+  background: var(--background);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+:root[data-design="modern"] [data-bottom-nav="modern"] > nav {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 6px 8px;
+}
+:root[data-design="modern"] [data-bottom-nav="modern"] > nav a {
+  border-radius: 10px;
+  gap: 2px;
+  padding-block: 6px;
+}
+:root[data-design="modern"] [data-bottom-nav="modern"] > [data-nav-fab] {
+  position: absolute;
+  right: 16px;
+  bottom: calc(100% + 14px);
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--navy);
+  color: var(--background);
+  box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.45);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Dialogs: solid panel, small radius, light scrim. */
+:root[data-design="modern"] [data-modal-backdrop] {
+  background: rgba(9, 9, 11, 0.45);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root[data-design="modern"] [data-modal-panel] {
+  border-radius: 16px;
+  background: var(--surface);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+@media (max-width: 639px) {
+  :root[data-design="modern"] [data-modal-panel] {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+}
+
+/* Controls: rounded squares instead of capsules. Switches, segmented
+   tracks and anything tagged data-keep-round keep their shape. */
+:root[data-design="modern"] button.rounded-full:not([role="switch"]):not([data-keep-round]),
+:root[data-design="modern"] a.rounded-full:not([data-keep-round]) {
+  border-radius: 10px;
+}
+:root[data-design="modern"] [data-segmented] {
+  border-radius: 12px;
+}
+:root[data-design="modern"] [data-segmented] > button {
+  border-radius: 9px;
+}
 :root[data-design="modern"] [class*="font-display"] {
   font-weight: 600;
   letter-spacing: -0.02em;
