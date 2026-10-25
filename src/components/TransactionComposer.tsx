@@ -186,6 +186,39 @@ function applyKey(expr: string, key: string): string {
   return expr + digits;
 }
 
+// Posts a scan or recording for extraction. A dropped connection, or a
+// gateway error page from the hosting platform (not one of our own JSON
+// errors, which already mean both models were tried), gets one automatic
+// retry — a flaky phone connection shouldn't cost the user a re-upload.
+async function postForExtraction(url: string, body: FormData): Promise<Response> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const res = await fetch(url, { method: "POST", body, signal: AbortSignal.timeout(AI_FETCH_TIMEOUT_MS) });
+      const isJson = (res.headers.get("content-type") ?? "").includes("application/json");
+      if (attempt === 0 && res.status >= 500 && !isJson) continue;
+      return res;
+    } catch (err) {
+      if (attempt === 0 && err instanceof TypeError) continue;
+      throw err;
+    }
+  }
+}
+
+// Seconds spent reading so far, so a slower scan visibly isn't stuck.
+function BusyElapsed() {
+  const [seconds, setSeconds] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setSeconds((n) => n + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+  if (seconds < 3) return null;
+  return (
+    <p className="text-xs text-surface-foreground-soft">
+      {seconds}s{seconds >= 10 ? " · taking longer than usual, trying a faster model too" : ""}
+    </p>
+  );
+}
+
 function blankValues(type: TransactionType, walletId: number | null, date = todayInputValue()): ExpenseFormValues {
   return { type, direction: "out", date, amount: "", merchant: "", category: "Other", notes: "", tags: [], walletId, locationName: "", latitude: null, longitude: null };
 }
@@ -388,7 +421,7 @@ export default function TransactionComposer({
     formData.append("image", await downscaleImage(files[index]));
     formData.append("fallbackDate", todayInputValue());
     try {
-      const res = await fetch("/api/extract-receipt", { method: "POST", body: formData, signal: AbortSignal.timeout(AI_FETCH_TIMEOUT_MS) });
+      const res = await postForExtraction("/api/extract-receipt", formData);
       const data = await res.json();
       if (!res.ok) {
         const message = typeof data.error === "string" ? data.error : "Could not read that document.";
@@ -439,7 +472,7 @@ export default function TransactionComposer({
     formData.append("audio", blob, `recording.${mimeType.split("/")[1]?.split(";")[0] ?? "webm"}`);
     formData.append("fallbackDate", todayInputValue());
     try {
-      const res = await fetch("/api/extract-voice", { method: "POST", body: formData, signal: AbortSignal.timeout(AI_FETCH_TIMEOUT_MS) });
+      const res = await postForExtraction("/api/extract-voice", formData);
       const data = await res.json();
       if (!res.ok) {
         const message = typeof data.error === "string" ? data.error : "Could not understand that recording.";
@@ -785,6 +818,7 @@ export default function TransactionComposer({
                 : "Reading…"
               : "Listening…"}
           </p>
+          <BusyElapsed key={capture.kind === "scan" ? `scan-${capture.index ?? 0}` : "voice"} />
         </div>
       )}
       {capture.status === "error" && (

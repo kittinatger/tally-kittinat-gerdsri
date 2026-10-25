@@ -13,8 +13,17 @@
 
 import { loadImageElement } from "@/lib/load-image-element";
 
-const MAX_DIMENSION = 1800;
-const JPEG_QUALITY = 0.82;
+// Gemini reads an image in 768px tiles, so pixels past what's needed to
+// read receipt text only add upload time and processing time. A total
+// pixel budget (rather than just a long-side cap) keeps a tall, narrow
+// receipt sharp while still shrinking a big square photo: 1.6MP is about
+// 1460x1100, or 730x2190 for a long receipt.
+const MAX_PIXELS = 1_600_000;
+const MAX_DIMENSION = 2048;
+const JPEG_QUALITY = 0.8;
+// Even a photo already within the budget is re-encoded if it's heavier
+// than this, since upload time on a phone connection is most of the wait.
+const REENCODE_ABOVE_BYTES = 700 * 1024;
 
 function isHeicLike(file: File): boolean {
   return /hei[cf]/i.test(file.type) || /\.hei[cf]$/i.test(file.name);
@@ -29,7 +38,12 @@ export async function downscaleImage(file: File): Promise<File> {
     // come back sideways otherwise, relative to how every <img> (and every
     // viewer's Photos app) already displays it.
     const img = await loadImageElement(file);
-    const scale = Math.min(1, MAX_DIMENSION / Math.max(img.naturalWidth, img.naturalHeight));
+    const scale = Math.min(
+      1,
+      MAX_DIMENSION / Math.max(img.naturalWidth, img.naturalHeight),
+      Math.sqrt(MAX_PIXELS / (img.naturalWidth * img.naturalHeight)),
+    );
+    if (scale === 1 && !isHeicLike(file) && file.size <= REENCODE_ABOVE_BYTES) return file;
     const width = Math.round(img.naturalWidth * scale);
     const height = Math.round(img.naturalHeight * scale);
 

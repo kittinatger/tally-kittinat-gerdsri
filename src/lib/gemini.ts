@@ -116,13 +116,86 @@ export async function withGeminiFallback<T>(
   }
 }
 
+// How long MODEL gets on its own before LITE_MODEL is started alongside it
+// (see withGeminiHedge). Most scans finish well inside this; the slow tail
+// used to wait out MODEL's full 45s timeout before falling back at all.
+const HEDGE_AFTER_MS = 8_000;
+
+// Errors worth trying the other model for rather than failing outright:
+// overload/rate limits, Google's transient 500s, timeouts, and a reply we
+// couldn't use (empty or not valid JSON).
+function isWorthTheOtherModel(err: unknown): boolean {
+  if (isRetryableGeminiError(err) || isGeminiTimeout(err)) return true;
+  if (err instanceof ApiError) return err.status >= 500;
+  return err instanceof Error && /empty response|not valid json|unexpected response shape/i.test(err.message);
+}
+
+// Races MODEL against LITE_MODEL for the one-shot extractions (receipt scans,
+// voice entries): MODEL starts first; if it hasn't answered within
+// HEDGE_AFTER_MS — or fails with something the other model might not hit —
+// LITE_MODEL starts too, and whichever returns a usable result first wins
+// (the other request is aborted). Only a failure of both (or a non-transient
+// error like bad input/auth) reaches the user, as MODEL's error. Usually one
+// call; at most two running at once, never sequential 45s waits.
+export async function withGeminiHedge<T>(
+  run: (model: string, timeoutMs: number, signal: AbortSignal) => Promise<T>,
+): Promise<{ result: T; model: string }> {
+  const primary = new AbortController();
+  const backup = new AbortController();
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    let backupStarted = false;
+    let pending = 1;
+    let primaryError: unknown = null;
+
+    const finish = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(hedgeTimer);
+      fn();
+    };
+    const failed = () => {
+      pending -= 1;
+      if (pending === 0) finish(() => reject(primaryError));
+    };
+    const startBackup = () => {
+      if (backupStarted || settled) return;
+      backupStarted = true;
+      pending += 1;
+      run(LITE_MODEL, LITE_REQUEST_TIMEOUT_MS, backup.signal).then(
+        (result) =>
+          finish(() => {
+            primary.abort();
+            resolve({ result, model: LITE_MODEL });
+          }),
+        () => failed(),
+      );
+    };
+
+    const hedgeTimer = setTimeout(startBackup, HEDGE_AFTER_MS);
+    withGeminiRetry(() => run(MODEL, REQUEST_TIMEOUT_MS, primary.signal), 2).then(
+      (result) =>
+        finish(() => {
+          backup.abort();
+          resolve({ result, model: MODEL });
+        }),
+      (err) => {
+        primaryError = err;
+        if (isWorthTheOtherModel(err)) startBackup();
+        else if (!backupStarted) return finish(() => reject(err));
+        failed();
+      },
+    );
+  });
+}
+
 // Reading a receipt or a short voice memo is extraction, not reasoning, so
-// MODEL is asked to keep its thinking short — the default thinking pass is
-// what pushed scans past the deadline. Lite models don't think by default, so
-// this only applies to MODEL. If the API ever rejects the setting (a model
-// alias moved to a family that doesn't accept it), it's dropped for the rest
-// of this server instance's life rather than failing every scan.
-const EXTRACTION_THINKING_BUDGET = 512;
+// MODEL is asked not to think at all — the thinking pass was most of a scan's
+// time (and what pushed scans past the deadline). Lite models don't think by
+// default, so this only applies to MODEL. If the API ever rejects the setting
+// (a model alias moved to a family that doesn't accept it), it's dropped for
+// the rest of this server instance's life rather than failing every scan.
+const EXTRACTION_THINKING_BUDGET = 0;
 let thinkingBudgetAccepted = true;
 
 type GenerateParams = Parameters<GoogleGenAI["models"]["generateContent"]>[0];
@@ -333,6 +406,10 @@ function parseExtractions(
   return results;
 }
 
+// The most recently used merchants are plenty for spelling-matching; the
+// full list (up to 200) made every prompt longer and slower for no gain.
+const KNOWN_MERCHANTS_IN_PROMPT = 80;
+
 // Server time zone won't match the user's — used only when the client didn't
 // supply its own local "today" as fallbackDate.
 function serverTodayIso(): string {
@@ -350,31 +427,27 @@ export async function extractTransaction(
   const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
   const ai = getClient();
 
-  const { result: text, model } = await withGeminiFallback(async (model, timeoutMs) => {
+  const prompt = buildPrompt(categories, walletNames, knownMerchants.slice(0, KNOWN_MERCHANTS_IN_PROMPT));
+  // Parsing happens inside the race, so a garbled reply from one model lets
+  // the other one win instead of failing the scan.
+  const { result: extraction, model } = await withGeminiHedge(async (model, timeoutMs, signal) => {
     const response = await generateExtraction(ai, {
       model,
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { text: buildPrompt(categories, walletNames, knownMerchants) },
-            { inlineData: { mimeType, data: imageBase64 } },
-          ],
-        },
-      ],
+      contents: [{ role: "user", parts: [{ text: prompt }, { inlineData: { mimeType, data: imageBase64 } }] }],
       config: {
         responseMimeType: "application/json",
         responseSchema: responseSchema(allCategories, false, walletNames),
         httpOptions: { timeout: timeoutMs },
+        abortSignal: signal,
       },
     });
     if (!response.text) {
       throw new Error("The vision model returned an empty response.");
     }
-    return response.text;
+    return parseExtraction(response.text, categories, walletNames, fallbackDate);
   });
 
-  return { extraction: parseExtraction(text, categories, walletNames, fallbackDate), model };
+  return { extraction, model };
 }
 
 // Voice entry supports logging several transactions in one recording (e.g.
@@ -391,29 +464,23 @@ export async function extractTransactionsFromAudio(
   const allCategories = [...new Set([...categories.expense, ...categories.income, ...categories.transfer])];
   const ai = getClient();
 
-  const { result: text, model } = await withGeminiFallback(async (model, timeoutMs) => {
+  const prompt = buildVoicePrompt(categories, walletNames, knownMerchants.slice(0, KNOWN_MERCHANTS_IN_PROMPT));
+  const { result: extractions, model } = await withGeminiHedge(async (model, timeoutMs, signal) => {
     const response = await generateExtraction(ai, {
       model,
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { text: buildVoicePrompt(categories, walletNames, knownMerchants) },
-            { inlineData: { mimeType, data: audioBase64 } },
-          ],
-        },
-      ],
+      contents: [{ role: "user", parts: [{ text: prompt }, { inlineData: { mimeType, data: audioBase64 } }] }],
       config: {
         responseMimeType: "application/json",
         responseSchema: arrayResponseSchema(allCategories, walletNames),
         httpOptions: { timeout: timeoutMs },
+        abortSignal: signal,
       },
     });
     if (!response.text) {
       throw new Error("The model returned an empty response. Try recording again with a clearer description.");
     }
-    return response.text;
+    return parseExtractions(response.text, categories, walletNames, fallbackDate);
   });
 
-  return { extractions: parseExtractions(text, categories, walletNames, fallbackDate), model };
+  return { extractions, model };
 }

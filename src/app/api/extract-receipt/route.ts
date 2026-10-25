@@ -17,17 +17,31 @@ import { MAX_GEMINI_CALLS_PER_DAY } from "@/lib/gemini-usage";
 const MAX_BYTES = 8 * 1024 * 1024; // 8MB
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 
-// Worst case is one MODEL attempt (REQUEST_TIMEOUT_MS, 45s) plus one
-// LITE_MODEL fallback (30s) — see withGeminiFallback in gemini.ts. This has
-// to stay above that, or the platform kills the function mid-fallback and
-// the client gets no response at all instead of a clean error.
+// The model race in gemini.ts (withGeminiHedge) runs MODEL (45s cap, up to
+// two attempts on a rate limit) and LITE_MODEL (30s cap) side by side, so
+// it settles well inside this; it has to stay above that worst case, or the
+// platform kills the function mid-request and the client gets no response
+// at all instead of a clean error.
 export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
   const userId = await getUserId();
-  const blocked = await guestBlockedResponse(userId);
+  // Everything the prompt needs is looked up while the upload is still
+  // being read, rather than one round trip after another.
+  const contextPromise = Promise.all([
+    listCategories(userId),
+    getCurrency(userId),
+    getAutoConvertCurrency(userId),
+    listWallets(userId),
+    listDistinctMerchants(userId),
+  ]);
+  contextPromise.catch(() => {}); // awaited below; avoids an unhandled rejection on early returns
+  const [blocked, recentCalls, formData] = await Promise.all([
+    guestBlockedResponse(userId),
+    countRecentGeminiUsage(userId, 24),
+    req.formData().catch(() => null),
+  ]);
   if (blocked) return blocked;
-  const formData = await req.formData().catch(() => null);
   const file = formData?.get("image");
 
   if (!file || !(file instanceof File)) {
@@ -42,7 +56,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Image is too large (max 8MB)." }, { status: 400 });
   }
 
-  const recentCalls = await countRecentGeminiUsage(userId, 24);
   if (recentCalls >= MAX_GEMINI_CALLS_PER_DAY) {
     return NextResponse.json({ error: "Daily scan limit reached. Try again tomorrow." }, { status: 429 });
   }
@@ -58,13 +71,9 @@ export async function POST(req: NextRequest) {
     typeof fallbackDateRaw === "string" && /^\d{4}-\d{2}-\d{2}$/.test(fallbackDateRaw) ? fallbackDateRaw : undefined;
 
   try {
-    await recordGeminiUsage(userId);
-    const [categoryRows, defaultCurrency, autoConvertEnabled, walletRows, knownMerchants] = await Promise.all([
-      listCategories(userId),
-      getCurrency(userId),
-      getAutoConvertCurrency(userId),
-      listWallets(userId),
-      listDistinctMerchants(userId),
+    const [[categoryRows, defaultCurrency, autoConvertEnabled, walletRows, knownMerchants]] = await Promise.all([
+      contextPromise,
+      recordGeminiUsage(userId),
     ]);
     const categories = {
       expense: categoryRows.filter((c) => c.type === "expense").map((c) => c.name),
