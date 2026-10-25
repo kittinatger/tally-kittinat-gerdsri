@@ -5,6 +5,24 @@ export type Release = { version: string; date: string; sections: { heading: stri
 
 export const RELEASES: Release[] = [
   {
+    version: "0.24.7",
+    date: "2026-10-25",
+    sections: [
+      {
+        heading: "Added",
+        items: [
+          "Pull to refresh on the Notifications page and on transaction details.",
+        ],
+      },
+      {
+        heading: "Fixed",
+        items: [
+          "Pull to refresh works on iPhone again. Since the bounce at the top of the page was turned off, iOS could take over the pull and cancel it, so it never finished; the pull now holds the gesture, resets cleanly if it is interrupted, and works when iOS reports a tiny scroll offset at the top.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.24.6",
     date: "2026-10-25",
     sections: [

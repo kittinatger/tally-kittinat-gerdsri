@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.24.7] - 2026-10-25
+
+### Added
+- Pull to refresh on the Notifications page and on transaction details.
+
+### Fixed
+- Pull to refresh works on iPhone again. Since the bounce at the top of the page was turned off, iOS could take over the pull and cancel it, so it never finished; the pull now holds the gesture, resets cleanly if it is interrupted, and works when iOS reports a tiny scroll offset at the top.
+
 ## [0.24.6] - 2026-10-25
 
 ### Added
