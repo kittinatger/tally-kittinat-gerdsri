@@ -1,7 +1,7 @@
 "use client";
 
-import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
-import { cardBackgroundStyle, cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
+import { dotClasses, colorDotStyle } from "@/lib/category-styles";
+import { cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
 import { formatCurrency } from "@/lib/format";
 import { useT } from "@/lib/language-context";
 import { KIND_FIELDS, type PassKind } from "@/lib/membership-templates";
@@ -9,28 +9,28 @@ import type { WalletOption } from "@/types/wallet";
 import type { MembershipCard } from "@/types/membership";
 import { SignatureSvg } from "./SignaturePad";
 
-// The backs shown by FlipCard on a card's / pass's detail view. Both reuse
-// the front's own colour or background (darkened) so it reads as the same
-// physical object turned over.
+// The backs shown by FlipCard on a card's / pass's detail view. Both use
+// the card's plain colour (darkened) — never the front's pattern, photo or
+// gradient — so the back stays a calm, readable surface.
 
 function Shell({
   color,
-  background,
   textColor,
   className = "",
   children,
 }: {
   color: string;
-  background: CardBackground | null;
+  /** Accepted for call-site symmetry with the front; the back ignores it. */
+  background?: CardBackground | null;
   textColor: string | null;
   className?: string;
   children: React.ReactNode;
 }) {
-  const fg = cardForegroundFor(textColor, background, color);
+  const fg = cardForegroundFor(textColor, null, color);
   return (
     <div
-      className={`relative h-full w-full overflow-hidden rounded-2xl ${background ? "" : heroGradientClasses(color)} ${className}`}
-      style={{ color: fg.full, ...(background ? cardBackgroundStyle(background) : colorHeroStyle(color)) }}
+      className={`relative h-full w-full overflow-hidden rounded-2xl ${dotClasses(color)} ${className}`}
+      style={{ color: fg.full, ...colorDotStyle(color) }}
     >
       {/* Darken the face so it reads as the back, not a second front. */}
       <div className="pointer-events-none absolute inset-0 bg-black/25" />
