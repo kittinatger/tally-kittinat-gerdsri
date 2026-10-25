@@ -4,8 +4,6 @@ import { useState } from "react";
 import { EditIcon, TrashIcon } from "@/lib/icons";
 import { useT } from "@/lib/language-context";
 import PassShape from "./PassShape";
-import FlipCard from "./FlipCard";
-import { PassBack } from "./CardBack";
 import { membershipImageUrl } from "@/lib/membership-card-mapper";
 import type { MembershipCard } from "@/types/membership";
 
@@ -36,11 +34,7 @@ export default function MembershipCardDetail({
   }
   return (
     <div>
-      <FlipCard
-        label="pass"
-        edgeColor={card.color}
-        back={<PassBack card={card} />}
-        front={
+      {/* No flip yet for passes — PassBack isn't polished enough to show. */}
       <PassShape
         name={card.name}
         color={card.color}
@@ -61,8 +55,6 @@ export default function MembershipCardDetail({
         showName={card.showName}
         hiddenFieldLabels={card.hiddenFieldLabels}
         showCodeText={card.showCodeText}
-      />
-        }
       />
 
       {card.notes && (

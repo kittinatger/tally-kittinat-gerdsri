@@ -171,7 +171,12 @@ export default function PassShape({
         )}
       </div>
 
-      {bannerUrl && (
+      {/* The grid/stack preview only has room for the header and the code —
+       * a banner photo, fields and notes are real content for the detail
+       * view, but forcing all of it into the same small fixed box as every
+       * other card tile either overflowed it or clipped mid-image/mid-row,
+       * so the small preview skips straight to the code instead. */}
+      {codeSize !== "small" && bannerUrl && (
         // Full-bleed, edge to edge — real Wallet passes (airline loyalty
         // cards especially) run the hero photo flush to both sides with no
         // inset or corner rounding of its own, unlike the rounded/padded
@@ -186,7 +191,7 @@ export default function PassShape({
         <img src={bannerUrl} alt="" className="-mx-4 mt-3 h-auto max-h-56 w-[calc(100%+2rem)] max-w-none object-contain" />
       )}
 
-      {primaryFields.length > 0 && (
+      {codeSize !== "small" && primaryFields.length > 0 && (
         <div className="mt-3">
           {primaryFields.map(({ key, label, value, labelHidden }) => (
             <div key={key}>
@@ -201,7 +206,7 @@ export default function PassShape({
         </div>
       )}
 
-      {hasStub ? (
+      {codeSize !== "small" && (hasStub ? (
         stubFields.length > 0 && (
           <div className="relative mt-3 border-t border-dashed pt-3" style={{ borderColor: fg.a40 }}>
             <span className="absolute -left-2 -top-2 h-3 w-3 rounded-full bg-black/15" />
@@ -238,15 +243,15 @@ export default function PassShape({
             ))}
           </div>
         )
-      )}
+      ))}
 
-      {notes && notes.trim() && (
+      {codeSize !== "small" && notes && notes.trim() && (
         <p className="mt-3 line-clamp-2 text-xs" style={{ color: fg.a70 }}>
           {notes.trim()}
         </p>
       )}
 
-      <div className="mt-3">
+      <div className={codeSize === "small" ? "mt-auto" : "mt-3"}>
         <MembershipCardCode value={codeValue} format={codeFormat} size={codeSize} showText={showCodeText} />
       </div>
     </div>
