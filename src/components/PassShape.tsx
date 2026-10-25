@@ -115,7 +115,16 @@ export default function PassShape({
     // around a small code. Now the code area is nested inside the same
     // card, right after whatever fields/notes the template has.
     <div
-      className={`w-full overflow-hidden rounded-2xl p-4 transition-colors duration-300 ${background ? "" : heroGradientClasses(color)}`}
+      className={`w-full overflow-hidden rounded-2xl p-4 transition-colors duration-300 ${
+        // The grid/stack preview (codeSize "small") sits alongside
+        // WalletCardShape/AccountCardShape/FolderShape, which all share this
+        // same aspect-ratio box — without it here too, a pass with more
+        // fields than its neighbors stretched the whole grid row, inflating
+        // every percentage-sized bit of FolderShape (pocket, peeking cards)
+        // well past its intended size. The full detail view (codeSize
+        // "large") keeps growing with its content instead.
+        codeSize === "small" ? "flex aspect-[1.586/1] min-h-[190px] flex-col" : ""
+      } ${background ? "" : heroGradientClasses(color)}`}
       style={{ color: fg.full, ...(background ? cardBackgroundStyle(background) : colorHeroStyle(color)) }}
     >
       <div className="flex items-center gap-2.5">
