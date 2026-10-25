@@ -171,25 +171,29 @@ export default function PassShape({
         )}
       </div>
 
-      {/* The grid/stack preview only has room for the header and the code —
-       * a banner photo, fields and notes are real content for the detail
-       * view, but forcing all of it into the same small fixed box as every
-       * other card tile either overflowed it or clipped mid-image/mid-row,
-       * so the small preview skips straight to the code instead. */}
-      {codeSize !== "small" && bannerUrl && (
-        // Full-bleed, edge to edge — real Wallet passes (airline loyalty
-        // cards especially) run the hero photo flush to both sides with no
-        // inset or corner rounding of its own, unlike the rounded/padded
-        // thumbnail this used to be. -mx-4 cancels the card's own p-4 so
-        // the image reaches the same edges the card outline does. Sized to
-        // the banner's own aspect ratio (fixed width, auto height) rather
-        // than forced into a fixed 16:9 box — the crop tool this comes from
-        // already lets the user pick whatever shape they want, same as the
-        // logo; a max-height keeps a very tall freeform crop from taking
-        // over the whole card.
-        // eslint-disable-next-line @next/next/no-img-element -- user-uploaded, not a build-time asset
-        <img src={bannerUrl} alt="" className="-mx-4 mt-3 h-auto max-h-56 w-[calc(100%+2rem)] max-w-none object-contain" />
-      )}
+      {bannerUrl &&
+        (codeSize === "small" ? (
+          // The grid/stack preview still shows the banner — just cropped to
+          // fill whatever room is left in the fixed tile (flex-1 + min-h-0,
+          // object-cover) instead of the detail view's own intrinsic
+          // height, which routinely ran past the ~190px every other card
+          // tile uses.
+          // eslint-disable-next-line @next/next/no-img-element -- user-uploaded, not a build-time asset
+          <img src={bannerUrl} alt="" className="-mx-4 mt-2 w-[calc(100%+2rem)] max-w-none flex-1 min-h-0 object-cover" />
+        ) : (
+          // Full-bleed, edge to edge — real Wallet passes (airline loyalty
+          // cards especially) run the hero photo flush to both sides with no
+          // inset or corner rounding of its own, unlike the rounded/padded
+          // thumbnail this used to be. -mx-4 cancels the card's own p-4 so
+          // the image reaches the same edges the card outline does. Sized to
+          // the banner's own aspect ratio (fixed width, auto height) rather
+          // than forced into a fixed 16:9 box — the crop tool this comes from
+          // already lets the user pick whatever shape they want, same as the
+          // logo; a max-height keeps a very tall freeform crop from taking
+          // over the whole card.
+          // eslint-disable-next-line @next/next/no-img-element -- user-uploaded, not a build-time asset
+          <img src={bannerUrl} alt="" className="-mx-4 mt-3 h-auto max-h-56 w-[calc(100%+2rem)] max-w-none object-contain" />
+        ))}
 
       {codeSize !== "small" && primaryFields.length > 0 && (
         <div className="mt-3">
