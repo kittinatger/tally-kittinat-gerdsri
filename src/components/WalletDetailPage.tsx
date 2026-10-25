@@ -4,7 +4,7 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArchiveIcon, CaretLeftIcon, CopySimpleIcon, FolderSimpleIcon, PaintBrushIcon, PencilSimpleIcon, PlusIcon, UsersIcon } from "@phosphor-icons/react/dist/ssr";
+import { ArchiveIcon, CaretLeftIcon, CopySimpleIcon, FolderSimpleIcon, PencilSimpleIcon, PlusIcon, UsersIcon } from "@phosphor-icons/react/dist/ssr";
 import type { WalletOption } from "@/types/wallet";
 import type { CardFolder } from "@/types/card-folder";
 import { CurrencyProvider } from "@/lib/currency-context";
@@ -135,10 +135,6 @@ export default function WalletDetailPage({
                     <Link href={`/wallet/${wallet.id}/edit`} className={chip}>
                       <PencilSimpleIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
                       {t("common.edit")}
-                    </Link>
-                    <Link href={`/wallet/${wallet.id}/edit?tab=back`} className={chip}>
-                      <PaintBrushIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
-                      Back &amp; signature
                     </Link>
                     <button type="button" onClick={duplicate} disabled={duplicating} className={`${chip} disabled:opacity-60`}>
                       <CopySimpleIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
