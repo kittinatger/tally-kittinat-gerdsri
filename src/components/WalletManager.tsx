@@ -1,6 +1,7 @@
 "use client";
 
 import { describeFetchError } from "@/lib/fetch-error";
+import { duplicateWallet } from "@/lib/wallet-duplicate";
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { badgeClasses, colorDotStyle } from "@/lib/category-styles";
@@ -18,7 +19,11 @@ import FilterDropdown from "./FilterDropdown";
 import OverflowMenu, { type OverflowMenuItem } from "./OverflowMenu";
 import { useT } from "@/lib/language-context";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
-import { ExportIcon as PhExportIcon, WalletIcon as PhWalletIcon, ArrowsLeftRightIcon as PhArrowsLeftRightIcon } from "@phosphor-icons/react/dist/ssr";
+import { CopySimpleIcon as PhCopySimpleIcon, ExportIcon as PhExportIcon, WalletIcon as PhWalletIcon, ArrowsLeftRightIcon as PhArrowsLeftRightIcon } from "@phosphor-icons/react/dist/ssr";
+
+function CopyIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return <PhCopySimpleIcon weight="fill" aria-hidden="true" className={className} />;
+}
 
 function ShareIcon() {
   return <PhExportIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
@@ -114,6 +119,21 @@ export default function WalletManager({
     }
   }
 
+  // Duplicate: the same look, details, signature, back and folder, balance
+  // starting at zero — then the list refreshes with the copy in it.
+  async function handleDuplicate(w: WalletOption) {
+    setBusyId(w.id);
+    setActionError(null);
+    try {
+      await duplicateWallet(w);
+      router.refresh();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : describeFetchError(err));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   // Adding and editing a wallet happen on their own pages; Cancel and a save
   // come back here.
   const BACK_HERE = encodeURIComponent("/settings?panel=wallets");
@@ -206,6 +226,7 @@ export default function WalletManager({
       items.push({ label: t("wallet.shareWallet"), icon: <ShareIcon />, onClick: () => setSharingWallet(w) });
     }
     items.push({ label: t("common.edit"), icon: <EditIcon className="h-4 w-4" />, onClick: () => openEdit(w) });
+    items.push({ label: "Duplicate", icon: <CopyIcon className="h-4 w-4" />, onClick: () => handleDuplicate(w) });
     items.push({
       label: w.archived ? "Unarchive" : t("wallet.archive"),
       icon: <ArchiveIcon className="h-4 w-4" />,
@@ -344,6 +365,15 @@ export default function WalletManager({
                   className="rounded-full p-2 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
                 >
                   <EditIcon />
+                </button>
+                <button
+                  onClick={() => handleDuplicate(w)}
+                  disabled={busyId === w.id}
+                  aria-label={`Duplicate ${w.name}`}
+                  title="Duplicate"
+                  className="rounded-full p-2 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
+                >
+                  <CopyIcon />
                 </button>
                 <button
                   onClick={() => patchWallet(w.id, { archived: !w.archived })}

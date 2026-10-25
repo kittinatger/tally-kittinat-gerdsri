@@ -4,11 +4,12 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArchiveIcon, CaretLeftIcon, FolderSimpleIcon, PencilSimpleIcon, PlusIcon, UsersIcon } from "@phosphor-icons/react/dist/ssr";
+import { ArchiveIcon, CaretLeftIcon, CopySimpleIcon, FolderSimpleIcon, PencilSimpleIcon, PlusIcon, UsersIcon } from "@phosphor-icons/react/dist/ssr";
 import type { WalletOption } from "@/types/wallet";
 import type { CardFolder } from "@/types/card-folder";
 import { CurrencyProvider } from "@/lib/currency-context";
 import { describeFetchError } from "@/lib/fetch-error";
+import { duplicateWallet } from "@/lib/wallet-duplicate";
 import { useT } from "@/lib/language-context";
 import AccountDetail from "./AccountDetail";
 import AppHeader from "./AppHeader";
@@ -40,6 +41,8 @@ export default function WalletDetailPage({
   const [sharing, setSharing] = useState(false);
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [archiveError, setArchiveError] = useState<string | null>(null);
+  const [duplicating, setDuplicating] = useState(false);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const [folderId, setFolderId] = useState(wallet.folderId);
   const [folderError, setFolderError] = useState<string | null>(null);
   const folder = folders.find((f) => f.id === folderId) ?? null;
@@ -63,6 +66,21 @@ export default function WalletDetailPage({
       router.refresh();
     } catch (err) {
       setArchiveError(describeFetchError(err));
+    }
+  }
+
+  // Makes a copy (same look, details, signature, back and folder; balance
+  // starts at zero) and opens it.
+  async function duplicate() {
+    setDuplicating(true);
+    setDuplicateError(null);
+    try {
+      const id = await duplicateWallet(wallet);
+      router.push(`/wallet/${id}`);
+      router.refresh();
+    } catch (err) {
+      setDuplicateError(err instanceof Error ? err.message : describeFetchError(err));
+      setDuplicating(false);
     }
   }
 
@@ -102,7 +120,7 @@ export default function WalletDetailPage({
           <AccountDetail
             wallet={wallet}
             defaultSignature={defaultSignature}
-            archiveError={archiveError}
+            archiveError={archiveError ?? duplicateError}
             confirmArchive={confirmArchive}
             onCancelArchive={() => setConfirmArchive(false)}
             onArchive={archive}
@@ -118,6 +136,10 @@ export default function WalletDetailPage({
                       <PencilSimpleIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
                       {t("common.edit")}
                     </Link>
+                    <button type="button" onClick={duplicate} disabled={duplicating} className={`${chip} disabled:opacity-60`}>
+                      <CopySimpleIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+                      {duplicating ? "Duplicating…" : "Duplicate"}
+                    </button>
                     <button type="button" onClick={() => setSharing(true)} className={chip}>
                       <UsersIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
                       {t("wallet.shareWallet")}
