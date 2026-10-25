@@ -57,9 +57,13 @@ function useAverageColor(photoDataUrl: string | null): string | null {
   return sampled && sampled.url === photoDataUrl ? sampled.color : null;
 }
 
-/** The back's base colour: a hex string, or the card's palette token when the front is plain. */
-function useBackColor(color: string, background: CardBackground | null | undefined): string {
-  const photo = background && background.pattern === "photo" ? background.photoDataUrl : null;
+/** The back's base colour: a hex string, or the card's palette token when the front is plain.
+ * `skip` drops the photo sampling entirely — used when a custom back design
+ * already has its own colour and this auto one would just be thrown away;
+ * decoding the front's photo onto a canvas on every mount only to discard
+ * it was a real, avoidable cost on the now-common "custom back" path. */
+function useBackColor(color: string, background: CardBackground | null | undefined, skip: boolean): string {
+  const photo = !skip && background && background.pattern === "photo" ? background.photoDataUrl : null;
   const average = useAverageColor(photo);
   if (!background) return color;
   if (background.pattern === "photo") return average ?? DARK_NEUTRAL;
@@ -83,8 +87,8 @@ function Shell({
   className?: string;
   children: React.ReactNode;
 }) {
-  const auto = useBackColor(color, background);
   const custom = Boolean(design?.custom);
+  const auto = useBackColor(color, background, custom);
   if (custom && design) {
     // The user's own back: their colour, pattern or photo, untouched.
     const bg = design.background;

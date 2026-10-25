@@ -3,8 +3,10 @@
 import { useState, type ReactNode } from "react";
 import { ArrowsCounterClockwiseIcon } from "@phosphor-icons/react/dist/ssr";
 
-const SLICES = 9;
-const SLICE_GAP = 0.9;
+// Fewer, wider-spaced slices than a first pass used (9 at 0.9px) — same
+// total depth, half the extra DOM nodes/compositing layers per card.
+const SLICES = 5;
+const SLICE_GAP = 1.6;
 const HALF = ((SLICES - 1) / 2) * SLICE_GAP + 0.5;
 
 // A card with a back: tap/click the card (or the Flip button) to turn it
