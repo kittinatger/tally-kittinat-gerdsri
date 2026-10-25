@@ -494,6 +494,13 @@ export default function WalletModal({
         className={asPage ? "space-y-4 lg:grid lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:items-start lg:gap-x-10 lg:space-y-0" : "space-y-4"}
       >
         <div className={asPage ? "lg:sticky lg:top-24" : ""}>
+        {/* The ambient glow wraps the whole flip scene from OUTSIDE it,
+         * not the front face from inside — nested inside the 3D
+         * (perspective/preserve-3d/backface-visibility) transform, the
+         * compositor clips its blur tight to the card's own edge instead
+         * of letting it spread softly, which reads as a solid ring of
+         * color hugging the card. */}
+        <ColorGlowPreview color={backgroundGlowColor(background, color)}>
         <FlipCard
           flipped={tab === "back"}
           interactive={false}
@@ -525,7 +532,6 @@ export default function WalletModal({
             </div>
           }
           front={
-        <ColorGlowPreview color={backgroundGlowColor(background, color)}>
           <WalletCardShape
             label={name || t("wallet.namePlaceholder")}
             holderName={holderName || null}
@@ -557,9 +563,9 @@ export default function WalletModal({
             showExpiry={showExpiry}
             namePosition={namePosition}
           />
-        </ColorGlowPreview>
           }
         />
+        </ColorGlowPreview>
         </div>
 
         <div className="min-w-0 space-y-4">
