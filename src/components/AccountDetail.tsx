@@ -156,6 +156,7 @@ export default function AccountDetail({
     <div>
       <FlipCard
         label="card"
+        edgeColor={wallet.color}
         back={<WalletBack wallet={wallet} currency={walletCurrency} signature={ownSignature ?? defaultSignature} design={backDesign} />}
         front={wallet.network ? (
         <WalletCardShape

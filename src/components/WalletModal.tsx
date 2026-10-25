@@ -504,6 +504,7 @@ export default function WalletModal({
         <FlipCard
           flipped={tab === "back"}
           interactive={false}
+          edgeColor={color}
           label={name || t("wallet.namePlaceholder")}
           back={
             <div className="aspect-[1.586/1] min-h-[190px] w-full">

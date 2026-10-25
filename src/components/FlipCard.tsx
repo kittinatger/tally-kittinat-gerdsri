@@ -24,12 +24,16 @@ export default function FlipCard({
   label = "card",
   flipped: flippedProp,
   interactive = true,
+  edgeColor = "#404040",
 }: {
   front: ReactNode;
   back: ReactNode;
   label?: string;
   flipped?: boolean;
   interactive?: boolean;
+  /** The edge's solid colour — pass the card's own front/back colour so the
+   * thickness reads as one solid slab instead of a generic dark edge. */
+  edgeColor?: string;
 }) {
   const [internalFlipped, setInternalFlipped] = useState(false);
   const flipped = flippedProp ?? internalFlipped;
@@ -54,7 +58,7 @@ export default function FlipCard({
                 }
               : undefined
           }
-          className={`relative rounded-2xl outline-none transition-transform duration-700 ease-[cubic-bezier(0.4,0.2,0.2,1)] [transform-style:preserve-3d] focus-visible:ring-2 focus-visible:ring-surface-accent focus-visible:ring-offset-2 motion-reduce:transition-none ${interactive ? "cursor-pointer" : ""}`}
+          className={`relative rounded-2xl outline-none transition-transform duration-[1100ms] ease-[cubic-bezier(0.4,0.2,0.2,1)] [transform-style:preserve-3d] focus-visible:ring-2 focus-visible:ring-surface-accent focus-visible:ring-offset-2 motion-reduce:transition-none ${interactive ? "cursor-pointer" : ""}`}
           style={{ transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
         >
           {/* Thickness: a stack of thin dark slices between the two faces,
@@ -64,8 +68,8 @@ export default function FlipCard({
             <div
               key={i}
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 rounded-2xl bg-neutral-700 dark:bg-neutral-500"
-              style={{ transform: `translateZ(${(i - (SLICES - 1) / 2) * SLICE_GAP}px)` }}
+              className="pointer-events-none absolute inset-0 rounded-2xl"
+              style={{ backgroundColor: edgeColor, transform: `translateZ(${(i - (SLICES - 1) / 2) * SLICE_GAP}px)` }}
             />
           ))}
           <div className="[backface-visibility:hidden]" style={{ transform: `translateZ(${HALF}px)` }} aria-hidden={flipped}>

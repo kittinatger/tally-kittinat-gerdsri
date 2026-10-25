@@ -38,6 +38,7 @@ export default function MembershipCardDetail({
     <div>
       <FlipCard
         label="pass"
+        edgeColor={card.color}
         back={<PassBack card={card} />}
         front={
       <PassShape
