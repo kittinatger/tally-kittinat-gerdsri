@@ -11,6 +11,8 @@ import { formatCurrency, formatDateLong } from "@/lib/format";
 import { normalizeExpenseType, normalizeDirection, signedAmount, type Expense } from "@/types/expense";
 import AccountCardShape from "./AccountCardShape";
 import WalletCardShape from "./WalletCardShape";
+import FlipCard from "./FlipCard";
+import { WalletBack } from "./CardBack";
 import type { WalletOption } from "@/types/wallet";
 
 type RecentExpenseRow = {
@@ -140,7 +142,10 @@ export default function AccountDetail({
 
   return (
     <div>
-      {wallet.network ? (
+      <FlipCard
+        label="card"
+        back={<WalletBack wallet={wallet} currency={walletCurrency} />}
+        front={wallet.network ? (
         <WalletCardShape
           label={wallet.name}
           holderName={wallet.holderName}
@@ -175,6 +180,7 @@ export default function AccountDetail({
       ) : (
         <AccountCardShape wallet={wallet} currency={appCurrency} />
       )}
+      />
 
       <div className="mt-4 rounded-card border border-line bg-surface p-3.5">
         <p className="text-xs uppercase tracking-wide text-ink-soft">{t("wallet.balanceLabel")}</p>
