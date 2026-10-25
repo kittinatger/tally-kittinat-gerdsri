@@ -1267,12 +1267,16 @@ export default function TransactionComposer({
             type="button"
             onClick={() => save(true)}
             disabled={submitting || busy}
-            aria-label="Save and add another"
-            title="Save and add another"
-            className="flex h-11 shrink-0 items-center gap-1.5 rounded-xl bg-surface-soft px-3.5 text-sm font-semibold text-surface-foreground transition hover:bg-[var(--surface-nav-hover)] disabled:opacity-50"
+            className="flex h-11 shrink-0 items-center gap-1.5 rounded-xl bg-surface-soft px-3 text-left text-xs font-semibold leading-tight text-surface-foreground transition hover:bg-[var(--surface-nav-hover)] disabled:opacity-50"
           >
-            <PlusIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
-            New
+            <PlusIcon weight="bold" aria-hidden="true" className="h-4 w-4 shrink-0" />
+            {/* Spelled out: a bare "New" read as "start over", not "save this
+                one, then start the next". */}
+            <span>
+              Save &amp;
+              <br />
+              add another
+            </span>
           </button>
         ) : (
           <button
