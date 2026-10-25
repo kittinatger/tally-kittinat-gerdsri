@@ -5,6 +5,22 @@ export type Release = { version: string; date: string; sections: { heading: stri
 
 export const RELEASES: Release[] = [
   {
+    version: "0.26.0",
+    date: "2026-10-25",
+    sections: [
+      {
+        heading: "Added",
+        items: [
+          "A new Activities layout for iPad and desktop. A sidebar with your balance, this month's income and spending, every wallet with its balance as a filter, and the type filter, next to a table of transactions with date, merchant, category, wallet and amount columns. On desktop the sidebar and the list scroll separately. Phones keep their layout.",
+          "Coming up in the next 7 days. Activities shows recurring transactions that are due soon, like rent and subscriptions, with when and how much.",
+          "More on every transaction. See how often you've been to that merchant, your total and average there, and your last visits; every receipt photo; the other lines of a split; and who added it in a shared wallet.",
+          "Duplicate, Make recurring and Delete on the transaction page, from the new More button next to Edit and Share.",
+          "Quick date filters on Activities (All time, This week, This month, Last month) and small icons on rows that have a receipt, a location or a split.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.25.0",
     date: "2026-10-25",
     sections: [
