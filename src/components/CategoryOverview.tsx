@@ -10,6 +10,7 @@ import { useCurrency } from "@/lib/currency-context";
 import FilterDropdown from "./FilterDropdown";
 import SpendingTrendChart, { ChartTypeDropdown, type ChartType } from "./SpendingTrendChart";
 import WidgetCard from "./WidgetCard";
+import { ChartBarIcon as PhChartBarIcon } from "@phosphor-icons/react/dist/ssr";
 
 const TYPE_COLOR: Record<TransactionType, CategoryColor> = { expense: "rose", income: "emerald", transfer: "sky" };
 const CATEGORY_PALETTE_SET: ReadonlySet<string> = new Set(CATEGORY_PALETTE);
@@ -210,9 +211,7 @@ export default function CategoryOverview({
 
       {breakdown.rows.length === 0 ? (
         <div className="mt-10 flex flex-col items-center gap-2 text-center animate-[fade-in-up_0.25s_ease-out] motion-reduce:animate-none">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" className="h-10 w-10 text-ink-soft">
-            <path d="M3 17V8M10 17V3M17 17v-6" />
-          </svg>
+          <PhChartBarIcon weight="duotone" aria-hidden="true" className="h-10 w-10 text-ink-soft" />
           <p className="font-display text-lg text-foreground">No data yet</p>
           <p className="text-sm text-ink-soft">
             {type === "income" ? "Income" : type === "transfer" ? "Transfers" : "Expenses"} for this range will show

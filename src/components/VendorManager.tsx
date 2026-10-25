@@ -12,7 +12,7 @@ import EmptyState from "./EmptyState";
 import ManagerHeader from "./ManagerHeader";
 import { useT, useLanguage } from "@/lib/language-context";
 import type { VendorStat } from "@/lib/db";
-import { StorefrontIcon as PhStorefrontIcon } from "@phosphor-icons/react/dist/ssr";
+import { StorefrontIcon as PhStorefrontIcon, CheckIcon as PhCheckIcon } from "@phosphor-icons/react/dist/ssr";
 
 // Same glyph as SettingsNavList's own StoreIcon — kept as its own local
 // copy rather than a shared export since every icon in this codebase is
@@ -345,9 +345,7 @@ export default function VendorManager() {
                       }`}
                     >
                       {isSelected && (
-                        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-                          <path d="M4 10l4 4 8-8" />
-                        </svg>
+                        <PhCheckIcon weight="bold" aria-hidden="true" className="h-3 w-3" />
                       )}
                     </button>
                   )}

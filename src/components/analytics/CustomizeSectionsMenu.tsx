@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { ANALYTICS_SECTION_IDS, type AnalyticsSectionId } from "@/lib/analytics-prefs";
 import { useT } from "@/lib/language-context";
 import { GearIcon } from "@/lib/icons";
+import { CheckIcon as PhCheckIcon } from "@phosphor-icons/react/dist/ssr";
 
 // A basic "which sections show" checklist — deliberately NOT a full
 // picker (no reordering, no per-section config, no adding/removing
@@ -99,9 +100,7 @@ export default function CustomizeSectionsMenu({
                     }`}
                   >
                     {checked && (
-                      <svg viewBox="0 0 20 20" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-2.5 w-2.5">
-                        <path d="M4.5 10.5l3.5 3.5 7.5-8" />
-                      </svg>
+                      <PhCheckIcon weight="bold" aria-hidden="true" className="h-2.5 w-2.5" />
                     )}
                   </span>
                   {sectionLabels[id]}

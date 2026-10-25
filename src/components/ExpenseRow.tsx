@@ -8,7 +8,7 @@ import { useCategoryColor, useCategoryIcon } from "@/lib/categories-context";
 import { useCurrency } from "@/lib/currency-context";
 import { isCategoryIconKey } from "@/lib/category-icons";
 import { CategoryIcon, TrashIcon, EditIcon } from "@/lib/icons";
-import { ExportIcon as PhExportIcon } from "@phosphor-icons/react/dist/ssr";
+import { ExportIcon as PhExportIcon, CheckIcon as PhCheckIcon } from "@phosphor-icons/react/dist/ssr";
 
 const OPEN_DELETE = -76;
 const OPEN_SHARE = 76;
@@ -330,9 +330,7 @@ export default function ExpenseRow({
               }`}
             >
               {selected && (
-                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-                  <path d="M4 10l4 4 8-8" />
-                </svg>
+                <PhCheckIcon weight="bold" aria-hidden="true" className="h-3 w-3" />
               )}
             </span>
           )}

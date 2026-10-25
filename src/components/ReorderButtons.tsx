@@ -1,4 +1,5 @@
 "use client";
+import { CaretUpIcon as PhCaretUpIcon, CaretDownIcon as PhCaretDownIcon } from "@phosphor-icons/react/dist/ssr";
 
 // The up/down chevron pair for manually reordering a manager's list —
 // byte-for-byte duplicated (same SVG paths, same disabled-at-the-edge
@@ -34,9 +35,7 @@ export default function ReorderButtons({
         aria-label={upLabel}
         className="rounded p-0.5 text-ink-soft transition hover:text-foreground disabled:opacity-30"
       >
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-          <path d="M5 12l5-5 5 5" />
-        </svg>
+        <PhCaretUpIcon weight="bold" aria-hidden="true" className="h-3 w-3" />
       </button>
       <button
         type="button"
@@ -45,9 +44,7 @@ export default function ReorderButtons({
         aria-label={downLabel}
         className="rounded p-0.5 text-ink-soft transition hover:text-foreground disabled:opacity-30"
       >
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-          <path d="M5 8l5 5 5-5" />
-        </svg>
+        <PhCaretDownIcon weight="bold" aria-hidden="true" className="h-3 w-3" />
       </button>
     </div>
   );

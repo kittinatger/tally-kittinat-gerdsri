@@ -18,7 +18,7 @@ import FilterDropdown from "./FilterDropdown";
 import OverflowMenu, { type OverflowMenuItem } from "./OverflowMenu";
 import { useT } from "@/lib/language-context";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
-import { ExportIcon as PhExportIcon, WalletIcon as PhWalletIcon } from "@phosphor-icons/react/dist/ssr";
+import { ExportIcon as PhExportIcon, WalletIcon as PhWalletIcon, ArrowsLeftRightIcon as PhArrowsLeftRightIcon } from "@phosphor-icons/react/dist/ssr";
 
 function ShareIcon() {
   return <PhExportIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
@@ -407,9 +407,7 @@ export default function WalletManager({
                 onClick={() => setTransferOpen(true)}
                 className="flex items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 py-2 text-sm font-semibold text-foreground transition hover:border-navy"
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 shrink-0">
-                  <path d="M7 7h13l-3.5-3.5M17 17H4l3.5 3.5" />
-                </svg>
+                <PhArrowsLeftRightIcon weight="bold" aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
                 {t("common.transfer")}
               </button>
             )}

@@ -15,7 +15,7 @@ import ManagerHeader from "./ManagerHeader";
 import ReorderButtons from "./ReorderButtons";
 import { useT } from "@/lib/language-context";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
-import { ClockCounterClockwiseIcon as PhClockCounterClockwiseIcon, TargetIcon as PhTargetIcon, TrashIcon as PhTrashIcon } from "@phosphor-icons/react/dist/ssr";
+import { ClockCounterClockwiseIcon as PhClockCounterClockwiseIcon, TargetIcon as PhTargetIcon, TrashIcon as PhTrashIcon, XIcon as PhXIcon } from "@phosphor-icons/react/dist/ssr";
 
 type SavingsGoal = { id: number; name: string; color: string; target_amount: string; current_amount: string };
 type Contribution = { id: number; delta: string; created_at: string };
@@ -366,9 +366,7 @@ export default function SavingsGoalsManager() {
                               aria-label="Delete this contribution"
                               className="shrink-0 rounded-full p-1 text-ink-soft transition hover:bg-red-50 hover:text-red-600 disabled:opacity-60 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                             >
-                              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-3 w-3">
-                                <path d="M5 5l10 10M15 5L5 15" />
-                              </svg>
+                              <PhXIcon weight="bold" aria-hidden="true" className="h-3 w-3" />
                             </button>
                           </div>
                         );

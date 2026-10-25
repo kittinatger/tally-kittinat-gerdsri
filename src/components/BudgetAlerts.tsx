@@ -6,6 +6,7 @@ import type { Budget } from "@/types/budget";
 import { monthKey, todayInputValue, formatCurrency } from "@/lib/format";
 import { useCurrency } from "@/lib/currency-context";
 import { computeEffectiveBudgetLimit } from "@/lib/budget-rollover";
+import { XIcon as PhXIcon } from "@phosphor-icons/react/dist/ssr";
 
 export default function BudgetAlerts({
   expenses,
@@ -77,9 +78,7 @@ export default function BudgetAlerts({
                 over ? "text-red-600 dark:text-red-300" : "text-amber-600 dark:text-amber-300"
               }`}
             >
-              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-4 w-4">
-                <path d="M5 5l10 10M15 5L5 15" />
-              </svg>
+              <PhXIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
             </button>
           </div>
         );

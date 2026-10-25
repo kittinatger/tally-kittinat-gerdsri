@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.24.6] - 2026-10-25
+
+### Added
+- Notifications have their own page. The bell opens an inbox with filters (All, Unread, Money, Friends & sharing, Updates), New / Today / This week / Earlier sections, and a menu on each notification to mark it read, delete it, or turn off that kind.
+- Choose exactly which notifications you get. Settings > Notifications has a switch for every kind, grouped into Your money, Friends & sharing and From Tally, plus Pause all (1 hour to 1 week) and the email and push options.
+- New notifications for friends and sharing. Get told about friend requests, accepted requests, new split bills and their updates, shared wallet invites, and transactions added to wallets you share.
+- A notification when Tally updates. Each new version tells you once what it added, with a link to the full changelog.
+
+### Changed
+- Adding a transaction is a page of its own, redesigned from scratch. A calculator keypad for the amount (sums like 120+45.5 work, and so does a physical keyboard), one-tap Repeat of recent entries, smart-fill of the category and wallet for merchants you've used before, Today / Yesterday date chips, Scan and Speak built in, and Save & add another. The keypad starts collapsed.
+- Icons are consistent across the app: the last hand-drawn icons (search, filter, close, checkmarks, arrows and empty states) now use the same Phosphor set as everything else.
+
+### Fixed
+- The duplicate warning now has Add anyway for scanned and spoken entries too (they used to fail with a "duplicate" error), and it only flags an entry saved in the last 10 minutes, so genuine repeat purchases on the same day aren't flagged. Transaction details show the time it was saved.
+- The save bar on the Add page no longer overlaps or clips against the bottom navigation on iPhones.
+
 ## [0.24.5] - 2026-10-24
 
 ### Changed

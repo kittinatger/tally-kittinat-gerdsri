@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getAppErrors, removeAppError, clearAppErrors, type LoggedError } from "@/lib/error-log";
 import { APP_VERSION } from "@/lib/version";
 import { useT } from "@/lib/language-context";
+import { XIcon as PhXIcon } from "@phosphor-icons/react/dist/ssr";
 
 const ISSUE_URL = "https://github.com/kittinatger/tally-kittinat-gerdsri/issues/new";
 
@@ -92,9 +93,7 @@ export default function ErrorReportsPanel() {
                   aria-label={t("errors.dismiss")}
                   className="shrink-0 rounded-full p-1.5 text-ink-soft transition hover:bg-bg-soft hover:text-foreground"
                 >
-                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-3.5 w-3.5">
-                    <path d="M5 5l10 10M15 5L5 15" />
-                  </svg>
+                  <PhXIcon weight="bold" aria-hidden="true" className="h-3.5 w-3.5" />
                 </button>
               </div>
               <a

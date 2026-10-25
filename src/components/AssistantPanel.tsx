@@ -4,7 +4,7 @@ import { describeFetchError } from "@/lib/fetch-error";
 import { useEffect, useRef, useState } from "react";
 import { todayInputValue } from "@/lib/format";
 import { useT } from "@/lib/language-context";
-import { PaperPlaneRightIcon as PhPaperPlaneRightIcon } from "@phosphor-icons/react/dist/ssr";
+import { PaperPlaneRightIcon as PhPaperPlaneRightIcon, ChatCircleDotsIcon as PhChatCircleDotsIcon } from "@phosphor-icons/react/dist/ssr";
 
 type Message = { role: "user" | "assistant"; text: string; model?: string };
 
@@ -20,12 +20,7 @@ const ASK_FETCH_TIMEOUT_MS = 125_000;
 function BotAvatar() {
   return (
     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-navy text-white">
-      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-        <path d="M10 2.5c-3.6 0-6.5 2.5-6.5 5.75 0 1.85.95 3.5 2.45 4.6L5 17l3.35-1.5c.53.1 1.08.15 1.65.15 3.6 0 6.5-2.5 6.5-5.75S13.6 2.5 10 2.5Z" />
-        <circle cx="7.25" cy="8.25" r="0.9" fill="currentColor" stroke="none" />
-        <circle cx="10" cy="8.25" r="0.9" fill="currentColor" stroke="none" />
-        <circle cx="12.75" cy="8.25" r="0.9" fill="currentColor" stroke="none" />
-      </svg>
+      <PhChatCircleDotsIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
     </span>
   );
 }

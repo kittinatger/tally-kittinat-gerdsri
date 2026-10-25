@@ -16,6 +16,7 @@ import {
   type CMYK,
 } from "@/lib/color-convert";
 import { useT } from "@/lib/language-context";
+import { PencilSimpleIcon as PhPencilSimpleIcon } from "@phosphor-icons/react/dist/ssr";
 
 const DEFAULT_CUSTOM = "#64748b";
 const HUE_GRADIENT = "linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)";
@@ -220,10 +221,7 @@ export default function ColorPicker({
                 aria-label={t("color.eyedropper")}
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-ink-soft transition hover:border-navy hover:text-foreground"
               >
-                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                  <path d="m14.5 3.5 2 2-9 9-3 1 1-3 9-9Z" />
-                  <path d="M12.5 5.5 14.5 7.5" />
-                </svg>
+                <PhPencilSimpleIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
               </button>
             )}
           </div>

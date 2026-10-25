@@ -16,7 +16,7 @@ import FilterDropdown from "./FilterDropdown";
 import DateRangeFilter from "./DateRangeFilter";
 import Modal from "./Modal";
 import { DEFAULT_ACTIVITIES_PREFS, compareActivitiesSort, resolveDefaultDateRange, type ActivitiesPrefs } from "@/lib/activities-prefs";
-import { ListChecksIcon as PhListChecksIcon, DownloadSimpleIcon as PhDownloadSimpleIcon, XIcon as PhXIcon } from "@phosphor-icons/react/dist/ssr";
+import { ListChecksIcon as PhListChecksIcon, DownloadSimpleIcon as PhDownloadSimpleIcon, XIcon as PhXIcon, ReceiptIcon as PhReceiptIcon, MagnifyingGlassIcon as PhMagnifyingGlassIcon, FunnelSimpleIcon as PhFunnelSimpleIcon } from "@phosphor-icons/react/dist/ssr";
 
 export type TypeFilter = "all" | TransactionType;
 
@@ -432,10 +432,7 @@ export default function ExpenseList({
   if (expenses.length === 0) {
     return (
       <div className="mt-10 flex flex-col items-center gap-2 text-center animate-[fade-in-up_0.25s_ease-out] motion-reduce:animate-none">
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" className="h-10 w-10 text-ink-soft">
-          <path d="M5 2.5h10v15l-2-1.3-1.5 1.3-1.5-1.3-1.5 1.3-1.5-1.3-2 1.3v-15Z" />
-          <path d="M7.5 6.5h5M7.5 9.5h5M7.5 12.5h3" />
-        </svg>
+        <PhReceiptIcon weight="duotone" aria-hidden="true" className="h-10 w-10 text-ink-soft" />
         <p className="font-display text-lg text-foreground">{t("activities.noTransactionsYet")}</p>
         <p className="text-sm text-ink-soft">{t("activities.noTransactionsDesc")}</p>
       </div>
@@ -458,9 +455,7 @@ export default function ExpenseList({
               aria-label={t("common.clear")}
               className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full transition hover:bg-navy/20"
             >
-              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-3 w-3">
-                <path d="M5 5l10 10M15 5 5 15" />
-              </svg>
+              <PhXIcon weight="bold" aria-hidden="true" className="h-3 w-3" />
             </button>
           </span>
         </div>
@@ -468,18 +463,7 @@ export default function ExpenseList({
 
       <div className="mb-3 flex items-center gap-2">
         <div className="relative flex-1">
-          <svg
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft"
-          >
-            <circle cx="8.7" cy="8.7" r="5.5" />
-            <path d="M16.5 16.5l-3.6-3.6" />
-          </svg>
+          <PhMagnifyingGlassIcon weight="bold" aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft" />
           <input
             type="text"
             value={search}
@@ -499,9 +483,7 @@ export default function ExpenseList({
               : "border-line bg-surface text-ink-soft hover:border-navy hover:text-foreground"
           }`}
         >
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">
-            <path d="M3 5.5h14M5.5 10h9M8 14.5h4" />
-          </svg>
+          <PhFunnelSimpleIcon weight="bold" aria-hidden="true" className="h-4.5 w-4.5" />
           {activeFilterCount > 0 && (
             <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-navy text-[10px] font-bold text-white">
               {activeFilterCount}
@@ -683,10 +665,7 @@ export default function ExpenseList({
 
       {filtered.length === 0 ? (
         <div className="mt-10 flex flex-col items-center gap-2 text-center animate-[fade-in-up_0.25s_ease-out] motion-reduce:animate-none">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" className="h-10 w-10 text-ink-soft">
-            <circle cx="8.7" cy="8.7" r="5.5" />
-            <path d="M16.5 16.5l-3.6-3.6" />
-          </svg>
+          <PhMagnifyingGlassIcon weight="bold" aria-hidden="true" className="h-10 w-10 text-ink-soft" />
           <p className="font-display text-lg text-foreground">{t("activities.noMatchingTransactions")}</p>
           <p className="text-sm text-ink-soft">{t("activities.noMatchingDesc")}</p>
         </div>

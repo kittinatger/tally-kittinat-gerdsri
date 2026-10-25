@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { badgeClasses } from "@/lib/category-styles";
+import { CaretRightIcon as PhCaretRightIcon } from "@phosphor-icons/react/dist/ssr";
 
 export function ChevronRight() {
   return (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 text-ink-soft">
-      <path d="M7.5 4.5l6 5.5-6 5.5" />
-    </svg>
+    <PhCaretRightIcon weight="bold" aria-hidden="true" className="h-4 w-4 shrink-0 text-ink-soft" />
   );
 }
 
