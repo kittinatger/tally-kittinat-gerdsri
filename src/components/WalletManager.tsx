@@ -1,7 +1,7 @@
 "use client";
 
 import { describeFetchError } from "@/lib/fetch-error";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { badgeClasses, colorDotStyle } from "@/lib/category-styles";
 import { useCurrency } from "@/lib/currency-context";
@@ -12,7 +12,7 @@ import WalletModal from "./WalletModal";
 import WalletTransferModal from "./WalletTransferModal";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import ManagerHeader from "./ManagerHeader";
-import ReorderButtons from "./ReorderButtons";
+import SortableList from "./SortableList";
 import WalletShareModal from "./WalletShareModal";
 import FilterDropdown from "./FilterDropdown";
 import OverflowMenu, { type OverflowMenuItem } from "./OverflowMenu";
@@ -147,25 +147,24 @@ export default function WalletManager({
     }
   }
 
-  async function handleMove(id: number, direction: "up" | "down") {
-    setBusyId(id);
+  // Drag-to-reorder: only the wallets you own have a position to save
+  // (see reorderWallets in db.ts), in the order they were dropped.
+  async function handleReorder(orderedIds: (string | number)[]) {
+    const owned = new Set(activeWallets.filter((w) => w.isOwner).map((w) => w.id));
     setActionError(null);
     try {
-      const res = await mutateFetch(`/api/wallets/${id}`, {
+      const res = await fetch("/api/wallets/reorder", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ move: direction }),
+        body: JSON.stringify({ orderedIds: orderedIds.filter((id) => owned.has(Number(id))) }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        setActionError(typeof data?.error === "string" ? data.error : "Could not reorder that wallet.");
-        return;
+        setActionError(typeof data?.error === "string" ? data.error : "Could not reorder your wallets.");
       }
       router.refresh();
     } catch (err) {
       setActionError(describeFetchError(err));
-    } finally {
-      setBusyId(null);
     }
   }
 
@@ -239,7 +238,7 @@ export default function WalletManager({
   // + icon badge + name/badges + balance caption, with every secondary
   // action consolidated into one OverflowMenu trigger instead of a row of
   // separate icon buttons.
-  function renderWalletRow(w: WalletOption, indexInGroup: number, groupLength: number) {
+  function renderWalletRow(w: WalletOption, indexInGroup: number, groupLength: number, handle?: ReactNode) {
     const isLast = indexInGroup === groupLength - 1;
     const confirming = confirmDeleteId === w.id;
     return (
@@ -247,15 +246,7 @@ export default function WalletManager({
         key={w.id}
         className={`flex items-center gap-3 px-4 py-3 ${isLast ? "" : "border-b border-line"} ${w.archived ? "opacity-60" : ""}`}
       >
-        <ReorderButtons
-          className={w.isOwner ? "" : "invisible"}
-          onMoveUp={() => handleMove(w.id, "up")}
-          onMoveDown={() => handleMove(w.id, "down")}
-          disableUp={busyId === w.id || indexInGroup === 0}
-          disableDown={busyId === w.id || indexInGroup === groupLength - 1}
-          upLabel={`Move ${w.name} up`}
-          downLabel={`Move ${w.name} down`}
-        />
+        {handle}
 
         <span
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses(w.color)}`}
@@ -295,20 +286,12 @@ export default function WalletManager({
   // Desktop (sm+) — a card grid instead of a flat list, using the extra
   // width for a bigger balance figure and every action visible at once
   // (no overflow menu needed — there's room for it).
-  function renderWalletCard(w: WalletOption, indexInGroup: number, groupLength: number) {
+  function renderWalletCard(w: WalletOption, handle?: ReactNode) {
     const confirming = confirmDeleteId === w.id;
     return (
       <div key={w.id} className={`flex flex-col gap-3 rounded-card border border-line bg-surface p-4 ${w.archived ? "opacity-60" : ""}`}>
         <div className="flex items-start gap-3">
-          <ReorderButtons
-            className={w.isOwner ? "mt-1" : "invisible"}
-            onMoveUp={() => handleMove(w.id, "up")}
-            onMoveDown={() => handleMove(w.id, "down")}
-            disableUp={busyId === w.id || indexInGroup === 0}
-            disableDown={busyId === w.id || indexInGroup === groupLength - 1}
-            upLabel={`Move ${w.name} up`}
-            downLabel={`Move ${w.name} down`}
-          />
+          {handle && <div className="-ml-1 mt-1">{handle}</div>}
           <span
             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${badgeClasses(w.color)}`}
             style={colorDotStyle(w.color)}
@@ -475,12 +458,26 @@ export default function WalletManager({
       {/* Mobile: a single decluttered list (OverflowMenu for actions).
        * Desktop (sm+): a card grid instead — more room, so the balance
        * reads bigger and every action stays visible without a menu. */}
-      <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface sm:hidden">
-        {activeWallets.map((w, i) => renderWalletRow(w, i, activeWallets.length))}
-      </div>
-      <div className="mt-4 hidden gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-3">
-        {activeWallets.map((w, i) => renderWalletCard(w, i, activeWallets.length))}
-      </div>
+      {/* Active wallets reorder by dragging the grip (owners only — a
+          wallet shared with you keeps the owner's position). */}
+      <SortableList
+        className="mt-4 rounded-card border border-line bg-surface sm:hidden"
+        items={activeWallets}
+        getId={(w) => w.id}
+        canReorder={(w) => w.isOwner}
+        onReorder={handleReorder}
+        handleLabel={(w) => `Drag to reorder ${w.name}`}
+        renderItem={(w, { handle, index }) => renderWalletRow(w, index, activeWallets.length, handle)}
+      />
+      <SortableList
+        className="mt-4 hidden gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-3"
+        items={activeWallets}
+        getId={(w) => w.id}
+        canReorder={(w) => w.isOwner}
+        onReorder={handleReorder}
+        handleLabel={(w) => `Drag to reorder ${w.name}`}
+        renderItem={(w, { handle }) => renderWalletCard(w, handle)}
+      />
 
       {archivedWallets.length > 0 && (
         <div className="mt-4">
@@ -489,7 +486,7 @@ export default function WalletManager({
             {archivedWallets.map((w, i) => renderWalletRow(w, i, archivedWallets.length))}
           </div>
           <div className="hidden gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-3">
-            {archivedWallets.map((w, i) => renderWalletCard(w, i, archivedWallets.length))}
+            {archivedWallets.map((w) => renderWalletCard(w))}
           </div>
         </div>
       )}

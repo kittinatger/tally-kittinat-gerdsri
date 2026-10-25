@@ -4547,6 +4547,33 @@ export async function createRecurringRule(
 // simple adjacent-swap reordering rather than drag-and-drop, since the list
 // is short and this avoids the pointer-event complexity that's caused
 // problems elsewhere in the dashboard widget editor.
+// Sets the full order in one request (drag-to-reorder in Settings) — same
+// all-or-nothing check as reorderWallets: the ids must be exactly the user's
+// current recurring rules, so a stale list can't scramble anything.
+export async function reorderRecurringRules(userId: number, orderedIds: number[]): Promise<{ ok: true } | { ok: false; error: string }> {
+  await ensureSchema();
+  const { rows } = await sql<{ id: number }>`SELECT id FROM recurring_rules WHERE user_id = ${userId};`;
+  const actualIds = new Set(rows.map((r) => r.id));
+  const givenIds = new Set(orderedIds);
+  if (givenIds.size !== orderedIds.length || actualIds.size !== givenIds.size || [...actualIds].some((id) => !givenIds.has(id))) {
+    return { ok: false, error: "That list is out of date — refresh and try again." };
+  }
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    for (let i = 0; i < orderedIds.length; i++) {
+      await client.sql`UPDATE recurring_rules SET sort_order = ${i} WHERE id = ${orderedIds[i]} AND user_id = ${userId};`;
+    }
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+  return { ok: true };
+}
+
 export async function moveRecurringRule(userId: number, id: number, direction: "up" | "down"): Promise<void> {
   await ensureSchema();
   const { rows } = await sql<{ id: number; sort_order: number }>`
@@ -4785,6 +4812,33 @@ export async function createSavingsGoal(
 }
 
 // Same adjacent-swap approach as moveRecurringRule.
+// Sets the full order in one request (drag-to-reorder in Settings) — same
+// all-or-nothing check as reorderWallets: the ids must be exactly the user's
+// current savings goals, so a stale list can't scramble anything.
+export async function reorderSavingsGoals(userId: number, orderedIds: number[]): Promise<{ ok: true } | { ok: false; error: string }> {
+  await ensureSchema();
+  const { rows } = await sql<{ id: number }>`SELECT id FROM savings_goals WHERE user_id = ${userId};`;
+  const actualIds = new Set(rows.map((r) => r.id));
+  const givenIds = new Set(orderedIds);
+  if (givenIds.size !== orderedIds.length || actualIds.size !== givenIds.size || [...actualIds].some((id) => !givenIds.has(id))) {
+    return { ok: false, error: "That list is out of date — refresh and try again." };
+  }
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    for (let i = 0; i < orderedIds.length; i++) {
+      await client.sql`UPDATE savings_goals SET sort_order = ${i} WHERE id = ${orderedIds[i]} AND user_id = ${userId};`;
+    }
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+  return { ok: true };
+}
+
 export async function moveSavingsGoal(userId: number, id: number, direction: "up" | "down"): Promise<void> {
   await ensureSchema();
   const { rows } = await sql<{ id: number; sort_order: number }>`

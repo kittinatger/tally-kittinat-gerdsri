@@ -16,7 +16,7 @@ import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import SegmentedControl from "./SegmentedControl";
 import ManagerHeader from "./ManagerHeader";
 import AddItemButton from "./AddItemButton";
-import ReorderButtons from "./ReorderButtons";
+import SortableList from "./SortableList";
 import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
@@ -300,18 +300,19 @@ export default function RecurringManager() {
   // recomputed sort order (data.rules), which can't be reconstructed
   // client-side — offline reordering simply fails with a normal network
   // error, same as before this feature existed.
-  async function handleMove(id: number, move: "up" | "down") {
-    setBusyId(id);
+  // Drag-to-reorder: optimistic, then the server's saved order.
+  async function handleReorder(orderedIds: (string | number)[]) {
+    setRules((prev) => (prev ? orderedIds.map((id) => prev.find((x) => x.id === id)!).filter(Boolean) : prev));
     try {
-      const res = await fetch(`/api/recurring/${id}`, {
+      const res = await fetch("/api/recurring/reorder", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ move }),
+        body: JSON.stringify({ orderedIds }),
       });
       const data = await res.json();
       if (res.ok) setRules(data.rules);
-    } finally {
-      setBusyId(null);
+    } catch {
+      // Keep the optimistic order; the next load shows the saved one.
     }
   }
 
@@ -519,8 +520,13 @@ export default function RecurringManager() {
           <EmptyState icon={<RepeatIcon />} text={t("recurring.noRulesYet")} />
         </div>
       ) : (
-        <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
-          {rules.map((r, i) => {
+        <div className="mt-4 rounded-card border border-line bg-surface">
+          <SortableList
+            items={rules}
+            getId={(r) => r.id}
+            onReorder={handleReorder}
+            handleLabel={(r) => `Drag to reorder ${r.merchant}`}
+            renderItem={(r, { handle, index: i }) => {
             const ruleType: TransactionType = r.type === "income" || r.type === "transfer" ? r.type : "expense";
             const categoryColor = allCategories.find((c) => c.type === ruleType && c.name === r.category)?.color;
             const confirming = confirmDeleteId === r.id;
@@ -529,14 +535,7 @@ export default function RecurringManager() {
                 key={r.id}
                 className={`flex items-center gap-3 px-4 py-3 ${i === 0 ? "" : "border-t border-line"} ${r.active ? "" : "opacity-60"}`}
               >
-                <ReorderButtons
-                  onMoveUp={() => handleMove(r.id, "up")}
-                  onMoveDown={() => handleMove(r.id, "down")}
-                  disableUp={busyId === r.id || i === 0}
-                  disableDown={busyId === r.id || i === rules.length - 1}
-                  upLabel="Move up"
-                  downLabel="Move down"
-                />
+                {handle}
 
                 <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses(categoryColor)}`}>
                   <RepeatIcon />
@@ -593,7 +592,8 @@ export default function RecurringManager() {
                 )}
               </div>
             );
-          })}
+            }}
+          />
         </div>
       )}
     </div>

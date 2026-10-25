@@ -12,7 +12,7 @@ import ColorPicker from "./ColorPicker";
 import EmptyState from "./EmptyState";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import ManagerHeader from "./ManagerHeader";
-import ReorderButtons from "./ReorderButtons";
+import SortableList from "./SortableList";
 import { useT } from "@/lib/language-context";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
 import { ClockCounterClockwiseIcon as PhClockCounterClockwiseIcon, TargetIcon as PhTargetIcon, TrashIcon as PhTrashIcon, XIcon as PhXIcon } from "@phosphor-icons/react/dist/ssr";
@@ -167,18 +167,19 @@ export default function SavingsGoalsManager() {
     }
   }
 
-  async function handleMove(id: number, move: "up" | "down") {
-    setBusyId(id);
+  // Drag-to-reorder: optimistic, then the server's saved order.
+  async function handleReorder(orderedIds: (string | number)[]) {
+    setGoals((prev) => (prev ? orderedIds.map((id) => prev.find((x) => x.id === id)!).filter(Boolean) : prev));
     try {
-      const res = await fetch(`/api/savings-goals/${id}`, {
+      const res = await fetch("/api/savings-goals/reorder", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ move }),
+        body: JSON.stringify({ orderedIds }),
       });
       const data = await res.json();
       if (res.ok) setGoals(data.goals);
-    } finally {
-      setBusyId(null);
+    } catch {
+      // Keep the optimistic order; the next load shows the saved one.
     }
   }
 
@@ -251,23 +252,21 @@ export default function SavingsGoalsManager() {
           <EmptyState icon={<TargetIcon />} text={t("savings.noGoalsYet")} />
         </div>
       ) : (
-        <div className="mt-4 overflow-hidden rounded-card border border-line bg-surface">
-          {goals.map((g, i) => {
+        <div className="mt-4 rounded-card border border-line bg-surface">
+          <SortableList
+            items={goals}
+            getId={(g) => g.id}
+            onReorder={handleReorder}
+            handleLabel={(g) => `Drag to reorder ${g.name}`}
+            renderItem={(g, { handle, index: i }) => {
             const current = Number(g.current_amount);
             const goalTarget = Number(g.target_amount);
             const percent = goalTarget > 0 ? Math.min(100, (current / goalTarget) * 100) : 0;
             const confirming = confirmDeleteId === g.id;
             return (
-              <div key={g.id} className={`px-4 py-3 ${i === 0 ? "" : "border-t border-line"}`}>
+              <div className={`px-4 py-3 ${i === 0 ? "" : "border-t border-line"}`}>
                 <div className="flex items-center gap-3">
-                  <ReorderButtons
-                    onMoveUp={() => handleMove(g.id, "up")}
-                    onMoveDown={() => handleMove(g.id, "down")}
-                    disableUp={busyId === g.id || i === 0}
-                    disableDown={busyId === g.id || i === goals.length - 1}
-                    upLabel={`Move ${g.name} up`}
-                    downLabel={`Move ${g.name} down`}
-                  />
+                  {handle}
 
                   <span
                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${badgeClasses(g.color)}`}
@@ -376,7 +375,8 @@ export default function SavingsGoalsManager() {
                 )}
               </div>
             );
-          })}
+            }}
+          />
         </div>
       )}
     </div>
