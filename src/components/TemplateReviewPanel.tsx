@@ -5,6 +5,8 @@ import { cardBackgroundStyle } from "@/lib/card-backgrounds";
 import { heroGradientClasses, colorHeroStyle } from "@/lib/category-styles";
 import { describeFetchError } from "@/lib/fetch-error";
 import { CheckCircleIcon, XCircleIcon, EditIcon, MembershipCardIcon } from "@/lib/icons";
+import { CopySimpleIcon } from "@phosphor-icons/react/dist/ssr";
+import { copyName } from "@/lib/wallet-duplicate";
 import EmptyState from "./EmptyState";
 import { NAME_POSITION_LABEL_KEYS } from "@/lib/name-position";
 import { BADGE_POSITION_LABEL_KEYS } from "@/lib/badge-position";
@@ -73,6 +75,58 @@ export default function TemplateReviewPanel() {
         return;
       }
       setTemplates((prev) => prev?.map((tpl) => (tpl.id === id ? data.template : tpl)) ?? null);
+    } catch (err) {
+      setError(describeFetchError(err));
+    } finally {
+      setActingId(null);
+    }
+  }
+
+  // Duplicate: a copy of the template (same look, forced settings, country
+  // and category) named "<name> (copy)". It's created as pending, like any
+  // new template, and opens straight in the editor so it can be adjusted
+  // before approving it.
+  async function duplicate(tpl: CardTemplateOption) {
+    setActingId(tpl.id);
+    setError(null);
+    try {
+      const res = await fetch("/api/card-templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: copyName(tpl.name),
+          color: tpl.color,
+          background: tpl.background,
+          textColor: tpl.textColor,
+          forceShowName: tpl.forceShowName,
+          forceShowNetworkBadge: tpl.forceShowNetworkBadge,
+          forceShowChip: tpl.forceShowChip,
+          forceShowCardNumber: tpl.forceShowCardNumber,
+          forceShowBalance: tpl.forceShowBalance,
+          forceShowCurrency: tpl.forceShowCurrency,
+          forceCurrency: tpl.forceCurrency,
+          country: tpl.country,
+          forceNamePosition: tpl.forceNamePosition,
+          lockTextColor: tpl.lockTextColor,
+          category: tpl.category,
+          forceNetwork: tpl.forceNetwork,
+          forceShowHolderName: tpl.forceShowHolderName,
+          forceShowExpiry: tpl.forceShowExpiry,
+          forceShowNfc: tpl.forceShowNfc,
+          forceNfcPosition: tpl.forceNfcPosition,
+          forceNfcSize: tpl.forceNfcSize,
+          lockSvgColors: tpl.lockSvgColors,
+          forceChipPosition: tpl.forceChipPosition,
+          forceCardNumberPosition: tpl.forceCardNumberPosition,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.template) {
+        setError(typeof data?.error === "string" ? data.error : "Could not duplicate that template.");
+        return;
+      }
+      setTemplates((prev) => (prev ? [data.template, ...prev] : [data.template]));
+      setEditing(data.template);
     } catch (err) {
       setError(describeFetchError(err));
     } finally {
@@ -168,6 +222,16 @@ export default function TemplateReviewPanel() {
                   </button>
                 </>
               )}
+              <button
+                type="button"
+                onClick={() => duplicate(tpl)}
+                disabled={actingId === tpl.id}
+                aria-label={`Duplicate ${tpl.name}`}
+                title="Duplicate"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
+              >
+                <CopySimpleIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+              </button>
               <button
                 type="button"
                 onClick={() => setEditing(tpl)}
