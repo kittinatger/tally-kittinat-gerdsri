@@ -220,7 +220,9 @@ export default function TransactionComposer({
 
   const [values, setValues] = useState<ExpenseFormValues>(() => blankValues(initialType, initialWalletId));
   const [expr, setExpr] = useState("");
-  const [keypadOpen, setKeypadOpen] = useState(true);
+  // Starts collapsed: the page opens showing the whole form, and tapping
+  // the amount brings the keypad up.
+  const [keypadOpen, setKeypadOpen] = useState(false);
   const [categoryTouched, setCategoryTouched] = useState(false);
   const [walletTouched, setWalletTouched] = useState(initialWalletId !== null);
   const [source, setSource] = useState<Source>({ kind: "manual" });
@@ -588,8 +590,6 @@ export default function TransactionComposer({
   const typeLabel = (type: TransactionType) =>
     type === "expense" ? t("common.expense") : type === "income" ? t("common.income") : t("common.transfer");
   const selectedCategory = categories.find((c) => c.name === values.category);
-  const selectedWallet = wallets.find((w) => w.id === walletId);
-  const dateLabel = values.date === today ? "Today" : values.date === yesterday ? "Yesterday" : formatDateLong(values.date);
   const merchantLabel = values.type === "income" ? t("form.source") : values.type === "transfer" ? t("form.description") : t("form.merchant");
 
   function toggleExtra(extra: Extra) {
@@ -664,7 +664,9 @@ export default function TransactionComposer({
               : hasOperator && exprTotal !== null
                 ? `= ${formatCurrency(exprTotal ?? 0, currency)}`
                 : !keypadOpen
-                  ? "Tap to edit"
+                  ? exprTotal === null
+                    ? "Tap to enter an amount"
+                    : "Tap to edit"
                   : ""}
           </span>
         </button>
@@ -1219,10 +1221,12 @@ export default function TransactionComposer({
     </section>
   );
 
-  // The dock: a live one-line summary of what will be saved, over the
-  // buttons. Warnings and errors stack above it.
+  // The dock: one compact, solid row resting on the phone's bottom nav
+  // (about 58px plus the home-indicator padding, see globals.css) so it never
+  // overlaps or clips it, on a fade of the page background so scrolled
+  // content doesn’t show through the gap above the nav. Warnings and errors stack above it.
   const saveDock = (
-    <div className="sticky bottom-[88px] z-10 sm:bottom-4">
+    <div className="sticky bottom-[calc(58px+var(--mobile-nav-bottom-pad,10px))] z-10 -mx-1 bg-gradient-to-t from-background from-60% to-transparent px-1 pb-3 pt-4 sm:bottom-0 sm:pb-4">
       {duplicate && (
         <div className="mb-2 rounded-card border border-amber-300 bg-amber-50 p-3.5 shadow-soft animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none dark:border-amber-700 dark:bg-amber-950">
           <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">{t("form.duplicateWarningTitle")}</p>
@@ -1257,47 +1261,45 @@ export default function TransactionComposer({
           {lastSaved.count > 1 ? `${lastSaved.count} saved` : `Saved ${lastSaved.merchant} · ${formatCurrency(lastSaved.amount, currency)}`}
         </p>
       )}
-      <div className="rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-2 shadow-soft backdrop-blur-xl">
-        <div className="flex items-center gap-2.5 px-1.5 pb-2 pt-0.5">
-          <span className={`h-2 w-2 shrink-0 rounded-full ${tone.solid}`} aria-hidden="true" />
-          <p className="min-w-0 flex-1 truncate text-xs text-surface-foreground-soft">
-            <span className="font-semibold text-surface-foreground">{values.merchant.trim() || merchantLabel}</span>
-            {" · "}
-            {splitMode ? t("form.categoriesAndAmounts") : values.category}
-            {" · "}
-            {dateLabel}
-            {selectedWallet && wallets.length > 1 ? ` · ${selectedWallet.name}` : ""}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {source.kind === "manual" ? (
-            <button
-              type="button"
-              onClick={() => save(true)}
-              disabled={submitting || busy}
-              className="flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground disabled:opacity-50"
-            >
-              <PlusIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
-              Save &amp; new
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={advance}
-              disabled={submitting}
-              className="rounded-xl px-3.5 py-2.5 text-sm font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground disabled:opacity-50"
-            >
-              {moreInQueue ? "Skip" : t("common.cancel")}
-            </button>
-          )}
+      <div className="flex items-center gap-2 rounded-2xl border border-surface-line bg-surface p-1.5 shadow-soft">
+        {source.kind === "manual" ? (
           <button
-            type="submit"
+            type="button"
+            onClick={() => save(true)}
             disabled={submitting || busy}
-            className={`flex-1 truncate rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60 ${tone.solid} ${tone.hover}`}
+            aria-label="Save and add another"
+            title="Save and add another"
+            className="flex h-11 shrink-0 items-center gap-1.5 rounded-xl bg-surface-soft px-3.5 text-sm font-semibold text-surface-foreground transition hover:bg-[var(--surface-nav-hover)] disabled:opacity-50"
           >
-            {submitting ? t("common.saving") : moreInQueue ? "Save & next" : amountNumber > 0 ? `Save ${formatCurrency(amountNumber, currency)}` : "Save"}
+            <PlusIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+            New
           </button>
-        </div>
+        ) : (
+          <button
+            type="button"
+            onClick={advance}
+            disabled={submitting}
+            className="flex h-11 shrink-0 items-center rounded-xl bg-surface-soft px-4 text-sm font-semibold text-surface-foreground transition hover:bg-[var(--surface-nav-hover)] disabled:opacity-50"
+          >
+            {moreInQueue ? "Skip" : t("common.cancel")}
+          </button>
+        )}
+        <button
+          type="submit"
+          disabled={submitting || busy}
+          className={`flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-white transition disabled:opacity-60 ${tone.solid} ${tone.hover}`}
+        >
+          {submitting ? (
+            t("common.saving")
+          ) : (
+            <>
+              <CheckIcon weight="bold" aria-hidden="true" className="h-4 w-4 shrink-0" />
+              <span className="truncate">
+                {moreInQueue ? "Save & next" : amountNumber > 0 ? `Save ${formatCurrency(amountNumber, currency)}` : "Save"}
+              </span>
+            </>
+          )}
+        </button>
       </div>
     </div>
   );
