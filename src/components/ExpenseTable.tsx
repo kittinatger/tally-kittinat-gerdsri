@@ -64,7 +64,7 @@ export default function ExpenseTable({
       {groups.map((g) => (
         <section key={g.key}>
           {g.label && (
-            <div className="sticky top-[72px] z-[1] flex items-center justify-between border-b border-surface-line bg-surface-soft/95 px-5 py-2 backdrop-blur">
+            <div className="sticky top-[72px] z-[1] lg:top-0 flex items-center justify-between border-b border-surface-line bg-surface-soft/95 px-5 py-2 backdrop-blur">
               <h3 data-date-heading className="text-xs font-semibold text-surface-foreground">
                 {g.label}
               </h3>

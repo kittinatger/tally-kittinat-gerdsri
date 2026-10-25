@@ -176,8 +176,11 @@ export default function ActivitiesView({
             <div className={hydrated ? "flex flex-1 flex-col" : "hidden flex-1 flex-col md:flex"}>
               <PullToRefresh>
                 <AppHeader onAddClick={openAdd} />
-                <main className="flex-1 px-2 py-6 lg:grid lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start lg:gap-6">
-                  <aside className="mb-6 lg:sticky lg:top-24 lg:mb-0">
+                <main className="flex-1 px-2 py-6 lg:grid lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start lg:gap-6 lg:pb-0">
+                  {/* On desktop the sidebar and the list are two independent scroll
+                      regions, each capped to the viewport under the header (same
+                      approach as SettingsSubpageLayout); iPad keeps one page scroll. */}
+                  <aside className="mb-6 lg:sticky lg:top-[88px] lg:mb-0 lg:max-h-[calc(100dvh-128px)] lg:overflow-y-auto lg:overscroll-contain lg:pb-2">
                     <ActivitiesSidebar
                       expenses={expenses}
                       wallets={activeWallets}
@@ -189,7 +192,7 @@ export default function ActivitiesView({
                       onAdd={openAdd}
                     />
                   </aside>
-                  <div className="min-w-0">
+                  <div className="min-w-0 lg:sticky lg:top-[88px] lg:max-h-[calc(100dvh-128px)] lg:overflow-y-auto lg:overscroll-contain lg:pb-2">
                     <ExpenseList
                       layout="table"
                       expenses={expenses}
