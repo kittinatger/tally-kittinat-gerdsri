@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { toggleSplitSettled } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
+import { notifySplitActivity } from "@/lib/notify-events";
 
 function parseId(id: string): number | null {
   const n = Number(id);
@@ -18,5 +19,6 @@ export async function PATCH(_req: NextRequest, { params }: { params: Promise<{ i
   if (!ok) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+  after(() => notifySplitActivity(userId, splitId, "settled"));
   return NextResponse.json({ ok: true });
 }

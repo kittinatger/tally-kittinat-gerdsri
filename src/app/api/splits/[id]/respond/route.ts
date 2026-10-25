@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { respondToSplit } from "@/lib/db";
 import { splitRespondSchema } from "@/lib/validation";
 import { getUserId } from "@/lib/auth";
+import { notifySplitActivity } from "@/lib/notify-events";
 
 function parseId(id: string): number | null {
   const n = Number(id);
@@ -24,5 +25,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!ok) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+  const accepted = parsed.data.accept;
+  after(() => notifySplitActivity(userId, splitId, accepted ? "accepted" : "declined"));
   return NextResponse.json({ ok: true });
 }

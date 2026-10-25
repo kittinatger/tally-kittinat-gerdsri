@@ -182,7 +182,7 @@ export default function SettingsView({
           githubError={githubError}
         />
       )}
-      {panel === "permissions" && <PermissionsSettings hasEmail={Boolean(email)} />}
+      {panel === "permissions" && <PermissionsSettings />}
       {panel === "categories" && <CategoryManager categories={categories} />}
       {panel === "tags" && <TagManager />}
       {panel === "vendors" && <VendorManager />}

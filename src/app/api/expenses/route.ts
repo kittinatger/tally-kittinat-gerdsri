@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createExpense, findPossibleDuplicateExpense, listExpenses } from "@/lib/db";
+import { NextRequest, NextResponse, after } from "next/server";
+import { createExpense, findPossibleDuplicateExpense, getCurrency, listExpenses } from "@/lib/db";
 import { expenseInputSchema } from "@/lib/validation";
 import { getUserId } from "@/lib/auth";
+import { notifyWalletActivity } from "@/lib/notify-events";
 
 export async function GET() {
   const userId = await getUserId();
@@ -29,5 +30,9 @@ export async function POST(req: NextRequest) {
   }
 
   const expense = await createExpense(userId, parsed.data);
+  // Tells the other people in a shared wallet (a no-op for unshared ones).
+  const walletId = (expense as unknown as { wallet_id: number | null }).wallet_id;
+  const { merchant, amount, type } = parsed.data;
+  after(async () => notifyWalletActivity(userId, walletId, { merchant, amount, type }, await getCurrency(userId)));
   return NextResponse.json({ expense }, { status: 201 });
 }

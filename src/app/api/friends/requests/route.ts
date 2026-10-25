@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { sendFriendRequest } from "@/lib/db";
 import { friendRequestInputSchema } from "@/lib/validation";
 import { getUserId } from "@/lib/auth";
+import { notifyFriendRequest } from "@/lib/notify-events";
 
 export async function POST(req: NextRequest) {
   const userId = await getUserId();
@@ -14,5 +15,7 @@ export async function POST(req: NextRequest) {
   if ("error" in result) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
+  const targetId = parsed.data.targetUserId;
+  after(() => notifyFriendRequest(userId, targetId, result.status === "accepted"));
   return NextResponse.json(result, { status: 201 });
 }

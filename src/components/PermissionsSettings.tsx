@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import NotificationSettings from "./NotificationSettings";
+import Link from "next/link";
 import { describeMediaError } from "@/lib/media-error";
 import { badgeClasses } from "@/lib/category-styles";
 import { MicIcon } from "@/lib/icons";
@@ -18,7 +18,7 @@ function PhotosIcon() {
   return <PhImagesIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />;
 }
 
-export default function PermissionsSettings({ hasEmail }: { hasEmail: boolean }) {
+export default function PermissionsSettings() {
   const t = useT();
   const [micStatus, setMicStatus] = useState<PermissionStatus>("unsupported");
   const [cameraStatus, setCameraStatus] = useState<PermissionStatus>("unsupported");
@@ -130,9 +130,17 @@ export default function PermissionsSettings({ hasEmail }: { hasEmail: boolean })
 
       <div>
         <h3 className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">{t("permissions.notifications")}</h3>
-        <div className="overflow-hidden rounded-card border border-line bg-surface p-4">
-          <NotificationSettings hasEmail={hasEmail} />
-        </div>
+        {/* The options themselves live on their own page now. */}
+        <Link
+          href="/notifications/settings"
+          className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface p-4 transition hover:border-navy"
+        >
+          <span className="min-w-0">
+            <span className="block text-sm font-medium text-foreground">Notification settings</span>
+            <span className="block text-[11px] leading-snug text-ink-soft">Choose which notifications you get, pause them, and set up email and push.</span>
+          </span>
+          <span aria-hidden="true" className="text-ink-soft">›</span>
+        </Link>
       </div>
     </div>
   );

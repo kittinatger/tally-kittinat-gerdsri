@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { removeWalletMember, respondToWalletInvite } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
+import { notifyWalletInviteAnswered } from "@/lib/notify-events";
 
 function parseId(id: string): number | null {
   const n = Number(id);
@@ -22,6 +23,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ me
   if (!ok) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+  after(() => notifyWalletInviteAnswered(userId, parsedId, accept));
   return NextResponse.json({ ok: true });
 }
 

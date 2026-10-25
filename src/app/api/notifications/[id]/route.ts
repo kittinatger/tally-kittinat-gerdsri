@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { markNotificationRead } from "@/lib/db";
+import { deleteNotification, markNotificationRead } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 
 function parseId(id: string): number | null {
@@ -15,6 +15,20 @@ export async function PATCH(_req: NextRequest, { params }: { params: Promise<{ i
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
   const ok = await markNotificationRead(userId, notificationId);
+  if (!ok) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const userId = await getUserId();
+  const { id } = await params;
+  const notificationId = parseId(id);
+  if (notificationId === null) {
+    return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+  }
+  const ok = await deleteNotification(userId, notificationId);
   if (!ok) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

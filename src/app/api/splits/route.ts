@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { listSplits, createSplit } from "@/lib/db";
+import { NextRequest, NextResponse, after } from "next/server";
+import { listSplits, createSplit, getCurrency } from "@/lib/db";
 import { splitInputSchema } from "@/lib/validation";
 import { getUserId } from "@/lib/auth";
+import { notifySplitAdded } from "@/lib/notify-events";
 
 export async function GET() {
   const userId = await getUserId();
@@ -20,5 +21,7 @@ export async function POST(req: NextRequest) {
   if ("error" in result) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
+  const input = parsed.data;
+  after(async () => notifySplitAdded(userId, input, await getCurrency(userId)));
   return NextResponse.json(result, { status: 201 });
 }

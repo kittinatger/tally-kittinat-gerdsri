@@ -1,3 +1,4 @@
+import type { NotificationPrefs, NotificationType } from "@/lib/notification-types";
 import { sql, db } from "@vercel/postgres";
 import { createHash, randomBytes, randomUUID } from "crypto";
 import type { ExpenseInput } from "@/lib/validation";
@@ -188,7 +189,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 79;
+const CURRENT_SCHEMA_VERSION = 80;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1617,6 +1618,13 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS location_name TEXT;`;
       await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION;`;
       await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;`;
+
+      // Notification settings: which in-app notification types are switched
+      // off ({type: false}), a "Pause all" end time, and the newest app
+      // version this user has already been told about (see notify-events.ts).
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS notification_prefs JSONB NOT NULL DEFAULT '{}'::jsonb;`;
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS notifications_paused_until TIMESTAMPTZ;`;
+      await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS last_seen_app_version TEXT;`;
 
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
@@ -6116,7 +6124,7 @@ export async function deleteFolder(userId: number, id: number): Promise<boolean>
 // creation time, same precedent as the existing (untranslated) email HTML
 // in lib/email.ts — only the notification center's own chrome is localized.
 
-export type NotificationType = "recurring_logged" | "budget_over_limit" | "loan_due";
+export type { NotificationType } from "@/lib/notification-types";
 
 export type NotificationRow = {
   id: number;
@@ -6128,6 +6136,9 @@ export type NotificationRow = {
   created_at: string;
 };
 
+// Records one notification — unless the user switched that type off, or has
+// paused notifications (both checked in the same statement, so it's still a
+// single round trip).
 export async function createNotification(
   userId: number,
   input: { type: NotificationType; title: string; body: string; url?: string | null },
@@ -6135,11 +6146,117 @@ export async function createNotification(
   await ensureSchema();
   await sql`
     INSERT INTO notifications (user_id, type, title, body, url)
-    VALUES (${userId}, ${input.type}, ${input.title}, ${input.body}, ${input.url ?? null});
+    SELECT ${userId}, ${input.type}, ${input.title}, ${input.body}, ${input.url ?? null}
+    WHERE NOT EXISTS (
+      SELECT 1 FROM app_settings
+      WHERE user_id = ${userId}
+        AND ((notification_prefs ->> ${input.type}) = 'false' OR notifications_paused_until > now())
+    );
   `;
 }
 
-export async function listNotifications(userId: number, limit = 50): Promise<NotificationRow[]> {
+export type NotificationSettingsRow = { prefs: NotificationPrefs; pausedUntil: string | null };
+
+export async function getNotificationSettings(userId: number): Promise<NotificationSettingsRow> {
+  await ensureSchema();
+  const { rows } = await sql<{ notification_prefs: NotificationPrefs | null; paused_until: string | null }>`
+    SELECT notification_prefs,
+           CASE WHEN notifications_paused_until > now() THEN notifications_paused_until::text END AS paused_until
+    FROM app_settings WHERE user_id = ${userId};
+  `;
+  return { prefs: rows[0]?.notification_prefs ?? {}, pausedUntil: rows[0]?.paused_until ?? null };
+}
+
+export async function setNotificationTypeEnabled(userId: number, type: NotificationType, enabled: boolean): Promise<void> {
+  await ensureSchema();
+  await sql`
+    UPDATE app_settings
+    SET notification_prefs = CASE WHEN ${enabled}::boolean
+      THEN notification_prefs - ${type}
+      ELSE notification_prefs || jsonb_build_object(${type}::text, false) END
+    WHERE user_id = ${userId};
+  `;
+}
+
+/** Pauses every in-app notification for `minutes` (null resumes them). */
+export async function setNotificationsPaused(userId: number, minutes: number | null): Promise<void> {
+  await ensureSchema();
+  await sql`
+    UPDATE app_settings
+    SET notifications_paused_until = CASE WHEN ${minutes}::int IS NULL THEN NULL ELSE now() + make_interval(mins => ${minutes}::int) END
+    WHERE user_id = ${userId};
+  `;
+}
+
+/** Swaps in the new version, atomically. `changed` is true only for the one
+ * request that moved it; `established` says whether the account is more than
+ * a day old (so a never-tracked existing user still hears about the current
+ * release, but a brand-new account doesn’t). */
+export async function swapLastSeenAppVersion(
+  userId: number,
+  version: string,
+): Promise<{ changed: boolean; previous: string | null; established: boolean }> {
+  await ensureSchema();
+  const { rows } = await sql<{ previous: string | null; established: boolean }>`
+    UPDATE app_settings a SET last_seen_app_version = ${version}
+    FROM (SELECT last_seen_app_version AS previous FROM app_settings WHERE user_id = ${userId} FOR UPDATE) old
+    WHERE a.user_id = ${userId} AND a.last_seen_app_version IS DISTINCT FROM ${version}
+    RETURNING old.previous,
+      COALESCE((SELECT created_at < now() - interval '1 day' FROM users WHERE id = ${userId}), false) AS established;
+  `;
+  return rows[0] ? { changed: true, previous: rows[0].previous, established: rows[0].established } : { changed: false, previous: version, established: true };
+}
+
+export async function deleteNotification(userId: number, id: number): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`DELETE FROM notifications WHERE id = ${id} AND user_id = ${userId};`;
+  return (rowCount ?? 0) > 0;
+}
+
+// ── Lookups for the social notifications (see lib/notify-events.ts) ──
+
+export async function getUsername(userId: number): Promise<string | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ username: string }>`SELECT username FROM users WHERE id = ${userId};`;
+  return rows[0]?.username ?? null;
+}
+
+export async function getFriendRequestRequester(requestId: number): Promise<number | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ requester_id: number }>`SELECT requester_id FROM friend_requests WHERE id = ${requestId};`;
+  return rows[0]?.requester_id ?? null;
+}
+
+export async function getSplitSummary(splitId: number): Promise<{ creatorId: number; title: string } | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ creator_id: number; title: string }>`SELECT creator_id, title FROM splits WHERE id = ${splitId};`;
+  return rows[0] ? { creatorId: rows[0].creator_id, title: rows[0].title } : null;
+}
+
+export async function getWalletSummary(walletId: number): Promise<{ ownerId: number; name: string } | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ user_id: number; name: string }>`SELECT user_id, name FROM wallets WHERE id = ${walletId};`;
+  return rows[0] ? { ownerId: rows[0].user_id, name: rows[0].name } : null;
+}
+
+export async function getWalletInvite(memberId: number): Promise<{ walletId: number; userId: number } | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ wallet_id: number; user_id: number }>`SELECT wallet_id, user_id FROM wallet_members WHERE id = ${memberId};`;
+  return rows[0] ? { walletId: rows[0].wallet_id, userId: rows[0].user_id } : null;
+}
+
+/** Everyone who can see a wallet: its owner and accepted members. */
+export async function listWalletAudience(walletId: number): Promise<number[]> {
+  await ensureSchema();
+  const { rows } = await sql<{ user_id: number }>`
+    SELECT user_id FROM wallets WHERE id = ${walletId}
+    UNION
+    SELECT user_id FROM wallet_members WHERE wallet_id = ${walletId} AND status = 'accepted';
+  `;
+  return rows.map((r) => r.user_id);
+}
+
+export async function listNotifications(userId: number, limit = 100): Promise<NotificationRow[]> {
   await ensureSchema();
   const { rows } = await sql<NotificationRow>`
     SELECT id, type, title, body, url, read, created_at::text AS created_at

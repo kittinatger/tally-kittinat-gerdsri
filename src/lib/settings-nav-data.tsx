@@ -4,10 +4,14 @@
 // hooks), so either can import it without duplicating the ~40 rows.
 import type { Panel } from "@/lib/settings-panels";
 import type { MessageKey } from "@/lib/i18n/messages";
-import { BookOpenIcon as PhBookOpenIcon, CalculatorIcon as PhCalculatorIcon, CalendarBlankIcon as PhCalendarBlankIcon, ChartPieSliceIcon as PhChartPieSliceIcon, ChatCircleDotsIcon as PhChatCircleDotsIcon, CircleHalfIcon as PhCircleHalfIcon, ClipboardTextIcon as PhClipboardTextIcon, ClockCounterClockwiseIcon as PhClockCounterClockwiseIcon, CloudArrowUpIcon as PhCloudArrowUpIcon, CoinsIcon as PhCoinsIcon, CurrencyCircleDollarIcon as PhCurrencyCircleDollarIcon, EnvelopeIcon as PhEnvelopeIcon, FlagIcon as PhFlagIcon, GiftIcon as PhGiftIcon, GlobeIcon as PhGlobeIcon, HandshakeIcon as PhHandshakeIcon, HashIcon as PhHashIcon, IdentificationCardIcon as PhIdentificationCardIcon, ImagesIcon as PhImagesIcon, KeyboardIcon as PhKeyboardIcon, LockSimpleIcon as PhLockSimpleIcon, PercentIcon as PhPercentIcon, QrCodeIcon as PhQrCodeIcon, QuestionIcon as PhQuestionIcon, ReceiptIcon as PhReceiptIcon, RepeatIcon as PhRepeatIcon, ScanIcon as PhScanIcon, ShieldCheckIcon as PhShieldCheckIcon, SparkleIcon as PhSparkleIcon, SquaresFourIcon as PhSquaresFourIcon, StorefrontIcon as PhStorefrontIcon, TargetIcon as PhTargetIcon, TrophyIcon as PhTrophyIcon, UserIcon as PhUserIcon, UsersIcon as PhUsersIcon, WalletIcon as PhWalletIcon, WarningIcon as PhWarningIcon, WrenchIcon as PhWrenchIcon, MapTrifoldIcon as PhMapTrifoldIcon } from "@phosphor-icons/react/dist/ssr";
+import { BellIcon as PhBellIcon, BookOpenIcon as PhBookOpenIcon, CalculatorIcon as PhCalculatorIcon, CalendarBlankIcon as PhCalendarBlankIcon, ChartPieSliceIcon as PhChartPieSliceIcon, ChatCircleDotsIcon as PhChatCircleDotsIcon, CircleHalfIcon as PhCircleHalfIcon, ClipboardTextIcon as PhClipboardTextIcon, ClockCounterClockwiseIcon as PhClockCounterClockwiseIcon, CloudArrowUpIcon as PhCloudArrowUpIcon, CoinsIcon as PhCoinsIcon, CurrencyCircleDollarIcon as PhCurrencyCircleDollarIcon, EnvelopeIcon as PhEnvelopeIcon, FlagIcon as PhFlagIcon, GiftIcon as PhGiftIcon, GlobeIcon as PhGlobeIcon, HandshakeIcon as PhHandshakeIcon, HashIcon as PhHashIcon, IdentificationCardIcon as PhIdentificationCardIcon, ImagesIcon as PhImagesIcon, KeyboardIcon as PhKeyboardIcon, LockSimpleIcon as PhLockSimpleIcon, PercentIcon as PhPercentIcon, QrCodeIcon as PhQrCodeIcon, QuestionIcon as PhQuestionIcon, ReceiptIcon as PhReceiptIcon, RepeatIcon as PhRepeatIcon, ScanIcon as PhScanIcon, ShieldCheckIcon as PhShieldCheckIcon, SparkleIcon as PhSparkleIcon, SquaresFourIcon as PhSquaresFourIcon, StorefrontIcon as PhStorefrontIcon, TargetIcon as PhTargetIcon, TrophyIcon as PhTrophyIcon, UserIcon as PhUserIcon, UsersIcon as PhUsersIcon, WalletIcon as PhWalletIcon, WarningIcon as PhWarningIcon, WrenchIcon as PhWrenchIcon, MapTrifoldIcon as PhMapTrifoldIcon } from "@phosphor-icons/react/dist/ssr";
 
 function AccountIcon() {
   return <PhUserIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
+}
+
+function BellNavIcon() {
+  return <PhBellIcon weight="fill" aria-hidden="true" className="h-5 w-5" />;
 }
 
 function ShieldIcon() {
@@ -189,6 +193,7 @@ export const SETTINGS_SECTIONS: SettingsSectionData[] = [
     titleKey: "settings.section.appSettings",
     rows: [
       { kind: "panel", icon: <AccountIcon />, labelKey: "settings.account", accent: "slate", panel: "account" },
+      { kind: "href", icon: <BellNavIcon />, labelKey: "notification.title", accent: "rose", href: "/notifications/settings" },
       { kind: "panel", icon: <ShieldIcon />, labelKey: "settings.permissions", accent: "slate", panel: "permissions" },
       { kind: "panel", icon: <LockIcon />, labelKey: "settings.appLock", accent: "rose", panel: "appLock" },
     ],

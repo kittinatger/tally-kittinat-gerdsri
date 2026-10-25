@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { acceptFriendRequest, deleteFriendRequest } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
+import { notifyFriendAccepted } from "@/lib/notify-events";
 
 function parseId(id: string): number | null {
   const n = Number(id);
@@ -20,6 +21,7 @@ export async function PATCH(_req: NextRequest, { params }: { params: Promise<{ i
   if (!ok) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+  after(() => notifyFriendAccepted(userId, requestId));
   return NextResponse.json({ ok: true });
 }
 

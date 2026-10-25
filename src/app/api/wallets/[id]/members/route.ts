@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { inviteWalletMember, listWalletMembers } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
+import { notifyWalletInvite } from "@/lib/notify-events";
 
 function parseId(id: string): number | null {
   const n = Number(id);
@@ -34,5 +35,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if ("error" in result) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
+  after(() => notifyWalletInvite(userId, walletId, friendId));
   return NextResponse.json(result, { status: 201 });
 }
