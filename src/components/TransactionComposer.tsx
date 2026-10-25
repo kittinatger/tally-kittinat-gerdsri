@@ -1,19 +1,27 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ArrowClockwiseIcon,
   ArrowCounterClockwiseIcon,
+  ArrowDownLeftIcon,
+  ArrowsLeftRightIcon,
+  ArrowUpRightIcon,
   BackspaceIcon,
   CalendarBlankIcon,
-  CaretDownIcon,
   CheckIcon,
   CopyIcon,
+  KeyboardIcon,
+  MapPinIcon,
   MicrophoneIcon,
+  NotePencilIcon,
   PlusIcon,
   ScanIcon,
   SparkleIcon,
+  StorefrontIcon,
+  TagIcon,
   UsersThreeIcon,
+  WalletIcon,
   XIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import type { TransactionType, TransferDirection } from "@/lib/categories";
@@ -58,7 +66,6 @@ export type RecentEntry = {
 // Above the server's own worst case (one 45s model attempt plus one 30s
 // lite fallback, under the route's 120s maxDuration).
 const AI_FETCH_TIMEOUT_MS = 125_000;
-const CATEGORY_PREVIEW = 7;
 const REPEAT_CHIPS = 8;
 const KEYS = ["1", "2", "3", "back", "4", "5", "6", "+", "7", "8", "9", "−", ".", "0", "00", "done"];
 
@@ -79,28 +86,47 @@ type Capture =
   | { kind: "scan"; status: "pick" | "busy" | "error"; error?: string; files?: File[]; index?: number; previewUrl?: string }
   | { kind: "voice"; status: "pick" | "busy" | "error"; error?: string; recording?: { blob: Blob; mimeType: string } };
 
-const HERO: Record<TransactionType, { bg: string; button: string; text: string }> = {
+type Extra = "location" | "tags" | "notes";
+
+// Each type's accent: the page itself stays neutral and only these touches
+// (tab underline, readout, operator keys, save button) carry the colour.
+const TONE: Record<
+  TransactionType,
+  { icon: typeof ArrowUpRightIcon; text: string; solid: string; hover: string; soft: string; border: string; wash: string }
+> = {
   expense: {
-    bg: "from-rose-500 to-rose-600 dark:from-rose-600 dark:to-rose-800",
-    button: "bg-rose-500 hover:bg-rose-600",
+    icon: ArrowUpRightIcon,
     text: "text-rose-600 dark:text-rose-400",
+    solid: "bg-rose-500",
+    hover: "hover:bg-rose-600",
+    soft: "bg-rose-500/10",
+    border: "border-rose-400/70",
+    wash: "bg-gradient-to-b from-rose-500/[0.06] to-transparent",
   },
   income: {
-    bg: "from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-800",
-    button: "bg-emerald-500 hover:bg-emerald-600",
+    icon: ArrowDownLeftIcon,
     text: "text-emerald-600 dark:text-emerald-400",
+    solid: "bg-emerald-500",
+    hover: "hover:bg-emerald-600",
+    soft: "bg-emerald-500/10",
+    border: "border-emerald-400/70",
+    wash: "bg-gradient-to-b from-emerald-500/[0.06] to-transparent",
   },
   transfer: {
-    bg: "from-sky-500 to-sky-600 dark:from-sky-600 dark:to-sky-800",
-    button: "bg-sky-500 hover:bg-sky-600",
+    icon: ArrowsLeftRightIcon,
     text: "text-sky-600 dark:text-sky-400",
+    solid: "bg-sky-500",
+    hover: "hover:bg-sky-600",
+    soft: "bg-sky-500/10",
+    border: "border-sky-400/70",
+    wash: "bg-gradient-to-b from-sky-500/[0.06] to-transparent",
   },
 };
 
 const inputClass =
   "w-full rounded-xl border border-surface-line bg-surface-soft px-3.5 py-2.5 text-base text-surface-foreground outline-none transition placeholder:text-surface-foreground-soft/60 focus:border-surface-accent focus:ring-2 focus:ring-surface-accent/20";
 const labelClass = "mb-2 block text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft";
-const chipClass = (on: boolean) =>
+const pillClass = (on: boolean) =>
   `flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition ${
     on ? "border-surface-accent bg-surface-accent/10 text-surface-foreground" : "border-surface-line text-surface-foreground-soft hover:text-surface-foreground"
   }`;
@@ -169,7 +195,7 @@ function blankValues(type: TransactionType, walletId: number | null, date = toda
  * keypad (sums like 120+45.5 work, and so does a physical keyboard), recent
  * merchants can be repeated in one tap, and picking a merchant you've used
  * before fills in the category and wallet it had last time. Scan and Speak
- * fill the same form; splits and the rest live under "More". A likely
+ * fill the same form; location, tags, notes and splits are opt-in chips. A likely
  * duplicate asks once, with "Add anyway", however the entry was made.
  */
 export default function TransactionComposer({
@@ -202,7 +228,7 @@ export default function TransactionComposer({
   const [conversion, setConversion] = useState<Conversion | null>(null);
   const [allCats, setAllCats] = useState(false);
   const [pickDate, setPickDate] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
+  const [extras, setExtras] = useState<Extra[]>([]);
   const [splitMode, setSplitMode] = useState(false);
   const [splitLines, setSplitLines] = useState<Line[]>([
     { category: "Other", amount: "" },
@@ -231,16 +257,9 @@ export default function TransactionComposer({
     };
   }, []);
 
-  const hero = HERO[values.type];
+  const tone = TONE[values.type];
   const symbol = currencySymbol(currency);
   const categories = useMemo(() => allCategories.filter((c) => c.type === values.type), [allCategories, values.type]);
-  // The selected category always stays visible, even past the preview.
-  const shownCategories = useMemo(() => {
-    if (allCats) return categories;
-    const first = categories.slice(0, CATEGORY_PREVIEW);
-    const selected = categories.find((c) => c.name === values.category);
-    return selected && !first.includes(selected) ? [...first.slice(0, -1), selected] : first;
-  }, [allCats, categories, values.category]);
   const defaultWallet = wallets.find((w) => w.isDefault) ?? wallets[0];
   const walletId = values.walletId ?? defaultWallet?.id ?? null;
   const splitTotal = splitLines.reduce((sum, l) => sum + (Number(l.amount) || 0), 0);
@@ -356,7 +375,8 @@ export default function TransactionComposer({
     setKeypadOpen(false);
     setDuplicate(null);
     setError(null);
-    setMoreOpen(Boolean(prefill.values.notes || prefill.values.locationName));
+    // Open the extras that the scan/voice filled in, so they get checked.
+    setExtras([...(prefill.values.locationName ? (["location"] as const) : []), ...(prefill.values.notes ? (["notes"] as const) : [])]);
   }
 
   async function readFile(files: File[], index: number) {
@@ -565,121 +585,168 @@ export default function TransactionComposer({
   }
 
   // ── Pieces ──────────────────────────────────────────────────────────
-  const amountCard = (
-    <section className={`overflow-hidden rounded-card bg-gradient-to-br text-white shadow-soft transition-colors ${hero.bg}`}>
-      <div className="px-4 pt-4 sm:px-5">
-        <div className="flex items-center gap-2">
-          <div role="group" className="flex flex-1 rounded-full bg-black/15 p-1">
-            {(["expense", "income", "transfer"] as TransactionType[]).map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setType(type)}
-                aria-pressed={values.type === type}
-                className={`flex-1 rounded-full py-1.5 text-sm font-semibold transition ${
-                  values.type === type ? `bg-white shadow-sm ${HERO[type].text}` : "text-white/80 hover:text-white"
-                }`}
-              >
-                {type === "expense" ? t("common.expense") : type === "income" ? t("common.income") : t("common.transfer")}
-              </button>
-            ))}
-          </div>
-          {source.kind === "manual" && (
-            <>
-              <button
-                type="button"
-                onClick={() => setCapture({ kind: "scan", status: "pick" })}
-                aria-label={t("modal.scan")}
-                title={t("modal.scan")}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black/15 transition hover:bg-black/25"
-              >
-                <ScanIcon weight="bold" aria-hidden="true" className="h-[18px] w-[18px]" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setCapture({ kind: "voice", status: "pick" })}
-                aria-label={t("modal.speak")}
-                title={t("modal.speak")}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black/15 transition hover:bg-black/25"
-              >
-                <MicrophoneIcon weight="bold" aria-hidden="true" className="h-[18px] w-[18px]" />
-              </button>
-            </>
+  const typeLabel = (type: TransactionType) =>
+    type === "expense" ? t("common.expense") : type === "income" ? t("common.income") : t("common.transfer");
+  const selectedCategory = categories.find((c) => c.name === values.category);
+  const selectedWallet = wallets.find((w) => w.id === walletId);
+  const dateLabel = values.date === today ? "Today" : values.date === yesterday ? "Yesterday" : formatDateLong(values.date);
+  const merchantLabel = values.type === "income" ? t("form.source") : values.type === "transfer" ? t("form.description") : t("form.merchant");
+
+  function toggleExtra(extra: Extra) {
+    setExtras((prev) => (prev.includes(extra) ? prev.filter((e) => e !== extra) : [...prev, extra]));
+  }
+
+  // The amount "display": type tabs on top, a calculator-style readout and
+  // a neutral keypad, with Scan / Speak as a footer.
+  const amountPanel = (
+    <section className="overflow-hidden rounded-card border border-surface-line bg-surface shadow-soft">
+      <div role="group" aria-label="Transaction type" className="grid grid-cols-3 border-b border-surface-line">
+        {(["expense", "income", "transfer"] as TransactionType[]).map((type) => {
+          const on = values.type === type;
+          const Icon = TONE[type].icon;
+          return (
+            <button
+              key={type}
+              type="button"
+              onClick={() => setType(type)}
+              aria-pressed={on}
+              className={`relative flex items-center justify-center gap-1.5 py-3 text-sm font-semibold transition ${
+                on ? TONE[type].text : "text-surface-foreground-soft hover:text-surface-foreground"
+              }`}
+            >
+              <Icon weight="bold" aria-hidden="true" className="h-4 w-4" />
+              {typeLabel(type)}
+              <span className={`absolute inset-x-4 bottom-0 h-0.5 rounded-full transition ${on ? TONE[type].solid : "bg-transparent"}`} />
+            </button>
+          );
+        })}
+      </div>
+
+      <div className={`relative px-5 pb-4 pt-4 transition-colors ${tone.wash}`}>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">{t("form.amount")}</span>
+          {values.type === "transfer" ? (
+            <div className="flex rounded-full bg-surface-soft p-0.5">
+              {(["out", "in"] as const).map((dir) => (
+                <button
+                  key={dir}
+                  type="button"
+                  onClick={() => patch({ direction: dir })}
+                  aria-pressed={values.direction === dir}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                    values.direction === dir ? `bg-surface shadow-sm ${tone.text}` : "text-surface-foreground-soft"
+                  }`}
+                >
+                  {dir === "out" ? t("form.moneyOut") : t("form.moneyIn")}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <span className="rounded-full bg-surface-soft px-2 py-0.5 text-[11px] font-semibold text-surface-foreground-soft">{currency}</span>
           )}
         </div>
-
-        {values.type === "transfer" && (
-          <div className="mx-auto mt-3 flex max-w-[15rem] rounded-full bg-black/15 p-0.5">
-            {(["out", "in"] as const).map((dir) => (
-              <button
-                key={dir}
-                type="button"
-                onClick={() => patch({ direction: dir })}
-                aria-pressed={values.direction === dir}
-                className={`flex-1 rounded-full py-1 text-xs font-semibold transition ${values.direction === dir ? "bg-white/90 text-sky-700" : "text-white/80"}`}
-              >
-                {dir === "out" ? t("form.moneyOut") : t("form.moneyIn")}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <button type="button" onClick={() => !splitMode && setKeypadOpen(true)} aria-label={t("form.amount")} className="block w-full py-6 text-center">
-          <span className="flex items-baseline justify-center gap-1.5">
-            <span className="text-2xl font-semibold text-white/70">{symbol}</span>
-            <span className={`font-semibold tabular-nums tracking-tight ${expr.length > 11 ? "text-4xl" : "text-5xl sm:text-6xl"}`}>
+        <button
+          type="button"
+          onClick={() => !splitMode && setKeypadOpen(true)}
+          aria-label={t("form.amount")}
+          className="mt-2 block w-full text-right"
+        >
+          <span className="flex items-baseline justify-end gap-1.5">
+            <span className="text-2xl font-medium text-surface-foreground-soft">{symbol}</span>
+            <span className={`font-semibold tabular-nums tracking-tight ${tone.text} ${expr.length > 11 ? "text-4xl" : "text-5xl sm:text-6xl"}`}>
               {splitMode ? splitTotal.toFixed(2) : expr || "0"}
             </span>
-            {keypadOpen && !splitMode && <span className="ml-0.5 inline-block h-10 w-0.5 animate-pulse self-center bg-white/80" aria-hidden="true" />}
+            {keypadOpen && !splitMode && <span className={`ml-0.5 inline-block h-10 w-0.5 animate-pulse self-center ${tone.solid}`} aria-hidden="true" />}
           </span>
-          <span className="mt-1 block h-5 text-sm text-white/75">
+          <span className="mt-1 block h-5 truncate text-sm text-surface-foreground-soft">
             {splitMode
               ? t("form.categoriesAndAmounts")
               : hasOperator && exprTotal !== null
                 ? `= ${formatCurrency(exprTotal ?? 0, currency)}`
-                : !keypadOpen && values.merchant
-                  ? `${values.merchant} · ${values.category}`
-                  : !keypadOpen
-                    ? "Tap to edit"
-                    : ""}
+                : !keypadOpen
+                  ? "Tap to edit"
+                  : ""}
           </span>
         </button>
       </div>
 
       {keypadOpen && !splitMode && (
-        <div className="grid grid-cols-4 gap-px bg-black/10 pt-px">
-          {KEYS.map((key) =>
-            key === "done" ? (
+        <div className="px-3 pb-3">
+          <div className="grid grid-cols-4 gap-2">
+            {KEYS.map((key) => {
+              if (key === "done")
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={finishAmount}
+                    aria-label="Done"
+                    className={`flex h-12 items-center justify-center rounded-xl text-white transition active:scale-95 sm:h-13 ${tone.solid}`}
+                  >
+                    <CheckIcon weight="bold" aria-hidden="true" className="h-5 w-5" />
+                  </button>
+                );
+              const op = key === "+" || key === "−" || key === "back";
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => press(key)}
+                  aria-label={key === "back" ? "Delete" : key}
+                  className={`flex h-12 items-center justify-center rounded-xl text-xl font-medium transition active:scale-95 sm:h-13 ${
+                    op ? `${tone.soft} ${tone.text}` : "bg-surface-soft text-surface-foreground hover:bg-[var(--surface-nav-hover)]"
+                  }`}
+                >
+                  {key === "back" ? <BackspaceIcon weight="bold" aria-hidden="true" className="h-5 w-5" /> : key}
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-2 flex items-center justify-between px-1">
+            <span className="hidden items-center gap-1.5 text-[11px] text-surface-foreground-soft lg:flex">
+              <KeyboardIcon weight="bold" aria-hidden="true" className="h-3.5 w-3.5" />
+              Type with your keyboard · Enter to finish
+            </span>
+            {expr && (
               <button
-                key={key}
                 type="button"
-                onClick={finishAmount}
-                aria-label="Done"
-                className="flex h-14 items-center justify-center bg-white/95 transition active:bg-white/80"
+                onClick={() => setExpr("")}
+                className="ml-auto rounded-full px-2.5 py-1 text-xs font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
               >
-                <CheckIcon weight="bold" aria-hidden="true" className={`h-5 w-5 ${hero.text}`} />
+                {t("common.clear")}
               </button>
-            ) : (
-              <button
-                key={key}
-                type="button"
-                onClick={() => press(key)}
-                aria-label={key === "back" ? "Delete" : key}
-                className={`flex h-14 items-center justify-center text-xl font-medium transition active:bg-white/25 ${
-                  key === "+" || key === "−" || key === "back" ? "bg-black/10" : "bg-white/10 hover:bg-white/15"
-                }`}
-              >
-                {key === "back" ? <BackspaceIcon weight="bold" aria-hidden="true" className="h-5 w-5" /> : key}
-              </button>
-            ),
-          )}
+            )}
+          </div>
+        </div>
+      )}
+
+      {source.kind === "manual" && (
+        <div className="grid grid-cols-2 divide-x divide-surface-line border-t border-surface-line">
+          <button
+            type="button"
+            onClick={() => setCapture({ kind: "scan", status: "pick" })}
+            aria-pressed={capture.kind === "scan"}
+            className="flex items-center justify-center gap-2 py-3 text-sm font-semibold text-surface-foreground transition hover:bg-[var(--surface-nav-hover)]"
+          >
+            <ScanIcon weight="bold" aria-hidden="true" className="h-[18px] w-[18px] text-amber-500" />
+            {t("modal.scan")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setCapture({ kind: "voice", status: "pick" })}
+            aria-pressed={capture.kind === "voice"}
+            className="flex items-center justify-center gap-2 py-3 text-sm font-semibold text-surface-foreground transition hover:bg-[var(--surface-nav-hover)]"
+          >
+            <MicrophoneIcon weight="bold" aria-hidden="true" className="h-[18px] w-[18px] text-violet-500" />
+            {t("modal.speak")}
+          </button>
         </div>
       )}
     </section>
   );
 
   const capturePanel = capture.kind !== "none" && (
-    <section className="rounded-card border border-surface-line bg-surface p-4 sm:p-5">
+    <section className="rounded-card border border-dashed border-surface-line bg-surface p-4 sm:p-5">
       <div className="mb-3 flex items-center justify-between gap-2">
         <p className="flex items-center gap-2 text-sm font-semibold text-surface-foreground">
           {capture.kind === "scan" ? (
@@ -747,52 +814,62 @@ export default function TransactionComposer({
     </section>
   );
 
+  // Batch progress for scans/voice: a thumbnail, "2 / 5" and a step bar.
   const sourceBanner = source.kind !== "manual" && (
-    <div
-      className={`flex items-center gap-3 rounded-card border p-3 ${
-        source.kind === "scan" ? "border-amber-300/60 bg-amber-500/5 dark:border-amber-800/60" : "border-violet-300/60 bg-violet-500/5 dark:border-violet-800/60"
-      }`}
-    >
-      {source.kind === "scan" && source.previewUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element -- local object URL preview
-        <img src={source.previewUrl} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
-      ) : (
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-500/15 text-violet-600 dark:text-violet-400">
-          <SparkleIcon weight="fill" aria-hidden="true" className="h-5 w-5" />
-        </span>
-      )}
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-surface-foreground">
-          {source.kind === "scan" ? "Filled from your receipt" : "Filled from what you said"}
-          {queue && queue.of > 1 && (
-            <span className="ml-1.5 text-xs font-medium text-surface-foreground-soft">
-              {queue.at + 1} / {queue.of}
-            </span>
-          )}
-        </p>
-        <p className="text-xs text-surface-foreground-soft">
-          Check the amount and type before saving.
-          {source.model && <> · {t("ai.modelUsed").replace("{model}", source.model)}</>}
-        </p>
-        {conversion && (
-          <p className="mt-0.5 text-xs font-medium text-sky-700 dark:text-sky-300">
-            Converted from {formatCurrency(conversion.originalAmount, conversion.originalCurrency)} to {currency}.
-          </p>
+    <div className="overflow-hidden rounded-card border border-surface-line bg-surface">
+      <div className="flex items-center gap-3 p-3">
+        {source.kind === "scan" && source.previewUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- local object URL preview
+          <img src={source.previewUrl} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
+        ) : (
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-violet-500/15 text-violet-600 dark:text-violet-400">
+            <SparkleIcon weight="fill" aria-hidden="true" className="h-5 w-5" />
+          </span>
         )}
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-surface-foreground">
+            {source.kind === "scan" ? "Filled from your receipt" : "Filled from what you said"}
+            {queue && queue.of > 1 && (
+              <span className="ml-1.5 text-xs font-medium text-surface-foreground-soft">
+                {queue.at + 1} / {queue.of}
+              </span>
+            )}
+          </p>
+          <p className="text-xs text-surface-foreground-soft">
+            Check the amount and type before saving.
+            {source.model && <> · {t("ai.modelUsed").replace("{model}", source.model)}</>}
+          </p>
+          {conversion && (
+            <p className="mt-0.5 text-xs font-medium text-sky-700 dark:text-sky-300">
+              Converted from {formatCurrency(conversion.originalAmount, conversion.originalCurrency)} to {currency}.
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => startOver()}
+          className="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
+        >
+          {t("common.clear")}
+        </button>
       </div>
-      <button
-        type="button"
-        onClick={() => startOver()}
-        className="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
-      >
-        {t("common.clear")}
-      </button>
+      {queue && queue.of > 1 && (
+        <div className="flex gap-1 px-3 pb-3" aria-hidden="true">
+          {Array.from({ length: queue.of }, (_, i) => (
+            <span
+              key={i}
+              className={`h-1 flex-1 rounded-full ${i < queue.at ? "bg-emerald-500" : i === queue.at ? (source.kind === "scan" ? "bg-amber-500" : "bg-violet-500") : "bg-surface-soft"}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 
+  // Recent merchants as small two-line tiles; one tap fills everything.
   const repeatRow = source.kind === "manual" && repeatChips.length > 0 && !values.merchant && (
     <div>
-      <p className="mb-2 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+      <p className="mb-2 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">
         <ArrowClockwiseIcon weight="bold" aria-hidden="true" className="h-3.5 w-3.5" />
         Repeat a recent one
       </p>
@@ -804,17 +881,19 @@ export default function TransactionComposer({
               key={r.merchant}
               type="button"
               onClick={() => repeat(r)}
-              className="flex shrink-0 items-center gap-2 rounded-full border border-surface-line bg-surface py-1.5 pl-1.5 pr-3 text-left transition hover:border-surface-accent"
+              className="flex w-36 shrink-0 flex-col gap-2 rounded-2xl border border-surface-line bg-surface p-3 text-left transition hover:-translate-y-0.5 hover:border-surface-accent"
             >
-              <span className={`flex h-7 w-7 items-center justify-center rounded-full ${badgeClasses(cat?.color)}`}>
+              <span className={`flex h-8 w-8 items-center justify-center rounded-xl ${badgeClasses(cat?.color)}`}>
                 {cat?.icon && isCategoryIconKey(cat.icon) ? (
-                  <CategoryIcon iconKey={cat.icon} className="h-3.5 w-3.5" />
+                  <CategoryIcon iconKey={cat.icon} className="h-4 w-4" />
                 ) : (
                   <span className="text-xs font-semibold">{r.merchant.charAt(0).toUpperCase()}</span>
                 )}
               </span>
-              <span className="max-w-[9rem] truncate text-sm font-medium text-surface-foreground">{r.merchant}</span>
-              <span className="text-xs tabular-nums text-surface-foreground-soft">{formatCurrency(r.amount, currency)}</span>
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold text-surface-foreground">{r.merchant}</span>
+                <span className="block text-xs tabular-nums text-surface-foreground-soft">{formatCurrency(r.amount, currency)}</span>
+              </span>
             </button>
           );
         })}
@@ -822,12 +901,10 @@ export default function TransactionComposer({
     </div>
   );
 
+  // The details as one grouped list: an icon gutter and a field per row.
   const details = (
-    <section className="space-y-5 rounded-card border border-surface-line bg-surface p-4 sm:p-5">
-      <div>
-        <label htmlFor="composer-merchant" className={labelClass}>
-          {values.type === "income" ? t("form.source") : values.type === "transfer" ? t("form.description") : t("form.merchant")}
-        </label>
+    <section className="divide-y divide-surface-line rounded-card border border-surface-line bg-surface">
+      <FieldRow icon={<StorefrontIcon weight="bold" className="h-[18px] w-[18px]" />} label={merchantLabel} htmlFor="composer-merchant">
         <input
           id="composer-merchant"
           type="text"
@@ -841,22 +918,22 @@ export default function TransactionComposer({
                 ? t("form.merchantPlaceholderTransfer")
                 : t("form.merchantPlaceholderExpense")
           }
-          className={inputClass}
+          className="w-full bg-transparent text-base font-medium text-surface-foreground outline-none placeholder:font-normal placeholder:text-surface-foreground-soft/60"
         />
         {merchantMatches.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {merchantMatches.map((m) => (
-              <button key={m.merchant} type="button" onClick={() => setMerchant(m.merchant)} className={chipClass(false)}>
+              <button key={m.merchant} type="button" onClick={() => setMerchant(m.merchant)} className={pillClass(false)}>
+                <SparkleIcon weight="fill" aria-hidden="true" className="h-3 w-3 text-surface-accent" />
                 {m.merchant}
               </button>
             ))}
           </div>
         )}
-      </div>
+      </FieldRow>
 
       {splitMode ? (
-        <div>
-          <p className={labelClass}>{t("form.categoriesAndAmounts")}</p>
+        <FieldRow icon={<CopyIcon weight="bold" className="h-[18px] w-[18px]" />} label={t("form.categoriesAndAmounts")}>
           <div className="space-y-2">
             {splitLines.map((line, i) => (
               <div key={i} className="flex items-center gap-2">
@@ -902,12 +979,29 @@ export default function TransactionComposer({
               {t("form.addAnotherCategory")}
             </button>
           </div>
-        </div>
+        </FieldRow>
       ) : (
-        <div>
-          <p className={labelClass}>{t("common.category")}</p>
-          <div className="grid grid-cols-4 gap-1.5">
-            {shownCategories.map((c) => {
+        <FieldRow
+          icon={
+            selectedCategory?.icon && isCategoryIconKey(selectedCategory.icon) ? (
+              <CategoryIcon iconKey={selectedCategory.icon} className="h-[18px] w-[18px]" />
+            ) : (
+              <TagIcon weight="bold" className="h-[18px] w-[18px]" />
+            )
+          }
+          iconClass={selectedCategory ? badgeClasses(selectedCategory.color) : undefined}
+          label={t("common.category")}
+          action={
+            categories.length > 4 && (
+              <button type="button" onClick={() => setAllCats((v) => !v)} className="text-xs font-semibold text-surface-accent hover:underline">
+                {allCats ? "Less" : "Show all"}
+              </button>
+            )
+          }
+        >
+          {/* A single scrolling row, or every category wrapped with "Show all". */}
+          <div className={allCats ? "flex flex-wrap gap-1.5" : "-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1"}>
+            {categories.map((c) => {
               const selected = values.category === c.name;
               return (
                 <button
@@ -918,84 +1012,59 @@ export default function TransactionComposer({
                     patch({ category: c.name });
                   }}
                   aria-pressed={selected}
-                  className={`flex min-w-0 flex-col items-center gap-1.5 rounded-xl px-1 py-2 transition ${
-                    selected ? "bg-surface-accent/10 ring-2 ring-surface-accent" : "hover:bg-[var(--surface-nav-hover)]"
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full border py-1 pl-1 pr-3 text-sm font-medium transition ${
+                    selected ? `${tone.border} ${tone.soft} text-surface-foreground` : "border-surface-line text-surface-foreground-soft hover:text-surface-foreground"
                   }`}
                 >
-                  <span className={`flex h-10 w-10 items-center justify-center rounded-full ${badgeClasses(c.color)}`}>
+                  <span className={`flex h-6 w-6 items-center justify-center rounded-full ${badgeClasses(c.color)}`}>
                     {c.icon && isCategoryIconKey(c.icon) ? (
-                      <CategoryIcon iconKey={c.icon} className="h-5 w-5" />
+                      <CategoryIcon iconKey={c.icon} className="h-3.5 w-3.5" />
                     ) : (
-                      <span className="text-base font-semibold">{c.name.charAt(0).toUpperCase()}</span>
+                      <span className="text-[11px] font-semibold">{c.name.charAt(0).toUpperCase()}</span>
                     )}
                   </span>
-                  <span className={`w-full truncate text-center text-[11px] font-medium ${selected ? "text-surface-foreground" : "text-surface-foreground-soft"}`}>
-                    {c.name}
-                  </span>
+                  {c.name}
                 </button>
               );
             })}
-            {categories.length > CATEGORY_PREVIEW && (
-              <button
-                type="button"
-                onClick={() => setAllCats((v) => !v)}
-                className="flex min-w-0 flex-col items-center gap-1.5 rounded-xl px-1 py-2 transition hover:bg-[var(--surface-nav-hover)]"
-              >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full border border-dashed border-surface-line text-surface-foreground-soft">
-                  <CaretDownIcon weight="bold" aria-hidden="true" className={`h-4 w-4 transition-transform ${allCats ? "rotate-180" : ""}`} />
-                </span>
-                <span className="w-full truncate text-center text-[11px] font-medium text-surface-foreground-soft">
-                  {allCats ? "Less" : `${categories.length - CATEGORY_PREVIEW} more`}
-                </span>
-              </button>
-            )}
           </div>
-        </div>
+        </FieldRow>
       )}
 
-      <div>
-        <p className={labelClass}>{t("common.date")}</p>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setPickDate(false);
-              patch({ date: today });
-            }}
-            className={chipClass(values.date === today)}
-          >
-            Today
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setPickDate(false);
-              patch({ date: yesterday });
-            }}
-            className={chipClass(values.date === yesterday)}
-          >
-            Yesterday
-          </button>
-          <button
-            type="button"
-            onClick={() => setPickDate((v) => !v)}
-            className={chipClass(pickDate || (values.date !== today && values.date !== yesterday))}
-          >
-            <CalendarBlankIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
-            {values.date !== today && values.date !== yesterday ? formatDateLong(values.date) : "Pick a date"}
-          </button>
+      <FieldRow icon={<CalendarBlankIcon weight="bold" className="h-[18px] w-[18px]" />} label={t("common.date")}>
+        <div className="flex rounded-xl bg-surface-soft p-1">
+          {[
+            { label: "Today", on: values.date === today && !pickDate, onClick: () => { setPickDate(false); patch({ date: today }); } },
+            { label: "Yesterday", on: values.date === yesterday && !pickDate, onClick: () => { setPickDate(false); patch({ date: yesterday }); } },
+            {
+              label: values.date !== today && values.date !== yesterday ? formatDateLong(values.date) : "Pick a date",
+              on: pickDate || (values.date !== today && values.date !== yesterday),
+              onClick: () => setPickDate((v) => !v),
+            },
+          ].map((opt) => (
+            <button
+              key={opt.label}
+              type="button"
+              onClick={opt.onClick}
+              aria-pressed={opt.on}
+              className={`min-w-0 flex-1 truncate rounded-lg px-2 py-1.5 text-sm font-medium transition ${
+                opt.on ? "bg-surface text-surface-foreground shadow-sm" : "text-surface-foreground-soft hover:text-surface-foreground"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
         {pickDate && (
           <div className="mt-2">
             <DatePicker id="composer-date" value={values.date} onChange={(date) => patch({ date })} required />
           </div>
         )}
-      </div>
+      </FieldRow>
 
       {wallets.length > 1 && (
-        <div>
-          <p className={labelClass}>{t("common.wallet")}</p>
-          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+        <FieldRow icon={<WalletIcon weight="bold" className="h-[18px] w-[18px]" />} label={t("common.wallet")}>
+          <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
             {wallets.map((w) => (
               <button
                 key={w.id}
@@ -1005,156 +1074,154 @@ export default function TransactionComposer({
                   patch({ walletId: w.id });
                 }}
                 aria-pressed={walletId === w.id}
-                className={chipClass(walletId === w.id)}
+                className={pillClass(walletId === w.id)}
               >
                 <span className={`h-2 w-2 rounded-full ${dotClasses(w.color)}`} />
                 {w.name}
               </button>
             ))}
           </div>
-        </div>
+        </FieldRow>
       )}
     </section>
   );
 
-  const more = (
-    <section className="overflow-hidden rounded-card border border-surface-line bg-surface">
-      <button
-        type="button"
-        onClick={() => setMoreOpen((o) => !o)}
-        aria-expanded={moreOpen}
-        className="flex w-full items-center justify-between gap-2 px-4 py-3.5 text-left sm:px-5"
-      >
-        <span className="min-w-0">
-          <span className="block text-sm font-semibold text-surface-foreground">More</span>
-          <span className="block truncate text-xs text-surface-foreground-soft">
-            {[
-              values.locationName || "Location",
-              values.tags.length ? `${values.tags.length} tag${values.tags.length === 1 ? "" : "s"}` : "tags",
-              values.notes ? "note added" : "notes",
-              splitMode || friendSplit ? "split on" : "splits",
-            ].join(", ")}
-          </span>
-        </span>
-        <CaretDownIcon weight="bold" aria-hidden="true" className={`h-4 w-4 shrink-0 text-surface-foreground-soft transition-transform ${moreOpen ? "rotate-180" : ""}`} />
-      </button>
-      {moreOpen && (
-        <div className="space-y-5 border-t border-surface-line p-4 sm:p-5">
+  // Extras: each is its own toggle chip that opens just that editor, and
+  // shows a dot once it holds something.
+  const canSplit = values.type !== "transfer" && source.kind === "manual";
+  const canFriendSplit = values.type === "expense" && friends.length > 0;
+  const extraChip = (key: string, on: boolean, filled: boolean, icon: ReactNode, label: string, onClick: () => void) => (
+    <button key={key} type="button" onClick={onClick} aria-pressed={on} className={pillClass(on)}>
+      {icon}
+      {label}
+      {filled && !on && <span className="h-1.5 w-1.5 rounded-full bg-surface-accent" aria-hidden="true" />}
+    </button>
+  );
+  const extrasCard = (
+    <section className="rounded-card border border-surface-line bg-surface p-4 sm:p-5">
+      <p className={labelClass}>Add details</p>
+      <div className="flex flex-wrap gap-1.5">
+        {extraChip("location", extras.includes("location"), Boolean(values.locationName), <MapPinIcon weight="bold" aria-hidden="true" className="h-4 w-4" />, "Location", () =>
+          toggleExtra("location"),
+        )}
+        {extraChip("tags", extras.includes("tags"), values.tags.length > 0, <TagIcon weight="bold" aria-hidden="true" className="h-4 w-4" />, t("common.tags"), () =>
+          toggleExtra("tags"),
+        )}
+        {extraChip("notes", extras.includes("notes"), Boolean(values.notes), <NotePencilIcon weight="bold" aria-hidden="true" className="h-4 w-4" />, t("common.notes"), () =>
+          toggleExtra("notes"),
+        )}
+        {canSplit &&
+          extraChip("split", splitMode, false, <CopyIcon weight="bold" aria-hidden="true" className="h-4 w-4" />, t("form.splitIntoCategories"), () => {
+            setSplitMode((v) => !v);
+            if (!splitMode) setKeypadOpen(false);
+          })}
+        {canFriendSplit &&
+          extraChip("friends", friendSplit, false, <UsersThreeIcon weight="bold" aria-hidden="true" className="h-4 w-4" />, "Split with friends", () =>
+            setFriendSplit((v) => !v),
+          )}
+      </div>
+
+      {extras.includes("location") && (
+        <div className="mt-4">
           <LocationField
             labelClass={labelClass}
             value={{ locationName: values.locationName ?? "", latitude: values.latitude ?? null, longitude: values.longitude ?? null }}
             onChange={(loc) => setValues((prev) => ({ ...prev, ...loc }))}
           />
-          <div>
-            <p className={labelClass}>{t("common.tags")}</p>
-            <TagInput tags={values.tags} onChange={(tags) => patch({ tags })} />
-          </div>
-          <div>
-            <label htmlFor="composer-notes" className={labelClass}>
-              {t("common.notes")}
-            </label>
-            <textarea
-              id="composer-notes"
-              rows={2}
-              value={values.notes}
-              onChange={(e) => patch({ notes: e.target.value })}
-              placeholder={t("form.notesPlaceholder")}
-              className={`${inputClass} resize-none`}
-            />
-          </div>
-          {values.type !== "transfer" && source.kind === "manual" && (
-            <label className="flex items-center justify-between gap-3 rounded-xl bg-surface-soft px-3.5 py-3">
-              <span className="flex items-center gap-2.5 text-sm font-medium text-surface-foreground">
-                <CopyIcon weight="bold" aria-hidden="true" className="h-4 w-4 text-surface-foreground-soft" />
-                {t("form.splitIntoCategories")}
-              </span>
-              <input
-                type="checkbox"
-                checked={splitMode}
-                onChange={(e) => {
-                  setSplitMode(e.target.checked);
-                  if (e.target.checked) setKeypadOpen(false);
-                }}
-                className="h-4 w-4 accent-surface-accent"
-              />
-            </label>
-          )}
-          {values.type === "expense" && friends.length > 0 && (
-            <div className="rounded-xl bg-surface-soft px-3.5 py-3">
-              <label className="flex items-center justify-between gap-3">
-                <span className="flex items-center gap-2.5 text-sm font-medium text-surface-foreground">
-                  <UsersThreeIcon weight="bold" aria-hidden="true" className="h-4 w-4 text-surface-foreground-soft" />
-                  Split this bill with friends
-                </span>
-                <input type="checkbox" checked={friendSplit} onChange={(e) => setFriendSplit(e.target.checked)} className="h-4 w-4 accent-surface-accent" />
-              </label>
-              {friendSplit && (
-                <div className="mt-3 space-y-3">
-                  <div className="flex flex-wrap gap-1.5">
-                    {friends.map((f) => {
-                      const on = friendIds.includes(f.id);
-                      return (
-                        <button
-                          key={f.id}
-                          type="button"
-                          onClick={() => setFriendIds((prev) => (on ? prev.filter((id) => id !== f.id) : [...prev, f.id]))}
-                          aria-pressed={on}
-                          className={`rounded-full px-3 py-1 text-xs font-semibold transition ${on ? "bg-surface-accent text-white" : "bg-surface text-surface-foreground-soft hover:text-surface-foreground"}`}
-                        >
-                          {f.username}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {friendIds.length > 0 && (
-                    <>
-                      <div className="flex rounded-full bg-surface p-1">
-                        {(["equal", "custom"] as const).map((m) => (
-                          <button
-                            key={m}
-                            type="button"
-                            onClick={() => setFriendMethod(m)}
-                            className={`flex-1 rounded-full py-1.5 text-xs font-semibold transition ${friendMethod === m ? "bg-surface-soft text-surface-foreground" : "text-surface-foreground-soft"}`}
-                          >
-                            {m === "equal" ? "Equal split" : "Custom amounts"}
-                          </button>
-                        ))}
-                      </div>
-                      {friendMethod === "custom" ? (
-                        <div className="space-y-1.5">
-                          {friendIds.map((id) => (
-                            <div key={id} className="flex items-center gap-2">
-                              <span className="w-28 shrink-0 truncate text-sm text-surface-foreground">{friends.find((f) => f.id === id)?.username}</span>
-                              <input
-                                type="number"
-                                inputMode="decimal"
-                                step="0.01"
-                                min="0"
-                                value={friendOwed[id] ?? ""}
-                                onChange={(e) => setFriendOwed((prev) => ({ ...prev, [id]: e.target.value }))}
-                                placeholder="0.00"
-                                className={`${inputClass} flex-1 bg-surface`}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-surface-foreground-soft">
-                          Each of you pays {formatCurrency(amountNumber / (friendIds.length + 1), currency)}, tracked in Split bills.
-                        </p>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
+        </div>
+      )}
+      {extras.includes("tags") && (
+        <div className="mt-4">
+          <p className={labelClass}>{t("common.tags")}</p>
+          <TagInput tags={values.tags} onChange={(tags) => patch({ tags })} />
+        </div>
+      )}
+      {extras.includes("notes") && (
+        <div className="mt-4">
+          <label htmlFor="composer-notes" className={labelClass}>
+            {t("common.notes")}
+          </label>
+          <textarea
+            id="composer-notes"
+            rows={2}
+            value={values.notes}
+            onChange={(e) => patch({ notes: e.target.value })}
+            placeholder={t("form.notesPlaceholder")}
+            className={`${inputClass} resize-none`}
+          />
+        </div>
+      )}
+      {canFriendSplit && friendSplit && (
+        <div className="mt-4 rounded-xl bg-surface-soft p-3.5">
+          <p className="mb-2 flex items-center gap-2 text-sm font-medium text-surface-foreground">
+            <UsersThreeIcon weight="bold" aria-hidden="true" className="h-4 w-4 text-surface-foreground-soft" />
+            Split this bill with friends
+          </p>
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-1.5">
+              {friends.map((f) => {
+                const on = friendIds.includes(f.id);
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setFriendIds((prev) => (on ? prev.filter((id) => id !== f.id) : [...prev, f.id]))}
+                    aria-pressed={on}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition ${on ? "bg-surface-accent text-white" : "bg-surface text-surface-foreground-soft hover:text-surface-foreground"}`}
+                  >
+                    {f.username}
+                  </button>
+                );
+              })}
             </div>
-          )}
+            {friendIds.length > 0 && (
+              <>
+                <div className="flex rounded-full bg-surface p-1">
+                  {(["equal", "custom"] as const).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setFriendMethod(m)}
+                      className={`flex-1 rounded-full py-1.5 text-xs font-semibold transition ${friendMethod === m ? "bg-surface-soft text-surface-foreground" : "text-surface-foreground-soft"}`}
+                    >
+                      {m === "equal" ? "Equal split" : "Custom amounts"}
+                    </button>
+                  ))}
+                </div>
+                {friendMethod === "custom" ? (
+                  <div className="space-y-1.5">
+                    {friendIds.map((id) => (
+                      <div key={id} className="flex items-center gap-2">
+                        <span className="w-28 shrink-0 truncate text-sm text-surface-foreground">{friends.find((f) => f.id === id)?.username}</span>
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.01"
+                          min="0"
+                          value={friendOwed[id] ?? ""}
+                          onChange={(e) => setFriendOwed((prev) => ({ ...prev, [id]: e.target.value }))}
+                          placeholder="0.00"
+                          className={`${inputClass} flex-1 bg-surface`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-surface-foreground-soft">
+                    Each of you pays {formatCurrency(amountNumber / (friendIds.length + 1), currency)}, tracked in Split bills.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
         </div>
       )}
     </section>
   );
 
-  const saveBar = (
+  // The dock: a live one-line summary of what will be saved, over the
+  // buttons. Warnings and errors stack above it.
+  const saveDock = (
     <div className="sticky bottom-[88px] z-10 sm:bottom-4">
       {duplicate && (
         <div className="mb-2 rounded-card border border-amber-300 bg-amber-50 p-3.5 shadow-soft animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none dark:border-amber-700 dark:bg-amber-950">
@@ -1190,34 +1257,47 @@ export default function TransactionComposer({
           {lastSaved.count > 1 ? `${lastSaved.count} saved` : `Saved ${lastSaved.merchant} · ${formatCurrency(lastSaved.amount, currency)}`}
         </p>
       )}
-      <div className="flex items-center gap-2 rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-1.5 shadow-soft backdrop-blur-xl">
-        {source.kind === "manual" ? (
+      <div className="rounded-2xl border border-[var(--glass-border)] bg-[image:var(--glass-bg)] p-2 shadow-soft backdrop-blur-xl">
+        <div className="flex items-center gap-2.5 px-1.5 pb-2 pt-0.5">
+          <span className={`h-2 w-2 shrink-0 rounded-full ${tone.solid}`} aria-hidden="true" />
+          <p className="min-w-0 flex-1 truncate text-xs text-surface-foreground-soft">
+            <span className="font-semibold text-surface-foreground">{values.merchant.trim() || merchantLabel}</span>
+            {" · "}
+            {splitMode ? t("form.categoriesAndAmounts") : values.category}
+            {" · "}
+            {dateLabel}
+            {selectedWallet && wallets.length > 1 ? ` · ${selectedWallet.name}` : ""}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {source.kind === "manual" ? (
+            <button
+              type="button"
+              onClick={() => save(true)}
+              disabled={submitting || busy}
+              className="flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground disabled:opacity-50"
+            >
+              <PlusIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+              Save &amp; new
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={advance}
+              disabled={submitting}
+              className="rounded-xl px-3.5 py-2.5 text-sm font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground disabled:opacity-50"
+            >
+              {moreInQueue ? "Skip" : t("common.cancel")}
+            </button>
+          )}
           <button
-            type="button"
-            onClick={() => save(true)}
+            type="submit"
             disabled={submitting || busy}
-            className="flex items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground disabled:opacity-50"
+            className={`flex-1 truncate rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60 ${tone.solid} ${tone.hover}`}
           >
-            <PlusIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
-            Save &amp; new
+            {submitting ? t("common.saving") : moreInQueue ? "Save & next" : amountNumber > 0 ? `Save ${formatCurrency(amountNumber, currency)}` : "Save"}
           </button>
-        ) : (
-          <button
-            type="button"
-            onClick={advance}
-            disabled={submitting}
-            className="rounded-full px-4 py-2.5 text-sm font-semibold text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground disabled:opacity-50"
-          >
-            {moreInQueue ? "Skip" : t("common.cancel")}
-          </button>
-        )}
-        <button
-          type="submit"
-          disabled={submitting || busy}
-          className={`flex-1 truncate rounded-full px-5 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60 ${hero.button}`}
-        >
-          {submitting ? t("common.saving") : moreInQueue ? "Save & next" : amountNumber > 0 ? `Save ${formatCurrency(amountNumber, currency)}` : "Save"}
-        </button>
+        </div>
       </div>
     </div>
   );
@@ -1228,21 +1308,63 @@ export default function TransactionComposer({
         e.preventDefault();
         save(false);
       }}
-      className="lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start lg:gap-6"
+      className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:items-start lg:gap-6"
     >
-      {/* Left (desktop) / top (phone): amount, keypad, quick capture. */}
+      {/* Left (desktop) / top (phone): the amount display, keypad and capture. */}
       <div className="flex flex-col gap-4 lg:sticky lg:top-24">
-        {amountCard}
+        {amountPanel}
         {capturePanel}
         {sourceBanner}
       </div>
-      {/* Right / below: everything else, then the save bar. */}
+      {/* Right / below: recents, the details list, extras, then the dock. */}
       <div className="mt-4 flex flex-col gap-4 lg:mt-0">
         {repeatRow}
         {details}
-        {more}
-        {saveBar}
+        {extrasCard}
+        {saveDock}
       </div>
     </form>
+  );
+}
+
+// One row of the details list: a tinted icon tile, a small label (with an
+// optional action on the right) and the field itself.
+function FieldRow({
+  icon,
+  iconClass,
+  label,
+  htmlFor,
+  action,
+  children,
+}: {
+  icon: ReactNode;
+  iconClass?: string;
+  label: string;
+  htmlFor?: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex gap-3 px-4 py-3.5 sm:px-5">
+      <span
+        aria-hidden="true"
+        className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${iconClass ?? "bg-surface-soft text-surface-foreground-soft"}`}
+      >
+        {icon}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="mb-1.5 flex items-center justify-between gap-2">
+          {htmlFor ? (
+            <label htmlFor={htmlFor} className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">
+              {label}
+            </label>
+          ) : (
+            <p className="text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">{label}</p>
+          )}
+          {action}
+        </div>
+        {children}
+      </div>
+    </div>
   );
 }
