@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon, PencilSimpleIcon, SplitHorizontalIcon, TrashIcon } from "@phosphor-icons/react/dist/ssr";
+import { CheckIcon, PencilSimpleIcon, TrashIcon } from "@phosphor-icons/react/dist/ssr";
 import { signedAmount, type Expense } from "@/types/expense";
 import { formatCurrency, formatDateShort } from "@/lib/format";
 import { badgeClasses, dotClasses } from "@/lib/category-styles";
@@ -8,6 +8,7 @@ import { useCategoryColor, useCategoryIcon } from "@/lib/categories-context";
 import { useCurrency } from "@/lib/currency-context";
 import { isCategoryIconKey } from "@/lib/category-icons";
 import { CategoryIcon } from "@/lib/icons";
+import { RowBadges } from "./ExpenseRow";
 
 const COLS: Record<string, string> = {
   "": "grid-cols-[minmax(0,1fr)_8rem_7rem] lg:grid-cols-[minmax(0,1fr)_9rem_8rem_8rem]",
@@ -148,7 +149,7 @@ function TableRow({
           <span className="min-w-0">
             <span className="flex items-center gap-1.5">
               <span className="truncate text-sm font-semibold text-surface-foreground">{e.merchant}</span>
-              {e.splitGroupId && <SplitHorizontalIcon weight="bold" aria-label="Split" className="h-3.5 w-3.5 shrink-0 text-surface-foreground-soft" />}
+              <RowBadges expense={e} />
             </span>
             {(e.notes || e.tags.length > 0) && (
               <span className="block truncate text-xs text-surface-foreground-soft">

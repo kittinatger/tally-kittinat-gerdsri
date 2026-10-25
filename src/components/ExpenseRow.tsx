@@ -8,7 +8,7 @@ import { useCategoryColor, useCategoryIcon } from "@/lib/categories-context";
 import { useCurrency } from "@/lib/currency-context";
 import { isCategoryIconKey } from "@/lib/category-icons";
 import { CategoryIcon, TrashIcon, EditIcon } from "@/lib/icons";
-import { ExportIcon as PhExportIcon, CheckIcon as PhCheckIcon } from "@phosphor-icons/react/dist/ssr";
+import { ExportIcon as PhExportIcon, CheckIcon as PhCheckIcon, MapPinIcon as PhMapPinIcon, ReceiptIcon as PhReceiptIcon, SplitHorizontalIcon as PhSplitHorizontalIcon } from "@phosphor-icons/react/dist/ssr";
 
 const OPEN_DELETE = -76;
 const OPEN_SHARE = 76;
@@ -30,6 +30,20 @@ function DeleteIcon({ className = "h-5 w-5" }: { className?: string }) {
 
 function ShareIcon({ className = "h-5 w-5" }: { className?: string }) {
   return <PhExportIcon weight="fill" aria-hidden="true" className={className} />;
+}
+
+// Small icons after the merchant: has a receipt, a location, or is part of
+// a split. Shared with the iPad/desktop table (ExpenseTable).
+export function RowBadges({ expense }: { expense: Expense }) {
+  const hasLocation = Boolean(expense.locationName) || (expense.latitude != null && expense.longitude != null);
+  if (!expense.hasReceipt && !hasLocation && !expense.splitGroupId) return null;
+  return (
+    <span className="flex shrink-0 items-center gap-1 text-surface-foreground-soft">
+      {expense.hasReceipt && <PhReceiptIcon weight="fill" aria-label="Has a receipt" className="h-3.5 w-3.5" />}
+      {hasLocation && <PhMapPinIcon weight="fill" aria-label="Has a location" className="h-3.5 w-3.5" />}
+      {expense.splitGroupId && <PhSplitHorizontalIcon weight="bold" aria-label="Split" className="h-3.5 w-3.5" />}
+    </span>
+  );
 }
 
 export async function shareExpense(expense: Expense, currency: string) {
@@ -347,7 +361,10 @@ export default function ExpenseRow({
             </span>
           )}
           <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold text-surface-foreground">{expense.merchant}</p>
+            <p className="flex min-w-0 items-center gap-1.5">
+              <span className="truncate font-semibold text-surface-foreground">{expense.merchant}</span>
+              <RowBadges expense={expense} />
+            </p>
             <p className="mt-0.5 truncate text-xs text-surface-foreground-soft">
               {expense.category}
               {!hideDate && <> · {formatDateLong(expense.date)}</>}

@@ -33,6 +33,33 @@ function CancelSelectIcon() {
   return <PhXIcon weight="bold" aria-hidden="true" className="h-4 w-4" />;
 }
 
+// Local YYYY-MM-DD for a Date (not toISOString, which is UTC).
+function isoDay(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+type QuickRange = "all" | "week" | "month" | "lastMonth";
+
+// The date range behind each quick chip above the list (weeks start Monday).
+function quickRange(range: QuickRange): { from: string; to: string } {
+  if (range === "all") return { from: "", to: "" };
+  const now = new Date();
+  if (range === "week") {
+    const start = new Date(now);
+    start.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    return { from: isoDay(start), to: "" };
+  }
+  if (range === "month") return { from: isoDay(new Date(now.getFullYear(), now.getMonth(), 1)), to: "" };
+  return { from: isoDay(new Date(now.getFullYear(), now.getMonth() - 1, 1)), to: isoDay(new Date(now.getFullYear(), now.getMonth(), 0)) };
+}
+
+const QUICK_RANGES: { id: QuickRange; label: string }[] = [
+  { id: "all", label: "All time" },
+  { id: "week", label: "This week" },
+  { id: "month", label: "This month" },
+  { id: "lastMonth", label: "Last month" },
+];
+
 type DisplayRow = { kind: "single"; expense: Expense } | { kind: "split"; groupId: string; items: Expense[] };
 
 // Splits share a split_group_id purely for display grouping (see
@@ -496,6 +523,40 @@ export default function ExpenseList({
             </span>
           )}
         </button>
+      </div>
+
+      {/* Quick date ranges — the same dateFrom/dateTo the filter sheet sets;
+          a range picked there that matches none of these shows as Custom. */}
+      <div className="-mx-1 mb-3 flex gap-2 overflow-x-auto px-1 pb-0.5">
+        {QUICK_RANGES.map(({ id, label }) => {
+          const r = quickRange(id);
+          const on = r.from === dateFrom && r.to === dateTo;
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => {
+                setDateFrom(r.from);
+                setDateTo(r.to);
+              }}
+              aria-pressed={on}
+              className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                on ? "border-transparent bg-navy text-white" : "border-line text-ink-soft hover:text-foreground"
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
+        {!QUICK_RANGES.some(({ id }) => quickRange(id).from === dateFrom && quickRange(id).to === dateTo) && (
+          <button
+            type="button"
+            onClick={() => setFilterOpen(true)}
+            className="shrink-0 rounded-full border border-transparent bg-navy px-3 py-1 text-xs font-semibold text-white"
+          >
+            Custom
+          </button>
+        )}
       </div>
 
       {showRenameBanner && (

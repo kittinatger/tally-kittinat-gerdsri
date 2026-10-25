@@ -30,6 +30,7 @@ export default function ActivitiesSidebar({
   walletFilter,
   onWalletFilterChange,
   onAdd,
+  upcoming,
 }: {
   expenses: Expense[];
   wallets: SidebarWallet[];
@@ -39,6 +40,8 @@ export default function ActivitiesSidebar({
   walletFilter: string;
   onWalletFilterChange: (wallet: string) => void;
   onAdd: () => void;
+  /** The "Coming up" card, placed under the balance. */
+  upcoming?: React.ReactNode;
 }) {
   const t = useT();
   const selectedWallet = walletFilter === "all" ? null : wallets.find((w) => String(w.id) === walletFilter);
@@ -104,6 +107,8 @@ export default function ActivitiesSidebar({
           {t("form.addTransaction")}
         </button>
       </section>
+
+      {upcoming}
 
       {/* Wallets as a filter */}
       {wallets.length > 1 && (

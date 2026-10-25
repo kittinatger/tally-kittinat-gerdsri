@@ -3583,9 +3583,13 @@ export async function getExpense(userId: number, id: number): Promise<Expense | 
       e.location_name,
       e.latitude,
       e.longitude,
-      to_char(e.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at
+      to_char(e.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
+      e.receipt_image IS NOT NULL AS has_primary_receipt,
+      e.user_id AS created_by_id,
+      u.username AS created_by
     FROM expenses e
     LEFT JOIN wallets w ON w.id = e.wallet_id
+    LEFT JOIN users u ON u.id = e.user_id
     WHERE e.id = ${id}
       AND (
         e.user_id = ${userId}
@@ -3625,6 +3629,69 @@ export async function listRecentEntryTemplates(userId: number, limit = 40): Prom
     LIMIT ${limit};
   `;
   return rows;
+}
+
+export type MerchantInsights = {
+  count: number;
+  total: number;
+  firstDate: string | null;
+  recent: { id: number; date: string; amount: number; type: string }[];
+};
+
+// "At this merchant" on a transaction's page: how many transactions of the
+// same type the user has with this merchant (case-insensitive), their total,
+// when the first was, and the five latest others. Same visibility rule as
+// listExpenses/getExpense.
+export async function getMerchantInsights(userId: number, merchant: string, type: string, excludeId: number): Promise<MerchantInsights> {
+  await ensureSchema();
+  const [{ rows: stats }, { rows: recent }] = await Promise.all([
+    sql<{ count: number; total: string | null; first_date: string | null }>`
+      SELECT COUNT(*)::int AS count, SUM(e.amount)::text AS total, to_char(MIN(e.date), 'YYYY-MM-DD') AS first_date
+      FROM expenses e
+      WHERE lower(e.merchant) = lower(${merchant}) AND e.type = ${type}
+        AND (
+          e.user_id = ${userId}
+          OR e.wallet_id IN (SELECT id FROM wallets WHERE user_id = ${userId})
+          OR e.wallet_id IN (SELECT wallet_id FROM wallet_members WHERE user_id = ${userId} AND status = 'accepted')
+        );
+    `,
+    sql<{ id: number; date: string; amount: string; type: string }>`
+      SELECT e.id, to_char(e.date, 'YYYY-MM-DD') AS date, e.amount::text AS amount, e.type
+      FROM expenses e
+      WHERE lower(e.merchant) = lower(${merchant}) AND e.type = ${type} AND e.id <> ${excludeId}
+        AND (
+          e.user_id = ${userId}
+          OR e.wallet_id IN (SELECT id FROM wallets WHERE user_id = ${userId})
+          OR e.wallet_id IN (SELECT wallet_id FROM wallet_members WHERE user_id = ${userId} AND status = 'accepted')
+        )
+      ORDER BY e.date DESC, e.id DESC
+      LIMIT 5;
+    `,
+  ]);
+  return {
+    count: stats[0]?.count ?? 0,
+    total: Number(stats[0]?.total ?? 0),
+    firstDate: stats[0]?.first_date ?? null,
+    recent: recent.map((r) => ({ id: r.id, date: r.date, amount: Number(r.amount), type: r.type })),
+  };
+}
+
+// The lines of one transaction split across several categories (they share
+// a split_group_id; see createSplitExpense).
+export async function listSplitGroupLines(userId: number, splitGroupId: string): Promise<{ id: number; category: string; amount: number }[]> {
+  await ensureSchema();
+  const { rows } = await sql<{ id: number; category: string; amount: string }>`
+    SELECT e.id, e.category, e.amount::text AS amount
+    FROM expenses e
+    WHERE e.split_group_id = ${splitGroupId}
+      AND (
+        e.user_id = ${userId}
+        OR e.wallet_id IN (SELECT id FROM wallets WHERE user_id = ${userId})
+        OR e.wallet_id IN (SELECT wallet_id FROM wallet_members WHERE user_id = ${userId} AND status = 'accepted')
+      )
+    ORDER BY e.id;
+  `;
+  return rows.map((r) => ({ id: r.id, category: r.category, amount: Number(r.amount) }));
 }
 
 // Powers the "Latest Transactions" list on a wallet's detail view (see

@@ -14,17 +14,20 @@ import { useT } from "@/lib/language-context";
 import { consumeOpenedFromList } from "@/lib/transaction-nav";
 import AppHeader from "./AppHeader";
 import PullToRefresh from "./PullToRefresh";
-import ExpenseDetailContent from "./ExpenseDetailContent";
+import ExpenseDetailContent, { type TransactionExtras } from "./ExpenseDetailContent";
+import TransactionMoreMenu from "./TransactionMoreMenu";
 
 const EditExpenseModal = dynamic(() => import("./EditExpenseModal"), { ssr: false });
 
 export default function TransactionDetailView({
   initialExpense,
+  extras,
   categories,
   currency,
   wallets,
 }: {
   initialExpense: Expense;
+  extras?: TransactionExtras;
   categories: CategoryOption[];
   currency: string;
   wallets: WalletOption[];
@@ -73,6 +76,8 @@ export default function TransactionDetailView({
               <div className="animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">
                 <ExpenseDetailContent
                   expense={expense}
+                  extras={extras}
+                  moreActions={<TransactionMoreMenu expense={expense} onDeleted={() => router.replace("/")} />}
                   onEdit={() => setEditing(true)}
                   onMerchantClick={(merchant) => router.push(`/?vendor=${encodeURIComponent(merchant)}`)}
                 />

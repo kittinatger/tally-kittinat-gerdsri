@@ -16,6 +16,7 @@ import PullToRefresh from "./PullToRefresh";
 import ExpenseList, { type TypeFilter } from "./ExpenseList";
 import ActivitiesBalanceCard from "./ActivitiesBalanceCard";
 import ActivitiesSidebar from "./ActivitiesSidebar";
+import UpcomingRecurring, { type UpcomingItem } from "./UpcomingRecurring";
 import AppHeader from "./AppHeader";
 
 // Never mounted on first paint (it needs a swipe/hover Edit first) —
@@ -40,6 +41,7 @@ export default function ActivitiesView({
   initialWalletFilter = "all",
   initialVendorFilter,
   prefs = DEFAULT_ACTIVITIES_PREFS,
+  upcoming = [],
 }: {
   initialExpenses: Expense[];
   categories: CategoryOption[];
@@ -58,6 +60,8 @@ export default function ActivitiesView({
    * activities-prefs.ts. Read server-side in page.tsx, same as
    * activitiesDefaultWalletId above. */
   prefs?: ActivitiesPrefs;
+  /** Recurring transactions due in the next 7 days. */
+  upcoming?: UpcomingItem[];
 }) {
   const router = useRouter();
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
@@ -149,6 +153,11 @@ export default function ActivitiesView({
                     walletFilter={walletFilter}
                     onWalletFilterChange={setWalletFilter}
                   />
+                  {upcoming.length > 0 && (
+                    <div className="mb-4">
+                      <UpcomingRecurring items={upcoming} currency={currency} collapsible />
+                    </div>
+                  )}
                   <ExpenseList
                     expenses={expenses}
                     onSelect={openTransaction}
@@ -190,6 +199,7 @@ export default function ActivitiesView({
                       walletFilter={walletFilter}
                       onWalletFilterChange={setWalletFilter}
                       onAdd={openAdd}
+                      upcoming={<UpcomingRecurring items={upcoming} currency={currency} />}
                     />
                   </aside>
                   <div className="min-w-0 lg:sticky lg:top-[88px] lg:max-h-[calc(100dvh-128px)] lg:overflow-y-auto lg:overscroll-contain lg:pb-2">
