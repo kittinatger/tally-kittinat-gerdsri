@@ -3589,6 +3589,36 @@ export async function getExpense(userId: number, id: number): Promise<Expense | 
   return rows[0] ?? null;
 }
 
+export type RecentEntryTemplate = {
+  merchant: string;
+  type: string;
+  direction: string | null;
+  category: string;
+  amount: string;
+  wallet_id: number | null;
+  date: string;
+};
+
+// The latest transaction per merchant (most recent first) — powers the Add
+// page's one-tap "Repeat" chips and its merchant smart-fill (picking a
+// known merchant pre-selects the category and wallet used last time).
+export async function listRecentEntryTemplates(userId: number, limit = 40): Promise<RecentEntryTemplate[]> {
+  await ensureSchema();
+  const { rows } = await sql<RecentEntryTemplate>`
+    SELECT * FROM (
+      SELECT DISTINCT ON (lower(merchant))
+        merchant, type, direction, category, amount::text AS amount, wallet_id,
+        to_char(date, 'YYYY-MM-DD') AS date, id
+      FROM expenses
+      WHERE user_id = ${userId} AND split_group_id IS NULL
+      ORDER BY lower(merchant), date DESC, id DESC
+    ) latest
+    ORDER BY date DESC, id DESC
+    LIMIT ${limit};
+  `;
+  return rows;
+}
+
 // Powers the "Latest Transactions" list on a wallet's detail view (see
 // AccountDetail.tsx) — a small, wallet-scoped, capped slice rather than
 // making the client fetch and filter the full (up to 10,000-row) list

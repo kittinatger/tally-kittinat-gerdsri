@@ -12,7 +12,7 @@ import { WalletsProvider } from "@/lib/wallets-context";
 import { useT } from "@/lib/language-context";
 import { consumeOpenedFromList } from "@/lib/transaction-nav";
 import AppHeader from "./AppHeader";
-import TransactionComposer from "./TransactionComposer";
+import TransactionComposer, { type RecentEntry } from "./TransactionComposer";
 
 export default function AddTransactionView({
   categories,
@@ -21,6 +21,7 @@ export default function AddTransactionView({
   initialType,
   initialWalletId,
   returnTo,
+  recent,
 }: {
   categories: CategoryOption[];
   currency: string;
@@ -29,6 +30,8 @@ export default function AddTransactionView({
   initialWalletId: number | null;
   /** Where to land after saving (and on close when opened directly). */
   returnTo: string;
+  /** Latest entry per merchant, for Repeat chips and smart-fill. */
+  recent: RecentEntry[];
 }) {
   const t = useT();
   const router = useRouter();
@@ -48,10 +51,10 @@ export default function AddTransactionView({
     <CategoriesProvider categories={categories}>
       <WalletsProvider wallets={wallets}>
         <CurrencyProvider currency={currency}>
-          <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10">
+          <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10 lg:max-w-6xl">
             <AppHeader />
 
-            <main className="mx-auto w-full max-w-2xl flex-1 px-1 py-4 sm:px-2 sm:py-6">
+            <main className="mx-auto w-full max-w-2xl flex-1 px-1 py-4 sm:px-2 sm:py-6 lg:max-w-none">
               <div className="mb-5 flex items-center justify-between gap-3">
                 <h1 className="font-display text-2xl text-foreground">{t("form.addTransaction")}</h1>
                 <button
@@ -69,6 +72,7 @@ export default function AddTransactionView({
                 <TransactionComposer
                   initialType={initialType}
                   initialWalletId={initialWalletId}
+                  recent={recent}
                   onSaved={() => {
                     savedRef.current = true;
                   }}

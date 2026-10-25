@@ -1,7 +1,8 @@
-import { listCategories, getCurrency, listWallets } from "@/lib/db";
+import { listCategories, getCurrency, listWallets, listRecentEntryTemplates } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import AddTransactionView from "@/components/AddTransactionView";
-import { isTransactionType } from "@/lib/categories";
+import type { RecentEntry } from "@/components/TransactionComposer";
+import { isTransactionType, isTransferDirection } from "@/lib/categories";
 import { toWalletOption } from "@/lib/wallet-mapper";
 import type { CategoryOption } from "@/types/category";
 import type { WalletOption } from "@/types/wallet";
@@ -23,11 +24,20 @@ export default async function NewTransactionPage({
 }) {
   const { type, wallet, from } = await searchParams;
   const userId = await getUserId();
-  const [categoryRows, currency, walletRows] = await Promise.all([
+  const [categoryRows, currency, walletRows, templateRows] = await Promise.all([
     listCategories(userId),
     getCurrency(userId),
     listWallets(userId),
+    listRecentEntryTemplates(userId),
   ]);
+  const recent: RecentEntry[] = templateRows.map((r) => ({
+    merchant: r.merchant,
+    type: isTransactionType(r.type) ? r.type : "expense",
+    direction: r.direction && isTransferDirection(r.direction) ? r.direction : "out",
+    category: r.category,
+    amount: Number(r.amount),
+    walletId: r.wallet_id,
+  }));
   const categories: CategoryOption[] = categoryRows.map((c) => ({
     id: c.id,
     type: isTransactionType(c.type) ? c.type : "expense",
@@ -46,6 +56,7 @@ export default async function NewTransactionPage({
       initialType={type && isTransactionType(type) ? type : "expense"}
       initialWalletId={wallets.some((w) => w.id === walletId) ? walletId : null}
       returnTo={safeReturnPath(from)}
+      recent={recent}
     />
   );
 }
