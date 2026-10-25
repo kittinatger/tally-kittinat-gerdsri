@@ -647,7 +647,7 @@ export default function TransactionComposer({
                 on ? TONE[type].text : "text-surface-foreground-soft hover:text-surface-foreground"
               }`}
             >
-              <Icon weight="bold" aria-hidden="true" className="h-4 w-4" />
+              <Icon weight="fill" aria-hidden="true" className="h-4 w-4" />
               {typeLabel(type)}
               <span className={`absolute inset-x-4 bottom-0 h-0.5 rounded-full transition ${on ? TONE[type].solid : "bg-transparent"}`} />
             </button>
@@ -718,7 +718,7 @@ export default function TransactionComposer({
                     aria-label="Done"
                     className={`flex h-12 items-center justify-center rounded-xl text-white transition active:scale-95 sm:h-13 ${tone.solid}`}
                   >
-                    <CheckIcon weight="bold" aria-hidden="true" className="h-5 w-5" />
+                    <CheckIcon weight="fill" aria-hidden="true" className="h-5 w-5" />
                   </button>
                 );
               const op = key === "+" || key === "−" || key === "back";
@@ -732,14 +732,14 @@ export default function TransactionComposer({
                     op ? `${tone.soft} ${tone.text}` : "bg-surface-soft text-surface-foreground hover:bg-[var(--surface-nav-hover)]"
                   }`}
                 >
-                  {key === "back" ? <BackspaceIcon weight="bold" aria-hidden="true" className="h-5 w-5" /> : key}
+                  {key === "back" ? <BackspaceIcon weight="fill" aria-hidden="true" className="h-5 w-5" /> : key}
                 </button>
               );
             })}
           </div>
           <div className="mt-2 flex items-center justify-between px-1">
             <span className="hidden items-center gap-1.5 text-[11px] text-surface-foreground-soft lg:flex">
-              <KeyboardIcon weight="bold" aria-hidden="true" className="h-3.5 w-3.5" />
+              <KeyboardIcon weight="fill" aria-hidden="true" className="h-3.5 w-3.5" />
               Type with your keyboard · Enter to finish
             </span>
             {expr && (
@@ -763,7 +763,7 @@ export default function TransactionComposer({
             aria-pressed={capture.kind === "scan"}
             className="flex items-center justify-center gap-2 py-3 text-sm font-semibold text-surface-foreground transition hover:bg-[var(--surface-nav-hover)]"
           >
-            <ScanIcon weight="bold" aria-hidden="true" className="h-[18px] w-[18px] text-amber-500" />
+            <ScanIcon weight="fill" aria-hidden="true" className="h-[18px] w-[18px] text-amber-500" />
             {t("modal.scan")}
           </button>
           <button
@@ -772,7 +772,7 @@ export default function TransactionComposer({
             aria-pressed={capture.kind === "voice"}
             className="flex items-center justify-center gap-2 py-3 text-sm font-semibold text-surface-foreground transition hover:bg-[var(--surface-nav-hover)]"
           >
-            <MicrophoneIcon weight="bold" aria-hidden="true" className="h-[18px] w-[18px] text-violet-500" />
+            <MicrophoneIcon weight="fill" aria-hidden="true" className="h-[18px] w-[18px] text-violet-500" />
             {t("modal.speak")}
           </button>
         </div>
@@ -785,9 +785,9 @@ export default function TransactionComposer({
       <div className="mb-3 flex items-center justify-between gap-2">
         <p className="flex items-center gap-2 text-sm font-semibold text-surface-foreground">
           {capture.kind === "scan" ? (
-            <ScanIcon weight="bold" aria-hidden="true" className="h-4 w-4 text-amber-500" />
+            <ScanIcon weight="fill" aria-hidden="true" className="h-4 w-4 text-amber-500" />
           ) : (
-            <MicrophoneIcon weight="bold" aria-hidden="true" className="h-4 w-4 text-violet-500" />
+            <MicrophoneIcon weight="fill" aria-hidden="true" className="h-4 w-4 text-violet-500" />
           )}
           {capture.kind === "scan" ? "Scan a receipt or bill" : "Say what you spent or earned"}
         </p>
@@ -798,7 +798,7 @@ export default function TransactionComposer({
             aria-label={t("common.cancel")}
             className="flex h-7 w-7 items-center justify-center rounded-full text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
           >
-            <XIcon weight="bold" aria-hidden="true" className="h-3.5 w-3.5" />
+            <XIcon weight="fill" aria-hidden="true" className="h-3.5 w-3.5" />
           </button>
         )}
       </div>
@@ -834,7 +834,7 @@ export default function TransactionComposer({
               }
               className="flex items-center gap-1.5 rounded-full border border-surface-line px-4 py-2 text-sm font-semibold text-surface-foreground transition hover:bg-[var(--surface-nav-hover)]"
             >
-              <ArrowCounterClockwiseIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+              <ArrowCounterClockwiseIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
               Retry
             </button>
             <button
@@ -906,7 +906,7 @@ export default function TransactionComposer({
   const repeatRow = source.kind === "manual" && repeatChips.length > 0 && !values.merchant && (
     <div>
       <p className="mb-2 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft">
-        <ArrowClockwiseIcon weight="bold" aria-hidden="true" className="h-3.5 w-3.5" />
+        <ArrowClockwiseIcon weight="fill" aria-hidden="true" className="h-3.5 w-3.5" />
         Repeat a recent one
       </p>
       <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
@@ -940,7 +940,7 @@ export default function TransactionComposer({
   // The details as one grouped list: an icon gutter and a field per row.
   const details = (
     <section className="divide-y divide-surface-line rounded-card border border-surface-line bg-surface">
-      <FieldRow icon={<StorefrontIcon weight="bold" className="h-[18px] w-[18px]" />} label={merchantLabel} htmlFor="composer-merchant">
+      <FieldRow icon={<StorefrontIcon weight="fill" className="h-[18px] w-[18px]" />} label={merchantLabel} htmlFor="composer-merchant">
         <input
           id="composer-merchant"
           type="text"
@@ -969,7 +969,7 @@ export default function TransactionComposer({
       </FieldRow>
 
       {splitMode ? (
-        <FieldRow icon={<CopyIcon weight="bold" className="h-[18px] w-[18px]" />} label={t("form.categoriesAndAmounts")}>
+        <FieldRow icon={<CopyIcon weight="fill" className="h-[18px] w-[18px]" />} label={t("form.categoriesAndAmounts")}>
           <div className="space-y-2">
             {splitLines.map((line, i) => (
               <div key={i} className="flex items-center gap-2">
@@ -1001,7 +1001,7 @@ export default function TransactionComposer({
                     aria-label="Remove line"
                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-red-600"
                   >
-                    <XIcon weight="bold" aria-hidden="true" className="h-3.5 w-3.5" />
+                    <XIcon weight="fill" aria-hidden="true" className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
@@ -1011,7 +1011,7 @@ export default function TransactionComposer({
               onClick={() => setSplitLines((prev) => [...prev, { category: "Other", amount: "" }])}
               className="flex items-center gap-1 text-sm font-semibold text-surface-accent hover:underline"
             >
-              <PlusIcon weight="bold" aria-hidden="true" className="h-3.5 w-3.5" />
+              <PlusIcon weight="fill" aria-hidden="true" className="h-3.5 w-3.5" />
               {t("form.addAnotherCategory")}
             </button>
           </div>
@@ -1022,7 +1022,7 @@ export default function TransactionComposer({
             selectedCategory?.icon && isCategoryIconKey(selectedCategory.icon) ? (
               <CategoryIcon iconKey={selectedCategory.icon} className="h-[18px] w-[18px]" />
             ) : (
-              <TagIcon weight="bold" className="h-[18px] w-[18px]" />
+              <TagIcon weight="fill" className="h-[18px] w-[18px]" />
             )
           }
           iconClass={selectedCategory ? badgeClasses(selectedCategory.color) : undefined}
@@ -1067,7 +1067,7 @@ export default function TransactionComposer({
         </FieldRow>
       )}
 
-      <FieldRow icon={<CalendarBlankIcon weight="bold" className="h-[18px] w-[18px]" />} label={t("common.date")}>
+      <FieldRow icon={<CalendarBlankIcon weight="fill" className="h-[18px] w-[18px]" />} label={t("common.date")}>
         <div className="flex rounded-xl bg-surface-soft p-1">
           {[
             { label: "Today", on: values.date === today && !pickDate, onClick: () => { setPickDate(false); patch({ date: today }); } },
@@ -1099,7 +1099,7 @@ export default function TransactionComposer({
       </FieldRow>
 
       {wallets.length > 1 && (
-        <FieldRow icon={<WalletIcon weight="bold" className="h-[18px] w-[18px]" />} label={t("common.wallet")}>
+        <FieldRow icon={<WalletIcon weight="fill" className="h-[18px] w-[18px]" />} label={t("common.wallet")}>
           <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
             {wallets.map((w) => (
               <button
@@ -1137,22 +1137,22 @@ export default function TransactionComposer({
     <section className="rounded-card border border-surface-line bg-surface p-4 sm:p-5">
       <p className={labelClass}>Add details</p>
       <div className="flex flex-wrap gap-1.5">
-        {extraChip("location", extras.includes("location"), Boolean(values.locationName), <MapPinIcon weight="bold" aria-hidden="true" className="h-4 w-4" />, "Location", () =>
+        {extraChip("location", extras.includes("location"), Boolean(values.locationName), <MapPinIcon weight="fill" aria-hidden="true" className="h-4 w-4" />, "Location", () =>
           toggleExtra("location"),
         )}
-        {extraChip("tags", extras.includes("tags"), values.tags.length > 0, <TagIcon weight="bold" aria-hidden="true" className="h-4 w-4" />, t("common.tags"), () =>
+        {extraChip("tags", extras.includes("tags"), values.tags.length > 0, <TagIcon weight="fill" aria-hidden="true" className="h-4 w-4" />, t("common.tags"), () =>
           toggleExtra("tags"),
         )}
-        {extraChip("notes", extras.includes("notes"), Boolean(values.notes), <NotePencilIcon weight="bold" aria-hidden="true" className="h-4 w-4" />, t("common.notes"), () =>
+        {extraChip("notes", extras.includes("notes"), Boolean(values.notes), <NotePencilIcon weight="fill" aria-hidden="true" className="h-4 w-4" />, t("common.notes"), () =>
           toggleExtra("notes"),
         )}
         {canSplit &&
-          extraChip("split", splitMode, false, <CopyIcon weight="bold" aria-hidden="true" className="h-4 w-4" />, t("form.splitIntoCategories"), () => {
+          extraChip("split", splitMode, false, <CopyIcon weight="fill" aria-hidden="true" className="h-4 w-4" />, t("form.splitIntoCategories"), () => {
             setSplitMode((v) => !v);
             if (!splitMode) setKeypadOpen(false);
           })}
         {canFriendSplit &&
-          extraChip("friends", friendSplit, false, <UsersThreeIcon weight="bold" aria-hidden="true" className="h-4 w-4" />, "Split with friends", () =>
+          extraChip("friends", friendSplit, false, <UsersThreeIcon weight="fill" aria-hidden="true" className="h-4 w-4" />, "Split with friends", () =>
             setFriendSplit((v) => !v),
           )}
       </div>
@@ -1190,7 +1190,7 @@ export default function TransactionComposer({
       {canFriendSplit && friendSplit && (
         <div className="mt-4 rounded-xl bg-surface-soft p-3.5">
           <p className="mb-2 flex items-center gap-2 text-sm font-medium text-surface-foreground">
-            <UsersThreeIcon weight="bold" aria-hidden="true" className="h-4 w-4 text-surface-foreground-soft" />
+            <UsersThreeIcon weight="fill" aria-hidden="true" className="h-4 w-4 text-surface-foreground-soft" />
             Split this bill with friends
           </p>
           <div className="space-y-3">
@@ -1291,7 +1291,7 @@ export default function TransactionComposer({
       {error && <p className="mb-2 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600 shadow-soft dark:bg-red-950 dark:text-red-400">{error}</p>}
       {lastSaved && source.kind === "manual" && !duplicate && !error && (
         <p className="mb-2 flex items-center justify-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400" aria-live="polite">
-          <CheckIcon weight="bold" aria-hidden="true" className="h-3.5 w-3.5" />
+          <CheckIcon weight="fill" aria-hidden="true" className="h-3.5 w-3.5" />
           {lastSaved.count > 1 ? `${lastSaved.count} saved` : `Saved ${lastSaved.merchant} · ${formatCurrency(lastSaved.amount, currency)}`}
         </p>
       )}
@@ -1303,7 +1303,7 @@ export default function TransactionComposer({
             disabled={submitting || busy}
             className="flex h-11 shrink-0 items-center gap-1.5 rounded-xl bg-surface-soft px-3 text-left text-xs font-semibold leading-tight text-surface-foreground transition hover:bg-[var(--surface-nav-hover)] disabled:opacity-50"
           >
-            <PlusIcon weight="bold" aria-hidden="true" className="h-4 w-4 shrink-0" />
+            <PlusIcon weight="fill" aria-hidden="true" className="h-4 w-4 shrink-0" />
             {/* Spelled out: a bare "New" read as "start over", not "save this
                 one, then start the next". */}
             <span>
@@ -1331,7 +1331,7 @@ export default function TransactionComposer({
             t("common.saving")
           ) : (
             <>
-              <CheckIcon weight="bold" aria-hidden="true" className="h-4 w-4 shrink-0" />
+              <CheckIcon weight="fill" aria-hidden="true" className="h-4 w-4 shrink-0" />
               <span className="truncate">
                 {moreInQueue ? "Save & next" : amountNumber > 0 ? `Save ${formatCurrency(amountNumber, currency)}` : "Save"}
               </span>

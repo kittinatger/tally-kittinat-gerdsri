@@ -79,7 +79,7 @@ function TrashIcon() {
 }
 
 function CheckIcon() {
-  return <PhCheckIcon weight="bold" aria-hidden="true" className="h-3.5 w-3.5" />;
+  return <PhCheckIcon weight="fill" aria-hidden="true" className="h-3.5 w-3.5" />;
 }
 
 function netLabel(

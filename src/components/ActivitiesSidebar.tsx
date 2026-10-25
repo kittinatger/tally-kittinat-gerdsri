@@ -103,7 +103,7 @@ export default function ActivitiesSidebar({
           onClick={onAdd}
           className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-navy px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-dark"
         >
-          <PlusIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+          <PlusIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
           {t("form.addTransaction")}
         </button>
       </section>
@@ -136,7 +136,7 @@ export default function ActivitiesSidebar({
         <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-surface-foreground-soft">{t("detail.type")}</p>
         {types.map(({ type, label, icon: TypeIcon }) => (
           <button key={type} type="button" onClick={() => onTypeFilterChange(type)} aria-pressed={typeFilter === type} className={rowClass(typeFilter === type)}>
-            <TypeIcon weight="bold" aria-hidden="true" className="h-4 w-4 shrink-0" />
+            <TypeIcon weight="fill" aria-hidden="true" className="h-4 w-4 shrink-0" />
             <span className="min-w-0 flex-1 truncate">{label}</span>
           </button>
         ))}

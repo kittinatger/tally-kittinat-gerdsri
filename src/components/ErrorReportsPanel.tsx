@@ -93,7 +93,7 @@ export default function ErrorReportsPanel() {
                   aria-label={t("errors.dismiss")}
                   className="shrink-0 rounded-full p-1.5 text-ink-soft transition hover:bg-bg-soft hover:text-foreground"
                 >
-                  <PhXIcon weight="bold" aria-hidden="true" className="h-3.5 w-3.5" />
+                  <PhXIcon weight="fill" aria-hidden="true" className="h-3.5 w-3.5" />
                 </button>
               </div>
               <a

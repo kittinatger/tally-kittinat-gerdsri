@@ -122,10 +122,10 @@ export default function SignaturePad({ onChange }: { onChange: (path: string | n
       <div className="mb-2 flex items-center gap-3">
         <div role="group" aria-label="History" className="flex overflow-hidden rounded-lg border border-surface-line">
           <button type="button" onClick={undo} disabled={!strokes.length} aria-label="Undo" className={toolButton}>
-            <ArrowArcLeftIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+            <ArrowArcLeftIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
           </button>
           <button type="button" onClick={redo} disabled={!undone.length} aria-label="Redo" className={`${toolButton} border-l border-surface-line`}>
-            <ArrowArcRightIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+            <ArrowArcRightIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
           </button>
         </div>
         <p className="hidden items-center gap-1 text-xs text-surface-foreground-soft sm:flex">
@@ -134,7 +134,7 @@ export default function SignaturePad({ onChange }: { onChange: (path: string | n
           to undo
         </p>
         <button type="button" onClick={clear} disabled={empty} className={`${toolButton} ml-auto rounded-lg border border-surface-line`}>
-          <BroomIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+          <BroomIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
           Clear
         </button>
       </div>

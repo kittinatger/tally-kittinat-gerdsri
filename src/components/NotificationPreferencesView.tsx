@@ -95,7 +95,7 @@ export default function NotificationPreferencesView({
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-1 py-4 sm:px-2 sm:py-6">
         <Link href="/notifications" className="mb-4 flex w-fit items-center gap-1.5 text-sm font-semibold text-ink-soft transition hover:text-foreground">
-          <CaretLeftIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+          <CaretLeftIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
           {t("notification.title")}
         </Link>
         <h1 className="font-display text-2xl text-foreground">Notification settings</h1>
@@ -185,7 +185,7 @@ export default function NotificationPreferencesView({
         {/* Email & push (unchanged options, moved here from Permissions) */}
         <section className="mt-6">
           <h2 className="mb-2 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-            <EnvelopeSimpleIcon weight="bold" aria-hidden="true" className="h-3.5 w-3.5" />
+            <EnvelopeSimpleIcon weight="fill" aria-hidden="true" className="h-3.5 w-3.5" />
             Email &amp; push
           </h2>
           <div className="overflow-hidden rounded-card border border-line bg-surface p-4">

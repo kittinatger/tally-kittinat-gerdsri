@@ -86,7 +86,7 @@ export default function LocationField({
             aria-label={t("form.locationRemovePin")}
             className="flex h-5 w-5 items-center justify-center rounded-full transition hover:bg-surface-accent/15"
           >
-            <XIcon weight="bold" aria-hidden="true" className="h-3 w-3" />
+            <XIcon weight="fill" aria-hidden="true" className="h-3 w-3" />
           </button>
         </div>
       )}

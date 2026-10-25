@@ -13,10 +13,6 @@ import AccountCardShape from "./AccountCardShape";
 import WalletCardShape from "./WalletCardShape";
 import FlipCard from "./FlipCard";
 import { WalletBack } from "./CardBack";
-import SignatureModal from "./SignatureModal";
-import CardBackEditor from "./CardBackEditor";
-import { DEFAULT_BACK_DESIGN, type CardBackDesign } from "@/lib/card-back";
-import { PaintBrushIcon, PenNibIcon } from "@phosphor-icons/react/dist/ssr";
 import type { WalletOption } from "@/types/wallet";
 
 type RecentExpenseRow = {
@@ -127,33 +123,10 @@ export default function AccountDetail({
   const t = useT();
   const appCurrency = useCurrency();
   const [recent, setRecent] = useState<Expense[] | null>(null);
-  // This card's own signature, kept here so a new one shows straight away
-  // (the open modal's wallet object isn't refreshed after a save).
-  const [ownSignature, setOwnSignature] = useState(wallet.signature);
-  const [signing, setSigning] = useState(false);
-  // The back's own design, likewise kept locally so a save shows straight away.
-  const [backDesign, setBackDesign] = useState(wallet.backDesign);
-  const [designingBack, setDesigningBack] = useState(false);
-
-  async function saveBackDesign(design: CardBackDesign | null) {
-    const res = await fetch(`/api/wallets/${wallet.id}/back-design`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ design }),
-    });
-    if (!res.ok) throw new Error();
-    setBackDesign(design ?? DEFAULT_BACK_DESIGN);
-  }
-
-  async function saveSignature(signature: string | null) {
-    const res = await fetch(`/api/wallets/${wallet.id}/signature`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ signature }),
-    });
-    if (!res.ok) throw new Error();
-    setOwnSignature(signature);
-  }
+  // This card's signature and back design are edited in its Back tab (see
+  // WalletModal); what's shown here is what the server last saved.
+  const ownSignature = wallet.signature;
+  const backDesign = wallet.backDesign;
 
   useEffect(() => {
     let cancelled = false;
@@ -222,49 +195,6 @@ export default function AccountDetail({
       />
 
       {actions && <div className="mt-3">{actions}</div>}
-      {wallet.isOwner && (
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => setSigning(true)}
-            className="flex items-center justify-center gap-2 rounded-full border border-line bg-surface px-3 py-2.5 text-sm font-semibold text-foreground transition hover:border-navy"
-          >
-            <PenNibIcon weight="bold" aria-hidden="true" className="h-4 w-4 shrink-0" />
-            <span className="truncate">{ownSignature ? "Change signature" : "Sign this card"}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setDesigningBack(true)}
-            className="flex items-center justify-center gap-2 rounded-full border border-line bg-surface px-3 py-2.5 text-sm font-semibold text-foreground transition hover:border-navy"
-          >
-            <PaintBrushIcon weight="bold" aria-hidden="true" className="h-4 w-4 shrink-0" />
-            <span className="truncate">Customise back</span>
-          </button>
-        </div>
-      )}
-      {designingBack && (
-        <CardBackEditor
-          wallet={{ ...wallet, backDesign }}
-          currency={walletCurrency}
-          signature={ownSignature ?? defaultSignature}
-          onSave={saveBackDesign}
-          onClose={() => setDesigningBack(false)}
-        />
-      )}
-      {signing && (
-        <SignatureModal
-          title={`Sign ${wallet.name}`}
-          description={
-            defaultSignature
-              ? "This card will use this signature instead of your default one."
-              : "Shown on the back of this card. Set one for every card in Settings > Wallets."
-          }
-          onSave={(path) => saveSignature(path)}
-          onClose={() => setSigning(false)}
-          secondary={ownSignature ? { label: defaultSignature ? "Use my default signature" : "Remove signature", onClick: () => saveSignature(null) } : undefined}
-        />
-      )}
-
       <div className="mt-4 rounded-card border border-line bg-surface p-3.5">
         <p className="text-xs uppercase tracking-wide text-ink-soft">{t("wallet.balanceLabel")}</p>
         <p className="mt-0.5 text-2xl font-bold text-foreground">{formatCurrency(wallet.balance, walletCurrency)}</p>

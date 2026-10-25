@@ -205,7 +205,7 @@ export default function SortableList<T>({
               dragging ? "cursor-grabbing" : "cursor-grab"
             }`}
           >
-            <DotsSixVerticalIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+            <DotsSixVerticalIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
           </button>
         ) : (
           <span className="w-6 shrink-0" aria-hidden="true" />

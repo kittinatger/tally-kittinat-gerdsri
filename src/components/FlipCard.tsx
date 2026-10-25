@@ -41,7 +41,7 @@ export default function FlipCard({ front, back, label = "card" }: { front: React
         onClick={() => setFlipped((v) => !v)}
         className="mx-auto mt-2.5 flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold text-ink-soft transition hover:text-foreground"
       >
-        <ArrowsCounterClockwiseIcon weight="bold" aria-hidden="true" className="h-3.5 w-3.5" />
+        <ArrowsCounterClockwiseIcon weight="fill" aria-hidden="true" className="h-3.5 w-3.5" />
         {flipped ? "Show front" : "Flip to see the back"}
       </button>
     </div>

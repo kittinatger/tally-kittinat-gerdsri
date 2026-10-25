@@ -420,7 +420,7 @@ export default function WalletManager({
                 onClick={() => setTransferOpen(true)}
                 className="flex items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 py-2 text-sm font-semibold text-foreground transition hover:border-navy"
               >
-                <PhArrowsLeftRightIcon weight="bold" aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                <PhArrowsLeftRightIcon weight="fill" aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
                 {t("common.transfer")}
               </button>
             )}

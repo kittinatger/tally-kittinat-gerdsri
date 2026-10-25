@@ -365,7 +365,7 @@ export default function SavingsGoalsManager() {
                               aria-label="Delete this contribution"
                               className="shrink-0 rounded-full p-1 text-ink-soft transition hover:bg-red-50 hover:text-red-600 disabled:opacity-60 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                             >
-                              <PhXIcon weight="bold" aria-hidden="true" className="h-3 w-3" />
+                              <PhXIcon weight="fill" aria-hidden="true" className="h-3 w-3" />
                             </button>
                           </div>
                         );

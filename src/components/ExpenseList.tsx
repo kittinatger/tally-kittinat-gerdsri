@@ -26,11 +26,11 @@ function DownloadIcon() {
 }
 
 function SelectCheckIcon() {
-  return <PhListChecksIcon weight="bold" aria-hidden="true" className="h-4 w-4" />;
+  return <PhListChecksIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 function CancelSelectIcon() {
-  return <PhXIcon weight="bold" aria-hidden="true" className="h-4 w-4" />;
+  return <PhXIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 // Local YYYY-MM-DD for a Date (not toISOString, which is UTC).
@@ -465,7 +465,7 @@ export default function ExpenseList({
   if (expenses.length === 0) {
     return (
       <div className="mt-10 flex flex-col items-center gap-2 text-center animate-[fade-in-up_0.25s_ease-out] motion-reduce:animate-none">
-        <PhReceiptIcon weight="duotone" aria-hidden="true" className="h-10 w-10 text-ink-soft" />
+        <PhReceiptIcon weight="fill" aria-hidden="true" className="h-10 w-10 text-ink-soft" />
         <p className="font-display text-lg text-foreground">{t("activities.noTransactionsYet")}</p>
         <p className="text-sm text-ink-soft">{t("activities.noTransactionsDesc")}</p>
       </div>
@@ -488,7 +488,7 @@ export default function ExpenseList({
               aria-label={t("common.clear")}
               className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full transition hover:bg-navy/20"
             >
-              <PhXIcon weight="bold" aria-hidden="true" className="h-3 w-3" />
+              <PhXIcon weight="fill" aria-hidden="true" className="h-3 w-3" />
             </button>
           </span>
         </div>
@@ -496,7 +496,7 @@ export default function ExpenseList({
 
       <div className="mb-3 flex items-center gap-2">
         <div className="relative flex-1">
-          <PhMagnifyingGlassIcon weight="bold" aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft" />
+          <PhMagnifyingGlassIcon weight="fill" aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft" />
           <input
             type="text"
             value={search}
@@ -516,7 +516,7 @@ export default function ExpenseList({
               : "border-line bg-surface text-ink-soft hover:border-navy hover:text-foreground"
           }`}
         >
-          <PhFunnelSimpleIcon weight="bold" aria-hidden="true" className="h-4.5 w-4.5" />
+          <PhFunnelSimpleIcon weight="fill" aria-hidden="true" className="h-4.5 w-4.5" />
           {activeFilterCount > 0 && (
             <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-navy text-[10px] font-bold text-white">
               {activeFilterCount}
@@ -732,7 +732,7 @@ export default function ExpenseList({
 
       {filtered.length === 0 ? (
         <div className="mt-10 flex flex-col items-center gap-2 text-center animate-[fade-in-up_0.25s_ease-out] motion-reduce:animate-none">
-          <PhMagnifyingGlassIcon weight="bold" aria-hidden="true" className="h-10 w-10 text-ink-soft" />
+          <PhMagnifyingGlassIcon weight="fill" aria-hidden="true" className="h-10 w-10 text-ink-soft" />
           <p className="font-display text-lg text-foreground">{t("activities.noMatchingTransactions")}</p>
           <p className="text-sm text-ink-soft">{t("activities.noMatchingDesc")}</p>
         </div>

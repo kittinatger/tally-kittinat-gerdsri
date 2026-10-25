@@ -158,7 +158,7 @@ export default function NotificationsView() {
                 onClick={markAllNotificationsRead}
                 className="flex h-9 items-center gap-1.5 rounded-full border border-line px-3 text-sm font-semibold text-foreground transition hover:bg-bg-soft"
               >
-                <ChecksIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+                <ChecksIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
                 <span className="hidden min-[400px]:inline">{t("notification.markAllRead")}</span>
               </button>
             )}
@@ -168,7 +168,7 @@ export default function NotificationsView() {
               title="Notification settings"
               className="flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink-soft transition hover:text-foreground"
             >
-              <GearSixIcon weight="bold" aria-hidden="true" className="h-[18px] w-[18px]" />
+              <GearSixIcon weight="fill" aria-hidden="true" className="h-[18px] w-[18px]" />
             </Link>
           </div>
         </div>
@@ -213,7 +213,7 @@ export default function NotificationsView() {
         ) : sections.length === 0 ? (
           <div className="flex flex-col items-center gap-2 rounded-card border border-dashed border-line px-6 py-14 text-center">
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-soft text-ink-soft">
-              <CheckIcon weight="bold" aria-hidden="true" className="h-6 w-6" />
+              <CheckIcon weight="fill" aria-hidden="true" className="h-6 w-6" />
             </span>
             <p className="font-semibold text-foreground">{filter === "unread" ? "Nothing unread" : t("notification.empty")}</p>
             <p className="max-w-xs text-sm text-ink-soft">
@@ -309,7 +309,7 @@ function NotificationItem({ notification: n, muted, onTurnOff }: { notification:
             aria-expanded={menuOpen}
             className="-mr-1.5 flex h-8 w-8 items-center justify-center rounded-full text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
           >
-            <DotsThreeIcon weight="bold" aria-hidden="true" className="h-5 w-5" />
+            <DotsThreeIcon weight="fill" aria-hidden="true" className="h-5 w-5" />
           </button>
           {menuOpen && (
             <div className="absolute right-0 top-9 z-20 w-60 overflow-hidden rounded-2xl border border-surface-line bg-surface p-1.5 shadow-soft">
@@ -359,7 +359,7 @@ function MenuItem({ icon: ItemIcon, danger, onClick, children }: { icon: Icon; d
         danger ? "text-red-600 dark:text-red-400" : "text-surface-foreground"
       }`}
     >
-      <ItemIcon weight="bold" aria-hidden="true" className="h-4 w-4 shrink-0" />
+      <ItemIcon weight="fill" aria-hidden="true" className="h-4 w-4 shrink-0" />
       <span className="min-w-0 truncate">{children}</span>
     </button>
   );

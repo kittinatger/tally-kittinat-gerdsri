@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getCurrency, listWallets } from "@/lib/db";
+import { getCurrency, getDefaultSignature, listWallets } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import { toWalletOption } from "@/lib/wallet-mapper";
 import WalletFormPage from "@/components/WalletFormPage";
@@ -13,15 +13,28 @@ export default async function EditWalletPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ from?: string }>;
+  searchParams: Promise<{ from?: string; tab?: string }>;
 }) {
   const { id: rawId } = await params;
-  const { from } = await searchParams;
+  const { from, tab } = await searchParams;
   const id = Number(rawId);
   if (!Number.isInteger(id) || id <= 0) notFound();
   const userId = await getUserId();
-  const [rows, currency] = await Promise.all([listWallets(userId, { includeArchived: true }), getCurrency(userId)]);
+  const [rows, currency, defaultSignature] = await Promise.all([
+    listWallets(userId, { includeArchived: true }),
+    getCurrency(userId),
+    getDefaultSignature(userId),
+  ]);
   const wallet = rows.map(toWalletOption).find((w) => w.id === id);
   if (!wallet || !wallet.isOwner) notFound();
-  return <WalletFormPage wallet={wallet} currency={currency} returnTo={safeReturnPath(from, `/wallet/${id}`)} />;
+  const initialTab = tab === "back" || tab === "card" || tab === "look" ? tab : undefined;
+  return (
+    <WalletFormPage
+      wallet={wallet}
+      currency={currency}
+      returnTo={safeReturnPath(from, `/wallet/${id}`)}
+      initialTab={initialTab}
+      defaultSignature={defaultSignature}
+    />
+  );
 }

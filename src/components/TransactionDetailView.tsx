@@ -68,7 +68,7 @@ export default function TransactionDetailView({
                   onClick={goBack}
                   className="flex items-center gap-1.5 rounded-full py-1.5 pr-3 text-sm font-semibold text-ink-soft transition hover:text-foreground"
                 >
-                  <CaretLeftIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+                  <CaretLeftIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
                   {t("nav.activities")}
                 </button>
               </div>

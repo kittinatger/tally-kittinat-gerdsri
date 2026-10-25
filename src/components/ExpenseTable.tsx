@@ -134,7 +134,7 @@ function TableRow({
               selected ? "border-surface-accent bg-surface-accent text-white" : "border-surface-line"
             }`}
           >
-            {selected && <CheckIcon weight="bold" aria-hidden="true" className="h-3 w-3" />}
+            {selected && <CheckIcon weight="fill" aria-hidden="true" className="h-3 w-3" />}
           </span>
         )}
         {showDate && <span className="whitespace-nowrap text-sm tabular-nums text-surface-foreground-soft">{formatDateShort(e.date)}</span>}
@@ -182,7 +182,7 @@ function TableRow({
             aria-label={`Edit ${e.merchant}`}
             className="flex h-8 w-8 items-center justify-center rounded-full text-surface-foreground-soft transition hover:bg-[var(--surface-nav-hover)] hover:text-surface-foreground"
           >
-            <PencilSimpleIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+            <PencilSimpleIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
           </button>
           )}
           <button
@@ -191,7 +191,7 @@ function TableRow({
             aria-label={`Delete ${e.merchant}`}
             className="flex h-8 w-8 items-center justify-center rounded-full text-red-600 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
           >
-            <TrashIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+            <TrashIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
           </button>
         </div>
       )}

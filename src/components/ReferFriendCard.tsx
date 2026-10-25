@@ -10,7 +10,7 @@ function CopyIcon() {
 }
 
 function CheckIcon() {
-  return <PhCheckIcon weight="bold" aria-hidden="true" className="h-4 w-4" />;
+  return <PhCheckIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 function ShareIcon() {
@@ -18,7 +18,7 @@ function ShareIcon() {
 }
 
 function CodeIcon() {
-  return <PhCodeIcon weight="bold" aria-hidden="true" className="h-4 w-4" />;
+  return <PhCodeIcon weight="fill" aria-hidden="true" className="h-4 w-4" />;
 }
 
 const EMBED_WIDTH = 320;

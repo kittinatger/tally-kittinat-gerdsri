@@ -230,7 +230,7 @@ export default function TemplateReviewPanel() {
                 title="Duplicate"
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground disabled:opacity-60"
               >
-                <CopySimpleIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+                <CopySimpleIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
               </button>
               <button
                 type="button"

@@ -1,4 +1,4 @@
-import { getCurrency } from "@/lib/db";
+import { getCurrency, getDefaultSignature } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import WalletFormPage from "@/components/WalletFormPage";
 import { safeReturnPath } from "@/lib/return-path";
@@ -9,5 +9,6 @@ export const dynamic = "force-dynamic";
 export default async function NewWalletPage({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
   const { from } = await searchParams;
   const userId = await getUserId();
-  return <WalletFormPage currency={await getCurrency(userId)} returnTo={safeReturnPath(from)} />;
+  const [currency, defaultSignature] = await Promise.all([getCurrency(userId), getDefaultSignature(userId)]);
+  return <WalletFormPage currency={currency} returnTo={safeReturnPath(from)} defaultSignature={defaultSignature} />;
 }

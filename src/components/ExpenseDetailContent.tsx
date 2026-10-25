@@ -236,7 +236,7 @@ export default function ExpenseDetailContent({
   );
 
   const splitCard = extras && extras.splitLines.length > 0 && (
-    <SideCard icon={<SplitHorizontalIcon weight="bold" aria-hidden="true" className="h-4 w-4" />} title="Split across categories">
+    <SideCard icon={<SplitHorizontalIcon weight="fill" aria-hidden="true" className="h-4 w-4" />} title="Split across categories">
       <ul className="divide-y divide-surface-line">
         {extras.splitLines.map((line) => (
           <li key={line.id} className={`flex items-center justify-between gap-3 px-4 py-2.5 text-sm ${line.id === expense.id ? "bg-surface-accent/5" : ""}`}>

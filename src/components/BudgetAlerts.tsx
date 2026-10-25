@@ -78,7 +78,7 @@ export default function BudgetAlerts({
                 over ? "text-red-600 dark:text-red-300" : "text-amber-600 dark:text-amber-300"
               }`}
             >
-              <PhXIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+              <PhXIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
             </button>
           </div>
         );

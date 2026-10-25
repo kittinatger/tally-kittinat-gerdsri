@@ -138,7 +138,7 @@ export default function ActivitiesBalanceCard({
             >
               {selectedWallet && <span className={`h-2 w-2 shrink-0 rounded-full ${dotClasses(selectedWallet.color)}`} />}
               <span className="truncate">{selectedWallet ? selectedWallet.name : t("activities.allWallets")}</span>
-              <CaretDownIcon weight="bold" aria-hidden="true" className="h-3 w-3 shrink-0" />
+              <CaretDownIcon weight="fill" aria-hidden="true" className="h-3 w-3 shrink-0" />
             </button>
             {walletMenu}
           </div>

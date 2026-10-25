@@ -41,7 +41,7 @@ export function RowBadges({ expense }: { expense: Expense }) {
     <span className="flex shrink-0 items-center gap-1 text-surface-foreground-soft">
       {expense.hasReceipt && <PhReceiptIcon weight="fill" aria-label="Has a receipt" className="h-3.5 w-3.5" />}
       {hasLocation && <PhMapPinIcon weight="fill" aria-label="Has a location" className="h-3.5 w-3.5" />}
-      {expense.splitGroupId && <PhSplitHorizontalIcon weight="bold" aria-label="Split" className="h-3.5 w-3.5" />}
+      {expense.splitGroupId && <PhSplitHorizontalIcon weight="fill" aria-label="Split" className="h-3.5 w-3.5" />}
     </span>
   );
 }
@@ -344,7 +344,7 @@ export default function ExpenseRow({
               }`}
             >
               {selected && (
-                <PhCheckIcon weight="bold" aria-hidden="true" className="h-3 w-3" />
+                <PhCheckIcon weight="fill" aria-hidden="true" className="h-3 w-3" />
               )}
             </span>
           )}

@@ -345,7 +345,7 @@ export default function VendorManager() {
                       }`}
                     >
                       {isSelected && (
-                        <PhCheckIcon weight="bold" aria-hidden="true" className="h-3 w-3" />
+                        <PhCheckIcon weight="fill" aria-hidden="true" className="h-3 w-3" />
                       )}
                     </button>
                   )}

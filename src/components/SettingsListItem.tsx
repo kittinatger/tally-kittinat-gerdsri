@@ -4,7 +4,7 @@ import { CaretRightIcon as PhCaretRightIcon } from "@phosphor-icons/react/dist/s
 
 export function ChevronRight() {
   return (
-    <PhCaretRightIcon weight="bold" aria-hidden="true" className="h-4 w-4 shrink-0 text-ink-soft" />
+    <PhCaretRightIcon weight="fill" aria-hidden="true" className="h-4 w-4 shrink-0 text-ink-soft" />
   );
 }
 

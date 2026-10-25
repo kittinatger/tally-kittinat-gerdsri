@@ -64,7 +64,7 @@ export default function AddTransactionView({
                   title={t("common.cancel")}
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-ink-soft transition hover:text-foreground"
                 >
-                  <XIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+                  <XIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
                 </button>
               </div>
 

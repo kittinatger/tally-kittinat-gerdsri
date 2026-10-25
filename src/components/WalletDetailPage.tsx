@@ -4,7 +4,7 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArchiveIcon, CaretLeftIcon, CopySimpleIcon, FolderSimpleIcon, PencilSimpleIcon, PlusIcon, UsersIcon } from "@phosphor-icons/react/dist/ssr";
+import { ArchiveIcon, CaretLeftIcon, CopySimpleIcon, FolderSimpleIcon, PaintBrushIcon, PencilSimpleIcon, PlusIcon, UsersIcon } from "@phosphor-icons/react/dist/ssr";
 import type { WalletOption } from "@/types/wallet";
 import type { CardFolder } from "@/types/card-folder";
 import { CurrencyProvider } from "@/lib/currency-context";
@@ -104,7 +104,7 @@ export default function WalletDetailPage({
         <AppHeader />
         <main className="mx-auto w-full max-w-xl flex-1 px-1 py-4 sm:px-2 sm:py-6">
           <Link href="/wallet" className="mb-3 flex w-fit items-center gap-1.5 rounded-full py-1.5 pr-3 text-sm font-semibold text-ink-soft transition hover:text-foreground">
-            <CaretLeftIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+            <CaretLeftIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
             {t("nav.wallet")}
           </Link>
           <div className="mb-4 min-w-0">
@@ -127,25 +127,29 @@ export default function WalletDetailPage({
             actions={
               <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
                 <Link href={`/transactions/new?type=income&wallet=${wallet.id}&from=/wallet/${wallet.id}`} className={chip}>
-                  <PlusIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+                  <PlusIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
                   {t("wallet.addMoney")}
                 </Link>
                 {wallet.isOwner && (
                   <>
                     <Link href={`/wallet/${wallet.id}/edit`} className={chip}>
-                      <PencilSimpleIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+                      <PencilSimpleIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
                       {t("common.edit")}
                     </Link>
+                    <Link href={`/wallet/${wallet.id}/edit?tab=back`} className={chip}>
+                      <PaintBrushIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
+                      Back &amp; signature
+                    </Link>
                     <button type="button" onClick={duplicate} disabled={duplicating} className={`${chip} disabled:opacity-60`}>
-                      <CopySimpleIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+                      <CopySimpleIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
                       {duplicating ? "Duplicating…" : "Duplicate"}
                     </button>
                     <button type="button" onClick={() => setSharing(true)} className={chip}>
-                      <UsersIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+                      <UsersIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
                       {t("wallet.shareWallet")}
                     </button>
                     <button type="button" onClick={() => setConfirmArchive(true)} className={chip}>
-                      <ArchiveIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+                      <ArchiveIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
                       {t("wallet.archive")}
                     </button>
                   </>

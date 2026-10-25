@@ -100,7 +100,7 @@ export default function CustomizeSectionsMenu({
                     }`}
                   >
                     {checked && (
-                      <PhCheckIcon weight="bold" aria-hidden="true" className="h-2.5 w-2.5" />
+                      <PhCheckIcon weight="fill" aria-hidden="true" className="h-2.5 w-2.5" />
                     )}
                   </span>
                   {sectionLabels[id]}

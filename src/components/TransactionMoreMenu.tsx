@@ -133,7 +133,7 @@ export default function TransactionMoreMenu({ expense, onDeleted }: { expense: E
         aria-expanded={open}
         className="flex h-full w-11 shrink-0 items-center justify-center rounded-lg border border-surface-line text-surface-foreground-soft transition hover:border-surface-accent hover:text-surface-accent disabled:opacity-50"
       >
-        <DotsThreeIcon weight="bold" aria-hidden="true" className="h-5 w-5" />
+        <DotsThreeIcon weight="fill" aria-hidden="true" className="h-5 w-5" />
       </button>
 
       {(open || panel || message) && (
@@ -224,7 +224,7 @@ function MenuItem({ icon: ItemIcon, danger, onClick, children }: { icon: Icon; d
         danger ? "text-red-600 dark:text-red-400" : "text-surface-foreground"
       }`}
     >
-      <ItemIcon weight="bold" aria-hidden="true" className="h-4 w-4 shrink-0" />
+      <ItemIcon weight="fill" aria-hidden="true" className="h-4 w-4 shrink-0" />
       {children}
     </button>
   );

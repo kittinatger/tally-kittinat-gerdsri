@@ -38,9 +38,9 @@ export default function UpcomingRecurring({ items, currency, collapsible = false
         href="/settings?panel=recurring"
         className="flex items-center gap-2 border-b border-surface-line px-4 py-3 text-xs font-semibold uppercase tracking-wide text-surface-foreground-soft transition hover:text-surface-foreground"
       >
-        <ArrowsClockwiseIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+        <ArrowsClockwiseIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
         <span className="flex-1">Coming up · next 7 days</span>
-        <CaretRightIcon weight="bold" aria-hidden="true" className="h-3.5 w-3.5" />
+        <CaretRightIcon weight="fill" aria-hidden="true" className="h-3.5 w-3.5" />
       </Link>
       <ul className="divide-y divide-surface-line">
         {shown.map((item) => (

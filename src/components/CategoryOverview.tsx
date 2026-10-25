@@ -211,7 +211,7 @@ export default function CategoryOverview({
 
       {breakdown.rows.length === 0 ? (
         <div className="mt-10 flex flex-col items-center gap-2 text-center animate-[fade-in-up_0.25s_ease-out] motion-reduce:animate-none">
-          <PhChartBarIcon weight="duotone" aria-hidden="true" className="h-10 w-10 text-ink-soft" />
+          <PhChartBarIcon weight="fill" aria-hidden="true" className="h-10 w-10 text-ink-soft" />
           <p className="font-display text-lg text-foreground">No data yet</p>
           <p className="text-sm text-ink-soft">
             {type === "income" ? "Income" : type === "transfer" ? "Transfers" : "Expenses"} for this range will show

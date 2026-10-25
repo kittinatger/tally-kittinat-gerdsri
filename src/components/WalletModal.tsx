@@ -37,6 +37,10 @@ import { useT } from "@/lib/language-context";
 import type { MessageKey } from "@/lib/i18n/messages";
 import type { WalletKind } from "@/lib/wallets";
 import type { WalletOption } from "@/types/wallet";
+import { DEFAULT_BACK_DESIGN, type CardBackDesign } from "@/lib/card-back";
+import { WalletBack } from "./CardBack";
+import CardBackFields from "./CardBackFields";
+import SignatureModal from "./SignatureModal";
 
 const NETWORK_LABEL_KEYS: Record<CardNetwork, MessageKey> = {
   visa: "wallet.networkVisa",
@@ -60,6 +64,8 @@ export default function WalletModal({
   onClose,
   onSaved,
   asPage = false,
+  initialTab,
+  defaultSignature = null,
 }: {
   wallet?: WalletOption;
   onClose: () => void;
@@ -68,6 +74,10 @@ export default function WalletModal({
    * WalletFormPage) instead of inside a popup: the live card preview stays
    * pinned beside the fields on wide screens and the save bar stays in reach. */
   asPage?: boolean;
+  /** Which tab opens first (e.g. "back" from a card page's Customise back link). */
+  initialTab?: "basics" | "card" | "look" | "template" | "back";
+  /** Shown on the back preview when this card has no signature of its own. */
+  defaultSignature?: string | null;
 }) {
   const t = useT();
   const appCurrency = useCurrency();
@@ -88,7 +98,13 @@ export default function WalletModal({
   // three tabs keeps each screenful focused; the live preview and the
   // submit/cancel row stay outside the tabs so switching never loses sight
   // of either.
-  const [tab, setTab] = useState<"basics" | "card" | "look" | "template">("basics");
+  const [tab, setTab] = useState<"basics" | "card" | "look" | "template" | "back">(initialTab ?? "basics");
+  // The back of the card: its design is saved with the form (see
+  // handleSubmit); the signature saves as soon as it's drawn, since it has
+  // its own endpoint and needs the card to exist.
+  const [backDesign, setBackDesign] = useState<CardBackDesign>(wallet?.backDesign ?? DEFAULT_BACK_DESIGN);
+  const [ownSignature, setOwnSignature] = useState<string | null>(wallet?.signature ?? null);
+  const [signing, setSigning] = useState(false);
 
   // Card-look fields — always part of the form now (see the comment above).
   const [network, setNetwork] = useState<CardNetwork>(wallet?.network ?? "other");
@@ -319,6 +335,7 @@ export default function WalletModal({
       ["basics", "wallet.tabBasics"],
       ["card", "wallet.tabCardDetails"],
       ["look", "wallet.tabLook"],
+      ["back", "wallet.tabLook"],
       ["template", "wallet.tabTemplate"],
     ] as const
   ).filter(([key]) => key !== "template" || !templateApplied || allowTemplateVariation);
@@ -442,6 +459,19 @@ export default function WalletModal({
         setError(typeof data.error === "string" ? data.error : "Could not save.");
         return;
       }
+      const savedId: number | undefined = isEdit ? wallet!.id : data.wallet?.id;
+      const initialBack = JSON.stringify(wallet?.backDesign ?? DEFAULT_BACK_DESIGN);
+      if (savedId && JSON.stringify(backDesign) !== initialBack) {
+        const backRes = await fetch(`/api/wallets/${savedId}/back-design`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ design: backDesign }),
+        });
+        if (!backRes.ok) {
+          setError("The card was saved, but its back design could not be.");
+          return;
+        }
+      }
       if (!isEdit && isDefault && data.wallet?.id) {
         await fetch(`/api/wallets/${data.wallet.id}`, {
           method: "PATCH",
@@ -463,6 +493,32 @@ export default function WalletModal({
         className={asPage ? "space-y-4 lg:grid lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:items-start lg:gap-x-10 lg:space-y-0" : "space-y-4"}
       >
         <div className={asPage ? "lg:sticky lg:top-24" : ""}>
+        {tab === "back" ? (
+          <div className="aspect-[1.586/1] min-h-[190px] w-full">
+            <WalletBack
+              wallet={
+                {
+                  name: name || "Card",
+                  color,
+                  background,
+                  textColor,
+                  kind,
+                  currency: currency ?? appCurrency,
+                  isDefault,
+                  balance: Number(startingBalance) || 0,
+                  holderName: holderName || null,
+                  last4: last4 || null,
+                  expiryMonth: month,
+                  expiryYear: year,
+                  backDesign,
+                } as WalletOption
+              }
+              currency={currency ?? appCurrency}
+              signature={ownSignature ?? defaultSignature}
+              design={backDesign}
+            />
+          </div>
+        ) : (
         <ColorGlowPreview color={backgroundGlowColor(background, color)}>
           <WalletCardShape
             label={name || t("wallet.namePlaceholder")}
@@ -496,6 +552,7 @@ export default function WalletModal({
             namePosition={namePosition}
           />
         </ColorGlowPreview>
+        )}
         </div>
 
         <div className="min-w-0 space-y-4">
@@ -517,10 +574,22 @@ export default function WalletModal({
                   : "border-line bg-bg-soft text-ink-soft hover:bg-[var(--nav-hover-bg)]"
               }`}
             >
-              {t(labelKey)}
+              {key === "back" ? "Back" : t(labelKey)}
             </button>
           ))}
         </div>
+
+        {tab === "back" && (
+          <CardBackFields
+            design={backDesign}
+            onChange={(patch) => setBackDesign((d) => ({ ...d, ...patch }))}
+            frontColor={color}
+            signature={ownSignature ?? defaultSignature}
+            signatureIsOwn={Boolean(ownSignature)}
+            onEditSignature={isEdit ? () => setSigning(true) : undefined}
+            signatureNote={isEdit ? undefined : "Save the card first, then you can sign it here."}
+          />
+        )}
 
         {tab === "basics" && (
         <FormSection icon={<CategoryIcon iconKey="bank" className="h-4 w-4" />} title={t("wallet.nameLabel")}>
@@ -1810,6 +1879,38 @@ export default function WalletModal({
           </div>
         </div>
         </div>
+        {signing && wallet && (
+          <SignatureModal
+            title={`Sign ${wallet.name}`}
+            description="Shown on the back of this card, instead of your default signature."
+            onSave={async (path) => {
+              const res = await fetch(`/api/wallets/${wallet.id}/signature`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ signature: path }),
+              });
+              if (!res.ok) throw new Error();
+              setOwnSignature(path);
+            }}
+            onClose={() => setSigning(false)}
+            secondary={
+              ownSignature
+                ? {
+                    label: defaultSignature ? "Use my default signature" : "Remove signature",
+                    onClick: async () => {
+                      const res = await fetch(`/api/wallets/${wallet.id}/signature`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ signature: null }),
+                      });
+                      if (!res.ok) throw new Error();
+                      setOwnSignature(null);
+                    },
+                  }
+                : undefined
+            }
+          />
+        )}
       </form>
   );
 

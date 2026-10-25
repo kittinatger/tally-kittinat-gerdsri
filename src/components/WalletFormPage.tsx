@@ -17,11 +17,15 @@ export default function WalletFormPage({
   wallet,
   currency,
   returnTo,
+  initialTab,
+  defaultSignature = null,
 }: {
   wallet?: WalletOption;
   currency: string;
   /** Where Cancel and a successful save go (a card's own page when editing). */
   returnTo: string;
+  initialTab?: "basics" | "card" | "look" | "template" | "back";
+  defaultSignature?: string | null;
 }) {
   const t = useT();
   const router = useRouter();
@@ -41,11 +45,11 @@ export default function WalletFormPage({
             onClick={() => router.push(returnTo)}
             className="mb-3 flex items-center gap-1.5 rounded-full py-1.5 pr-3 text-sm font-semibold text-ink-soft transition hover:text-foreground"
           >
-            <CaretLeftIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+            <CaretLeftIcon weight="fill" aria-hidden="true" className="h-4 w-4" />
             {wallet ? wallet.name : t("nav.wallet")}
           </button>
           <h1 className="mb-5 font-display text-2xl text-foreground">{wallet ? t("wallet.editTitle") : t("wallet.addWallet")}</h1>
-          <WalletForm wallet={wallet} asPage onClose={() => router.push(returnTo)} onSaved={leave} />
+          <WalletForm wallet={wallet} asPage initialTab={initialTab} defaultSignature={defaultSignature} onClose={() => router.push(returnTo)} onSaved={leave} />
         </main>
       </div>
     </CurrencyProvider>
