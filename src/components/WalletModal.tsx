@@ -75,7 +75,7 @@ export default function WalletModal({
    * pinned beside the fields on wide screens and the save bar stays in reach. */
   asPage?: boolean;
   /** Which tab opens first (e.g. "back" from a card page's Customise back link). */
-  initialTab?: "basics" | "card" | "look" | "template" | "back";
+  initialTab?: "basics" | "card" | "premade" | "template" | "back";
   /** Shown on the back preview when this card has no signature of its own. */
   defaultSignature?: string | null;
 }) {
@@ -98,7 +98,7 @@ export default function WalletModal({
   // three tabs keeps each screenful focused; the live preview and the
   // submit/cancel row stay outside the tabs so switching never loses sight
   // of either.
-  const [tab, setTab] = useState<"basics" | "card" | "look" | "template" | "back">(initialTab ?? "basics");
+  const [tab, setTab] = useState<"basics" | "card" | "premade" | "template" | "back">(initialTab ?? "basics");
   // The back of the card: its design is saved with the form (see
   // handleSubmit); the signature saves as soon as it's drawn, since it has
   // its own endpoint and needs the card to exist.
@@ -334,7 +334,7 @@ export default function WalletModal({
     [
       ["basics", "wallet.tabBasics"],
       ["card", "wallet.tabCardDetails"],
-      ["look", "wallet.tabLook"],
+      ["premade", "wallet.tabLook"],
       ["back", "wallet.tabLook"],
       ["template", "wallet.tabTemplate"],
     ] as const
@@ -574,7 +574,7 @@ export default function WalletModal({
                   : "border-line bg-bg-soft text-ink-soft hover:bg-[var(--nav-hover-bg)]"
               }`}
             >
-              {key === "back" ? "Back" : t(labelKey)}
+              {key === "back" ? "Back" : key === "card" ? "Front" : key === "premade" ? "Premade" : t(labelKey)}
             </button>
           ))}
         </div>
@@ -641,6 +641,19 @@ export default function WalletModal({
               ))}
             </div>
           </div>
+        </FormSection>
+        )}
+
+        {tab === "basics" && (
+        <FormSection icon={<FileIcon className="h-4 w-4" />} title={t("membership.notesLabel")}>
+          <textarea
+            id="walletCardNotes"
+            rows={2}
+            value={cardNotes}
+            onChange={(e) => setCardNotes(e.target.value)}
+            placeholder={t("membership.notesPlaceholder")}
+            className="w-full resize-none rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+          />
         </FormSection>
         )}
 
@@ -1206,16 +1219,59 @@ export default function WalletModal({
         </FormSection>
         )}
 
-          <FormSection icon={<FileIcon className="h-4 w-4" />} title={t("membership.notesLabel")}>
-            <textarea
-              id="walletCardNotes"
-              rows={2}
-              value={cardNotes}
-              onChange={(e) => setCardNotes(e.target.value)}
-              placeholder={t("membership.notesPlaceholder")}
-              className="w-full resize-none rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
-            />
-          </FormSection>
+        <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("wallet.colorLabel")}>
+          <CardBackgroundPicker
+            value={background}
+            onChange={setBackground}
+            plainColor={color}
+            onPlainColorChange={setColor}
+            svgColorsLocked={svgColorsLockedByTemplate}
+          />
+          {/* Hidden entirely once a picked template locks the text color —
+           * see the matching name-position section above for why this is a
+           * hide, not a disabled/note state. */}
+          {!textColorLocked && (
+            <div className="border-t border-line pt-3">
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("background.textColorLabel")}</label>
+              <CardTextColorPicker value={textColor} onChange={setTextColor} autoColor={cardForegroundFor(null, background, color).full} />
+            </div>
+          )}
+          {showNetworkBadge && (
+            <div className="border-t border-line pt-3">
+              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.iconColorLabel")}</label>
+              <p className="mb-1.5 text-[11px] text-ink-soft">{t("wallet.iconColorDesc")}</p>
+              {iconColor === ICON_COLOR_ORIGINAL ? (
+                <div className="flex items-center justify-between gap-2 rounded-card border border-line bg-bg-soft px-3.5 py-2.5">
+                  <span className="text-xs text-ink-soft">{t("wallet.iconColorOriginalActive")}</span>
+                  <button
+                    type="button"
+                    onClick={() => setIconColor(null)}
+                    className="shrink-0 text-xs font-semibold text-navy underline dark:text-blue-300"
+                  >
+                    {t("wallet.iconColorCustomize")}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <CardTextColorPicker
+                    value={iconColor}
+                    onChange={setIconColor}
+                    autoColor={cardForegroundFor(textColor, background, color).full}
+                  />
+                  {RECOLORABLE_BADGE_ASPECT[network] && (
+                    <button
+                      type="button"
+                      onClick={() => setIconColor(ICON_COLOR_ORIGINAL)}
+                      className="mt-1.5 text-xs font-semibold text-ink-soft underline"
+                    >
+                      {t("wallet.iconColorUseOriginal")}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </FormSection>
         </>
         )}
 
@@ -1271,8 +1327,8 @@ export default function WalletModal({
         </FormSection>
         )}
 
-        {tab === "look" && (
-        <FormSection icon={<PaletteIcon className="h-4 w-4" />} title={t("wallet.colorLabel")}>
+        {tab === "premade" && (
+        <FormSection icon={<PaletteIcon className="h-4 w-4" />} title="Premade cards">
           <PremadeCardPicker
             onSelect={(tpl) => {
               setTemplateApplied(true);
@@ -1370,57 +1426,6 @@ export default function WalletModal({
               }
             }}
           />
-          <CardBackgroundPicker
-            value={background}
-            onChange={setBackground}
-            plainColor={color}
-            onPlainColorChange={setColor}
-            svgColorsLocked={svgColorsLockedByTemplate}
-          />
-          {/* Hidden entirely once a picked template locks the text color —
-           * see the matching name-position section above for why this is a
-           * hide, not a disabled/note state. */}
-          {!textColorLocked && (
-            <div className="border-t border-line pt-3">
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("background.textColorLabel")}</label>
-              <CardTextColorPicker value={textColor} onChange={setTextColor} autoColor={cardForegroundFor(null, background, color).full} />
-            </div>
-          )}
-          {showNetworkBadge && (
-            <div className="border-t border-line pt-3">
-              <label className="mb-1.5 block text-xs font-semibold text-ink-soft">{t("wallet.iconColorLabel")}</label>
-              <p className="mb-1.5 text-[11px] text-ink-soft">{t("wallet.iconColorDesc")}</p>
-              {iconColor === ICON_COLOR_ORIGINAL ? (
-                <div className="flex items-center justify-between gap-2 rounded-card border border-line bg-bg-soft px-3.5 py-2.5">
-                  <span className="text-xs text-ink-soft">{t("wallet.iconColorOriginalActive")}</span>
-                  <button
-                    type="button"
-                    onClick={() => setIconColor(null)}
-                    className="shrink-0 text-xs font-semibold text-navy underline dark:text-blue-300"
-                  >
-                    {t("wallet.iconColorCustomize")}
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <CardTextColorPicker
-                    value={iconColor}
-                    onChange={setIconColor}
-                    autoColor={cardForegroundFor(textColor, background, color).full}
-                  />
-                  {RECOLORABLE_BADGE_ASPECT[network] && (
-                    <button
-                      type="button"
-                      onClick={() => setIconColor(ICON_COLOR_ORIGINAL)}
-                      className="mt-1.5 text-xs font-semibold text-ink-soft underline"
-                    >
-                      {t("wallet.iconColorUseOriginal")}
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          )}
         </FormSection>
         )}
 

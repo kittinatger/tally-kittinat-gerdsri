@@ -24,7 +24,7 @@ export default function WalletFormPage({
   currency: string;
   /** Where Cancel and a successful save go (a card's own page when editing). */
   returnTo: string;
-  initialTab?: "basics" | "card" | "look" | "template" | "back";
+  initialTab?: "basics" | "card" | "premade" | "template" | "back";
   defaultSignature?: string | null;
 }) {
   const t = useT();

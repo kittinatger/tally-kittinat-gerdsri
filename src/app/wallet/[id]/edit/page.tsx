@@ -27,7 +27,7 @@ export default async function EditWalletPage({
   ]);
   const wallet = rows.map(toWalletOption).find((w) => w.id === id);
   if (!wallet || !wallet.isOwner) notFound();
-  const initialTab = tab === "back" || tab === "card" || tab === "look" ? tab : undefined;
+  const initialTab = tab === "back" || tab === "card" || tab === "premade" ? tab : undefined;
   return (
     <WalletFormPage
       wallet={wallet}
