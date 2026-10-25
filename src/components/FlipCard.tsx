@@ -35,6 +35,13 @@ export default function FlipCard({
 
   return (
     <div>
+      {/* overflow-hidden here, tightly around the 3D scene, clips the
+       * thickness slices (and any sub-pixel rounding between the two
+       * faces' boxes) to the card's own rounded rect — otherwise a sliver
+       * of the slice stack can show as a border even at rest. A Y rotation
+       * only ever foreshortens the card's footprint, never grows it, so
+       * this never clips the flip itself. */}
+      <div className="overflow-hidden rounded-2xl">
       <div className="[perspective:1200px]">
         <div
           role={interactive ? "button" : undefined}
@@ -52,7 +59,7 @@ export default function FlipCard({
                 }
               : undefined
           }
-          className={`relative rounded-2xl shadow-[0_10px_24px_-8px_rgba(0,0,0,0.45)] outline-none transition-transform duration-700 ease-[cubic-bezier(0.4,0.2,0.2,1)] [transform-style:preserve-3d] focus-visible:ring-2 focus-visible:ring-surface-accent focus-visible:ring-offset-2 motion-reduce:transition-none ${interactive ? "cursor-pointer" : ""}`}
+          className={`relative rounded-2xl outline-none transition-transform duration-700 ease-[cubic-bezier(0.4,0.2,0.2,1)] [transform-style:preserve-3d] focus-visible:ring-2 focus-visible:ring-surface-accent focus-visible:ring-offset-2 motion-reduce:transition-none ${interactive ? "cursor-pointer" : ""}`}
           style={{ transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
         >
           {/* Thickness: a stack of thin dark slices between the two faces,
@@ -77,6 +84,7 @@ export default function FlipCard({
             {back}
           </div>
         </div>
+      </div>
       </div>
       {interactive && (
         <button
