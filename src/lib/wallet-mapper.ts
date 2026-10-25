@@ -45,6 +45,7 @@ export function toWalletOption(w: WalletRow): WalletOption {
     nfcPosition: isBadgePosition(w.nfc_position) ? w.nfc_position : DEFAULT_NFC_POSITION,
     nfcSize: isNfcSize(w.nfc_size) ? w.nfc_size : DEFAULT_NFC_SIZE,
     notes: w.notes,
+    signature: w.signature ?? null,
     showBalance: w.show_balance,
     showCurrency: w.show_currency,
     showCardNumber: w.show_card_number,

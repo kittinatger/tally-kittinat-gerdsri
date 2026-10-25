@@ -7,6 +7,7 @@ import { useT } from "@/lib/language-context";
 import { KIND_FIELDS, type PassKind } from "@/lib/membership-templates";
 import type { WalletOption } from "@/types/wallet";
 import type { MembershipCard } from "@/types/membership";
+import { SignatureSvg } from "./SignaturePad";
 
 // The backs shown by FlipCard on a card's / pass's detail view. Both reuse
 // the front's own colour or background (darkened) so it reads as the same
@@ -39,7 +40,7 @@ function Shell({
 }
 
 /** Back of a wallet: a magnetic stripe, signature strip, and the account's details. */
-export function WalletBack({ wallet, currency }: { wallet: WalletOption; currency: string }) {
+export function WalletBack({ wallet, currency, signature = null }: { wallet: WalletOption; currency: string; signature?: string | null }) {
   const t = useT();
   const expiry =
     wallet.expiryMonth && wallet.expiryYear ? `${String(wallet.expiryMonth).padStart(2, "0")}/${String(wallet.expiryYear).slice(-2)}` : null;
@@ -49,8 +50,10 @@ export function WalletBack({ wallet, currency }: { wallet: WalletOption; currenc
         {/* Magnetic stripe */}
         <div className="mt-3 h-8 w-full shrink-0 bg-black/85" />
         {/* Signature strip with the last 4 digits */}
-        <div className="mx-4 mt-2.5 flex h-6 shrink-0 items-center gap-3">
-          <div className="h-full flex-1 rounded-sm bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.92)_0_6px,rgba(235,235,235,0.92)_6px_12px)]" />
+        <div className="mx-4 mt-2.5 flex h-8 shrink-0 items-center gap-3">
+          <div className="relative h-full flex-1 overflow-hidden rounded-sm bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.92)_0_6px,rgba(235,235,235,0.92)_6px_12px)]">
+            {signature && <SignatureSvg path={signature} className="absolute inset-0 h-full w-full px-2 py-0.5 text-neutral-900" />}
+          </div>
           <span className="rounded-sm bg-white/90 px-2 py-0.5 font-mono text-xs font-semibold italic text-neutral-800">
             {wallet.last4 ?? "•••"}
           </span>

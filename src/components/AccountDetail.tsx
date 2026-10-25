@@ -13,6 +13,8 @@ import AccountCardShape from "./AccountCardShape";
 import WalletCardShape from "./WalletCardShape";
 import FlipCard from "./FlipCard";
 import { WalletBack } from "./CardBack";
+import SignatureModal from "./SignatureModal";
+import { PenNibIcon } from "@phosphor-icons/react/dist/ssr";
 import type { WalletOption } from "@/types/wallet";
 
 type RecentExpenseRow = {
@@ -101,12 +103,14 @@ function TransactionRow({ expense, currency }: { expense: Expense; currency: str
 // body, one deliberate step further from the trigger.
 export default function AccountDetail({
   wallet,
+  defaultSignature = null,
   onArchive,
   archiveError,
   confirmArchive,
   onCancelArchive,
 }: {
   wallet: WalletOption;
+  defaultSignature?: string | null;
   onArchive: () => void;
   archiveError: string | null;
   confirmArchive: boolean;
@@ -115,6 +119,20 @@ export default function AccountDetail({
   const t = useT();
   const appCurrency = useCurrency();
   const [recent, setRecent] = useState<Expense[] | null>(null);
+  // This card's own signature, kept here so a new one shows straight away
+  // (the open modal's wallet object isn't refreshed after a save).
+  const [ownSignature, setOwnSignature] = useState(wallet.signature);
+  const [signing, setSigning] = useState(false);
+
+  async function saveSignature(signature: string | null) {
+    const res = await fetch(`/api/wallets/${wallet.id}/signature`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ signature }),
+    });
+    if (!res.ok) throw new Error();
+    setOwnSignature(signature);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -144,7 +162,7 @@ export default function AccountDetail({
     <div>
       <FlipCard
         label="card"
-        back={<WalletBack wallet={wallet} currency={walletCurrency} />}
+        back={<WalletBack wallet={wallet} currency={walletCurrency} signature={ownSignature ?? defaultSignature} />}
         front={wallet.network ? (
         <WalletCardShape
           label={wallet.name}
@@ -181,6 +199,30 @@ export default function AccountDetail({
         <AccountCardShape wallet={wallet} currency={appCurrency} />
       )}
       />
+
+      {wallet.isOwner && (
+        <button
+          type="button"
+          onClick={() => setSigning(true)}
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-foreground transition hover:border-navy"
+        >
+          <PenNibIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
+          {ownSignature ? "Change this card's signature" : "Sign this card"}
+        </button>
+      )}
+      {signing && (
+        <SignatureModal
+          title={`Sign ${wallet.name}`}
+          description={
+            defaultSignature
+              ? "This card will use this signature instead of your default one."
+              : "Shown on the back of this card. Set one for every card in Settings > Wallets."
+          }
+          onSave={(path) => saveSignature(path)}
+          onClose={() => setSigning(false)}
+          secondary={ownSignature ? { label: defaultSignature ? "Use my default signature" : "Remove signature", onClick: () => saveSignature(null) } : undefined}
+        />
+      )}
 
       <div className="mt-4 rounded-card border border-line bg-surface p-3.5">
         <p className="text-xs uppercase tracking-wide text-ink-soft">{t("wallet.balanceLabel")}</p>

@@ -52,6 +52,8 @@ export type WalletOption = {
   /** How big the NFC symbol renders — see nfc-size.ts. */
   nfcSize: NfcSize;
   notes: string | null;
+  /** This card's own signature (SVG path data); null means use the default. */
+  signature: string | null;
   /** Whether the balance amount renders on the card face — independent of
    * whether the wallet has a card look at all. */
   showBalance: boolean;

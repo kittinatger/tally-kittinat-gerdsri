@@ -61,12 +61,15 @@ export default function WalletPageView({
   memberships: initialMemberships,
   walletFolders: initialWalletFolders,
   passFolders: initialPassFolders,
+  defaultSignature = null,
 }: {
   wallets: WalletOption[];
   passes: MembershipCard[];
   memberships: MembershipCard[];
   walletFolders: CardFolder[];
   passFolders: CardFolder[];
+  /** Shown on the back of cards that don't have their own signature. */
+  defaultSignature?: string | null;
 }) {
   const t = useT();
   const router = useRouter();
@@ -612,6 +615,7 @@ export default function WalletPageView({
           <AccountDetail
             key={viewingAccount.id}
             wallet={viewingAccount}
+            defaultSignature={defaultSignature}
             archiveError={accountArchiveError}
             confirmArchive={confirmArchiveAccount}
             onCancelArchive={() => setConfirmArchiveAccount(false)}
