@@ -13,6 +13,7 @@ import { WalletsProvider } from "@/lib/wallets-context";
 import { useT } from "@/lib/language-context";
 import { consumeOpenedFromList } from "@/lib/transaction-nav";
 import AppHeader from "./AppHeader";
+import PullToRefresh from "./PullToRefresh";
 import ExpenseDetailContent from "./ExpenseDetailContent";
 
 const EditExpenseModal = dynamic(() => import("./EditExpenseModal"), { ssr: false });
@@ -31,6 +32,12 @@ export default function TransactionDetailView({
   const t = useT();
   const router = useRouter();
   const [expense, setExpense] = useState(initialExpense);
+  // A pull-to-refresh re-render brings a fresh copy from the server.
+  const [prevInitial, setPrevInitial] = useState(initialExpense);
+  if (prevInitial !== initialExpense) {
+    setPrevInitial(initialExpense);
+    setExpense(initialExpense);
+  }
   const [editing, setEditing] = useState(false);
   // Read once: whether Back can just pop history (see transaction-nav.ts).
   const [fromList] = useState(consumeOpenedFromList);
@@ -48,6 +55,7 @@ export default function TransactionDetailView({
       <WalletsProvider wallets={wallets}>
         <CurrencyProvider currency={currency}>
           <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10 lg:max-w-5xl">
+            <PullToRefresh>
             <AppHeader />
 
             <main className="flex-1 px-1 py-4 sm:px-2 sm:py-6">
@@ -70,6 +78,7 @@ export default function TransactionDetailView({
                 />
               </div>
             </main>
+            </PullToRefresh>
 
             {editing && (
               <EditExpenseModal

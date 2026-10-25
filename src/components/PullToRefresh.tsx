@@ -19,7 +19,21 @@ const SETTLE_MS = 700;
 // the normal one.
 const HOLD_FOR_FULL_REFRESH_MS = 2000;
 
-export default function PullToRefresh({ children }: { children: React.ReactNode }) {
+// iOS can report a fractional scroll offset (e.g. 0.5) while sitting at the
+// very top, which used to disqualify every pull.
+function atTop(): boolean {
+  return (document.scrollingElement?.scrollTop ?? window.scrollY) <= 1;
+}
+
+export default function PullToRefresh({
+  children,
+  onRefresh,
+}: {
+  children: React.ReactNode;
+  /** Extra data to reload alongside the server re-render — for pages whose
+   * data lives in a client store (e.g. Notifications). */
+  onRefresh?: () => void;
+}) {
   const router = useRouter();
   const [pull, setPull] = useState(0);
   // Whether the current pull has been held past the threshold long enough
@@ -31,6 +45,7 @@ export default function PullToRefresh({ children }: { children: React.ReactNode 
   const startY = useRef<number | null>(null);
   const pulling = useRef(false);
   const holdTimer = useRef<number | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   function clearHoldTimer() {
     if (holdTimer.current !== null) {
@@ -50,13 +65,14 @@ export default function PullToRefresh({ children }: { children: React.ReactNode 
       return;
     }
     router.refresh();
+    onRefresh?.();
     window.setTimeout(() => {
       setRefreshing(null);
       setPull(0);
     }, SETTLE_MS);
   }
 
-  function onTouchStart(e: React.TouchEvent) {
+  function onTouchStart(e: TouchEvent) {
     // A card armed for click-and-hold-to-drag (see use-reorderable-list.ts)
     // sits inside this wrapper, and touch events aren't stopped by that
     // card's own touch-action: none — that CSS property only suppresses
@@ -68,7 +84,7 @@ export default function PullToRefresh({ children }: { children: React.ReactNode 
     // gestures were fighting over the same touch the entire time. Any
     // touch starting on a reorderable card skips pull-to-refresh tracking
     // entirely instead.
-    if (refreshing || window.scrollY > 0 || (e.target as HTMLElement).closest?.("[data-reorder-item]")) {
+    if (refreshing || !atTop() || (e.target as HTMLElement).closest?.("[data-reorder-item]")) {
       startY.current = null;
       return;
     }
@@ -77,16 +93,20 @@ export default function PullToRefresh({ children }: { children: React.ReactNode 
     setArmedForFull(false);
   }
 
-  function onTouchMove(e: React.TouchEvent) {
+  function onTouchMove(e: TouchEvent) {
     if (refreshing || !pulling.current || startY.current === null) return;
     const delta = e.touches[0].clientY - startY.current;
-    if (delta <= 0 || window.scrollY > 0) {
+    if (delta <= 0 || !atTop()) {
       pulling.current = false;
       setPull(0);
       setArmedForFull(false);
       clearHoldTimer();
       return;
     }
+    // Hold the gesture: otherwise iOS (with overscroll disabled in
+    // globals.css) can claim this downward drag at the top of the page and
+    // cancel the touch before it's released.
+    if (e.cancelable) e.preventDefault();
     const next = Math.min(delta * RESISTANCE, MAX_PULL);
     setPull(next);
     if (next >= PULL_THRESHOLD) {
@@ -116,12 +136,39 @@ export default function PullToRefresh({ children }: { children: React.ReactNode 
     setArmedForFull(false);
   }
 
+  // A cancelled touch (the OS took the gesture, a call came in…) just resets.
+  function onTouchCancel() {
+    pulling.current = false;
+    startY.current = null;
+    clearHoldTimer();
+    setPull(0);
+    setArmedForFull(false);
+  }
+
+  // Native listeners rather than React's onTouch* props: React registers
+  // touch listeners as passive, and a passive touchmove can't preventDefault.
+  // Re-bound every render so they always see the latest state.
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd);
+    el.addEventListener("touchcancel", onTouchCancel);
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+      el.removeEventListener("touchcancel", onTouchCancel);
+    };
+  });
+
   const indicatorHeight = refreshing ? PULL_THRESHOLD : pull;
   const ready = pull >= PULL_THRESHOLD;
   const label = armedForFull ? "Release for a full refresh" : ready ? "Release to refresh · keep holding for a full refresh" : "Pull to refresh";
 
   return (
-    <div onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+    <div ref={rootRef}>
       {!refreshing && (
         <div
           className="flex items-center justify-center overflow-hidden transition-[height] duration-200 ease-out"

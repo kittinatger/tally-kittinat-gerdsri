@@ -33,6 +33,7 @@ import {
 } from "@/lib/notification-store";
 import { notificationTypeInfo, type NotificationGroup } from "@/lib/notification-types";
 import AppHeader from "./AppHeader";
+import PullToRefresh from "./PullToRefresh";
 
 type Filter = "all" | "unread" | NotificationGroup;
 
@@ -141,6 +142,7 @@ export default function NotificationsView() {
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10">
+      <PullToRefresh onRefresh={() => loadNotifications(true)}>
       <AppHeader />
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-1 py-4 sm:px-2 sm:py-6">
@@ -233,6 +235,7 @@ export default function NotificationsView() {
           </div>
         )}
       </main>
+      </PullToRefresh>
 
       {toast && (
         <div className="fixed inset-x-0 bottom-[calc(64px+var(--mobile-nav-bottom-pad,10px)+12px)] z-30 flex justify-center px-4 sm:bottom-6" role="status">
