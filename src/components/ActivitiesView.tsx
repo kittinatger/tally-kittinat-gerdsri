@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import type { Expense } from "@/types/expense";
@@ -10,15 +10,22 @@ import { CategoriesProvider } from "@/lib/categories-context";
 import { CurrencyProvider } from "@/lib/currency-context";
 import { WalletsProvider } from "@/lib/wallets-context";
 import { markOpenedFromList } from "@/lib/transaction-nav";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { DEFAULT_ACTIVITIES_PREFS, type ActivitiesPrefs } from "@/lib/activities-prefs";
 import PullToRefresh from "./PullToRefresh";
 import ExpenseList, { type TypeFilter } from "./ExpenseList";
 import ActivitiesBalanceCard from "./ActivitiesBalanceCard";
+import ActivitiesSidebar from "./ActivitiesSidebar";
 import AppHeader from "./AppHeader";
 
 // Never mounted on first paint (it needs a swipe/hover Edit first) —
 // loading it on demand keeps it out of Activities' initial JS bundle.
 const EditExpenseModal = dynamic(() => import("./EditExpenseModal"), { ssr: false });
+
+// iPad and desktop get their own Activities layout (sidebar + table); phones
+// keep the original one untouched. Matches Tailwind's md: breakpoint.
+const WIDE_QUERY = "(min-width: 768px)";
+const noopSubscribe = () => () => {};
 
 function sortByDateDesc(a: Expense, b: Expense): number {
   if (a.date !== b.date) return a.date < b.date ? 1 : -1;
@@ -76,6 +83,14 @@ export default function ActivitiesView({
   const [vendorFilter, setVendorFilter] = useState<string | null>(initialVendorFilter ?? null);
 
   const activeWallets = wallets.filter((w) => !w.archived);
+  // The server can't know the screen size, so the first render (server and
+  // hydration) includes both layouts with CSS choosing one — no flash of the
+  // phone layout on desktop — and once hydrated only the matching one stays
+  // mounted.
+  const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
+  const wide = useMediaQuery(WIDE_QUERY);
+  const showPhone = !hydrated || !wide;
+  const showWide = !hydrated || wide;
 
   // Adding a transaction happens on its own page (/transactions/new).
   function openAdd() {
@@ -118,41 +133,85 @@ export default function ActivitiesView({
       <WalletsProvider wallets={wallets}>
       <CurrencyProvider currency={currency}>
         <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10 lg:max-w-6xl">
-          <PullToRefresh>
-            <AppHeader onAddClick={openAdd} />
+          {showPhone && (
+            <div className={hydrated ? "contents" : "contents md:hidden"}>
+            <PullToRefresh>
+              <AppHeader onAddClick={openAdd} />
 
-            <main className="flex-1 px-1 py-6 sm:px-2">
-              <div className="mx-auto w-full max-w-3xl">
-                <ActivitiesBalanceCard
-                  expenses={expenses}
-                  wallets={activeWallets}
-                  currency={currency}
-                  typeFilter={typeFilter}
-                  onTypeFilterChange={setTypeFilter}
-                  walletFilter={walletFilter}
-                  onWalletFilterChange={setWalletFilter}
-                />
-                <ExpenseList
-                  expenses={expenses}
-                  onSelect={openTransaction}
-                  onEdit={setEditing}
-                  onBulkDeleted={handleBulkDeleted}
-                  onBulkUpdated={handleBulkUpdated}
-                  typeFilter={typeFilter}
-                  onTypeFilterChange={setTypeFilter}
-                  walletFilter={walletFilter}
-                  onWalletFilterChange={setWalletFilter}
-                  search={search}
-                  onSearchChange={setSearch}
-                  vendorFilter={vendorFilter}
-                  onVendorFilterChange={setVendorFilter}
-                  prefs={prefs}
-                />
-              </div>
+              <main className="flex-1 px-1 py-6 sm:px-2">
+                <div className="mx-auto w-full max-w-3xl">
+                  <ActivitiesBalanceCard
+                    expenses={expenses}
+                    wallets={activeWallets}
+                    currency={currency}
+                    typeFilter={typeFilter}
+                    onTypeFilterChange={setTypeFilter}
+                    walletFilter={walletFilter}
+                    onWalletFilterChange={setWalletFilter}
+                  />
+                  <ExpenseList
+                    expenses={expenses}
+                    onSelect={openTransaction}
+                    onEdit={setEditing}
+                    onBulkDeleted={handleBulkDeleted}
+                    onBulkUpdated={handleBulkUpdated}
+                    typeFilter={typeFilter}
+                    onTypeFilterChange={setTypeFilter}
+                    walletFilter={walletFilter}
+                    onWalletFilterChange={setWalletFilter}
+                    search={search}
+                    onSearchChange={setSearch}
+                    vendorFilter={vendorFilter}
+                    onVendorFilterChange={setVendorFilter}
+                    prefs={prefs}
+                  />
+                </div>
 
-            </main>
-          </PullToRefresh>
+              </main>
+            </PullToRefresh>
 
+            </div>
+          )}
+          {showWide && (
+            <div className={hydrated ? "flex flex-1 flex-col" : "hidden flex-1 flex-col md:flex"}>
+              <PullToRefresh>
+                <AppHeader onAddClick={openAdd} />
+                <main className="flex-1 px-2 py-6 lg:grid lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start lg:gap-6">
+                  <aside className="mb-6 lg:sticky lg:top-24 lg:mb-0">
+                    <ActivitiesSidebar
+                      expenses={expenses}
+                      wallets={activeWallets}
+                      currency={currency}
+                      typeFilter={typeFilter}
+                      onTypeFilterChange={setTypeFilter}
+                      walletFilter={walletFilter}
+                      onWalletFilterChange={setWalletFilter}
+                      onAdd={openAdd}
+                    />
+                  </aside>
+                  <div className="min-w-0">
+                    <ExpenseList
+                      layout="table"
+                      expenses={expenses}
+                      onSelect={openTransaction}
+                      onEdit={setEditing}
+                      onBulkDeleted={handleBulkDeleted}
+                      onBulkUpdated={handleBulkUpdated}
+                      typeFilter={typeFilter}
+                      onTypeFilterChange={setTypeFilter}
+                      walletFilter={walletFilter}
+                      onWalletFilterChange={setWalletFilter}
+                      search={search}
+                      onSearchChange={setSearch}
+                      vendorFilter={vendorFilter}
+                      onVendorFilterChange={setVendorFilter}
+                      prefs={prefs}
+                    />
+                  </div>
+                </main>
+              </PullToRefresh>
+            </div>
+          )}
           {editing && (
             <EditExpenseModal
               expense={editing}

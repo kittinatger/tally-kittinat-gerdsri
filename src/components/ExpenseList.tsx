@@ -12,6 +12,7 @@ import { useT, useLanguage } from "@/lib/language-context";
 import { mutateFetch } from "@/lib/offline/fetch-wrapper";
 import ExpenseRow from "./ExpenseRow";
 import SplitExpenseGroup from "./SplitExpenseGroup";
+import ExpenseTable from "./ExpenseTable";
 import FilterDropdown from "./FilterDropdown";
 import DateRangeFilter from "./DateRangeFilter";
 import Modal from "./Modal";
@@ -67,6 +68,7 @@ export default function ExpenseList({
   vendorFilter,
   onVendorFilterChange,
   prefs = DEFAULT_ACTIVITIES_PREFS,
+  layout = "list",
 }: {
   expenses: Expense[];
   onSelect: (expense: Expense) => void;
@@ -103,6 +105,10 @@ export default function ExpenseList({
    * grouping/row display) — none of it disables the list's own filter
    * controls. */
   prefs?: ActivitiesPrefs;
+  /** "table" is the iPad/desktop presentation (see ExpenseTable); the
+   * phone keeps "list". Everything else — filters, search, selection,
+   * export — is shared. */
+  layout?: "list" | "table";
 }) {
   const t = useT();
   const language = useLanguage();
@@ -669,6 +675,22 @@ export default function ExpenseList({
           <p className="font-display text-lg text-foreground">{t("activities.noMatchingTransactions")}</p>
           <p className="text-sm text-ink-soft">{t("activities.noMatchingDesc")}</p>
         </div>
+      ) : layout === "table" ? (
+        <ExpenseTable
+          groups={groups.map(([key, items]) => ({
+            key,
+            label: prefs.groupBy === "none" ? null : prefs.groupBy === "day" ? dayLabel(key) : prefs.groupBy === "week" ? weekLabel(key) : monthLabel(key),
+            net: items.reduce((sum, e) => sum + signedAmount(e), 0),
+            items,
+          }))}
+          showDate={prefs.groupBy !== "day"}
+          selectMode={selectMode}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelected}
+          onSelect={onSelect}
+          onEdit={onEdit}
+          onDelete={handleSwipeDelete}
+        />
       ) : (
         <div className="space-y-6">
           {groups.map(([key, items]) => {
