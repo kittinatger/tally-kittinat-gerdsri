@@ -11,6 +11,7 @@ import { isNamePosition, DEFAULT_NAME_POSITION } from "@/lib/name-position";
 import { isCardNumberPosition, DEFAULT_CARD_NUMBER_POSITION } from "@/lib/card-number-position";
 import { isCardTemplateCategory } from "@/lib/card-template-category";
 import { isNfcSize, DEFAULT_NFC_SIZE } from "@/lib/nfc-size";
+import { parseBackDesign } from "@/lib/card-back";
 
 // Every server page that lists wallets (Activities, Analytics, Settings,
 // the Wallet page itself) maps the raw DB row the same way — pulled out
@@ -46,6 +47,7 @@ export function toWalletOption(w: WalletRow): WalletOption {
     nfcSize: isNfcSize(w.nfc_size) ? w.nfc_size : DEFAULT_NFC_SIZE,
     notes: w.notes,
     signature: w.signature ?? null,
+    backDesign: parseBackDesign(w.back_design),
     showBalance: w.show_balance,
     showCurrency: w.show_currency,
     showCardNumber: w.show_card_number,

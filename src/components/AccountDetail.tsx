@@ -14,7 +14,9 @@ import WalletCardShape from "./WalletCardShape";
 import FlipCard from "./FlipCard";
 import { WalletBack } from "./CardBack";
 import SignatureModal from "./SignatureModal";
-import { PenNibIcon } from "@phosphor-icons/react/dist/ssr";
+import CardBackEditor from "./CardBackEditor";
+import { DEFAULT_BACK_DESIGN, type CardBackDesign } from "@/lib/card-back";
+import { PaintBrushIcon, PenNibIcon } from "@phosphor-icons/react/dist/ssr";
 import type { WalletOption } from "@/types/wallet";
 
 type RecentExpenseRow = {
@@ -123,6 +125,19 @@ export default function AccountDetail({
   // (the open modal's wallet object isn't refreshed after a save).
   const [ownSignature, setOwnSignature] = useState(wallet.signature);
   const [signing, setSigning] = useState(false);
+  // The back's own design, likewise kept locally so a save shows straight away.
+  const [backDesign, setBackDesign] = useState(wallet.backDesign);
+  const [designingBack, setDesigningBack] = useState(false);
+
+  async function saveBackDesign(design: CardBackDesign | null) {
+    const res = await fetch(`/api/wallets/${wallet.id}/back-design`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ design }),
+    });
+    if (!res.ok) throw new Error();
+    setBackDesign(design ?? DEFAULT_BACK_DESIGN);
+  }
 
   async function saveSignature(signature: string | null) {
     const res = await fetch(`/api/wallets/${wallet.id}/signature`, {
@@ -162,7 +177,7 @@ export default function AccountDetail({
     <div>
       <FlipCard
         label="card"
-        back={<WalletBack wallet={wallet} currency={walletCurrency} signature={ownSignature ?? defaultSignature} />}
+        back={<WalletBack wallet={wallet} currency={walletCurrency} signature={ownSignature ?? defaultSignature} design={backDesign} />}
         front={wallet.network ? (
         <WalletCardShape
           label={wallet.name}
@@ -201,14 +216,33 @@ export default function AccountDetail({
       />
 
       {wallet.isOwner && (
-        <button
-          type="button"
-          onClick={() => setSigning(true)}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-foreground transition hover:border-navy"
-        >
-          <PenNibIcon weight="bold" aria-hidden="true" className="h-4 w-4" />
-          {ownSignature ? "Change this card's signature" : "Sign this card"}
-        </button>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setSigning(true)}
+            className="flex items-center justify-center gap-2 rounded-full border border-line bg-surface px-3 py-2.5 text-sm font-semibold text-foreground transition hover:border-navy"
+          >
+            <PenNibIcon weight="bold" aria-hidden="true" className="h-4 w-4 shrink-0" />
+            <span className="truncate">{ownSignature ? "Change signature" : "Sign this card"}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setDesigningBack(true)}
+            className="flex items-center justify-center gap-2 rounded-full border border-line bg-surface px-3 py-2.5 text-sm font-semibold text-foreground transition hover:border-navy"
+          >
+            <PaintBrushIcon weight="bold" aria-hidden="true" className="h-4 w-4 shrink-0" />
+            <span className="truncate">Customise back</span>
+          </button>
+        </div>
+      )}
+      {designingBack && (
+        <CardBackEditor
+          wallet={{ ...wallet, backDesign }}
+          currency={walletCurrency}
+          signature={ownSignature ?? defaultSignature}
+          onSave={saveBackDesign}
+          onClose={() => setDesigningBack(false)}
+        />
       )}
       {signing && (
         <SignatureModal

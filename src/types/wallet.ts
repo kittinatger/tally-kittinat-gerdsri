@@ -1,4 +1,5 @@
 import type { WalletKind } from "@/lib/wallets";
+import type { CardBackDesign } from "@/lib/card-back";
 import type { CardBackground } from "@/lib/card-backgrounds";
 import type { CardNetwork } from "@/lib/wallet-cards";
 import type { ChipColor } from "@/lib/chip-colors";
@@ -54,6 +55,8 @@ export type WalletOption = {
   notes: string | null;
   /** This card's own signature (SVG path data); null means use the default. */
   signature: string | null;
+  /** How this card's back looks — see CardBackDesign. */
+  backDesign: CardBackDesign;
   /** Whether the balance amount renders on the card face — independent of
    * whether the wallet has a card look at all. */
   showBalance: boolean;

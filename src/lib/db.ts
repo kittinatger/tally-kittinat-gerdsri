@@ -189,7 +189,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 81;
+const CURRENT_SCHEMA_VERSION = 82;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1632,6 +1632,10 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS signature TEXT;`;
       await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS signature TEXT;`;
 
+      // How the back of a card looks (JSON text; see lib/card-back.ts) — NULL
+      // means the default back that follows the front's colour.
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS back_design TEXT;`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -1826,6 +1830,8 @@ export type WalletRow = {
   id: number;
   /** This card's own signature (SVG path data), or null to use the default. */
   signature: string | null;
+  /** JSON text of the back's design, or null for the default — see parseBackDesign in card-back.ts. */
+  back_design: string | null;
   name: string;
   color: string;
   /** Raw JSON text, or null for "no pattern, use plain color" — see parseCardBackground in card-backgrounds.ts. */
@@ -1894,7 +1900,7 @@ const WALLET_COLUMNS = `
   w.show_network_badge, w.badge_position, w.icon_color, w.show_chip, w.chip_color,
   w.chip_position, w.show_nfc, w.nfc_position, w.nfc_size, w.notes, w.show_balance, w.show_currency, w.show_card_number, w.show_name,
   w.show_holder_name, w.show_expiry, w.name_position, w.card_number_position, w.card_number_last4_only,
-  w.category, w.folder_id, w.signature
+  w.category, w.folder_id, w.signature, w.back_design
 `;
 const WALLET_BALANCE_EXPR = `
   (
@@ -2052,7 +2058,7 @@ export async function createWallet(
       show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position,
       card_number_position, card_number_last4_only, category;
   `;
-  return { ...rows[0], is_default: false, archived: false, balance: "0", is_owner: true, folder_id: null, signature: null };
+  return { ...rows[0], is_default: false, archived: false, balance: "0", is_owner: true, folder_id: null, signature: null, back_design: null };
 }
 
 export async function updateWallet(
@@ -3718,6 +3724,13 @@ export async function setDefaultSignature(userId: number, signature: string | nu
 export async function setWalletSignature(userId: number, walletId: number, signature: string | null): Promise<boolean> {
   await ensureSchema();
   const { rowCount } = await sql`UPDATE wallets SET signature = ${signature} WHERE id = ${walletId} AND user_id = ${userId};`;
+  return (rowCount ?? 0) > 0;
+}
+
+// One card's back design as JSON text (null resets it). Owner only.
+export async function setWalletBackDesign(userId: number, walletId: number, json: string | null): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await sql`UPDATE wallets SET back_design = ${json} WHERE id = ${walletId} AND user_id = ${userId};`;
   return (rowCount ?? 0) > 0;
 }
 

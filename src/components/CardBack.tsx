@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { dotClasses, colorDotStyle } from "@/lib/category-styles";
-import { cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
+import { cardBackgroundStyle, cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
+import type { CardBackDesign } from "@/lib/card-back";
 import { formatCurrency } from "@/lib/format";
 import { useT } from "@/lib/language-context";
 import { KIND_FIELDS, type PassKind } from "@/lib/membership-templates";
@@ -69,22 +70,39 @@ function Shell({
   color,
   background,
   textColor,
+  design,
   className = "",
   children,
 }: {
   color: string;
   /** The front's background — only used to pick the back's colour. */
   background?: CardBackground | null;
+  /** The card's own back design; when `custom`, it replaces the automatic colour. */
+  design?: CardBackDesign;
   textColor: string | null;
   className?: string;
   children: React.ReactNode;
 }) {
-  const base = useBackColor(color, background);
-  const fg = cardForegroundFor(textColor, null, base);
+  const auto = useBackColor(color, background);
+  const custom = Boolean(design?.custom);
+  if (custom && design) {
+    // The user's own back: their colour, pattern or photo, untouched.
+    const bg = design.background;
+    const fg = cardForegroundFor(design.textColor, bg, design.color);
+    return (
+      <div
+        className={`relative h-full w-full overflow-hidden rounded-2xl ${bg ? "" : dotClasses(design.color)} ${className}`}
+        style={{ color: fg.full, ...(bg ? cardBackgroundStyle(bg) : colorDotStyle(design.color)) }}
+      >
+        <div className="relative h-full">{children}</div>
+      </div>
+    );
+  }
+  const fg = cardForegroundFor(textColor, null, auto);
   return (
     <div
-      className={`relative h-full w-full overflow-hidden rounded-2xl ${dotClasses(base)} ${className}`}
-      style={{ color: fg.full, ...colorDotStyle(base) }}
+      className={`relative h-full w-full overflow-hidden rounded-2xl ${dotClasses(auto)} ${className}`}
+      style={{ color: fg.full, ...colorDotStyle(auto) }}
     >
       {/* Darken the face so it reads as the back, not a second front. */}
       <div className="pointer-events-none absolute inset-0 bg-black/25" />
@@ -93,36 +111,52 @@ function Shell({
   );
 }
 
-/** Back of a wallet: a magnetic stripe, signature strip, and the account's details. */
-export function WalletBack({ wallet, currency, signature = null }: { wallet: WalletOption; currency: string; signature?: string | null }) {
+/** Back of a wallet: a magnetic stripe, signature strip, and the account's details — each can be switched off in the card's back design. */
+export function WalletBack({
+  wallet,
+  currency,
+  signature = null,
+  design,
+}: {
+  wallet: WalletOption;
+  currency: string;
+  signature?: string | null;
+  /** Overrides wallet.backDesign — used by the live preview while editing. */
+  design?: CardBackDesign;
+}) {
   const t = useT();
+  const d = design ?? wallet.backDesign;
   const expiry =
     wallet.expiryMonth && wallet.expiryYear ? `${String(wallet.expiryMonth).padStart(2, "0")}/${String(wallet.expiryYear).slice(-2)}` : null;
+  const details = [
+    d.showBalance && <BackField key="balance" label={t("wallet.balanceLabel")} value={formatCurrency(wallet.balance, currency)} strong />,
+    d.showCurrency && <BackField key="currency" label={t("wallet.currencyLabel")} value={wallet.isDefault ? `${currency} · Default` : currency} />,
+    d.showHolder &&
+      (wallet.holderName ? (
+        <BackField key="holder" label="Card holder" value={wallet.holderName} />
+      ) : (
+        <BackField key="type" label={t("wallet.typeLabel")} value={wallet.kind === "digital" ? t("wallet.digital") : t("wallet.cash")} />
+      )),
+    d.showExpiry && expiry && <BackField key="expiry" label="Expires" value={expiry} />,
+  ].filter(Boolean);
   return (
-    <Shell color={wallet.color} background={wallet.background} textColor={wallet.textColor}>
+    <Shell color={wallet.color} background={wallet.background} textColor={wallet.textColor} design={d}>
       <div className="flex h-full flex-col">
         {/* Magnetic stripe */}
-        <div className="mt-3 h-8 w-full shrink-0 bg-black/85" />
+        {d.showStripe && <div className="mt-3 h-8 w-full shrink-0 bg-black/85" />}
         {/* Signature strip with the last 4 digits */}
-        <div className="mx-4 mt-2.5 flex h-8 shrink-0 items-center gap-3">
-          <div className="relative h-full flex-1 overflow-hidden rounded-sm bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.92)_0_6px,rgba(235,235,235,0.92)_6px_12px)]">
-            {signature && <SignatureSvg path={signature} className="absolute inset-0 h-full w-full px-2 py-0.5 text-neutral-900" />}
+        {d.showSignature && (
+          <div className={`mx-4 flex h-8 shrink-0 items-center gap-3 ${d.showStripe ? "mt-2.5" : "mt-4"}`}>
+            <div className="relative h-full flex-1 overflow-hidden rounded-sm bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.92)_0_6px,rgba(235,235,235,0.92)_6px_12px)]">
+              {signature && <SignatureSvg path={signature} className="absolute inset-0 h-full w-full px-2 py-0.5 text-neutral-900" />}
+            </div>
+            <span className="rounded-sm bg-white/90 px-2 py-0.5 font-mono text-xs font-semibold italic text-neutral-800">
+              {wallet.last4 ?? "•••"}
+            </span>
           </div>
-          <span className="rounded-sm bg-white/90 px-2 py-0.5 font-mono text-xs font-semibold italic text-neutral-800">
-            {wallet.last4 ?? "•••"}
-          </span>
-        </div>
+        )}
         {/* At most four details, so they always fit the card. */}
-        <div className="mt-auto grid grid-cols-2 gap-x-4 gap-y-1 px-4 pb-3 text-xs">
-          <BackField label={t("wallet.balanceLabel")} value={formatCurrency(wallet.balance, currency)} strong />
-          <BackField label={t("wallet.currencyLabel")} value={wallet.isDefault ? `${currency} · Default` : currency} />
-          {wallet.holderName ? (
-            <BackField label="Card holder" value={wallet.holderName} />
-          ) : (
-            <BackField label={t("wallet.typeLabel")} value={wallet.kind === "digital" ? t("wallet.digital") : t("wallet.cash")} />
-          )}
-          {expiry && <BackField label="Expires" value={expiry} />}
-        </div>
+        {details.length > 0 && <div className="mt-auto grid grid-cols-2 gap-x-4 gap-y-1 px-4 pb-3 pt-2 text-xs">{details}</div>}
       </div>
     </Shell>
   );
