@@ -3,6 +3,10 @@
 import { useState, type ReactNode } from "react";
 import { ArrowsCounterClockwiseIcon } from "@phosphor-icons/react/dist/ssr";
 
+const SLICES = 9;
+const SLICE_GAP = 0.9;
+const HALF = ((SLICES - 1) / 2) * SLICE_GAP + 0.5;
+
 // A card with a back: tap/click the card (or the Flip button) to turn it
 // over with a 3D flip. The front sets the size; the back is laid over it at
 // the same size, so any card/pass shape works. Tap rather than hover, since
@@ -25,13 +29,28 @@ export default function FlipCard({ front, back, label = "card" }: { front: React
               setFlipped((v) => !v);
             }
           }}
-          className="relative cursor-pointer outline-none transition-transform duration-700 ease-[cubic-bezier(0.4,0.2,0.2,1)] [transform-style:preserve-3d] focus-visible:ring-2 focus-visible:ring-surface-accent focus-visible:ring-offset-2 motion-reduce:transition-none"
+          className="relative cursor-pointer rounded-2xl shadow-[0_10px_24px_-8px_rgba(0,0,0,0.45)] outline-none transition-transform duration-700 ease-[cubic-bezier(0.4,0.2,0.2,1)] [transform-style:preserve-3d] focus-visible:ring-2 focus-visible:ring-surface-accent focus-visible:ring-offset-2 motion-reduce:transition-none"
           style={{ transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
         >
-          <div className="[backface-visibility:hidden]" aria-hidden={flipped}>
+          {/* Thickness: a stack of thin dark slices between the two faces,
+           * so the card reads as a slab with an edge rather than a sheet
+           * of paper. The faces sit on the outer slices. */}
+          {Array.from({ length: SLICES }, (_, i) => (
+            <div
+              key={i}
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 rounded-2xl bg-neutral-700 dark:bg-neutral-500"
+              style={{ transform: `translateZ(${(i - (SLICES - 1) / 2) * SLICE_GAP}px)` }}
+            />
+          ))}
+          <div className="[backface-visibility:hidden]" style={{ transform: `translateZ(${HALF}px)` }} aria-hidden={flipped}>
             {front}
           </div>
-          <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]" aria-hidden={!flipped}>
+          <div
+            className="absolute inset-0 [backface-visibility:hidden]"
+            style={{ transform: `rotateY(180deg) translateZ(${HALF}px)` }}
+            aria-hidden={!flipped}
+          >
             {back}
           </div>
         </div>
