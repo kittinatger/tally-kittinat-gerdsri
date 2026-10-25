@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.25.0] - 2026-10-25
+
+### Changed
+- Receipt scans are much faster. Reading a receipt skips the slow thinking step, photos are uploaded smaller (sharp enough to read, quicker on mobile data), and the prompt is shorter.
+- Scans and voice entries fail far less often. If the main model is slow (8 seconds) or has a problem, a faster model starts alongside it and whichever answers first wins, instead of waiting up to 45 seconds before trying again. A dropped connection is retried once automatically, and the scan shows how long it has been reading.
+
 ## [0.24.7] - 2026-10-25
 
 ### Added
