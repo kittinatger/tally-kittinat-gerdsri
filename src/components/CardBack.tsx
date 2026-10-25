@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { dotClasses, colorDotStyle } from "@/lib/category-styles";
 import { cardForegroundFor, type CardBackground } from "@/lib/card-backgrounds";
 import { formatCurrency } from "@/lib/format";
@@ -9,28 +10,81 @@ import type { WalletOption } from "@/types/wallet";
 import type { MembershipCard } from "@/types/membership";
 import { SignatureSvg } from "./SignaturePad";
 
-// The backs shown by FlipCard on a card's / pass's detail view. Both use
-// the card's plain colour (darkened) — never the front's pattern, photo or
-// gradient — so the back stays a calm, readable surface.
+// The backs shown by FlipCard on a card's / pass's detail view. Both are a
+// plain colour (darkened) — never the front's pattern, photo or gradient — so
+// the back stays a calm, readable surface, but the colour is the one the
+// FRONT actually shows: a pattern's base colour, or the average colour of a
+// photo front. (The card's own `color` field is only a fallback — it's a
+// leftover default, e.g. green, on a card whose front is a black photo.)
+
+const DARK_NEUTRAL = "#1f2937";
+
+// The average colour of a photo (data URL), sampled on a tiny canvas.
+function useAverageColor(photoDataUrl: string | null): string | null {
+  const [sampled, setSampled] = useState<{ url: string; color: string } | null>(null);
+  useEffect(() => {
+    if (!photoDataUrl) return;
+    let cancelled = false;
+    const img = new Image();
+    img.onload = () => {
+      if (cancelled) return;
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = canvas.height = 8;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0, 8, 8);
+        const data = ctx.getImageData(0, 0, 8, 8).data;
+        let r = 0, g = 0, b = 0;
+        const n = data.length / 4;
+        for (let i = 0; i < data.length; i += 4) {
+          r += data[i];
+          g += data[i + 1];
+          b += data[i + 2];
+        }
+        const hex = (v: number) => Math.round(v / n).toString(16).padStart(2, "0");
+        setSampled({ url: photoDataUrl, color: `#${hex(r)}${hex(g)}${hex(b)}` });
+      } catch {
+        // Unreadable image — keep the neutral fallback.
+      }
+    };
+    img.src = photoDataUrl;
+    return () => {
+      cancelled = true;
+    };
+  }, [photoDataUrl]);
+  return sampled && sampled.url === photoDataUrl ? sampled.color : null;
+}
+
+/** The back's base colour: a hex string, or the card's palette token when the front is plain. */
+function useBackColor(color: string, background: CardBackground | null | undefined): string {
+  const photo = background && background.pattern === "photo" ? background.photoDataUrl : null;
+  const average = useAverageColor(photo);
+  if (!background) return color;
+  if (background.pattern === "photo") return average ?? DARK_NEUTRAL;
+  return background.colors[0] ?? color;
+}
 
 function Shell({
   color,
+  background,
   textColor,
   className = "",
   children,
 }: {
   color: string;
-  /** Accepted for call-site symmetry with the front; the back ignores it. */
+  /** The front's background — only used to pick the back's colour. */
   background?: CardBackground | null;
   textColor: string | null;
   className?: string;
   children: React.ReactNode;
 }) {
-  const fg = cardForegroundFor(textColor, null, color);
+  const base = useBackColor(color, background);
+  const fg = cardForegroundFor(textColor, null, base);
   return (
     <div
-      className={`relative h-full w-full overflow-hidden rounded-2xl ${dotClasses(color)} ${className}`}
-      style={{ color: fg.full, ...colorDotStyle(color) }}
+      className={`relative h-full w-full overflow-hidden rounded-2xl ${dotClasses(base)} ${className}`}
+      style={{ color: fg.full, ...colorDotStyle(base) }}
     >
       {/* Darken the face so it reads as the back, not a second front. */}
       <div className="pointer-events-none absolute inset-0 bg-black/25" />
