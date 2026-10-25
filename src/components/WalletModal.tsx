@@ -39,6 +39,7 @@ import type { WalletKind } from "@/lib/wallets";
 import type { WalletOption } from "@/types/wallet";
 import { DEFAULT_BACK_DESIGN, type CardBackDesign } from "@/lib/card-back";
 import { WalletBack } from "./CardBack";
+import FlipCard from "./FlipCard";
 import CardBackFields from "./CardBackFields";
 import SignatureModal from "./SignatureModal";
 
@@ -493,32 +494,37 @@ export default function WalletModal({
         className={asPage ? "space-y-4 lg:grid lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:items-start lg:gap-x-10 lg:space-y-0" : "space-y-4"}
       >
         <div className={asPage ? "lg:sticky lg:top-24" : ""}>
-        {tab === "back" ? (
-          <div className="aspect-[1.586/1] min-h-[190px] w-full">
-            <WalletBack
-              wallet={
-                {
-                  name: name || "Card",
-                  color,
-                  background,
-                  textColor,
-                  kind,
-                  currency: currency ?? appCurrency,
-                  isDefault,
-                  balance: Number(startingBalance) || 0,
-                  holderName: holderName || null,
-                  last4: last4 || null,
-                  expiryMonth: month,
-                  expiryYear: year,
-                  backDesign,
-                } as WalletOption
-              }
-              currency={currency ?? appCurrency}
-              signature={ownSignature ?? defaultSignature}
-              design={backDesign}
-            />
-          </div>
-        ) : (
+        <FlipCard
+          flipped={tab === "back"}
+          interactive={false}
+          label={name || t("wallet.namePlaceholder")}
+          back={
+            <div className="aspect-[1.586/1] min-h-[190px] w-full">
+              <WalletBack
+                wallet={
+                  {
+                    name: name || "Card",
+                    color,
+                    background,
+                    textColor,
+                    kind,
+                    currency: currency ?? appCurrency,
+                    isDefault,
+                    balance: Number(startingBalance) || 0,
+                    holderName: holderName || null,
+                    last4: last4 || null,
+                    expiryMonth: month,
+                    expiryYear: year,
+                    backDesign,
+                  } as WalletOption
+                }
+                currency={currency ?? appCurrency}
+                signature={ownSignature ?? defaultSignature}
+                design={backDesign}
+              />
+            </div>
+          }
+          front={
         <ColorGlowPreview color={backgroundGlowColor(background, color)}>
           <WalletCardShape
             label={name || t("wallet.namePlaceholder")}
@@ -552,7 +558,8 @@ export default function WalletModal({
             namePosition={namePosition}
           />
         </ColorGlowPreview>
-        )}
+          }
+        />
         </div>
 
         <div className="min-w-0 space-y-4">
