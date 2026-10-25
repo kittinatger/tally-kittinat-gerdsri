@@ -19,27 +19,16 @@ import { useCurrency } from "@/lib/currency-context";
 import { describeFetchError } from "@/lib/fetch-error";
 import { formatCurrency } from "@/lib/format";
 import { dotClasses, colorDotStyle } from "@/lib/category-styles";
-import { PlusIcon, EditIcon, ArchiveIcon, TrashIcon } from "@/lib/icons";
+import { PlusIcon, EditIcon, TrashIcon } from "@/lib/icons";
 import type { WalletOption } from "@/types/wallet";
 import type { MembershipCard } from "@/types/membership";
 import type { MembershipCodeFormat } from "@/lib/memberships";
 import type { CardFolder } from "@/types/card-folder";
-import { ExportIcon as PhExportIcon } from "@phosphor-icons/react/dist/ssr";
 
-// Same glyph as WalletManager's own local ShareIcon — this app keeps
-// ShareIcon defined per-file rather than as one shared icons.tsx export
-// (ExpenseRow and WalletCardShape each have their own too, for a
-// different "share to app" meaning), so this follows that convention.
-function ShareIcon({ className = "h-4 w-4" }: { className?: string }) {
-  return <PhExportIcon weight="fill" aria-hidden="true" className={className} />;
-}
 
 // None of these are needed on first paint — every one requires a tap first.
-const WalletModal = dynamic(() => import("./WalletModal"), { ssr: false });
-const WalletShareModal = dynamic(() => import("./WalletShareModal"), { ssr: false });
 const MembershipCardModal = dynamic(() => import("./MembershipCardModal"), { ssr: false });
 const MembershipCardDetail = dynamic(() => import("./MembershipCardDetail"), { ssr: false });
-const AccountDetail = dynamic(() => import("./AccountDetail"), { ssr: false });
 const WalletEntryModal = dynamic(() => import("./WalletEntryModal"), { ssr: false });
 const AddCardEntryModal = dynamic(() => import("./AddCardEntryModal"), { ssr: false });
 const ScanCardModal = dynamic(() => import("./ScanCardModal"), { ssr: false });
@@ -61,15 +50,12 @@ export default function WalletPageView({
   memberships: initialMemberships,
   walletFolders: initialWalletFolders,
   passFolders: initialPassFolders,
-  defaultSignature = null,
 }: {
   wallets: WalletOption[];
   passes: MembershipCard[];
   memberships: MembershipCard[];
   walletFolders: CardFolder[];
   passFolders: CardFolder[];
-  /** Shown on the back of cards that don't have their own signature. */
-  defaultSignature?: string | null;
 }) {
   const t = useT();
   const router = useRouter();
@@ -80,7 +66,6 @@ export default function WalletPageView({
   const [error, setError] = useState<string | null>(null);
 
   const [entryOpen, setEntryOpen] = useState(false);
-  const [accountModal, setAccountModal] = useState<{ mode: "edit"; wallet: WalletOption } | { mode: "add" } | null>(null);
   const [passModal, setPassModal] = useState<{ mode: "add" } | { mode: "edit"; card: MembershipCard } | null>(null);
   // A scan result waiting to be applied to whichever pass modal is (or is
   // about to be) open — kept separate from `passModal` itself so that
@@ -92,28 +77,6 @@ export default function WalletPageView({
   // initial state.
   const [pendingScan, setPendingScan] = useState<{ value: string; format: MembershipCodeFormat } | null>(null);
   const [viewingPass, setViewingPass] = useState<MembershipCard | null>(null);
-  const [viewingAccount, setViewingAccount] = useState<WalletOption | null>(null);
-  const [accountArchiveError, setAccountArchiveError] = useState<string | null>(null);
-  // Archive lives behind the "..." menu (see headerRight below), not as a
-  // permanently-visible button — this still gates it behind its own
-  // explicit confirm step in the body, so it takes "..." → Archive →
-  // Confirm, not a single easy-to-misclick tap. Archiving (not a real
-  // delete) from this quick card-detail view is reversible via Manage
-  // accounts, which still offers a real delete for when that's what's
-  // actually wanted.
-  const [confirmArchiveAccount, setConfirmArchiveAccount] = useState(false);
-  // "Add Money" on a wallet's "..." menu — opens the normal add-transaction
-  // flow pre-filled as an income into that specific wallet, rather than a
-  // dedicated top-up mechanism (this app has no real payment processing —
-  // see the wallet_cards table comment in db.ts — so "adding money" is
-  // just logging an income transaction, the same as anywhere else in the
-  // app).
-  // "Share" on a wallet's "..." menu — invites a friend to co-operate on
-  // it (same wallet_members flow WalletManager already offered). Only
-  // meaningful for a wallet this account actually owns — a member of a
-  // wallet shared *with* them can't invite further members themselves,
-  // same restriction WalletManager already enforces.
-  const [sharingWallet, setSharingWallet] = useState<WalletOption | null>(null);
   const [passEntryOpen, setPassEntryOpen] = useState(false);
   const [passScanOpen, setPassScanOpen] = useState(false);
 
@@ -203,31 +166,6 @@ export default function WalletPageView({
     }
   }
 
-  // Archiving (not deleting) from the quick card-detail view — reversible
-  // via Manage accounts, unlike the real delete WalletManager still offers
-  // there. updateWallet (db.ts) refuses to archive the last active wallet,
-  // so that error is shown inline in AccountDetail rather than closing the
-  // modal, same as the old delete flow did.
-  async function handleArchiveAccount(id: number) {
-    setAccountArchiveError(null);
-    try {
-      const res = await fetch(`/api/wallets/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ archived: true }),
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) {
-        setAccountArchiveError(typeof data?.error === "string" ? data.error : "Could not archive that wallet.");
-        return;
-      }
-      setViewingAccount(null);
-      router.refresh();
-    } catch (err) {
-      setAccountArchiveError(describeFetchError(err));
-    }
-  }
-
   async function moveWalletToFolder(walletId: number, folderId: number | null) {
     setError(null);
     try {
@@ -240,7 +178,6 @@ export default function WalletPageView({
         setError(t("folder.couldNotSave"));
         return;
       }
-      setViewingAccount(null);
       router.refresh();
     } catch (err) {
       setError(describeFetchError(err));
@@ -381,12 +318,7 @@ export default function WalletPageView({
       ) : (
         <AccountCardShape wallet={wallet} currency={currency} />
       ),
-      onOpen: () => {
-        setViewingFolder(null);
-        setAccountArchiveError(null);
-        setConfirmArchiveAccount(false);
-        setViewingAccount(wallet);
-      },
+      onOpen: () => router.push(`/wallet/${wallet.id}`),
       ariaLabel: wallet.name,
     };
   }
@@ -539,89 +471,13 @@ export default function WalletPageView({
           onClose={() => setEntryOpen(false)}
           onAddWallet={() => {
             setEntryOpen(false);
-            setAccountModal({ mode: "add" });
+            router.push("/wallet/new");
           }}
           onAddPass={() => {
             setEntryOpen(false);
             setPassEntryOpen(true);
           }}
         />
-      )}
-
-      {accountModal && (
-        <WalletModal
-          wallet={accountModal.mode === "edit" ? accountModal.wallet : undefined}
-          onClose={() => setAccountModal(null)}
-          onSaved={() => {
-            setAccountModal(null);
-            router.refresh();
-          }}
-        />
-      )}
-
-      {sharingWallet && (
-        <WalletShareModal walletId={sharingWallet.id} walletName={sharingWallet.name} onClose={() => setSharingWallet(null)} />
-      )}
-
-      {viewingAccount && (
-        <Modal
-          onClose={() => setViewingAccount(null)}
-          title={viewingAccount.name}
-          headerRight={
-            <OverflowMenu
-              items={[
-                {
-                  label: t("wallet.addMoney"),
-                  icon: <PlusIcon className="h-4 w-4" />,
-                  onClick: () => {
-                    router.push(`/transactions/new?type=income&wallet=${viewingAccount.id}&from=/wallet`);
-                    setViewingAccount(null);
-                  },
-                },
-                ...(viewingAccount.isOwner
-                  ? [
-                      {
-                        label: t("wallet.shareWallet"),
-                        icon: <ShareIcon className="h-4 w-4" />,
-                        onClick: () => {
-                          setSharingWallet(viewingAccount);
-                          setViewingAccount(null);
-                        },
-                      },
-                    ]
-                  : []),
-                {
-                  label: t("common.edit"),
-                  icon: <EditIcon className="h-4 w-4" />,
-                  onClick: () => {
-                    setAccountModal({ mode: "edit", wallet: viewingAccount });
-                    setViewingAccount(null);
-                  },
-                },
-                {
-                  label: t("wallet.archive"),
-                  icon: <ArchiveIcon className="h-4 w-4" />,
-                  // Doesn't archive on this tap — just reveals the body's
-                  // own confirm step (see AccountDetail). Not marked
-                  // destructive: archiving is reversible from Manage
-                  // accounts, unlike the real delete that used to live here.
-                  onClick: () => setConfirmArchiveAccount(true),
-                },
-                ...folderMenuItems("wallet", viewingAccount.folderId, viewingAccount.id),
-              ]}
-            />
-          }
-        >
-          <AccountDetail
-            key={viewingAccount.id}
-            wallet={viewingAccount}
-            defaultSignature={defaultSignature}
-            archiveError={accountArchiveError}
-            confirmArchive={confirmArchiveAccount}
-            onCancelArchive={() => setConfirmArchiveAccount(false)}
-            onArchive={() => handleArchiveAccount(viewingAccount.id)}
-          />
-        </Modal>
       )}
 
       {viewingPass && (

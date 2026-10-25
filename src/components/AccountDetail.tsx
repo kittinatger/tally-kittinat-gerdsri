@@ -110,6 +110,8 @@ export default function AccountDetail({
   archiveError,
   confirmArchive,
   onCancelArchive,
+  actions,
+  folderControl,
 }: {
   wallet: WalletOption;
   defaultSignature?: string | null;
@@ -117,6 +119,10 @@ export default function AccountDetail({
   archiveError: string | null;
   confirmArchive: boolean;
   onCancelArchive: () => void;
+  /** Quick-action chips shown under the card (the wallet page supplies them). */
+  actions?: React.ReactNode;
+  /** The folder picker, shown with the details. */
+  folderControl?: React.ReactNode;
 }) {
   const t = useT();
   const appCurrency = useCurrency();
@@ -215,6 +221,7 @@ export default function AccountDetail({
       )}
       />
 
+      {actions && <div className="mt-3">{actions}</div>}
       {wallet.isOwner && (
         <div className="mt-3 grid grid-cols-2 gap-2">
           <button
@@ -262,6 +269,8 @@ export default function AccountDetail({
         <p className="text-xs uppercase tracking-wide text-ink-soft">{t("wallet.balanceLabel")}</p>
         <p className="mt-0.5 text-2xl font-bold text-foreground">{formatCurrency(wallet.balance, walletCurrency)}</p>
       </div>
+
+      {folderControl}
 
       <div className="mt-4 space-y-2 rounded-card border border-line bg-surface p-3.5 text-sm">
         <div className="flex items-center justify-between">

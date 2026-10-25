@@ -8,7 +8,6 @@ import { useCurrency } from "@/lib/currency-context";
 import { formatCurrency } from "@/lib/format";
 import type { WalletOption } from "@/types/wallet";
 import { EditIcon, TrashIcon, PlusIcon, ArchiveIcon } from "@/lib/icons";
-import WalletModal from "./WalletModal";
 import WalletTransferModal from "./WalletTransferModal";
 import ConfirmDeleteButtons from "./ConfirmDeleteButtons";
 import ManagerHeader from "./ManagerHeader";
@@ -40,7 +39,6 @@ export default function WalletManager({
   const router = useRouter();
   const t = useT();
   const currency = useCurrency();
-  const [modal, setModal] = useState<{ mode: "add" } | { mode: "edit"; wallet: WalletOption } | null>(null);
   const [transferOpen, setTransferOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -116,10 +114,11 @@ export default function WalletManager({
     }
   }
 
-  function handleSaved() {
-    setModal(null);
-    router.refresh();
-  }
+  // Adding and editing a wallet happen on their own pages; Cancel and a save
+  // come back here.
+  const BACK_HERE = encodeURIComponent("/settings?panel=wallets");
+  const openAdd = () => router.push(`/wallet/new?from=${BACK_HERE}`);
+  const openEdit = (w: WalletOption) => router.push(`/wallet/${w.id}/edit?from=${BACK_HERE}`);
 
   function handleTransferSaved() {
     setTransferOpen(false);
@@ -206,7 +205,7 @@ export default function WalletManager({
     if (!w.archived) {
       items.push({ label: t("wallet.shareWallet"), icon: <ShareIcon />, onClick: () => setSharingWallet(w) });
     }
-    items.push({ label: t("common.edit"), icon: <EditIcon className="h-4 w-4" />, onClick: () => setModal({ mode: "edit", wallet: w }) });
+    items.push({ label: t("common.edit"), icon: <EditIcon className="h-4 w-4" />, onClick: () => openEdit(w) });
     items.push({
       label: w.archived ? "Unarchive" : t("wallet.archive"),
       icon: <ArchiveIcon className="h-4 w-4" />,
@@ -340,7 +339,7 @@ export default function WalletManager({
                   </button>
                 )}
                 <button
-                  onClick={() => setModal({ mode: "edit", wallet: w })}
+                  onClick={() => openEdit(w)}
                   aria-label={`Edit ${w.name}`}
                   className="rounded-full p-2 text-ink-soft transition hover:bg-[var(--nav-hover-bg)] hover:text-foreground"
                 >
@@ -396,7 +395,7 @@ export default function WalletManager({
               </button>
             )}
             <button
-              onClick={() => setModal({ mode: "add" })}
+              onClick={openAdd}
               aria-label={t("wallet.addWallet")}
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97]"
             >
@@ -492,14 +491,6 @@ export default function WalletManager({
             {archivedWallets.map((w) => renderWalletCard(w))}
           </div>
         </div>
-      )}
-
-      {modal && (
-        <WalletModal
-          wallet={modal.mode === "edit" ? modal.wallet : undefined}
-          onClose={() => setModal(null)}
-          onSaved={handleSaved}
-        />
       )}
 
       {transferOpen && (

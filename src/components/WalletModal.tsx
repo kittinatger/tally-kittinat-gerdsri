@@ -59,10 +59,15 @@ export default function WalletModal({
   wallet,
   onClose,
   onSaved,
+  asPage = false,
 }: {
   wallet?: WalletOption;
   onClose: () => void;
   onSaved: () => void;
+  /** Renders the form for the /wallet/new and /wallet/[id]/edit pages (see
+   * WalletFormPage) instead of inside a popup: the live card preview stays
+   * pinned beside the fields on wide screens and the save bar stays in reach. */
+  asPage?: boolean;
 }) {
   const t = useT();
   const appCurrency = useCurrency();
@@ -452,9 +457,12 @@ export default function WalletModal({
     }
   }
 
-  return (
-    <Modal onClose={onClose} title={isEdit ? t("wallet.editTitle") : t("wallet.addWallet")}>
-      <form onSubmit={handleSubmit} className="space-y-4">
+  const form = (
+      <form
+        onSubmit={handleSubmit}
+        className={asPage ? "space-y-4 lg:grid lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:items-start lg:gap-x-10 lg:space-y-0" : "space-y-4"}
+      >
+        <div className={asPage ? "lg:sticky lg:top-24" : ""}>
         <ColorGlowPreview color={backgroundGlowColor(background, color)}>
           <WalletCardShape
             label={name || t("wallet.namePlaceholder")}
@@ -488,6 +496,9 @@ export default function WalletModal({
             namePosition={namePosition}
           />
         </ColorGlowPreview>
+        </div>
+
+        <div className="min-w-0 space-y-4">
 
         {/* A horizontal scroll strip, not an equal-width segmented control
          * — four tabs (five once "Template" briefly overlaps in width
@@ -1771,7 +1782,17 @@ export default function WalletModal({
 
         {error && <p className="text-sm text-red-600 dark:text-red-400 animate-[fade-in_0.15s_ease-out] motion-reduce:animate-none">{error}</p>}
 
-        <div className="flex items-center justify-end gap-2 pt-1">
+        {/* On the page the save bar floats just above the phone's bottom nav
+            (about 58px plus the home-indicator padding, see globals.css), on
+            a fade so the form doesn't show through the gap. */}
+        <div
+          className={
+            asPage
+              ? "sticky bottom-[calc(58px+var(--mobile-nav-bottom-pad,10px))] z-10 -mx-1 bg-gradient-to-t from-background from-60% to-transparent px-1 pb-3 pt-4 sm:bottom-0 sm:pb-4"
+              : "flex items-center justify-end gap-2 pt-1"
+          }
+        >
+          <div className={asPage ? "flex items-center justify-end gap-2 rounded-2xl border border-surface-line bg-surface p-1.5 shadow-soft" : "contents"}>
           <button
             type="button"
             onClick={onClose}
@@ -1782,12 +1803,20 @@ export default function WalletModal({
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60"
+            className={`rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-navy-dark active:scale-[0.97] disabled:opacity-60 ${asPage ? "flex-1 sm:flex-none" : ""}`}
           >
             {submitting ? t("common.saving") : isEdit ? t("form.saveChanges") : t("wallet.addWallet")}
           </button>
+          </div>
+        </div>
         </div>
       </form>
+  );
+
+  if (asPage) return form;
+  return (
+    <Modal onClose={onClose} title={isEdit ? t("wallet.editTitle") : t("wallet.addWallet")}>
+      {form}
     </Modal>
   );
 }

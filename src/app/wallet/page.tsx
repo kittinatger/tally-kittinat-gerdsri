@@ -1,4 +1,4 @@
-import { listWallets, listMembershipCards, listFolders, getDefaultSignature } from "@/lib/db";
+import { listWallets, listMembershipCards, listFolders } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import { toWalletOption } from "@/lib/wallet-mapper";
 import { toMembershipCard } from "@/lib/membership-card-mapper";
@@ -13,12 +13,11 @@ export default async function WalletPage() {
   // Archived wallets are deliberately excluded (default) — this page's
   // stack only ever shows active ones; managing (including restoring an
   // archived one) now lives in Settings > Wallets instead.
-  const [walletRows, membershipRows, walletFolders, passFolders, defaultSignature] = await Promise.all([
+  const [walletRows, membershipRows, walletFolders, passFolders] = await Promise.all([
     listWallets(userId),
     listMembershipCards(userId),
     listFolders(userId, "wallet"),
     listFolders(userId, "pass"),
-    getDefaultSignature(userId),
   ]);
 
   // Accounts and payment cards are now one list — a wallet with `network`
@@ -37,7 +36,6 @@ export default async function WalletPage() {
       memberships={membershipCards.filter((c) => c.category === "membership")}
       walletFolders={walletFolders}
       passFolders={passFolders}
-      defaultSignature={defaultSignature}
     />
   );
 }
