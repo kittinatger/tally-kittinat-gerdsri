@@ -28,7 +28,6 @@ import type { CardFolder } from "@/types/card-folder";
 
 // None of these are needed on first paint — every one requires a tap first.
 const MembershipCardModal = dynamic(() => import("./MembershipCardModal"), { ssr: false });
-const MembershipCardDetail = dynamic(() => import("./MembershipCardDetail"), { ssr: false });
 const WalletEntryModal = dynamic(() => import("./WalletEntryModal"), { ssr: false });
 const AddCardEntryModal = dynamic(() => import("./AddCardEntryModal"), { ssr: false });
 const ScanCardModal = dynamic(() => import("./ScanCardModal"), { ssr: false });
@@ -66,7 +65,9 @@ export default function WalletPageView({
   const [error, setError] = useState<string | null>(null);
 
   const [entryOpen, setEntryOpen] = useState(false);
-  const [passModal, setPassModal] = useState<{ mode: "add" } | { mode: "edit"; card: MembershipCard } | null>(null);
+  // Editing a pass now happens on its own page (/pass/[id]) — this is only
+  // ever "add" (the "add pass" entry flow below), never "edit".
+  const [passModal, setPassModal] = useState<{ mode: "add" } | null>(null);
   // A scan result waiting to be applied to whichever pass modal is (or is
   // about to be) open — kept separate from `passModal` itself so that
   // scanning again from *within* an already-open modal (MembershipCardModal's
@@ -76,7 +77,6 @@ export default function WalletPageView({
   // scannedValue prop, applied via an effect there rather than just its
   // initial state.
   const [pendingScan, setPendingScan] = useState<{ value: string; format: MembershipCodeFormat } | null>(null);
-  const [viewingPass, setViewingPass] = useState<MembershipCard | null>(null);
   const [passEntryOpen, setPassEntryOpen] = useState(false);
   const [passScanOpen, setPassScanOpen] = useState(false);
 
@@ -118,24 +118,6 @@ export default function WalletPageView({
     setPassesFor(card.category === "pass" ? "membership" : "pass")((prev) => prev.filter((c) => c.id !== card.id));
     setPassModal(null);
     setPendingScan(null);
-    setViewingPass(null);
-  }
-
-  async function handleDeletePass(id: number) {
-    setError(null);
-    try {
-      const res = await fetch(`/api/memberships/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        setError(typeof data?.error === "string" ? data.error : t("membership.couldNotDelete"));
-        return;
-      }
-      setPasses((prev) => prev.filter((c) => c.id !== id));
-      setMemberships((prev) => prev.filter((c) => c.id !== id));
-      setViewingPass(null);
-    } catch (err) {
-      setError(describeFetchError(err));
-    }
   }
 
   // Click-and-hold-to-drag on the wallets/cards stack (see CardStack/
@@ -196,7 +178,6 @@ export default function WalletPageView({
         setError(t("folder.couldNotSave"));
         return;
       }
-      setViewingPass(null);
       router.refresh();
     } catch (err) {
       setError(describeFetchError(err));
@@ -374,10 +355,7 @@ export default function WalletPageView({
           showCodeText={card.showCodeText}
         />
       ),
-      onOpen: () => {
-        setViewingFolder(null);
-        setViewingPass(card);
-      },
+      onOpen: () => router.push(`/pass/${card.id}`),
       ariaLabel: card.name,
     };
   }
@@ -480,25 +458,6 @@ export default function WalletPageView({
         />
       )}
 
-      {viewingPass && (
-        <Modal
-          onClose={() => setViewingPass(null)}
-          title={viewingPass.name}
-          headerRight={<OverflowMenu items={folderMenuItems("pass", viewingPass.folderId, viewingPass.id)} />}
-        >
-          <MembershipCardDetail
-            key={viewingPass.id}
-            card={viewingPass}
-            onEdit={() => {
-              setPendingScan(null);
-              setPassModal({ mode: "edit", card: viewingPass });
-              setViewingPass(null);
-            }}
-            onDelete={() => handleDeletePass(viewingPass.id)}
-          />
-        </Modal>
-      )}
-
       {passEntryOpen && (
         <AddCardEntryModal
           onClose={() => setPassEntryOpen(false)}
@@ -532,7 +491,6 @@ export default function WalletPageView({
 
       {passModal && (
         <MembershipCardModal
-          card={passModal.mode === "edit" ? passModal.card : undefined}
           scannedValue={pendingScan}
           onClose={() => {
             setPassModal(null);
