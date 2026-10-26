@@ -185,6 +185,8 @@ export default function WalletCardShape({
   showHolderName = true,
   showExpiry = true,
   namePosition = DEFAULT_NAME_POSITION,
+  cardLabel = null,
+  showCardLabel = true,
 }: {
   label: string;
   holderName: string | null;
@@ -264,6 +266,12 @@ export default function WalletCardShape({
    * floating element instead, same idea as badgePosition/chipPosition —
    * see name-position.ts. */
   namePosition?: NamePosition;
+  /** A free-text tier/type word (e.g. "Platinum", "Business") shown next
+   * to the name — null means none set. */
+  cardLabel?: string | null;
+  /** Whether cardLabel actually renders — only matters when cardLabel is
+   * also set. */
+  showCardLabel?: boolean;
 }) {
   const t = useT();
   const expiry = expiryMonth && expiryYear ? `${String(expiryMonth).padStart(2, "0")}/${String(expiryYear).slice(-2)}` : null;
@@ -515,8 +523,13 @@ export default function WalletCardShape({
        * the balance/holder block is pushed to the bottom explicitly
        * (mt-auto, below) regardless of how much or how little sits above
        * it, matching AccountCardShape's flush-bottom balance exactly. */}
-      <div className="flex min-h-5 items-start" style={rowReserveStyle(true)}>
+      <div className="flex min-h-5 items-start justify-between gap-2" style={rowReserveStyle(true)}>
         {showName && <p className="min-w-0 truncate text-sm font-semibold">{label}</p>}
+        {showCardLabel && cardLabel && (
+          <p className="shrink-0 truncate text-[10px] font-bold uppercase tracking-wide" style={{ color: fg.a85 }}>
+            {cardLabel}
+          </p>
+        )}
       </div>
 
       <div className="mt-2 flex min-h-6 items-center gap-2" style={cardNumberReservesForChip ? { paddingLeft: 40 } : undefined}>

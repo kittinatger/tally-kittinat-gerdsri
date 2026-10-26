@@ -189,7 +189,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 82;
+const CURRENT_SCHEMA_VERSION = 83;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1636,6 +1636,15 @@ function ensureSchema(): Promise<void> {
       // means the default back that follows the front's colour.
       await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS back_design TEXT;`;
 
+      // A free-text tier/type word shown on the card face (e.g. "Platinum",
+      // "Business", "Virtual") — real payment cards often carry one of
+      // these next to the issuer name. Plain text rather than a fixed enum
+      // since issuers use all sorts of their own naming; shown only when
+      // both the text and the toggle are set, same convention as every
+      // other show_* field above.
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS card_label TEXT;`;
+      await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS show_card_label BOOLEAN NOT NULL DEFAULT true;`;
+
       await sql`UPDATE schema_meta SET version = ${CURRENT_SCHEMA_VERSION};`;
     })();
   }
@@ -1890,6 +1899,10 @@ export type WalletRow = {
   /** Which /wallet page folder this wallet is grouped into — null means
    * ungrouped, shown loose in the top-level stack. See card_folders. */
   folder_id: number | null;
+  /** A free-text tier/type word shown on the card face (e.g. "Platinum"),
+   * or null — only rendered when show_card_label is also true. */
+  card_label: string | null;
+  show_card_label: boolean;
 };
 
 // The full column list every wallet-returning query below selects — one
@@ -1900,7 +1913,7 @@ const WALLET_COLUMNS = `
   w.show_network_badge, w.badge_position, w.icon_color, w.show_chip, w.chip_color,
   w.chip_position, w.show_nfc, w.nfc_position, w.nfc_size, w.notes, w.show_balance, w.show_currency, w.show_card_number, w.show_name,
   w.show_holder_name, w.show_expiry, w.name_position, w.card_number_position, w.card_number_last4_only,
-  w.category, w.folder_id, w.signature, w.back_design
+  w.category, w.folder_id, w.signature, w.back_design, w.card_label, w.show_card_label
 `;
 const WALLET_BALANCE_EXPR = `
   (
@@ -1975,6 +1988,8 @@ export async function createWallet(
     cardNumberPosition?: string;
     cardNumberLast4Only?: boolean;
     category?: string | null;
+    cardLabel?: string | null;
+    showCardLabel?: boolean;
   },
 ): Promise<WalletRow> {
   await ensureSchema();
@@ -2003,6 +2018,7 @@ export async function createWallet(
   const namePosition = input.namePosition ?? "bottomLeft";
   const cardNumberPosition = input.cardNumberPosition ?? "middle";
   const cardNumberLast4Only = input.cardNumberLast4Only ?? false;
+  const showCardLabel = input.showCardLabel ?? true;
   const { rows } = await sql<{
     id: number;
     name: string;
@@ -2036,27 +2052,29 @@ export async function createWallet(
     card_number_position: string;
     card_number_last4_only: boolean;
     category: string | null;
+    card_label: string | null;
+    show_card_label: boolean;
   }>`
     INSERT INTO wallets (
       user_id, name, color, background, text_color, kind, currency, sort_order,
       holder_name, last4, expiry_month, expiry_year, network,
       show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, show_nfc, nfc_position, nfc_size, notes,
       show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position,
-      card_number_position, card_number_last4_only, category
+      card_number_position, card_number_last4_only, category, card_label, show_card_label
     )
     VALUES (
       ${userId}, ${input.name}, ${input.color}, ${backgroundJson}, ${input.textColor ?? null}, ${input.kind}, ${input.currency ?? null}, ${nextSort},
       ${input.holderName ?? null}, ${input.last4 ?? null}, ${input.expiryMonth ?? null}, ${input.expiryYear ?? null}, ${input.network ?? null},
       ${showNetworkBadge}, ${badgePosition}, ${input.iconColor ?? null}, ${showChip}, ${chipColor}, ${chipPosition}, ${showNfc}, ${nfcPosition}, ${nfcSize}, ${input.notes ?? null},
       ${showBalance}, ${showCurrency}, ${showCardNumber}, ${showName}, ${showHolderName}, ${showExpiry}, ${namePosition},
-      ${cardNumberPosition}, ${cardNumberLast4Only}, ${input.category ?? null}
+      ${cardNumberPosition}, ${cardNumberLast4Only}, ${input.category ?? null}, ${input.cardLabel ?? null}, ${showCardLabel}
     )
     RETURNING
       id, name, color, background, text_color, kind, currency,
       holder_name, last4, expiry_month, expiry_year, network,
       show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, show_nfc, nfc_position, nfc_size, notes,
       show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position,
-      card_number_position, card_number_last4_only, category;
+      card_number_position, card_number_last4_only, category, card_label, show_card_label;
   `;
   return { ...rows[0], is_default: false, archived: false, balance: "0", is_owner: true, folder_id: null, signature: null, back_design: null };
 }
@@ -2100,6 +2118,8 @@ export async function updateWallet(
     cardNumberLast4Only?: boolean;
     category?: string | null;
     folderId?: number | null;
+    cardLabel?: string | null;
+    showCardLabel?: boolean;
   },
 ): Promise<WalletRow | { ok: false; error: string } | null> {
   await ensureSchema();
@@ -2138,13 +2158,15 @@ export async function updateWallet(
     card_number_last4_only: boolean;
     category: string | null;
     folder_id: number | null;
+    card_label: string | null;
+    show_card_label: boolean;
   }>`
     SELECT
       name, color, background, text_color, kind, currency, is_default, archived,
       holder_name, last4, expiry_month, expiry_year, network,
       show_network_badge, badge_position, icon_color, show_chip, chip_color, chip_position, show_nfc, nfc_position, nfc_size, notes,
       show_balance, show_currency, show_card_number, show_name, show_holder_name, show_expiry, name_position,
-      card_number_position, card_number_last4_only, category, folder_id
+      card_number_position, card_number_last4_only, category, folder_id, card_label, show_card_label
     FROM wallets WHERE id = ${id} AND user_id = ${userId};
   `;
   const existing = existingRows[0];
@@ -2193,6 +2215,8 @@ export async function updateWallet(
   const newCardNumberLast4Only = input.cardNumberLast4Only ?? existing.card_number_last4_only;
   const newCategory = input.category !== undefined ? input.category : existing.category;
   const newFolderId = input.folderId !== undefined ? input.folderId : existing.folder_id;
+  const newCardLabel = input.cardLabel !== undefined ? input.cardLabel : existing.card_label;
+  const newShowCardLabel = input.showCardLabel ?? existing.show_card_label;
 
   const client = await db.connect();
   try {
@@ -2208,7 +2232,8 @@ export async function updateWallet(
             show_chip = ${newShowChip}, chip_color = ${newChipColor}, chip_position = ${newChipPosition}, show_nfc = ${newShowNfc}, nfc_position = ${newNfcPosition}, nfc_size = ${newNfcSize}, notes = ${newNotes},
             show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}, show_card_number = ${newShowCardNumber}, show_name = ${newShowName},
             show_holder_name = ${newShowHolderName}, show_expiry = ${newShowExpiry}, name_position = ${newNamePosition},
-            card_number_position = ${newCardNumberPosition}, card_number_last4_only = ${newCardNumberLast4Only}, category = ${newCategory}, folder_id = ${newFolderId}
+            card_number_position = ${newCardNumberPosition}, card_number_last4_only = ${newCardNumberLast4Only}, category = ${newCategory}, folder_id = ${newFolderId},
+            card_label = ${newCardLabel}, show_card_label = ${newShowCardLabel}
         WHERE id = ${id} AND user_id = ${userId};
       `;
     } else {
@@ -2220,7 +2245,8 @@ export async function updateWallet(
             show_chip = ${newShowChip}, chip_color = ${newChipColor}, chip_position = ${newChipPosition}, show_nfc = ${newShowNfc}, nfc_position = ${newNfcPosition}, nfc_size = ${newNfcSize}, notes = ${newNotes},
             show_balance = ${newShowBalance}, show_currency = ${newShowCurrency}, show_card_number = ${newShowCardNumber}, show_name = ${newShowName},
             show_holder_name = ${newShowHolderName}, show_expiry = ${newShowExpiry}, name_position = ${newNamePosition},
-            card_number_position = ${newCardNumberPosition}, card_number_last4_only = ${newCardNumberLast4Only}, category = ${newCategory}, folder_id = ${newFolderId}
+            card_number_position = ${newCardNumberPosition}, card_number_last4_only = ${newCardNumberLast4Only}, category = ${newCategory}, folder_id = ${newFolderId},
+            card_label = ${newCardLabel}, show_card_label = ${newShowCardLabel}
         WHERE id = ${id} AND user_id = ${userId};
       `;
     }

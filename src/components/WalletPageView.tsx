@@ -295,6 +295,8 @@ export default function WalletPageView({
           showHolderName={wallet.showHolderName}
           showExpiry={wallet.showExpiry}
           namePosition={wallet.namePosition}
+          cardLabel={wallet.cardLabel}
+          showCardLabel={wallet.showCardLabel}
         />
       ) : (
         <AccountCardShape wallet={wallet} currency={currency} />

@@ -85,4 +85,12 @@ export type WalletOption = {
   /** Which /wallet page folder this wallet is grouped into — null means
    * ungrouped, shown loose in the top-level stack. */
   folderId: number | null;
+  /** A free-text tier/type word shown next to the name on the card face
+   * (e.g. "Platinum", "Business", "Virtual") — null means none set. Plain
+   * text rather than a fixed enum since issuers use all sorts of their
+   * own naming. */
+  cardLabel: string | null;
+  /** Whether cardLabel actually renders — only matters when cardLabel is
+   * also set. */
+  showCardLabel: boolean;
 };

@@ -189,6 +189,8 @@ export default function AccountDetail({
           showHolderName={wallet.showHolderName}
           showExpiry={wallet.showExpiry}
           namePosition={wallet.namePosition}
+          cardLabel={wallet.cardLabel}
+          showCardLabel={wallet.showCardLabel}
         />
       ) : (
         <AccountCardShape wallet={wallet} currency={appCurrency} />

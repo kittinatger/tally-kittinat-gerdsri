@@ -152,6 +152,8 @@ export default function WalletModal({
   // favor of the template's own placement.
   const [cardNumberPositionLocked, setCardNumberPositionLocked] = useState(false);
   const [showName, setShowName] = useState(wallet?.showName ?? true);
+  const [cardLabel, setCardLabel] = useState(wallet?.cardLabel ?? "");
+  const [showCardLabel, setShowCardLabel] = useState(wallet?.showCardLabel ?? true);
   const [showHolderName, setShowHolderName] = useState(wallet?.showHolderName ?? true);
   const [showExpiry, setShowExpiry] = useState(wallet?.showExpiry ?? true);
   const [namePosition, setNamePosition] = useState<NamePosition>(wallet?.namePosition ?? DEFAULT_NAME_POSITION);
@@ -429,6 +431,8 @@ export default function WalletModal({
         cardNumberLast4Only,
         cardNumberPosition,
         showName,
+        cardLabel: cardLabel.trim() || null,
+        showCardLabel,
         showHolderName,
         showExpiry,
         namePosition,
@@ -560,6 +564,8 @@ export default function WalletModal({
             cardNumberLast4Only={cardNumberLast4Only}
             cardNumberPosition={cardNumberPosition}
             showName={showName}
+            cardLabel={cardLabel || null}
+            showCardLabel={showCardLabel}
             showHolderName={showHolderName}
             showExpiry={showExpiry}
             namePosition={namePosition}
@@ -1023,6 +1029,46 @@ export default function WalletModal({
               </span>
             </button>
           )}
+
+          <div className="border-t border-line pt-3">
+            <label htmlFor="walletCardLabel" className="mb-1.5 block text-xs font-semibold text-ink-soft">
+              Card label
+            </label>
+            <input
+              id="walletCardLabel"
+              type="text"
+              maxLength={24}
+              value={cardLabel}
+              onChange={(e) => setCardLabel(e.target.value)}
+              placeholder="e.g. Platinum, Business, Virtual"
+              className="w-full rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-base text-foreground outline-none transition focus:border-navy focus:ring-2 focus:ring-navy/20"
+            />
+            <p className="mt-1 text-[11px] text-ink-soft">A short tier or type word shown next to the name on the card.</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowCardLabel((v) => !v)}
+            className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-bg-soft px-3.5 py-2.5 text-left transition"
+          >
+            <span>
+              <span className="block text-sm font-medium text-foreground">Show card label</span>
+              <span className="block text-xs text-ink-soft">Shows the label above, when one&apos;s set.</span>
+            </span>
+            <span
+              role="switch"
+              aria-checked={showCardLabel}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                showCardLabel ? "bg-navy" : "bg-line"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                  showCardLabel ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </span>
+          </button>
 
           {/* last4/holder/expiry are plain data fields, independent of
            * whether their respective show* toggle is forced — even a

@@ -235,6 +235,12 @@ const walletCardVisualFields = {
   // transit card, ...) — same enum as card_templates.category. Metadata
   // only; never applied automatically, just persisted on the wallet.
   category: z.enum(CARD_TEMPLATE_CATEGORIES).nullable().optional(),
+  // A free-text tier/type word (e.g. "Platinum", "Business") shown next to
+  // the name on the card face — real payment cards often carry one of
+  // these, and issuers all name them differently, so it's plain text
+  // rather than a fixed enum.
+  cardLabel: z.string().trim().max(24).nullable().optional(),
+  showCardLabel: z.boolean().optional(),
 };
 
 export const walletInputSchema = z.object({
