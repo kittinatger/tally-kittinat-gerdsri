@@ -562,6 +562,13 @@ export default function WalletPageView({
         <FolderFormModal
           kind={folderForm.kind}
           folder={folderForm.folder}
+          previewColors={
+            !folderForm.folder
+              ? []
+              : folderForm.kind === "wallet"
+                ? activeWallets.filter((w) => w.folderId === folderForm.folder!.id).map((w) => w.color)
+                : allPassCards.filter((c) => c.folderId === folderForm.folder!.id).map((c) => c.color)
+          }
           onClose={() => setFolderForm(null)}
           onSaved={(folder) => handleFolderSaved(folderForm.kind, folder, folderForm.assign)}
         />

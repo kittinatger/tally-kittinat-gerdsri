@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Modal from "./Modal";
 import ColorPicker from "./ColorPicker";
+import FolderShape from "./FolderShape";
+import ColorGlowPreview from "./ColorGlowPreview";
 import { describeFetchError } from "@/lib/fetch-error";
 import { useT } from "@/lib/language-context";
 import { CATEGORY_PALETTE } from "@/lib/categories";
@@ -10,15 +12,23 @@ import type { CardFolder } from "@/types/card-folder";
 
 // Creates a new folder (no `folder` prop) or renames/recolors an existing
 // one — same name+color fields either way, so one form covers both,
-// matching CategoryModal's create/edit-in-one-component convention.
+// matching CategoryModal's create/edit-in-one-component convention. A live
+// FolderShape preview up top (the actual tile, not a mockup of it) makes
+// this a real customizer instead of two plain fields you'd only see the
+// effect of back on the Wallet page.
 export default function FolderFormModal({
   kind,
   folder,
+  previewColors = [],
   onClose,
   onSaved,
 }: {
   kind: "wallet" | "pass";
   folder?: CardFolder;
+  /** The colours of whatever's actually inside this folder already (empty
+   * for a brand-new one) — shown peeking in the live preview so it looks
+   * like the real tile, not a generic mockup. */
+  previewColors?: string[];
   onClose: () => void;
   onSaved: (folder: CardFolder) => void;
 }) {
@@ -28,6 +38,8 @@ export default function FolderFormModal({
   const [color, setColor] = useState<string>(folder?.color ?? CATEGORY_PALETTE[0]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const previewFolder: CardFolder = { id: folder?.id ?? 0, kind, name: name.trim() || t("folder.newFolder"), color };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -61,6 +73,23 @@ export default function FolderFormModal({
   return (
     <Modal onClose={onClose} title={isEdit ? t("folder.editTitle") : t("folder.newFolder")}>
       <form onSubmit={handleSubmit} className="space-y-4">
+        <ColorGlowPreview color={color}>
+          <div className="mx-auto max-w-[220px]">
+            <FolderShape
+              folder={previewFolder}
+              previewColors={previewColors}
+              summaryLabel={kind === "wallet" ? t("wallet.balanceLabel") : undefined}
+              summaryValue={
+                kind === "wallet"
+                  ? "—"
+                  : previewColors.length === 1
+                    ? t("folder.passCountOne")
+                    : t("folder.passCountOther").replace("{count}", String(previewColors.length))
+              }
+            />
+          </div>
+        </ColorGlowPreview>
+
         <div>
           <label htmlFor="folderName" className="mb-1.5 block text-sm font-semibold text-ink-soft">
             {t("folder.nameLabel")}
