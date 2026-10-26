@@ -34,8 +34,18 @@ export default function FolderShape({
   const cards = previewColors.slice(-3);
   const peeks = PEEK.slice(PEEK.length - cards.length);
 
+  // A pass folder sits in the grid/stack next to full-size pass tiles
+  // (PassShape's own codeSize="small" box), which are a taller shape than
+  // the flat 1.586:1 payment cards — match it here so the two line up,
+  // while a wallet folder keeps the card ratio its own contents use.
+  const isPassFolder = folder.kind === "pass";
+
   return (
-    <div className="group relative aspect-[1.586/1] min-h-[190px] w-full overflow-hidden rounded-2xl bg-neutral-900 shadow-soft">
+    <div
+      className={`group relative w-full overflow-hidden rounded-2xl bg-neutral-900 shadow-soft ${
+        isPassFolder ? "aspect-[5/7] min-h-[260px]" : "aspect-[1.586/1] min-h-[190px]"
+      }`}
+    >
       {/* Wallet back: the dark inside, with the folder's name on its top edge. */}
       <div className="absolute inset-0 shadow-[inset_0_18px_30px_rgba(0,0,0,0.45)]" />
       <div className="absolute inset-x-4 top-3 z-[5] flex items-center justify-between gap-2 text-white">

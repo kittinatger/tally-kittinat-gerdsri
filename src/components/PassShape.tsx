@@ -116,14 +116,14 @@ export default function PassShape({
     // card, right after whatever fields/notes the template has.
     <div
       className={`w-full overflow-hidden rounded-2xl p-4 transition-colors duration-300 ${
-        // The grid/stack preview (codeSize "small") sits alongside
-        // WalletCardShape/AccountCardShape/FolderShape, which all share this
-        // same aspect-ratio box — without it here too, a pass with more
-        // fields than its neighbors stretched the whole grid row, inflating
-        // every percentage-sized bit of FolderShape (pocket, peeking cards)
-        // well past its intended size. The full detail view (codeSize
-        // "large") keeps growing with its content instead.
-        codeSize === "small" ? "flex aspect-[1.586/1] min-h-[190px] flex-col" : ""
+        // The grid/stack preview (codeSize "small") still shows the full
+        // pass — header, banner, fields, code — just scaled down, so it
+        // needs its own fixed box tall enough for that (not the wide
+        // 1.586:1 ratio the flat payment-card shapes use). Every pass tile
+        // shares this exact box (and FolderShape matches it for pass
+        // folders) so the grid/stack is uniform regardless of how much a
+        // given pass actually fills in.
+        codeSize === "small" ? "flex aspect-[5/7] min-h-[260px] flex-col" : ""
       } ${background ? "" : heroGradientClasses(color)}`}
       style={{ color: fg.full, ...(background ? cardBackgroundStyle(background) : colorHeroStyle(color)) }}
     >
@@ -173,11 +173,10 @@ export default function PassShape({
 
       {bannerUrl &&
         (codeSize === "small" ? (
-          // The grid/stack preview still shows the banner — just cropped to
-          // fill whatever room is left in the fixed tile (flex-1 + min-h-0,
+          // Scaled-down but still the real banner — cropped to fill
+          // whatever room is left in the fixed tile (flex-1 + min-h-0,
           // object-cover) instead of the detail view's own intrinsic
-          // height, which routinely ran past the ~190px every other card
-          // tile uses.
+          // height.
           // eslint-disable-next-line @next/next/no-img-element -- user-uploaded, not a build-time asset
           <img src={bannerUrl} alt="" className="-mx-4 mt-2 w-[calc(100%+2rem)] max-w-none flex-1 min-h-0 object-cover" />
         ) : (
@@ -195,7 +194,7 @@ export default function PassShape({
           <img src={bannerUrl} alt="" className="-mx-4 mt-3 h-auto max-h-56 w-[calc(100%+2rem)] max-w-none object-contain" />
         ))}
 
-      {codeSize !== "small" && primaryFields.length > 0 && (
+      {primaryFields.length > 0 && (
         <div className="mt-3">
           {primaryFields.map(({ key, label, value, labelHidden }) => (
             <div key={key}>
@@ -210,7 +209,7 @@ export default function PassShape({
         </div>
       )}
 
-      {codeSize !== "small" && (hasStub ? (
+      {(hasStub ? (
         stubFields.length > 0 && (
           <div className="relative mt-3 border-t border-dashed pt-3" style={{ borderColor: fg.a40 }}>
             <span className="absolute -left-2 -top-2 h-3 w-3 rounded-full bg-black/15" />
@@ -249,7 +248,7 @@ export default function PassShape({
         )
       ))}
 
-      {codeSize !== "small" && notes && notes.trim() && (
+      {notes && notes.trim() && (
         <p className="mt-3 line-clamp-2 text-xs" style={{ color: fg.a70 }}>
           {notes.trim()}
         </p>
