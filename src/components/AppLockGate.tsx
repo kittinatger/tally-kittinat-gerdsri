@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { usePathname } from "next/navigation";
 import { useT } from "@/lib/language-context";
+import LoadingScreen from "./LoadingScreen";
 import PinKeypad from "./PinKeypad";
 import { LockSimpleIcon as PhLockSimpleIcon } from "@phosphor-icons/react/dist/ssr";
 
@@ -223,7 +224,15 @@ export default function AppLockGate({ children }: { children: React.ReactNode })
     }
   }
 
-  if (!checked) return null;
+  // This gate sits above the entire routed app (layout.tsx) — rendering
+  // nothing here while the lock check is in flight blanked the screen
+  // before even a route's own loading.tsx could show anything, since
+  // nothing below this point mounts until `checked` flips true. The
+  // branded splash instead of a blank screen: same thing every route
+  // shows anyway while its own data loads, so there's no visible seam
+  // once the check resolves and the real route (or its own loading
+  // state) takes over.
+  if (!checked) return <LoadingScreen />;
   if (!locked) return <>{children}</>;
 
   const bothAvailable = hasCredentials && hasPasscode;
