@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import LoadingScreen from "./LoadingScreen";
 
 const PULL_THRESHOLD = 64;
 const MAX_PULL = 96;
@@ -18,6 +17,15 @@ const SETTLE_MS = 700;
 // the bigger refresh; it still only actually fires on release, same as
 // the normal one.
 const HOLD_FOR_FULL_REFRESH_MS = 2000;
+
+// The ring's progress arc — a full circle (no caps/gaps) rather than one
+// true to PULL_THRESHOLD/MAX_PULL's own ratio, since the handoff from "still
+// filling" to "spinning once released" reads clearer as a clean 0%-100%
+// sweep than one that visibly stops short of the circle.
+const RING_SIZE = 28;
+const RING_STROKE = 2.5;
+const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 // iOS can report a fractional scroll offset (e.g. 0.5) while sitting at the
 // very top, which used to disqualify every pull.
@@ -163,40 +171,63 @@ export default function PullToRefresh({
     };
   });
 
-  const indicatorHeight = refreshing ? PULL_THRESHOLD : pull;
+  const indicatorHeight = refreshing === "small" ? PULL_THRESHOLD : refreshing === "big" ? MAX_PULL : pull;
+  const progress = Math.min(pull / PULL_THRESHOLD, 1);
   const ready = pull >= PULL_THRESHOLD;
-  const label = armedForFull ? "Release for a full refresh" : ready ? "Release to refresh · keep holding for a full refresh" : "Pull to refresh";
+  const label = refreshing ? "Refreshing…" : armedForFull ? "Release for a full refresh" : ready ? "Release to refresh" : "Pull to refresh";
 
   return (
     <div ref={rootRef}>
-      {!refreshing && (
-        <div
-          className="flex items-center justify-center overflow-hidden transition-[height] duration-200 ease-out"
-          style={{ height: indicatorHeight }}
-          aria-hidden={indicatorHeight === 0}
-        >
-          <div className="flex max-w-[85vw] items-center gap-2 rounded-full border border-[var(--glass-border)] bg-[image:var(--glass-bg)] px-3.5 py-2 shadow-soft backdrop-blur-xl">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.25"
-              strokeLinecap="round"
-              className="h-5 w-5 shrink-0 text-navy transition-transform"
-              style={{ transform: `rotate(${Math.min(pull * 3.5, 360)}deg)` }}
-            >
-              <path d="M20 12a8 8 0 1 1-2.34-5.66" />
-              <path d="M20 4v5h-5" />
-            </svg>
-            <span className={`truncate text-xs font-semibold ${ready ? "text-foreground" : "text-ink-soft"}`}>{label}</span>
-          </div>
+      <div
+        className="flex items-center justify-center gap-2 overflow-hidden transition-[height] duration-200 ease-out"
+        style={{ height: indicatorHeight }}
+        aria-hidden={indicatorHeight === 0}
+      >
+        <div className="relative flex h-7 w-7 shrink-0 items-center justify-center">
+          {refreshing ? (
+            // Same spinner the rest of the app uses for loading states —
+            // keeps this feeling like one consistent piece of UI rather
+            // than its own bespoke animation.
+            <span className="absolute inset-0 animate-spin rounded-full border-[2.5px] border-navy/20 border-t-navy" />
+          ) : (
+            <>
+              <svg width={RING_SIZE} height={RING_SIZE} viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`} className="absolute inset-0 -rotate-90">
+                <circle cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_RADIUS} fill="none" stroke="var(--line)" strokeWidth={RING_STROKE} />
+                <circle
+                  cx={RING_SIZE / 2}
+                  cy={RING_SIZE / 2}
+                  r={RING_RADIUS}
+                  fill="none"
+                  strokeWidth={RING_STROKE}
+                  strokeLinecap="round"
+                  stroke={armedForFull ? "#d97706" : "var(--navy)"}
+                  strokeDasharray={RING_CIRCUMFERENCE}
+                  strokeDashoffset={RING_CIRCUMFERENCE * (1 - progress)}
+                  className="transition-[stroke-dashoffset,stroke] duration-100 ease-out"
+                />
+              </svg>
+              {/* A plain chevron that flips once the pull clears the
+               * threshold — "point down to pull, point up to release" is
+               * the same motif most native pull-to-refresh uses, clearer
+               * at a glance than a refresh glyph spinning proportionally
+               * to how far a finger has moved. */}
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke={armedForFull ? "#d97706" : "var(--navy)"}
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-3.5 w-3.5 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+                style={{ transform: `rotate(${ready ? 180 : 0}deg)` }}
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </>
+          )}
         </div>
-      )}
-      {refreshing && (
-        <div className="fixed inset-0 z-50 bg-background">
-          <LoadingScreen />
-        </div>
-      )}
+        <span className={`truncate text-xs font-semibold ${ready || refreshing ? "text-foreground" : "text-ink-soft"}`}>{label}</span>
+      </div>
       {children}
     </div>
   );
