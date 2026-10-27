@@ -12,15 +12,16 @@ import { useEffect, useState } from "react";
 // per explicit product direction, no skeleton placeholders anywhere, full
 // consistency over mimicking each page's eventual shape.
 //
-// Two designs depending on connectivity: online, the real favicon-*.svg
-// logo is worth the wait (see below) since a real page is genuinely on
-// its way over the network too, so this splash isn't racing anything.
-// Offline, there's no page coming — this *is* as far as the load gets,
-// possibly for a while — so it falls back to the pure CSS/text version
-// with zero network dependency, since the favicon-*.svg files are a
-// full illustration (megabytes of path data), not a simple icon, and
-// would otherwise sit there failing/stalling to load with nothing to
-// show for it.
+// One shell, two fills rather than two unrelated screens: a soft pulsing
+// glow behind a rounded tile, the wordmark, and an indeterminate progress
+// bar, all pure CSS (no JS-driven animation, nothing to schedule before
+// first paint matters here). Online, the tile holds the real favicon-*.svg
+// logo — worth the wait since a real page is genuinely on its way over the
+// network too, so this splash isn't racing anything. Offline, there's no
+// page coming — this *is* as far as the load gets, possibly for a while —
+// so the tile holds a plain CSS dot instead: the favicon-*.svg files are a
+// full illustration (megabytes of path data), not a simple icon, and would
+// otherwise sit there failing/stalling to load with nothing to show for it.
 export default function LoadingScreen() {
   const [online, setOnline] = useState(() => (typeof navigator === "undefined" ? true : navigator.onLine));
 
@@ -39,23 +40,31 @@ export default function LoadingScreen() {
     };
   }, []);
 
-  if (!online) {
-    return (
-      <div className="flex min-h-dvh w-full flex-col items-center justify-center gap-4 px-4">
-        <span className="h-10 w-10 animate-spin rounded-full border-[3px] border-navy/20 border-t-navy" />
-        <p className="font-display text-lg text-foreground">Tally</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex min-h-dvh w-full flex-col items-center justify-center gap-4 px-4">
-      <div className="relative flex h-16 w-16 items-center justify-center">
-        <span className="absolute inset-0 animate-spin rounded-full border-[3px] border-navy/20 border-t-navy" />
-        <img src="/favicon-light.svg" alt="" className="h-8 w-8 dark:hidden" />
-        <img src="/favicon-dark.svg" alt="" className="hidden h-8 w-8 dark:block" />
+    <div className="flex min-h-dvh w-full flex-col items-center justify-center gap-5 px-4">
+      <div className="relative flex h-20 w-20 items-center justify-center">
+        <span
+          aria-hidden="true"
+          className="absolute inset-0 animate-[loading-pulse_1.8s_ease-in-out_infinite] rounded-2xl bg-navy/30 blur-xl motion-reduce:animate-none motion-reduce:opacity-60"
+        />
+        <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-surface shadow-soft">
+          {online ? (
+            <>
+              <img src="/favicon-light.svg" alt="" className="h-8 w-8 dark:hidden" />
+              <img src="/favicon-dark.svg" alt="" className="hidden h-8 w-8 dark:block" />
+            </>
+          ) : (
+            <span
+              aria-hidden="true"
+              className="h-3.5 w-3.5 animate-[loading-pulse_1.2s_ease-in-out_infinite] rounded-full bg-navy motion-reduce:animate-none"
+            />
+          )}
+        </div>
       </div>
       <p className="font-display text-lg text-foreground">Tally</p>
+      <div className="h-1 w-28 overflow-hidden rounded-full bg-line">
+        <div className="h-full w-1/3 animate-[loading-bar-sweep_1.3s_ease-in-out_infinite] rounded-full bg-navy motion-reduce:hidden" />
+      </div>
     </div>
   );
 }

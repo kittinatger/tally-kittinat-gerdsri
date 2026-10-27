@@ -674,3 +674,14 @@ input:-webkit-autofill:focus {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* LoadingScreen.tsx's ambient glow (behind the logo tile, and the plain
+   dot standing in for it offline) and its indeterminate progress bar. */
+@keyframes loading-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.18); opacity: 0.9; }
+}
+@keyframes loading-bar-sweep {
+  0% { transform: translateX(-110%); }
+  100% { transform: translateX(310%); }
+}
