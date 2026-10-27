@@ -23,9 +23,20 @@ import { useEffect, useState } from "react";
 // full illustration (megabytes of path data), not a simple icon, and would
 // otherwise sit there failing/stalling to load with nothing to show for it.
 export default function LoadingScreen() {
-  const [online, setOnline] = useState(() => (typeof navigator === "undefined" ? true : navigator.onLine));
+  // Always starts true, matching what the server rendered (it has no way to
+  // know) — reading navigator.onLine straight into the initial state here
+  // instead made the client's very first render disagree with the server's
+  // whenever they actually differed, which React surfaces as a hydration
+  // mismatch (logged, then the whole subtree re-rendered from scratch) and
+  // this component now hits far more often than before, since AppLockGate
+  // renders it on literally every load, not just the few routes that
+  // previously reached it as a Suspense fallback. The effect below corrects
+  // it immediately after mount if the device is actually offline already.
+  const [online, setOnline] = useState(true);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing from navigator.onLine, a real external API, not derivable state
+    setOnline(navigator.onLine);
     function onOnline() {
       setOnline(true);
     }

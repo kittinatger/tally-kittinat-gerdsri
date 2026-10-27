@@ -101,8 +101,15 @@ export default function AppLockGate({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (exempt) return;
     let cancelled = false;
-    fetch("/api/webauthn/credentials")
-      .then((res) => (res.ok ? res.json() : null))
+    // A plain inline script in layout.tsx's <head> starts this same request
+    // the instant the document starts parsing — well before this component
+    // has even loaded, let alone mounted and run this effect — and stashes
+    // the promise on window for this effect to pick up instead of firing
+    // its own redundant fetch. Falls back to a fresh fetch if that script
+    // didn't run for some reason (SSR, an exempt path at the time it ran
+    // but not now, an older cached HTML shell, ...).
+    const precheck = (window as { __appLockPrecheck?: Promise<unknown> }).__appLockPrecheck;
+    (precheck ?? fetch("/api/webauthn/credentials").then((res) => (res.ok ? res.json() : null)))
       .then((data) => {
         if (cancelled) return;
         if (data?.enabled) {

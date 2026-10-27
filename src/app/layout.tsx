@@ -143,6 +143,21 @@ export default function RootLayout({
             __html: `(function(){try{var t=localStorage.getItem('tally-theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);if(localStorage.getItem('tally-design')==='classic'){document.documentElement.setAttribute('data-design','classic');}}catch(e){}})();`,
           }}
         />
+        {/* Starts AppLockGate's own check as early as the browser can issue a
+         * request — document parse time, well before the JS bundle has even
+         * downloaded, let alone hydrated and run the effect that used to be
+         * the earliest this could start. AppLockGate picks this promise up
+         * instead of firing its own fetch when it's already in flight;
+         * either way the real server response is still always what's
+         * waited on, so this only removes dead time, not the check itself.
+         * The exempt-path list has to be duplicated here (AppLockGate's own
+         * EXEMPT_PREFIXES is the source of truth) since this plain script
+         * runs before any app code is loaded to import it from. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var p=location.pathname;var exempt=["/welcome","/login","/register","/forgot-password","/reset-password","/splits/","/offline","/embed/"];for(var i=0;i<exempt.length;i++){if(p.indexOf(exempt[i])===0)return;}window.__appLockPrecheck=fetch('/api/webauthn/credentials').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}catch(e){}})();`,
+          }}
+        />
       </head>
       <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
         <ThemeSync />
