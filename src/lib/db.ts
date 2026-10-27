@@ -189,7 +189,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 83;
+const CURRENT_SCHEMA_VERSION = 84;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -488,6 +488,11 @@ function ensureSchema(): Promise<void> {
       `;
       await sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS wallet_id INTEGER REFERENCES wallets(id) ON DELETE SET NULL;`;
       await sql`CREATE INDEX IF NOT EXISTS expenses_wallet_idx ON expenses (wallet_id);`;
+      // Every wallets query filters by user_id (listWallets, getWalletById,
+      // the dashboard, Settings, ...) — this table never had an index for
+      // it, unlike expenses/recurring_rules/notifications above, so every
+      // one of those was a full-table scan across every user's wallets.
+      await sql`CREATE INDEX IF NOT EXISTS wallets_user_idx ON wallets (user_id);`;
 
       // Whether a wallet represents physical cash or a digital account (bank,
       // e-wallet, card) — purely descriptive, doesn't affect balance math.
@@ -871,6 +876,10 @@ function ensureSchema(): Promise<void> {
           created_at TIMESTAMPTZ NOT NULL DEFAULT now()
         );
       `;
+      // Every membership_cards query filters by user_id (listMembershipCards,
+      // getMembershipCardById, the Wallet page) — no index for it until now,
+      // so each was a full-table scan across every user's passes.
+      await sql`CREATE INDEX IF NOT EXISTS membership_cards_user_idx ON membership_cards (user_id);`;
 
       // Pass template (visual shape + which extra fields apply) and the
       // template-specific field values/custom zone layout, stored as JSON
@@ -1586,6 +1595,10 @@ function ensureSchema(): Promise<void> {
       `;
       await sql`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS folder_id INTEGER REFERENCES card_folders(id) ON DELETE SET NULL;`;
       await sql`ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS folder_id INTEGER REFERENCES card_folders(id) ON DELETE SET NULL;`;
+      // listFolders filters by user_id AND kind together — no index at all
+      // until now, so every call (every Wallet page load) scanned the whole
+      // table.
+      await sql`CREATE INDEX IF NOT EXISTS card_folders_user_kind_idx ON card_folders (user_id, kind);`;
 
       // In-app notification center. Reuses the three detection points that
       // already exist for email/push (recurring rule auto-logged, category
