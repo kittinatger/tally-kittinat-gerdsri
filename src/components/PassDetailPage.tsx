@@ -13,6 +13,7 @@ import { useT } from "@/lib/language-context";
 import { membershipImageUrl } from "@/lib/membership-card-mapper";
 import PassShape from "./PassShape";
 import AppHeader from "./AppHeader";
+import PullToRefresh from "./PullToRefresh";
 import SelectDropdown from "./SelectDropdown";
 
 const MembershipCardModal = dynamic(() => import("./MembershipCardModal"), { ssr: false });
@@ -74,6 +75,7 @@ export default function PassDetailPage({ card: initialCard, folders }: { card: M
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10">
+      <PullToRefresh>
       <AppHeader />
       <main className="mx-auto w-full max-w-xl flex-1 px-1 py-4 sm:px-2 sm:py-6">
         <Link href="/wallet" className="mb-3 flex w-fit items-center gap-1.5 rounded-full py-1.5 pr-3 text-sm font-semibold text-ink-soft transition hover:text-foreground">
@@ -152,6 +154,7 @@ export default function PassDetailPage({ card: initialCard, folders }: { card: M
           </div>
         )}
       </main>
+      </PullToRefresh>
 
       {editing && (
         <MembershipCardModal

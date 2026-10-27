@@ -13,6 +13,7 @@ import { duplicateWallet } from "@/lib/wallet-duplicate";
 import { useT } from "@/lib/language-context";
 import AccountDetail from "./AccountDetail";
 import AppHeader from "./AppHeader";
+import PullToRefresh from "./PullToRefresh";
 import SelectDropdown from "./SelectDropdown";
 
 const WalletShareModal = dynamic(() => import("./WalletShareModal"), { ssr: false });
@@ -101,6 +102,7 @@ export default function WalletDetailPage({
   return (
     <CurrencyProvider currency={currency}>
       <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-3 pb-28 pt-3 sm:px-4 sm:pb-10">
+        <PullToRefresh>
         <AppHeader />
         <main className="mx-auto w-full max-w-xl flex-1 px-1 py-4 sm:px-2 sm:py-6">
           <Link href="/wallet" className="mb-3 flex w-fit items-center gap-1.5 rounded-full py-1.5 pr-3 text-sm font-semibold text-ink-soft transition hover:text-foreground">
@@ -165,6 +167,7 @@ export default function WalletDetailPage({
 
           {sharing && <WalletShareModal walletId={wallet.id} walletName={wallet.name} onClose={() => setSharing(false)} />}
         </main>
+        </PullToRefresh>
       </div>
     </CurrencyProvider>
   );
