@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getCurrency, getDefaultSignature, listFolders, listWallets } from "@/lib/db";
+import { getCurrency, getDefaultSignature, getWalletById, listFolders } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import { toWalletOption } from "@/lib/wallet-mapper";
 import WalletDetailPage from "@/components/WalletDetailPage";
@@ -12,13 +12,13 @@ export default async function WalletPage({ params }: { params: Promise<{ id: str
   const id = Number(rawId);
   if (!Number.isInteger(id) || id <= 0) notFound();
   const userId = await getUserId();
-  const [rows, folders, defaultSignature, currency] = await Promise.all([
-    listWallets(userId, { includeArchived: true }),
+  const [row, folders, defaultSignature, currency] = await Promise.all([
+    getWalletById(userId, id),
     listFolders(userId, "wallet"),
     getDefaultSignature(userId),
     getCurrency(userId),
   ]);
-  const wallet = rows.map(toWalletOption).find((w) => w.id === id);
-  if (!wallet) notFound();
+  if (!row) notFound();
+  const wallet = toWalletOption(row);
   return <WalletDetailPage wallet={wallet} folders={folders} defaultSignature={defaultSignature} currency={currency} />;
 }

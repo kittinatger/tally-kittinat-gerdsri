@@ -1954,6 +1954,25 @@ export async function listWallets(userId: number, opts: { includeArchived?: bool
   return rows;
 }
 
+// One wallet by id, for pages that only need to show a single card
+// (/wallet/[id], its edit page) — these used to call listWallets and
+// .find() the one they wanted, fetching and mapping every wallet (plus
+// WALLET_BALANCE_EXPR's own per-row correlated subquery) just to throw
+// away all but one. Same ownership rule as listWallets: the owner, or a
+// member the wallet's been shared with.
+export async function getWalletById(userId: number, id: number): Promise<WalletRow | null> {
+  await ensureSchema();
+  const { rows } = await sql.query<WalletRow>(
+    `SELECT ${WALLET_COLUMNS}, ${WALLET_BALANCE_EXPR}, (w.user_id = $1) AS is_owner
+     FROM wallets w
+     WHERE w.id = $2
+       AND (w.user_id = $1
+         OR w.id IN (SELECT wallet_id FROM wallet_members WHERE user_id = $1 AND status = 'accepted'));`,
+    [userId, id],
+  );
+  return rows[0] ?? null;
+}
+
 export async function createWallet(
   userId: number,
   input: {
@@ -6114,6 +6133,21 @@ export async function listMembershipCards(userId: number): Promise<MembershipCar
     ORDER BY sort_order, id;
   `;
   return rows;
+}
+
+// One pass/membership card by id, for /pass/[id] — same idea as
+// getWalletById: that page used to call listMembershipCards and .find()
+// the one it wanted, fetching and parsing every pass just to throw away
+// all but one.
+export async function getMembershipCardById(userId: number, id: number): Promise<MembershipCardRow | null> {
+  await ensureSchema();
+  const { rows } = await sql<MembershipCardRow>`
+    SELECT id, name, code_value, code_format, color, icon, notes, kind, fields, layout, background, text_color, category, custom_field_labels, show_logo, show_name, hidden_field_labels, logo_updated_at, banner_updated_at, show_code_text, folder_id,
+      (logo_image IS NOT NULL) AS has_logo, (banner_image IS NOT NULL) AS has_banner
+    FROM membership_cards
+    WHERE id = ${id} AND user_id = ${userId};
+  `;
+  return rows[0] ?? null;
 }
 
 export async function createMembershipCard(

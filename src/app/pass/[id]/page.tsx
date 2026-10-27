@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { listFolders, listMembershipCards } from "@/lib/db";
+import { getMembershipCardById, listFolders } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import { toMembershipCard } from "@/lib/membership-card-mapper";
 import PassDetailPage from "@/components/PassDetailPage";
@@ -13,8 +13,8 @@ export default async function PassPage({ params }: { params: Promise<{ id: strin
   const id = Number(rawId);
   if (!Number.isInteger(id) || id <= 0) notFound();
   const userId = await getUserId();
-  const [rows, folders] = await Promise.all([listMembershipCards(userId), listFolders(userId, "pass")]);
-  const card = rows.map(toMembershipCard).find((c) => c.id === id);
-  if (!card) notFound();
+  const [row, folders] = await Promise.all([getMembershipCardById(userId, id), listFolders(userId, "pass")]);
+  if (!row) notFound();
+  const card = toMembershipCard(row);
   return <PassDetailPage card={card} folders={folders} />;
 }

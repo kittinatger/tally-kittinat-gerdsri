@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getCurrency, getDefaultSignature, listWallets } from "@/lib/db";
+import { getCurrency, getDefaultSignature, getWalletById } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import { toWalletOption } from "@/lib/wallet-mapper";
 import WalletFormPage from "@/components/WalletFormPage";
@@ -20,12 +20,12 @@ export default async function EditWalletPage({
   const id = Number(rawId);
   if (!Number.isInteger(id) || id <= 0) notFound();
   const userId = await getUserId();
-  const [rows, currency, defaultSignature] = await Promise.all([
-    listWallets(userId, { includeArchived: true }),
+  const [row, currency, defaultSignature] = await Promise.all([
+    getWalletById(userId, id),
     getCurrency(userId),
     getDefaultSignature(userId),
   ]);
-  const wallet = rows.map(toWalletOption).find((w) => w.id === id);
+  const wallet = row ? toWalletOption(row) : null;
   if (!wallet || !wallet.isOwner) notFound();
   const initialTab = tab === "back" || tab === "card" || tab === "premade" ? tab : undefined;
   return (
