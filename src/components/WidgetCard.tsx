@@ -82,42 +82,6 @@ export const WIDGET_TEXT: Record<CategoryColor, string> = {
   slate: "text-surface-foreground",
 };
 
-export const WIDGET_TEXT_SOFT: Record<CategoryColor, string> = {
-  emerald: "text-emerald-700/70 dark:text-emerald-300/70",
-  green: "text-green-700/70 dark:text-green-300/70",
-  teal: "text-teal-700/70 dark:text-teal-300/70",
-  cyan: "text-cyan-700/70 dark:text-cyan-300/70",
-  sky: "text-sky-700/70 dark:text-sky-300/70",
-  blue: "text-blue-700/70 dark:text-blue-300/70",
-  indigo: "text-indigo-700/70 dark:text-indigo-300/70",
-  violet: "text-violet-700/70 dark:text-violet-300/70",
-  fuchsia: "text-fuchsia-700/70 dark:text-fuchsia-300/70",
-  pink: "text-pink-700/70 dark:text-pink-300/70",
-  rose: "text-rose-700/70 dark:text-rose-300/70",
-  orange: "text-orange-700/70 dark:text-orange-300/70",
-  amber: "text-amber-700/70 dark:text-amber-300/70",
-  lime: "text-lime-700/70 dark:text-lime-300/70",
-  slate: "text-surface-foreground-soft",
-};
-
-export const WIDGET_SOLID: Record<CategoryColor, string> = {
-  emerald: "bg-emerald-500",
-  green: "bg-green-500",
-  teal: "bg-teal-500",
-  cyan: "bg-cyan-500",
-  sky: "bg-sky-500",
-  blue: "bg-blue-500",
-  indigo: "bg-indigo-500",
-  violet: "bg-violet-500",
-  fuchsia: "bg-fuchsia-500",
-  pink: "bg-pink-500",
-  rose: "bg-rose-500",
-  orange: "bg-orange-500",
-  amber: "bg-amber-500",
-  lime: "bg-lime-500",
-  slate: "bg-surface-accent",
-};
-
 export const WIDGET_SOFT_BG: Record<CategoryColor, string> = {
   emerald: "bg-emerald-500/10",
   green: "bg-green-500/10",
@@ -134,24 +98,6 @@ export const WIDGET_SOFT_BG: Record<CategoryColor, string> = {
   amber: "bg-amber-500/10",
   lime: "bg-lime-500/10",
   slate: "bg-surface-accent/10",
-};
-
-export const WIDGET_GRADIENT_TEXT: Record<CategoryColor, string> = {
-  emerald: "from-emerald-600 to-teal-500 dark:from-emerald-300 dark:to-teal-300",
-  green: "from-green-600 to-emerald-500 dark:from-green-300 dark:to-emerald-300",
-  teal: "from-teal-600 to-cyan-500 dark:from-teal-300 dark:to-cyan-300",
-  cyan: "from-cyan-600 to-sky-500 dark:from-cyan-300 dark:to-sky-300",
-  sky: "from-sky-600 to-blue-500 dark:from-sky-300 dark:to-blue-300",
-  blue: "from-blue-600 to-indigo-500 dark:from-blue-300 dark:to-indigo-300",
-  indigo: "from-indigo-600 to-violet-500 dark:from-indigo-300 dark:to-violet-300",
-  violet: "from-violet-600 to-fuchsia-500 dark:from-violet-300 dark:to-fuchsia-300",
-  fuchsia: "from-fuchsia-600 to-pink-500 dark:from-fuchsia-300 dark:to-pink-300",
-  pink: "from-pink-600 to-rose-500 dark:from-pink-300 dark:to-rose-300",
-  rose: "from-rose-600 to-orange-500 dark:from-rose-300 dark:to-orange-300",
-  orange: "from-orange-600 to-amber-500 dark:from-orange-300 dark:to-amber-300",
-  amber: "from-amber-600 to-orange-500 dark:from-amber-300 dark:to-orange-300",
-  lime: "from-lime-600 to-green-500 dark:from-lime-300 dark:to-green-300",
-  slate: "from-surface-foreground to-surface-foreground-soft",
 };
 
 const BLOB_POS: Record<BlobPosition, string> = {

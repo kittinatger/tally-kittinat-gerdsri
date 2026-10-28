@@ -6,9 +6,7 @@ import { cardBackgroundStyle, cardForegroundFor, type CardBackground } from "@/l
 import type { CardBackDesign } from "@/lib/card-back";
 import { formatCurrency } from "@/lib/format";
 import { useT } from "@/lib/language-context";
-import { KIND_FIELDS, type PassKind } from "@/lib/membership-templates";
 import type { WalletOption } from "@/types/wallet";
-import type { MembershipCard } from "@/types/membership";
 import { SignatureSvg } from "./SignaturePad";
 
 // The backs shown by FlipCard on a card's / pass's detail view. Both are a
@@ -161,36 +159,6 @@ export function WalletBack({
         )}
         {/* At most four details, so they always fit the card. */}
         {details.length > 0 && <div className="mt-auto grid grid-cols-2 gap-x-4 gap-y-1 px-4 pb-3 pt-2 text-xs">{details}</div>}
-      </div>
-    </Shell>
-  );
-}
-
-/** Back of a pass: every filled-in field, the code number and notes. */
-export function PassBack({ card }: { card: MembershipCard }) {
-  const t = useT();
-  const defs = Object.fromEntries((KIND_FIELDS[card.kind as PassKind] ?? []).map((f) => [f.key, f]));
-  const fields = Object.entries(card.fields)
-    .filter(([, value]) => value)
-    .map(([key, value]) => ({ key, label: defs[key] ? t(defs[key].labelKey) : (card.customFieldLabels[key] ?? key), value }));
-
-  return (
-    <Shell color={card.color} background={card.background} textColor={card.textColor}>
-      <div className="flex h-full flex-col p-4">
-        <div className="flex items-start justify-between gap-3">
-          <p className="min-w-0 truncate text-xs font-semibold uppercase tracking-wide opacity-80">{card.name}</p>
-          <p className="max-w-[55%] truncate font-mono text-xs font-semibold opacity-90" title={card.codeValue}>
-            {card.codeValue}
-          </p>
-        </div>
-        {fields.length > 0 && (
-          <div className="mt-3 grid min-h-0 grid-cols-2 gap-x-4 gap-y-2 overflow-hidden text-xs">
-            {fields.slice(0, 6).map((f) => (
-              <BackField key={f.key} label={f.label} value={f.value} />
-            ))}
-          </div>
-        )}
-        {card.notes && <p className="mt-auto line-clamp-2 whitespace-pre-wrap pt-2 text-xs leading-snug opacity-90">{card.notes}</p>}
       </div>
     </Shell>
   );

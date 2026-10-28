@@ -3499,21 +3499,9 @@ export async function setActivitiesDefaultWalletId(userId: number, walletId: num
 }
 
 // Biometric app-lock — see AppLockGate.tsx/AppLockSettingsPanel.tsx.
-export async function getAppLockEnabled(userId: number): Promise<boolean> {
-  await ensureSchema();
-  const { rows } = await sql<{ applock_enabled: boolean }>`SELECT applock_enabled FROM app_settings WHERE user_id = ${userId};`;
-  return rows[0]?.applock_enabled ?? false;
-}
-
 export async function setAppLockEnabled(userId: number, enabled: boolean): Promise<void> {
   await ensureSchema();
   await sql`UPDATE app_settings SET applock_enabled = ${enabled} WHERE user_id = ${userId};`;
-}
-
-export async function getAppLockTimeoutSeconds(userId: number): Promise<number> {
-  await ensureSchema();
-  const { rows } = await sql<{ applock_timeout_seconds: number }>`SELECT applock_timeout_seconds FROM app_settings WHERE user_id = ${userId};`;
-  return rows[0]?.applock_timeout_seconds ?? 0;
 }
 
 export async function setAppLockTimeoutSeconds(userId: number, seconds: number): Promise<void> {
@@ -3530,12 +3518,6 @@ export async function getAppLockPinHash(userId: number): Promise<string | null> 
 export async function setAppLockPinHash(userId: number, hash: string | null, length: number | null): Promise<void> {
   await ensureSchema();
   await sql`UPDATE app_settings SET applock_pin_hash = ${hash}, applock_pin_length = ${length} WHERE user_id = ${userId};`;
-}
-
-export async function getAppLockPinLength(userId: number): Promise<number | null> {
-  await ensureSchema();
-  const { rows } = await sql<{ applock_pin_length: number | null }>`SELECT applock_pin_length FROM app_settings WHERE user_id = ${userId};`;
-  return rows[0]?.applock_pin_length ?? null;
 }
 
 // Single-row combination of the four getters above, for callers (the
