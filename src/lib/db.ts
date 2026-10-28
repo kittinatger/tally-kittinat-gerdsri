@@ -189,7 +189,7 @@ let schemaReady: Promise<void> | null = null;
 // to Neon) before the very first query of a cold request could proceed.
 // Tracking a version in the DB means a cold start pays for one fast SELECT
 // instead, in the common case where nothing's actually changed.
-const CURRENT_SCHEMA_VERSION = 85;
+const CURRENT_SCHEMA_VERSION = 84;
 
 function ensureSchema(): Promise<void> {
   if (!schemaReady) {
@@ -1479,34 +1479,6 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE pass_templates ADD COLUMN IF NOT EXISTS lock_logo BOOLEAN NOT NULL DEFAULT false;`;
       await sql`ALTER TABLE pass_templates ADD COLUMN IF NOT EXISTS lock_banner BOOLEAN NOT NULL DEFAULT false;`;
       await sql`ALTER TABLE pass_templates ADD COLUMN IF NOT EXISTS lock_fields BOOLEAN NOT NULL DEFAULT false;`;
-
-      // A starter set of transit-pass premade designs — every other
-      // premade design (card_templates, pass_templates otherwise) only
-      // ever arrives by a real user submitting one through the app and an
-      // admin approving it, so these are the one exception: pre-approved,
-      // submitted_by NULL, inserted directly here instead. Each is an
-      // original color/pattern design loosely evoking the general *style*
-      // of a well-known transit card from a different city/country (tap
-      // card, travelcard, IC card, ...) — same rule CARD_PATTERNS's own
-      // "inspired by real card designs" gallery already follows: no real
-      // operator's name, logo, wordmark, or mascot, just the general
-      // color/material language. Guarded per-name so this only ever
-      // inserts once, even though the whole migration block re-runs on
-      // every deploy whose schema version is behind.
-      for (const t of [
-        { name: "Metro Fare Card", pattern: "stripes", colors: ["#003DA5", "#F2A900"], color: "#003DA5" },
-        { name: "Underground Travelcard", pattern: "diagonal", colors: ["#041E42", "#DC241F"], color: "#041E42" },
-        { name: "IC Commuter Pass", pattern: "wave", colors: ["#00A95C", "#00703C"], color: "#00A95C" },
-        { name: "Smart City Card", pattern: "dots", colors: ["#8DC63F", "#F7941E"], color: "#8DC63F" },
-        { name: "Regional Rail Pass", pattern: "diagonal", colors: ["#C8102E", "#7A0C1C"], color: "#C8102E" },
-        { name: "Bay Transit Card", pattern: "wave", colors: ["#003DA5", "#8FD3F4"], color: "#003DA5" },
-      ]) {
-        await sql`
-          INSERT INTO pass_templates (submitted_by, name, kind, color, background, text_color, category, status)
-          SELECT NULL, ${t.name}, 'transitPass', ${t.color}, ${JSON.stringify({ pattern: t.pattern, colors: t.colors })}, NULL, 'transit', 'approved'
-          WHERE NOT EXISTS (SELECT 1 FROM pass_templates WHERE name = ${t.name});
-        `;
-      }
 
       // The card-look wallet visual can now show a contactless/NFC symbol,
       // same corner-badge treatment as the network logo. DEFAULT false
