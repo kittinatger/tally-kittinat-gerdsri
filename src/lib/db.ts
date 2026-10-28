@@ -3538,6 +3538,29 @@ export async function getAppLockPinLength(userId: number): Promise<number | null
   return rows[0]?.applock_pin_length ?? null;
 }
 
+// Single-row combination of the four getters above, for callers (the
+// webauthn/credentials GET, read by AppLockGate on every page load) that
+// need all of them at once — one round trip to Neon's HTTP driver instead
+// of four concurrent ones against the exact same app_settings row.
+export async function getAppLockSettings(
+  userId: number,
+): Promise<{ enabled: boolean; timeoutSeconds: number; pinHash: string | null; pinLength: number | null }> {
+  await ensureSchema();
+  const { rows } = await sql<{
+    applock_enabled: boolean;
+    applock_timeout_seconds: number;
+    applock_pin_hash: string | null;
+    applock_pin_length: number | null;
+  }>`SELECT applock_enabled, applock_timeout_seconds, applock_pin_hash, applock_pin_length FROM app_settings WHERE user_id = ${userId};`;
+  const row = rows[0];
+  return {
+    enabled: row?.applock_enabled ?? false,
+    timeoutSeconds: row?.applock_timeout_seconds ?? 0,
+    pinHash: row?.applock_pin_hash ?? null,
+    pinLength: row?.applock_pin_length ?? null,
+  };
+}
+
 export type WebauthnCredentialRow = {
   id: number;
   credential_id: string;

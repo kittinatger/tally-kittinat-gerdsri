@@ -3,11 +3,9 @@ import { getUserId } from "@/lib/auth";
 import {
   listWebauthnCredentials,
   deleteWebauthnCredential,
-  getAppLockEnabled,
+  getAppLockSettings,
   setAppLockEnabled,
   getAppLockPinHash,
-  getAppLockPinLength,
-  getAppLockTimeoutSeconds,
   setAppLockTimeoutSeconds,
 } from "@/lib/db";
 import { checkMutationRateLimit } from "@/lib/mutation-rate-limit";
@@ -15,18 +13,12 @@ import { APPLOCK_TIMEOUT_OPTIONS } from "@/lib/applock-timeout";
 
 export async function GET() {
   const userId = await getUserId();
-  const [credentials, enabled, pinHash, pinLength, timeoutSeconds] = await Promise.all([
-    listWebauthnCredentials(userId),
-    getAppLockEnabled(userId),
-    getAppLockPinHash(userId),
-    getAppLockPinLength(userId),
-    getAppLockTimeoutSeconds(userId),
-  ]);
+  const [credentials, settings] = await Promise.all([listWebauthnCredentials(userId), getAppLockSettings(userId)]);
   return NextResponse.json({
-    enabled,
-    hasPasscode: pinHash !== null,
-    pinLength,
-    timeoutSeconds,
+    enabled: settings.enabled,
+    hasPasscode: settings.pinHash !== null,
+    pinLength: settings.pinLength,
+    timeoutSeconds: settings.timeoutSeconds,
     credentials: credentials.map((c) => ({
       id: c.id,
       deviceLabel: c.device_label,
