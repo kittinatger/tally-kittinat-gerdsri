@@ -32,20 +32,31 @@ async function fetchSessionVersion(userId: number): Promise<number | null> {
   }
 }
 
+// How long a cache miss will wait on Neon before giving up and treating it
+// the same as a failed query (see below) — a cold Edge isolate hitting a
+// cold Neon compute/connection can take seconds, and every one of those
+// seconds sits directly in front of the first byte of every page on a cold
+// app open. The query itself isn't cancelled, just no longer waited on: it
+// keeps running and still populates the cache for the requests right behind
+// it, so this only bounds the worst case rather than giving up on freshness
+// outright.
+const PENDING_TIMEOUT_MS = 400;
+
 // Any failure here (missing column on first deploy, a transient connection
-// hiccup, etc.) must never crash the request: returns null to mean
-// "couldn't verify," and proxy.ts treats that as "trust the token's
-// signature," same as before session revocation existed, rather than
-// 500ing the request.
+// hiccup, a timeout per PENDING_TIMEOUT_MS above, etc.) must never crash the
+// request: returns null to mean "couldn't verify," and proxy.ts treats that
+// as "trust the token's signature," same as before session revocation
+// existed, rather than 500ing the request.
 export async function getSessionVersion(userId: number): Promise<number | null> {
   const cached = cache.get(userId);
   if (cached && cached.expiresAt > Date.now()) {
     return cached.version;
   }
 
-  const version = await fetchSessionVersion(userId);
-  if (version !== null) {
-    cache.set(userId, { version, expiresAt: Date.now() + CACHE_TTL_MS });
-  }
-  return version;
+  const pending = fetchSessionVersion(userId).then((version) => {
+    if (version !== null) cache.set(userId, { version, expiresAt: Date.now() + CACHE_TTL_MS });
+    return version;
+  });
+  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), PENDING_TIMEOUT_MS));
+  return Promise.race([pending, timeout]);
 }
